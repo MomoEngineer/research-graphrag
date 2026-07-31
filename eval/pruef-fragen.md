@@ -4,6 +4,8 @@ Pragmatisches, festes Frageset zur Qualitätssicherung über alle **fünf Fraget
 
 > **Status Phase 4:** Konkrete, auf den migrierten Korpus (145 Paper) bezogene Fragen sind ergänzt und einmal über die CLI (`python -m scripts.ask "<frage>" [--mode …]`) durchgespielt. Die **Befund**-Spalte hält das Ergebnis der Stichprobe fest (Index-Stand: Schema 0.2.0 mit Abschnitts-Provenienz). Die Modi entsprechen [ADR 0008](../docs/adr/0008-retrieval-and-query-router-phase4.md); ab **Phase 5** werden dieselben Modi als MCP-Tools in Copilot geprüft.
 
+> **Status Phase 6:** Dasselbe Set ist jetzt **wiederholbar** als QS-Harness `python -m scripts.qa` hinterlegt (Single Source of Truth: `QUESTIONS` in [scripts/qa.py](../scripts/qa.py)); ein struktureller Regressionstest ([tests/retrieval/test_qa.py](../tests/retrieval/test_qa.py)) sichert die Provenienz-Form. Erneuter Durchlauf am Korpus (Index-Schema **0.3.0**) liefert für **alle 10 Fragen belegte Provenienz (10/10)**; die Befunde decken sich mit Phase 4 (u. a. D1 → „Datasets and Evaluation Metrics", W1 → Community #0/„Overall Comparison (RQ1)", W2 → Community #11 „agentic/vectorrag"). Vereinzeltes **Abschnitts-Rauschen** einzelner Treffer (z. B. „20.09 20.15", OCR-Ligaturen) bleibt die bekannte Heuristik-Grenze ([ADR 0006](../docs/adr/0006-canonical-model-phase2-scope.md)), kein Retrieval-Fehler ([ADR 0010](../docs/adr/0010-drop-in-workflow-and-qa-phase6.md)).
+
 Für jede Frage werden festgehalten:
 
 - **Erwarteter Suchmodus** (gemäß Fragetyp-Mapping der README),
@@ -52,9 +54,9 @@ Für jede Frage werden festgehalten:
 ## Durchführung
 
 1. Voraussetzung: Index inkl. Graph/Communities vorhanden (`python -m scripts.ingest`, Phasen 2–3).
-2. Jede Frage über den passenden Suchmodus stellen: `python -m scripts.ask "<frage>" --mode <basic|local|global|drift>` oder ohne `--mode` (Heuristik-Router, `auto`).
+2. **Ganzes Set auf einmal** (Phase 6): `python -m scripts.qa` spielt alle Fragen je erwartetem Modus durch und druckt die Provenienz für die Stichprobe. Einzeln/explorativ: `python -m scripts.ask "<frage>" --mode <basic|local|global|drift>` oder ohne `--mode` (Heuristik-Router, `auto`).
 3. Antwort **und** gelieferte Provenienz gegen die Erwartung prüfen, Befund eintragen.
-4. Auffälligkeiten (fehlende/falsche Quelle) als Stichprobenfund notieren (siehe README, „Qualitätssicherung").
+4. Auffälligkeiten (fehlende/falsche Quelle) als Stichprobenfund notieren (siehe README, „Qualitätssicherung"). Ein schneller Index-/Konsistenz-Überblick liefert `python -m scripts.status`.
 
 > **Beobachtung (ehrlich):** Die Abschnitts-Provenienz ist meist präzise (z. B. „Datasets and Evaluation Metrics", „Overall Comparison (RQ1)"), stellenweise aber verrauscht (die Phase-2-Heuristik übersegmentiert, z. B. „20.09 20.15" als Abschnitt) – bekannte Grenze aus [ADR 0006](../docs/adr/0006-canonical-model-phase2-scope.md), kein Retrieval-Fehler. Ab **Phase 5** wird dieselbe Stichprobe zusätzlich über die MCP-Tools in Copilot gefahren.
 

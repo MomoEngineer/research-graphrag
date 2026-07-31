@@ -11,13 +11,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.model import SCHEMA_VERSION, read_schema_version
 from research_graphrag.extraction.pdf import CanonicalPaper, extract_pdf
-from research_graphrag.indexing.graph_index import build_graph
+from research_graphrag.indexing.graph_index import GraphBuildReport, build_graph
 from research_graphrag.indexing.tfidf_index import build_index
 
 
@@ -135,6 +136,35 @@ def _write_quality_report(papers: list[CanonicalPaper], data_dir: Path) -> Path:
     return json_path
 
 
+def _build_index_atomically(
+    papers: list[CanonicalPaper], index_path: Path
+) -> tuple[int, GraphBuildReport]:
+    """Baut Index **und** Graph in eine Temporärdatei und ersetzt den Zielindex atomar.
+
+    Der MCP-Server liest den Index pro Anfrage frisch (On-Read, siehe
+    docs/adr/0010-drop-in-workflow-and-qa-phase6.md); ein *In-place*-Neuaufbau könnte daher
+    kurzzeitig einen halbfertigen Zustand liefern. Deshalb wird zunächst vollständig nach
+    ``index.sqlite.tmp`` gebaut (TF-IDF/SQLite **und** Paper-Graph) und erst nach Erfolg per
+    :func:`os.replace` **atomar** an die Zielstelle verschoben. Schlägt der Bau fehl, bleibt der
+    bestehende Index unangetastet (Crash-Sicherheit); die Temporärdatei wird stets entfernt.
+
+    Args:
+        papers: Extrahierte Canonical-Papers (Quelle für Index und Graph).
+        index_path: Zielpfad der SQLite-Index-Datei.
+
+    Returns:
+        Tupel aus indexierten Chunks und :class:`GraphBuildReport`.
+    """
+    tmp_path = index_path.with_name(index_path.name + ".tmp")
+    try:
+        indexed_chunks = build_index(papers, tmp_path)
+        graph_report = build_graph(papers, tmp_path)
+        os.replace(tmp_path, index_path)
+    finally:
+        tmp_path.unlink(missing_ok=True)
+    return indexed_chunks, graph_report
+
+
 def ingest(papers_dir: str | Path, data_dir: str | Path) -> IngestReport:
     """Führt deduplizierte Extraktion und Index-Bau für einen ``papers/``-Ordner aus.
 
@@ -181,8 +211,7 @@ def ingest(papers_dir: str | Path, data_dir: str | Path) -> IngestReport:
             ErrorCode.INVALID_INPUT, "Keine Canonical-Paper vorhanden (papers/ leer?)."
         )
 
-    indexed_chunks = build_index(papers, index_path)
-    graph_report = build_graph(papers, index_path)
+    indexed_chunks, graph_report = _build_index_atomically(papers, index_path)
     _write_quality_report(papers, data_path)
     return IngestReport(
         extracted=extracted,

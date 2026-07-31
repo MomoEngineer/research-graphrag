@@ -10,5 +10,7 @@ vom Repository-Wurzelverzeichnis (WinPython-Konsolenskripte liegen nicht im `PAT
 | `ask.py` | Frage über die Retrieval-Modi (Basic/Local/Global/DRIFT) mit Provenienz beantworten; `--mode auto` routet heuristisch ([ADR 0008](../docs/adr/0008-retrieval-and-query-router-phase4.md)). Aufruf: `python -m scripts.ask "<Frage>" [--mode …]`. |
 | `graph_info.py` | Read-only-Übersicht der Graph-Communities (Keywords, Vertreter, Auszug); Phase-3-Nachweis ([ADR 0007](../docs/adr/0007-graphrag-index-phase3-option-b.md)). Aufruf: `python -m scripts.graph_info`. |
 | `update_overview.py` | Übersicht-Entwürfe: deterministische, extraktive Entwurfszeilen **append-only** nach `data/overview_drafts.md` (kuratierte `Übersicht.md` bleibt unangetastet, [ADR 0006](../docs/adr/0006-canonical-model-phase2-scope.md)). Aufruf: `python -m scripts.update_overview`. |
+| `status.py` | Read-only-Status von Index/Korpus (Schema, Paper/Chunks/Communities, Qualitäts-Flags, Identifier-Abdeckung) + Konsistenz-Check `papers/ ↔ manifest ↔ canonical`; pragmatische QS ([ADR 0010](../docs/adr/0010-drop-in-workflow-and-qa-phase6.md)). Aufruf: `python -m scripts.status`. |
+| `qa.py` | QS-Harness: spielt das feste Prüf-Fragen-Set je erwartetem Modus (Basic/Local/Global/DRIFT) durch und zeigt die belegte Provenienz ([ADR 0010](../docs/adr/0010-drop-in-workflow-and-qa-phase6.md)). Aufruf: `python -m scripts.qa`. |
 
 Damit `python -m scripts.…` funktioniert, enthält der Ordner ein `__init__.py`.

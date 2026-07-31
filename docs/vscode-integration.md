@@ -2,7 +2,7 @@
 
 Diese Anleitung beschreibt, wie der MCP-Server von research-graphrag lokal in VS Code eingebunden und über **GitHub Copilot** (Agent-Modus) genutzt wird. VS Code ist dabei nur der Anwendungsrahmen; die eigentliche Fähigkeit stellt der MCP-Server bereit.
 
-> **Status:** ✅ **Phase 5 umgesetzt** – der MCP-Server ist lauffähig (`python -m research_graphrag.mcp_server`) und die aktive [`.vscode/mcp.json`](../.vscode/mcp.json) ist angelegt ([ADR 0009](adr/0009-mcp-server-stdio-phase5.md)). Diese Anleitung beschreibt die Einbindung; folge ihr, um die Werkzeuge im Copilot-Agent-Modus zu nutzen.
+> **Status:** ✅ **Phase 5 umgesetzt** – der MCP-Server ist lauffähig (`python -m research_graphrag.mcp_server`) und die aktive [`.vscode/mcp.json`](../.vscode/mcp.json) ist angelegt ([ADR 0009](adr/0009-mcp-server-stdio-phase5.md)). **Phase 6** härtet den On-Read-Zugriff (atomarer Index-Swap) und ergänzt read-only Status-/QS-Skripte ([ADR 0010](adr/0010-drop-in-workflow-and-qa-phase6.md)). Diese Anleitung beschreibt die Einbindung; folge ihr, um die Werkzeuge im Copilot-Agent-Modus zu nutzen.
 
 ---
 
@@ -58,6 +58,8 @@ Damit der Serverprozess die in der `.venv` verfügbaren Abhängigkeiten (mcp, sc
 4. Bei Problemen: `MCP: List Servers` → Server auswählen → `Show Output` (Startfehler des Prozesses prüfen).
 
 Ist der Server korrekt eingebunden, ruft Copilot die Tools im Agent-Modus selbstständig auf und erhält belegte Antworten mit Provenienz.
+
+> **Frische Artefakte (On-Read):** Der Server hält keinen Index im Speicher, sondern lädt ihn **pro Anfrage** frisch aus `data/index/index.sqlite`. Nach `python -m scripts.ingest` sind neue Paper daher **ohne Server-Neustart** sofort verfügbar; der Index-Neuaufbau erfolgt **atomar** (Build nach `*.sqlite.tmp` + `os.replace`), sodass ein laufender Aufruf nie einen halbfertigen Index sieht ([ADR 0010](adr/0010-drop-in-workflow-and-qa-phase6.md)). Ein schneller Status-/Konsistenz-Überblick: `python -m scripts.status`.
 
 ---
 
