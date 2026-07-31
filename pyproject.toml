@@ -13,29 +13,22 @@ license = { text = "Proprietary" }
 # ---------------------------------------------------------------------------
 # Kern-Laufzeitabhängigkeiten mit exakten Pins (Reproduzierbarkeit).
 #
-# Bewusst MINIMAL gehalten, damit `pip install -e .` auch im Offline-Umfeld
-# durchläuft: Die hier gelisteten Pakete sind in der WinPython-Basis bereits
-# vorhanden (siehe docs/adr/0002-venv-and-offline-dependency-strategy.md).
-#
-# Der schwere Pipeline-Stack (Docling, Microsoft GraphRAG, LanceDB) liegt im
-# optionalen Extra [pipeline] und wird erst in Phase 0b/2 beschafft, sobald die
-# Wheels verfügbar sind (siehe ADR 0002 und den offenen ADR 0005).
+# Der Index-Bau folgt dem Offline-Hybrid (Option B, siehe
+# docs/adr/0005-graphrag-index-backend-open.md): pypdf (Extraktion), scikit-learn
+# (TF-IDF), networkx (Graph + Louvain), SQLite (stdlib). Alle Pins sind in der
+# WinPython-Basis vorhanden, sodass `pip install -e .` offline durchläuft
+# (siehe docs/adr/0002-venv-and-offline-dependency-strategy.md). Der MS-GraphRAG-
+# Stack (docling/graphrag/lancedb) ist offline nicht beschaffbar und daher NICHT
+# Teil der Abhängigkeiten (ADR 0005).
 # ---------------------------------------------------------------------------
 dependencies = [
     "mcp==1.21.0",
+    "pypdf==5.6.0",
+    "scikit-learn==1.8.0",
+    "networkx==3.6.1",
 ]
 
 [project.optional-dependencies]
-# Schwerer Pipeline-Stack (Extraktion + Index + Vektor-Store). Offline ggf. NICHT
-# beschaffbar (ADR 0005). Die Versionen – und die Python-Kompatibilität von graphrag –
-# werden beim Beschaffen geprüft und final gepinnt; bis dahin bewusst ohne == (kein
-# Anspruch auf reproduzierbare Auflösung).
-pipeline = [
-    "docling",
-    "graphrag",
-    "lancedb",
-]
-
 # Entwicklungswerkzeuge mit exakten Pins. Diese Versionen sind in der
 # WinPython-Basis vorhanden. Bewusst NICHT enthalten sind pytest-cov/coverage und
 # pytest-asyncio – sie sind offline nicht installierbar; die Ersatzstrategie steht

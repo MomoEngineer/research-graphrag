@@ -44,11 +44,11 @@ Ein ADR wird angelegt bei u. a.:
 | [0002](0002-venv-and-offline-dependency-strategy.md) | venv- und Offline-Dependency-Strategie | Akzeptiert |
 | [0003](0003-offline-test-and-coverage-tooling.md) | Offline-Test- und Coverage-Tooling | Akzeptiert |
 | [0004](0004-llm-bridge-via-mcp-sampling.md) | LLM-Bridge über MCP-Sampling (Abfragezeit) | Akzeptiert |
-| [0005](0005-graphrag-index-backend-open.md) | Index-Backend offline: MS-GraphRAG vs. Offline-Hybrid | Vorgeschlagen (offen) |
+| [0005](0005-graphrag-index-backend-open.md) | Index-Backend: Offline-Hybrid (Option B) | Akzeptiert |
 
 ---
 
 ## 5. Offene/geplante ADRs
 
-- **[ADR 0005](0005-graphrag-index-backend-open.md)** ist bewusst **offen**: Das Index-Backend (LLM + Embeddings für den GraphRAG-Bau) wird vor Phase 2/3 entschieden und dann als Folge-ADR geschlossen. Bis dahin gibt es keinen Code-Impact.
-- Ein späterer **Umstieg auf `uv`** (sobald ein Mirror/Netz verfügbar ist) wird als eigener ADR angelegt und löst [ADR 0002](0002-venv-and-offline-dependency-strategy.md) teilweise ab.
+- Derzeit sind **keine** ADR-pflichtigen Entscheidungen offen: [ADR 0005](0005-graphrag-index-backend-open.md) wurde nach einem empirischen Beschaffbarkeits-Test auf **Option B (Offline-Hybrid)** entschieden.
+- Geplant: **Umstieg auf `uv`** (sobald ein Mirror/Netz verfügbar ist) – löst [ADR 0002](0002-venv-and-offline-dependency-strategy.md) teilweise ab; **Option C** (pluggable Backends) als Folge-ADR, falls Teile des MS-GraphRAG-Stacks beschaffbar werden.

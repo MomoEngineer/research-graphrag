@@ -22,7 +22,7 @@ Provenienz (Paper, Abschnitt, Seite/Chunk).
 ## Abhängigkeiten
 
 - Python ≥ 3.11 (WinPython-Basis: 3.13), `mcp` (SDK).
-- Pipeline-Stack (`graphrag`, `docling`, `lancedb`) über das Extra `[pipeline]`.
+- Offline-Hybrid-Stack als Kern-Abhängigkeiten: `pypdf`, `scikit-learn` (TF-IDF), `networkx`, SQLite (stdlib) – Option B, [ADR 0005](../docs/adr/0005-graphrag-index-backend-open.md).
 
 ## Start (Transport `stdio`)
 

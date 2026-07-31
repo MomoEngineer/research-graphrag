@@ -16,7 +16,7 @@ Zur **Abfragezeit** kann eine Antwort-Synthese ein LLM benötigen (z. B. das Zus
 
 ## Geltungsbereich / Abgrenzung
 
-Diese Entscheidung betrifft die **Abfrage-/Generierungszeit**. Der **Index-Bau** (Entity-/Relationship-Extraktion, Community-Reports, Embeddings) ist ein **Batch-Lauf ohne MCP-Client** und wird von der LLM-Bridge **nicht** abgedeckt (MCP-Sampling liefert insbesondere **keine Embeddings**). Dafür ist der offene [ADR 0005](0005-graphrag-index-backend-open.md) zuständig.
+Diese Entscheidung betrifft die **Abfrage-/Generierungszeit**. Der **Index-Bau** (Entity-/Relationship-Extraktion, Community-Reports, Embeddings) ist ein **Batch-Lauf ohne MCP-Client** und wird von der LLM-Bridge **nicht** abgedeckt (MCP-Sampling liefert insbesondere **keine Embeddings**). Dafür ist [ADR 0005](0005-graphrag-index-backend-open.md) (Offline-Hybrid) zuständig.
 
 ## Alternativen
 

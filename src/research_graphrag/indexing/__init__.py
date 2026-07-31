@@ -1,9 +1,9 @@
-"""Indexierung: Canonical Paper JSON → GraphRAG-Index.
+"""Indexierung: Canonical Paper JSON → Offline-Hybrid-Index (Option B).
 
-Platzhalter für **Phase 3** (siehe Roadmap.md). Enthält künftig die Orchestrierung
-des GraphRAG-Indexlaufs (Chunking, Entity-/Relationship-/Community-Extraktion,
-Embeddings) und die Ablage als Parquet + LanceDB. Das Index-Backend ist noch offen
-(siehe docs/adr/0005-graphrag-index-backend-open.md).
+Platzhalter für **Phase 3** (siehe Roadmap.md). Enthält künftig die Orchestrierung des
+Index-Baus im Offline-Hybrid: Chunking, **TF-IDF** (``scikit-learn``), Graph + **Louvain**
+(``networkx``) und Ablage in **SQLite** (siehe docs/adr/0005-graphrag-index-backend-open.md).
+Ein LLM kommt nur zur Abfragezeit über die LLM-Bridge (ADR 0004).
 """
 
 from __future__ import annotations

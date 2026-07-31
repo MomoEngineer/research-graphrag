@@ -31,7 +31,7 @@ Fachliche Fehler werden **nicht** als unbehandelte Exceptions geworfen, sondern 
 | `constraint_violation` | fachliche Invariante verletzt | Abfrage angefordert, aber kein Index gebaut |
 | `internal_error` | unerwarteter interner Fehler (Bug) | nicht abgefangene Ausnahme im Tool |
 
-> **Abgrenzung `dependency_error` ↔ `internal_error`:** Fehler eines **eingebetteten, im Prozess laufenden** Stores (z. B. lokale LanceDB-/Parquet-Dateien) sind **kein** `dependency_error`, sondern `internal_error`. `dependency_error` ist ausschließlich für **externe/vernetzte** Dienste vorgesehen.
+> **Abgrenzung `dependency_error` ↔ `internal_error`:** Fehler eines **eingebetteten, im Prozess laufenden** Stores (z. B. die lokale SQLite-Index-Datei) sind **kein** `dependency_error`, sondern `internal_error`. `dependency_error` ist ausschließlich für **externe/vernetzte** Dienste vorgesehen.
 
 Neue Kategorien sind **ADR-pflichtig**, da sie das gesamte Tool-Portfolio betreffen.
 

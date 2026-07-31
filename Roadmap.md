@@ -12,15 +12,15 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 - **Provenienz zuerst:** jede Antwort ist auf Paper/Abschnitt/Seite rückführbar.
 - **Inkrementell nutzbar:** neue PDFs per Drop-in-Ordner + Skript, ohne alles neu aufzusetzen.
 - **Klein, aber wachstumsfähig:** optimiert für ≤ 500 Paper, mit klaren Erweiterungspfaden.
-- **Wiederverwenden statt neu bauen:** Microsoft GraphRAG, MCP-SDK, Docling/Marker als Fundament.
+- **Wiederverwenden statt neu bauen:** MCP-SDK sowie `scikit-learn`/`networkx`/`pypdf` als Fundament der Offline-Variante (Option B, [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)); Microsoft GraphRAG/Docling bleiben Zielbild, falls beschaffbar.
 - **Konsolidierte Forschungsbasis:** ersetzt den bisherigen `Recherche`-Ordner und vereint PDFs, kuratierte Literaturübersicht (`Übersicht.md`) und GraphRAG-Index in einem Repo.
 
 ## Offene Entscheidungen (mit Empfehlung)
 
 | Entscheidung | Optionen | Empfehlung |
 |---|---|---|
-| **Index-LLM / Embeddings** | Cloud-API (Azure OpenAI/OpenAI) · lokal via Ollama · hybrid | **Start mit Cloud-API** für beste Extraktionsqualität (Kosten bei ≤ 500 Papern gering); **Ollama-Pfad** parallel dokumentieren für voll-lokalen/privaten Betrieb. |
-| **Primär-Extraktor** | Docling · Marker | **Docling** als Standard (saubere Struktur/Tabellen, pure Python); **Marker** als Fallback für formel-/layoutlastige PDFs. |
+| **Index-LLM / Embeddings** | Cloud-API (Azure OpenAI/OpenAI) · lokal via Ollama · hybrid | **Entschieden: Offline-Hybrid (Option B)** – Cloud/Ollama offline nicht beschaffbar; **TF-IDF** im Index, LLM nur zur Abfragezeit via Bridge ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)). |
+| **Primär-Extraktor** | Docling · Marker | **Entschieden: `pypdf` (Option B)** – Docling/Marker offline nicht beschaffbar; `pypdf` liefert Text + Seiten-Provenienz, Docling/Marker als späterer Ausbau ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)). |
 | **Index-Aktualisierung** | voller Re-Index · inkrementelles `graphrag update` | **Voller Re-Index** als Standard (bei ≤ 500 günstig & konsistent); inkrementelles Update als spätere Optimierung. |
 | **Ingestion-Trigger** | manuelles Skript · Auto-Watcher | **Manuelles Skript** zuerst (vorhersehbar); Auto-Watcher als Ausbaustufe. |
 | **`papers/`-Layout bei Migration** | flach · Cluster-Unterordner beibehalten | **Flach** (eine Ebene) für einfache Dedup/Links; Themencluster leben in `Übersicht.md`, nicht im Dateisystem. |
@@ -55,7 +55,7 @@ Diese Punkte werden spätestens in der jeweiligen Phase final entschieden und hi
 ### Phase 2 – PDF-Ingestion, Canonical Model & Übersicht
 **Ziel:** robuste PDF → kanonisches JSON, nur neue/geänderte Dateien; Übersicht-Entwürfe.
 
-- Docling-Extraktor (Marker-Fallback) integrieren.
+- `pypdf`-Extraktor integrieren (Option B, [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)); Docling/Marker als späterer Ausbau, falls beschaffbar.
 - **Canonical Paper JSON** definieren: stabile IDs, Section-Hierarchie, Chunk-IDs, Referenzen, Seiten-/Bounding-Box-Provenienz, Extraktions-Qualitätsflags.
 - **Dedup & Cache:** `manifest.json` (Datei-Hash → Paper-ID); unveränderte PDFs überspringen.
 - **Qualitäts-Gates:** fehlender Abstract, kaputte Referenzen, OCR-Rauschen, leere/kopflose Tabellen, zu kurze/lange Chunks.
@@ -66,6 +66,8 @@ Diese Punkte werden spätestens in der jeweiligen Phase final entschieden und hi
 
 ### Phase 3 – GraphRAG-Index (file-based)
 **Ziel:** Wissensgraph + Community-Reports aus Canonical JSON.
+
+> **Umsetzung als Offline-Hybrid (Option B, [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)):** statt Microsoft GraphRAG/LanceDB/Leiden → **TF-IDF** (`scikit-learn`), Graph + **Louvain** (`networkx`), Speicher in **SQLite**; Community-Zusammenfassungen extraktiv bzw. on-demand über die LLM-Bridge. Die folgenden MS-GraphRAG-Punkte bleiben das Zielbild (Option C).
 
 - Canonical JSON → GraphRAG-Input (JSON/JSONL bzw. Custom InputReader / BYO-DataFrame).
 - `settings.yaml`: Chunking, Entity-/Relationship-/(Claim-)Extraktion, Community-Detection (Leiden), Embeddings.
@@ -132,7 +134,7 @@ Das Repo übernimmt die Rolle des bisherigen `Recherche`-Ordners:
 | Entity Resolution (Synonyme, gleichnamige Autoren) | Leichte Alias-/Synonym-Kuratierung; bei kleinem Korpus manuell handhabbar. |
 | Scheinsicherheit durch Summaries | Antworten immer mit Quellenankern/Original-TextUnits; für Fakten Local/Basic bevorzugen. |
 | Inkonsistenz bei inkrementellen Updates | Standard = voller Re-Index (konsistent); inkrementell nur dokumentiert/optional. |
-| Kosten/Datenschutz des Index-LLM | Offene Entscheidung dokumentiert; Ollama-Pfad für voll-lokalen Betrieb. |
+| Kosten/Datenschutz des Index-LLM | Entschärft durch Option B: **kein** Index-LLM (offline, TF-IDF); LLM nur zur Abfragezeit via Bridge ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)). |
 
 ## Meilensteine
 

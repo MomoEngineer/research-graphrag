@@ -73,6 +73,8 @@ Der Zugriff erfolgt über einen **MCP-Server** (stdio), den GitHub Copilot in VS
 - **Ingestion** (links): PDF → kanonisches JSON → GraphRAG-Index. Angestoßen durch ein manuelles Skript; nur neue/geänderte PDFs werden neu verarbeitet (Dedup per Datei-Hash).
 - **Retrieval** (rechts): Der Query-Router wählt den passenden Suchmodus; der MCP-Server stellt die Ergebnisse Copilot als Werkzeuge bereit.
 
+> **Hinweis:** Das Diagramm zeigt das **Zielbild**. Die aktuelle Umsetzung folgt der **Offline-Variante (Option B)** – `pypdf` statt Docling, TF-IDF + `networkx`/Louvain + SQLite statt GraphRAG/LanceDB (siehe [Tech-Stack](#tech-stack) und [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).
+
 ## Workflow: neue Paper hinzufügen
 
 1. PDF(s) in den Ordner `papers/` legen.
@@ -102,6 +104,8 @@ Details und Ausbaustufen siehe [Roadmap](Roadmap.md).
 
 ## Tech-Stack
 
+> **Offline-Variante (Option B, [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)):** In der aktuellen Offline-Umgebung sind **Microsoft GraphRAG, Docling und LanceDB nicht beschaffbar** (empirisch geprüft). Die **implementierte** Variante nutzt daher `pypdf` (Extraktion), **TF-IDF** (`scikit-learn`), `networkx`/**Louvain** und **SQLite**; ein LLM kommt nur zur Abfragezeit über die **LLM-Bridge** (MCP-Sampling, [ADR 0004](docs/adr/0004-llm-bridge-via-mcp-sampling.md)). Die folgende Tabelle bleibt das **Zielbild** (Option C), falls Wheels/Modelle verfügbar werden.
+
 | Schicht                | Wahl (MVP)                                                                                                                         | Später / Optional                                                                  |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | PDF-Extraktion         | **Docling** (pure Python)                                                                                                    | **Marker** (formel-/layoutlastig), GROBID (Referenzen, benötigt Docker/Java) |
@@ -111,7 +115,7 @@ Details und Ausbaustufen siehe [Roadmap](Roadmap.md).
 | Graph (Erweiterung)    | —                                                                                                                                 | **Kuzu** (embedded, Cypher, Text2Cypher)                                      |
 | Agent-Anbindung        | **MCP-Server (Python, stdio)**                                                                                               | HTTP/SSE (Remote/Multi-User)                                                        |
 | Consumer-Agent         | **GitHub Copilot** (VS Code)                                                                                                 | weitere MCP-Clients                                                                 |
-| LLM/Embeddings (Index) | **offene Entscheidung** – Cloud-API (empfohlen für Qualität) *oder* lokal via Ollama (kostenlos/privat, kein Container) | —                                                                                  |
+| LLM/Embeddings (Index) | **entschieden (Option B):** offline **TF-IDF** im Index, LLM nur zur Abfragezeit via Bridge; Cloud-API/Ollama = Zielbild, falls verfügbar ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)) | —                                                                                  |
 
 Alle MVP-Komponenten laufen **ohne Container** unter Windows in einer Python-Umgebung.
 
@@ -128,13 +132,13 @@ research-graphrag/
 ├─ data/
 │  ├─ canonical/               # extrahiertes Canonical Paper JSON (Cache)
 │  ├─ manifest.json            # Datei-Hash → Paper-ID (Dedup)
-│  └─ graphrag/                # GraphRAG-Workspace (input/output/cache)
+│  └─ index/                   # Offline-Hybrid-Index (SQLite + TF-IDF)
 ├─ scripts/
 │  ├─ ingest.py                # Drop-in → Extraktion → Index-Update
 │  └─ update_overview.py       # Entwurfszeilen für Übersicht.md erzeugen
 ├─ src/research_graphrag/
-│  ├─ extraction/              # Docling/Marker → Canonical JSON
-│  ├─ indexing/                # GraphRAG-Orchestrierung
+│  ├─ extraction/              # pypdf → Canonical JSON (Option B)
+│  ├─ indexing/                # Index-Orchestrierung (TF-IDF + networkx/SQLite)
 │  ├─ retrieval/               # Query-Router (Local/Global/DRIFT/Basic)
 │  └─ mcp_server/              # MCP-Server (stdio) mit Tools
 ├─ eval/                       # Prüf-Fragen & Stichproben (pragmatische QS)

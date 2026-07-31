@@ -37,14 +37,14 @@ Dieses Dokument ist das zentrale Regelwerk für die Arbeit am Repository **Resea
 
 ## 3. Technischer Stack
 
-- **Primärsprache: Python** (WinPython-Basis: 3.13; Mindestversion 3.11, daher `requires-python = ">=3.11"`). Die konkrete Python-Kompatibilität von `graphrag` wird bei der Beschaffung des Pipeline-Stacks geprüft (siehe [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).
+- **Primärsprache: Python** (WinPython-Basis: 3.13; Mindestversion 3.11, daher `requires-python = ">=3.11"`).
 - **MCP-Server** mit dem offiziellen **MCP Python SDK** (`mcp`, inkl. FastMCP), Transport `stdio`.
-- **PDF-Extraktion:** Docling (Standard), Marker als Fallback – Extra `[pipeline]`.
-- **Index & Retrieval:** Microsoft GraphRAG (file-based) – Extra `[pipeline]`.
+- **PDF-Extraktion:** `pypdf` (Offline-Hybrid, [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)); Docling/Marker als späterer Ausbau, falls offline beschaffbar.
+- **Index & Retrieval:** Offline-Hybrid – TF-IDF (`scikit-learn`) + `networkx`/Louvain + SQLite ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).
 - **Tests:** `pytest`; asynchrone Tests über das `anyio`-Plugin (offline, siehe [ADR 0003](docs/adr/0003-offline-test-and-coverage-tooling.md)).
 - **Statische Qualität:** `ruff` (Lint + Format) und `mypy` (Typen).
 - **Dependencies/Lockfile:** `pip` + `requirements.lock` (Offline-Kompromiss, [ADR 0002](docs/adr/0002-venv-and-offline-dependency-strategy.md)). `uv` ist das bevorzugte Ziel, sobald ein Mirror verfügbar ist.
-- **LLM/Embeddings:** LLM-Bridge über MCP-Sampling (Client-Modell) zur Abfragezeit; Index-Backend offen ([ADR 0004](docs/adr/0004-llm-bridge-via-mcp-sampling.md), [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).
+- **LLM/Embeddings:** LLM-Bridge über MCP-Sampling (Client-Modell) zur Abfragezeit; Index-Backend als Offline-Hybrid entschieden ([ADR 0004](docs/adr/0004-llm-bridge-via-mcp-sampling.md), [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).
 
 Alle Werkzeuge werden über `python -m <tool>` gestartet (WinPython ohne Konsolenskripte im `PATH`).
 

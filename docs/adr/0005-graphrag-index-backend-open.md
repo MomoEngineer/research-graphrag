@@ -1,29 +1,42 @@
-# 0005 – Index-Backend offline: MS-GraphRAG vs. Offline-Hybrid
+# 0005 – Index-Backend: Offline-Hybrid (Option B)
 
-- **Status:** Vorgeschlagen (offen)
+- **Status:** Akzeptiert
 - **Datum:** 2026-07-31
+- **Historie:** ursprünglich „Vorgeschlagen (offen)"; nach empirischem Beschaffbarkeits-Test geschlossen.
 
 ## Kontext
 
-Die [README.md](../../README.md) beschreibt eine Architektur auf Basis von **Microsoft GraphRAG** (file-based, Parquet + LanceDB, Leiden-Communities, Local/Global/DRIFT/Basic Search). Der **Index-Bau** benötigt zwingend:
+Die [README.md](../../README.md) beschreibt eine Architektur auf Basis von **Microsoft GraphRAG** (file-based, Parquet + LanceDB, Leiden-Communities, Local/Global/DRIFT/Basic Search). Der **Index-Bau** benötigt zwingend ein **LLM** (Entity-/Relationship-/Claim-Extraktion, Community-Reports) und ein **Embedding-Modell** – als **Batch in `scripts/ingest.py`**, **ohne** MCP-Client. Damit greift die LLM-Bridge ([ADR 0004](0004-llm-bridge-via-mcp-sampling.md)) hier **nicht**; MCP-Sampling liefert zudem **keine** Embeddings. Rahmenbedingung: Offline-Umfeld ([ADR 0002](0002-venv-and-offline-dependency-strategy.md)).
 
-- ein **LLM** für Entity-/Relationship-/Claim-Extraktion und Community-Reports (viele Batch-Aufrufe) und
-- ein **Embedding-Modell** für TextUnit-/Entity-Embeddings.
+**Empirischer Beschaffbarkeits-Test (2026-07-31):**
 
-Dieser Schritt läuft als **Batch in `scripts/ingest.py`**, **ohne** MCP-Client. Damit greift die LLM-Bridge ([ADR 0004](0004-llm-bridge-via-mcp-sampling.md)) hier **nicht**; MCP-Sampling liefert zudem **keine** Embeddings. Rahmenbedingung: Offline-Umfeld ([ADR 0002](0002-venv-and-offline-dependency-strategy.md)), in dem Cloud-APIs und ggf. lokale Modelle/Wheels nicht ohne Weiteres verfügbar sind.
+- `docling`, `graphrag`, `lancedb` sind **nicht beschaffbar** (`pip install --dry-run` → „No matching distribution found"; kein PyPI, kein Mirror).
+- Offline vorhanden: `pypdf 5.6.0`, `scikit-learn 1.8.0`, `networkx 3.6.1`, `numpy`, `scipy`, `sqlite3` (stdlib), `mcp 1.21.0`.
+- `leidenalg`/`python-igraph` fehlen (kein Leiden).
 
-## Zur Entscheidung stehende Optionen
+## Entscheidung
 
-- **A – MS-GraphRAG beibehalten, reales Index-Backend.** Lokales Modell (z. B. Ollama, falls beschaffbar) für Extraktion + kompatible/lokale Embeddings; alternativ ein einmaliges Online-/Mirror-Fenster für den Index-Bau. Nähe zur README, aber Offline-Beschaffung offen.
-- **B – Offline-Hybrid (wie Vorbild-Repo).** Deterministische Extraktion + **TF-IDF**-Retrieval + Graph in SQLite; ein LLM kommt nur zur Abfragezeit über die Bridge. Voll offline-tauglich, weicht aber von der MS-GraphRAG-Architektur der README ab.
-- **C – Hybrid.** MS-GraphRAG-Datenmodell und Suchmodi, aber austauschbare, offline-fähige Backends (pluggable LLM/Embedding).
+**Option B – Offline-Hybrid.** Der Index wird vollständig offline und deterministisch gebaut:
 
-## Warum jetzt offen
+| Schicht | Umsetzung |
+| --- | --- |
+| PDF-Extraktion | `pypdf` (Text + Seiten-Provenienz; Layout/Tabellen begrenzt) |
+| Embeddings | deterministisches **TF-IDF** (`scikit-learn`) |
+| Vektor-/Speicher | **SQLite** (stdlib) + TF-IDF-Matrix |
+| Graph + Communities | `networkx` + **Louvain** (Leiden offline nicht verfügbar) |
+| Suchmodi (nachgebildet) | Basic ≈ TF-IDF-Top-k · Local ≈ Graph-Nachbarschaft · Global ≈ Community-Zusammenfassung · DRIFT ≈ Hybrid |
+| Antwort-Synthese | **LLM-Bridge** (MCP-Sampling, [ADR 0004](0004-llm-bridge-via-mcp-sampling.md)); Community-Zusammenfassungen extraktiv oder on-demand über die Bridge |
 
-Für **Phase 0 (Fundament)** ist die Wahl **nicht** erforderlich; sie hängt von der Beschaffbarkeit der Wheels/Modelle (Phase 0b/2) ab. Die Entscheidung wird **vor Phase 2/3** als Folge-ADR getroffen und schließt diesen ADR. Bewusst wird die Spannung dokumentiert, statt sie zu verstecken.
+Kein externer Dienst, keine Secrets, kein Batch-LLM im Index-Bau. Die Deps (`pypdf`, `scikit-learn`, `networkx`) werden Kern-Abhängigkeiten in `pyproject.toml`; das `[pipeline]`-Extra entfällt.
 
-## Vorläufige Konsequenzen
+## Alternativen
 
-- Phase 0 bleibt unblockiert; der Kern (`pip install -e .`) hängt nicht am Pipeline-Stack.
-- `.env.example` markiert die Index-Backend-Variablen als „OFFEN".
-- Die Extraktions-/Index-/Retrieval-Platzhalter unter `src/research_graphrag/` treffen bewusst **keine** Backend-Annahme.
+- **A – MS-GraphRAG + reales Backend (Ollama/Cloud).** Verworfen: `graphrag`/`docling`/`lancedb` offline **nicht beschaffbar**; Cloud/Ollama im Umfeld nicht verfügbar bzw. secretpflichtig.
+- **C – Hybrid mit pluggable Backends.** Zurückgestellt: sinnvoll erst, wenn Teile des MS-Stacks beschaffbar werden → dann Folge-ADR.
+- **Warten auf Wheels/Mirror.** Verworfen als Blocker; B ist sofort tragfähig.
+
+## Konsequenzen
+
+- **Positiv:** Voll offline-tauglich, deterministischer und reproduzierbarer Index; nutzt ausschließlich vorhandene Bausteine; secret-frei. Konzeptuelle Nähe zum Vorbild-Repo `mcs-copilot-tools` (SQLite-Graph, TF-IDF, RRF, Sampling).
+- **Negativ / Aufwand:** Weicht vom README-/Roadmap-Stack ab (Reconcile nötig); `pypdf` liefert weniger Struktur/Tabellen als Docling; **Louvain statt Leiden**; „Community-Reports" nicht als vorab erzeugte LLM-Zusammenfassungen; DRIFT nur angenähert.
+- **Folgeentscheidungen:** README/Roadmap-Reconcile (Tech-Stack); spätere **Option C** per Folge-ADR, falls Teile des MS-GraphRAG-Stacks beschaffbar werden.

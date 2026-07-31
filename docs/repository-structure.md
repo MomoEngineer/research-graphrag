@@ -12,7 +12,7 @@ research-graphrag/
 ├─ Roadmap.md                    # Phasenplan (0–7)
 ├─ Übersicht.md                  # Kuratierte Literaturübersicht (Quellen-Tabelle)
 ├─ CONTRIBUTING.md               # Zentrales Regelwerk
-├─ pyproject.toml                # src-Layout, Kern-Deps + Extras [pipeline]/[dev]
+├─ pyproject.toml                # src-Layout, Kern-Deps (Offline-Hybrid) + Extra [dev]
 ├─ requirements.lock             # eingefrorene Gesamtauflösung (pip freeze, ADR 0002)
 ├─ .env.example                  # Beispiel-Umgebungsvariablen (keine Secrets)
 ├─ docs/
@@ -38,15 +38,15 @@ research-graphrag/
 │  └─ update_overview.py         # (Phase 2, noch nicht vorhanden)
 ├─ src/research_graphrag/
 │  ├─ __init__.py                # Paket-Version
-│  ├─ extraction/                # (Phase 2) Docling/Marker → Canonical JSON
-│  ├─ indexing/                  # (Phase 3) GraphRAG-Orchestrierung
+│  ├─ extraction/                # (Phase 2) pypdf → Canonical JSON (Option B)
+│  ├─ indexing/                  # (Phase 3) Index-Orchestrierung (TF-IDF + networkx/SQLite)
 │  ├─ retrieval/                 # (Phase 4) Query-Router (Local/Global/DRIFT/Basic)
 │  └─ mcp_server/                # (Phase 5) MCP-Server (stdio) mit Tools + specs/
 ├─ eval/
 │  └─ pruef-fragen.md            # Prüf-Fragen über alle 5 Fragetypen
 ├─ recherche/                    # (Phase 1) migrierte Rechercheartefakte (noch nicht vorhanden)
 ├─ papers/                       # PDF-Korpus (nicht versioniert)
-├─ data/                         # Canonical JSON, manifest.json, graphrag/ (nicht versioniert)
+├─ data/                         # Canonical JSON, manifest.json, index/ (SQLite, nicht versioniert)
 └─ tests/                        # gespiegelt zu src/research_graphrag/
    ├─ conftest.py
    └─ test_smoke.py
@@ -58,8 +58,8 @@ research-graphrag/
 
 | Ordner | Verantwortung | Phase |
 | --- | --- | --- |
-| `src/research_graphrag/extraction/` | PDF → Canonical Paper JSON (Docling/Marker) | 2 |
-| `src/research_graphrag/indexing/` | Canonical JSON → GraphRAG-Index | 3 |
+| `src/research_graphrag/extraction/` | PDF → Canonical Paper JSON (`pypdf`) | 2 |
+| `src/research_graphrag/indexing/` | Canonical JSON → Offline-Hybrid-Index (TF-IDF + networkx/SQLite) | 3 |
 | `src/research_graphrag/retrieval/` | Query-Router (Local/Global/DRIFT/Basic) | 4 |
 | `src/research_graphrag/mcp_server/` | MCP-Server (stdio) mit Tools + Provenienz | 5 |
 
