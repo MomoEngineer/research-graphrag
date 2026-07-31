@@ -1,8 +1,8 @@
 # Tool-Spezifikation: `search_local`
 
 > Pro-Tool-Spezifikation (Single Source of Truth für Contract-/Funktionstests). Umsetzung:
-> `src/research_graphrag/retrieval/local.py`. Als MCP-Tool wird `search_local` in **Phase 5**
-> registriert; diese Spec beschreibt bereits den Vertrag (Phase 4).
+> `src/research_graphrag/retrieval/local.py`; als MCP-Tool registriert in **Phase 5**
+> ([ADR 0009](../../../../docs/adr/0009-mcp-server-stdio-phase5.md)).
 
 ---
 

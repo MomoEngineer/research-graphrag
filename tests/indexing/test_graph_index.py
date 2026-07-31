@@ -12,6 +12,7 @@ from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
 from research_graphrag.indexing.graph_index import (
     TOP_REPRESENTATIVES,
+    CommunityView,
     build_graph,
     load_communities,
     load_neighbors,
@@ -249,3 +250,24 @@ def test_load_neighbors_without_graph_raises_constraint_violation(tmp_path: Path
     with pytest.raises(DomainError) as excinfo:
         load_neighbors(db, "aaaa0001")
     assert excinfo.value.code is ErrorCode.CONSTRAINT_VIOLATION
+
+
+def test_community_view_to_dict_shape() -> None:
+    """CommunityView.to_dict liefert das Output-Schema von list_topics (Phase 5)."""
+    view = CommunityView(
+        community_id=0,
+        size=2,
+        keywords=("graph", "neural"),
+        summary="lead snippet",
+        members=("aaaa0001", "bbbb0002"),
+        representatives=("aaaa0001",),
+    )
+
+    assert view.to_dict() == {
+        "community_id": 0,
+        "size": 2,
+        "keywords": ["graph", "neural"],
+        "summary": "lead snippet",
+        "members": ["aaaa0001", "bbbb0002"],
+        "representatives": ["aaaa0001"],
+    }

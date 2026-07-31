@@ -102,6 +102,8 @@ Diese Punkte werden spätestens in der jeweiligen Phase final entschieden und hi
 
 **DoD:** Copilot ruft die Werkzeuge auf und erhält belegte Antworten mit Quellen.
 
+> **Status:** ✅ umgesetzt ([ADR 0009](docs/adr/0009-mcp-server-stdio-phase5.md)): Der **stdio-MCP-Server** (`python -m research_graphrag.mcp_server`, FastMCP) registriert alle sechs Werkzeuge (`search_basic`/`search_local`/`search_global`/`search_drift`/`get_paper`/`list_topics`); jede Antwort trägt strukturierte Provenienz, fachliche Fehler werden an der Server-Grenze in `isError`-Ausgaben (`{"error": …}`) übersetzt. **Kein** serverseitiges LLM-Sampling – die Tools liefern Evidenz, Copilot formuliert (Abgrenzung zu [ADR 0004](docs/adr/0004-llm-bridge-via-mcp-sampling.md)). Einbindung über [`.vscode/mcp.json`](.vscode/mcp.json) (venv-Interpreter). Für zitierfähige `get_paper`-Metadaten wurde der Index additiv auf **Schema 0.3.0** (Identifikatoren) erweitert; Re-Ingest bestätigt (**145 Paper / 14 397 Chunks / 42 Communities**, 142/145 mit DOI/arXiv). **DoD-Anpassung:** mangels steuerbarem Copilot-Client erfolgt der Nachweis – wie in Phase 3/4 – über Tests, insbesondere einen **In-Memory-Client-Roundtrip** über alle sechs Tools (Erfolg + Fehler-Envelope). Tests grün; Chunk-/Entitäts-Ebene und ein LLM-Synthese-Pfad bleiben zurückgestellt (Phase 7).
+
 ### Phase 6 – Drop-in-Workflow & Qualitätssicherung
 **Ziel:** reibungsloser „ablegen → nutzen"-Kreislauf.
 
@@ -148,6 +150,6 @@ Das Repo übernimmt die Rolle des bisherigen `Recherche`-Ordners:
 
 - **M0 – Migration:** PDFs, Recherche und `Übersicht.md` ins Repo übernommen (Phase 1).
 - **M1 – Erster Durchstich:** ✅ erreicht – 1 PDF → Index → 1 Frage mit Quelle beantwortet (Offline-Hybrid, `python -m scripts.ingest` + `python -m scripts.ask`).
-- **M2 – Copilot nutzt es:** MCP-Server in VS Code aktiv, Pilot-Korpus abfragbar (Phase 5).
+- **M2 – Copilot nutzt es:** ✅ erreicht – stdio-MCP-Server registriert ([`.vscode/mcp.json`](.vscode/mcp.json)), sechs Werkzeuge mit Provenienz; Korpus abfragbar (Nachweis über In-Memory-Client-Roundtrip, produktive Nutzung nach Trust-Prompt im Agent-Modus) (Phase 5).
 - **M3 – Drop & Use:** nahtlose inkrementelle Ingestion + pragmatische QS (Phase 6).
 - **M4 – Erweiterungen:** Graph-/Zitationsfunktionen nach Bedarf (Phase 7).

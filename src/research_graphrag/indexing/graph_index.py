@@ -96,7 +96,11 @@ class GraphBuildReport:
 
 @dataclass(frozen=True)
 class CommunityView:
-    """Read-only-Sicht auf eine persistierte Community (für ``scripts/graph_info.py``)."""
+    """Read-only-Sicht auf eine persistierte Community.
+
+    Genutzt von ``scripts/graph_info.py`` und dem MCP-Tool ``list_topics``
+    (siehe docs/adr/0009-mcp-server-stdio-phase5.md).
+    """
 
     community_id: int
     size: int
@@ -104,6 +108,17 @@ class CommunityView:
     summary: str
     members: tuple[str, ...]
     representatives: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialisiert die Community-Sicht (Output-Schema des Tools ``list_topics``)."""
+        return {
+            "community_id": self.community_id,
+            "size": self.size,
+            "keywords": list(self.keywords),
+            "summary": self.summary,
+            "members": list(self.members),
+            "representatives": list(self.representatives),
+        }
 
 
 @dataclass(frozen=True)

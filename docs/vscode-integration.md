@@ -2,7 +2,7 @@
 
 Diese Anleitung beschreibt, wie der MCP-Server von research-graphrag lokal in VS Code eingebunden und über **GitHub Copilot** (Agent-Modus) genutzt wird. VS Code ist dabei nur der Anwendungsrahmen; die eigentliche Fähigkeit stellt der MCP-Server bereit.
 
-> **Status Phase 0:** Der MCP-Server entsteht in **Phase 5** (siehe [Roadmap.md](../Roadmap.md)). Diese Anleitung ist bereits vollständig, damit die Einbindung ohne Reibung erfolgt, sobald `src/research_graphrag/mcp_server/` einen Einstiegspunkt besitzt. Bis dahin wird bewusst **keine** aktive `.vscode/mcp.json` angelegt – ein Eintrag auf einen noch nicht startbaren Server würde beim Start fehlschlagen.
+> **Status:** ✅ **Phase 5 umgesetzt** – der MCP-Server ist lauffähig (`python -m research_graphrag.mcp_server`) und die aktive [`.vscode/mcp.json`](../.vscode/mcp.json) ist angelegt ([ADR 0009](adr/0009-mcp-server-stdio-phase5.md)). Diese Anleitung beschreibt die Einbindung; folge ihr, um die Werkzeuge im Copilot-Agent-Modus zu nutzen.
 
 ---
 
@@ -23,7 +23,7 @@ Diese Anleitung beschreibt, wie der MCP-Server von research-graphrag lokal in VS
 
 ## 3. Einbindung über `.vscode/mcp.json` (mit venv-Interpreter)
 
-Damit der Serverprozess die in der `.venv` verfügbaren Abhängigkeiten (mcp, graphrag, docling …) sieht, zeigt `command` auf den **venv-Interpreter** – **nicht** auf ein globales `python`:
+Damit der Serverprozess die in der `.venv` verfügbaren Abhängigkeiten (mcp, scikit-learn, networkx, pypdf …) sieht, zeigt `command` auf den **venv-Interpreter** – **nicht** auf ein globales `python`:
 
 ```jsonc
 {
@@ -34,7 +34,6 @@ Damit der Serverprozess die in der `.venv` verfügbaren Abhängigkeiten (mcp, gr
       "args": ["-m", "research_graphrag.mcp_server"],
       "cwd": "${workspaceFolder}",
       "env": {
-        "RESEARCH_GRAPHRAG_WORKSPACE_ROOTS": "${workspaceFolder}",
         "RESEARCH_GRAPHRAG_LOG_LEVEL": "INFO"
       }
     }
@@ -45,14 +44,15 @@ Damit der Serverprozess die in der `.venv` verfügbaren Abhängigkeiten (mcp, gr
 - **Windows:** `.venv/Scripts/python.exe`. Unter Linux/macOS: `.venv/bin/python`.
 - **Warum der venv-Pfad?** Das Vorbild-Repo `mcs-copilot-tools` nutzt `"command": "python"`, weil es bewusst gegen das System-WinPython **ohne** venv läuft. research-graphrag nutzt eine venv (Isolation) – daher muss der Interpreterpfad explizit auf die venv zeigen, sonst startet der Server ohne die installierten Pakete (`ModuleNotFoundError`).
 - **`cwd`:** Repository-Wurzel, damit der Modul-Import `research_graphrag.mcp_server` auflöst.
+- **Umgebungsvariablen (optional):** `RESEARCH_GRAPHRAG_INDEX` setzt den Index-Pfad (Default `data/index/index.sqlite` relativ zu `cwd`), `RESEARCH_GRAPHRAG_LOG_LEVEL` das stderr-Log-Niveau (Default `INFO`) – vollständige Liste im [Server-README](../src/research_graphrag/mcp_server/README.md).
 
-> **Secrets:** Keine Tokens/Keys in `mcp.json`. Die Standard-Generierung läuft secret-frei über die LLM-Bridge (MCP-Sampling, [ADR 0004](adr/0004-llm-bridge-via-mcp-sampling.md)). Sensible Werte – falls je nötig – über VS-Code-Inputs oder `.env`, nie committen.
+> **Secrets:** Keine Tokens/Keys in `mcp.json`. Die Tools liefern nur strukturierte Evidenz + Provenienz; ein LLM kommt allein clientseitig (Copilot) ins Spiel ([ADR 0009](adr/0009-mcp-server-stdio-phase5.md), [ADR 0004](adr/0004-llm-bridge-via-mcp-sampling.md)). Sensible Werte – falls je nötig – über VS-Code-Inputs oder `.env`, nie committen.
 
 ---
 
 ## 4. Server aktivieren und prüfen
 
-1. `.vscode/mcp.json` speichern (ab Phase 5).
+1. `.vscode/mcp.json` speichern (bereits angelegt).
 2. Copilot-Chat öffnen und in den **Agent-Modus** wechseln.
 3. In der Werkzeug-/Tools-Auswahl prüfen, ob die Tools gelistet werden: `search_local`, `search_global`, `search_drift`, `search_basic`, `get_paper`, `list_topics`.
 4. Bei Problemen: `MCP: List Servers` → Server auswählen → `Show Output` (Startfehler des Prozesses prüfen).

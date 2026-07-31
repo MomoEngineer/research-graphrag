@@ -1,8 +1,8 @@
 # Tool-Spezifikation: `search_global`
 
 > Pro-Tool-Spezifikation (Single Source of Truth für Contract-/Funktionstests). Umsetzung:
-> `src/research_graphrag/retrieval/global_search.py`. Als MCP-Tool wird `search_global` in
-> **Phase 5** registriert; diese Spec beschreibt bereits den Vertrag (Phase 4).
+> `src/research_graphrag/retrieval/global_search.py`; als MCP-Tool registriert in
+> **Phase 5** ([ADR 0009](../../../../docs/adr/0009-mcp-server-stdio-phase5.md)).
 
 ---
 

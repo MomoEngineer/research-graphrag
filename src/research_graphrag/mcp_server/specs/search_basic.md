@@ -1,8 +1,8 @@
 # Tool-Spezifikation: `search_basic`
 
 > Pro-Tool-Spezifikation (Single Source of Truth für Contract-/Funktionstests). Umsetzung:
-> `src/research_graphrag/retrieval/basic.py`. Als MCP-Tool wird `search_basic` in **Phase 5**
-> registriert; diese Spec beschreibt bereits den Vertrag.
+> `src/research_graphrag/retrieval/basic.py`; als MCP-Tool registriert in **Phase 5**
+> ([ADR 0009](../../../../docs/adr/0009-mcp-server-stdio-phase5.md)).
 
 ---
 

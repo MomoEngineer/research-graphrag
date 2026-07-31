@@ -1,0 +1,76 @@
+# Tool-Spezifikation: `get_paper`
+
+> Pro-Tool-Spezifikation (Single Source of Truth für Contract-/Funktionstests). Umsetzung:
+> `src/research_graphrag/retrieval/paper.py`; als MCP-Tool registriert in **Phase 5**
+> ([ADR 0009](../../../../docs/adr/0009-mcp-server-stdio-phase5.md)).
+
+---
+
+## Metadaten
+
+| Feld | Wert |
+| --- | --- |
+| **Tool-Name** | `get_paper` |
+| **Version** | `0.1.0` |
+| **Capability-Schicht** | Katalog / Provenienz (siehe README.md) |
+| **Status** | Implementiert (Phase 5) |
+
+---
+
+## 1. Zweck
+
+Liefert die **Metadaten eines einzelnen Papers** anhand seiner stabilen `paper_id` **direkt aus dem Index** (Source of Truth): Quelle, Identifikatoren (DOI/arXiv), Seiten-/Chunk-Umfang, Abschnittstitel und ein Leit-Snippet. Dient einem Agenten zur schnellen Einordnung und zur **zitierfähigen** Referenzierung eines Treffers aus den `search_*`-Tools.
+
+## 2. Input-Schema
+
+| Parameter | Typ | Pflicht | Beschreibung / Wertebereich |
+| --- | --- | --- | --- |
+| `paper_id` | `str` | ja | Stabile Paper-ID (kein Datei-Pfad); nicht leer. |
+
+> Der Index-Pfad ist **Server-Konfiguration**, kein Tool-Parameter (Standard: `data/index/index.sqlite`).
+
+## 3. Output-Schema
+
+```json
+{
+  "paper_id": "…",
+  "source_uri": "file:///…",
+  "identifiers": { "doi": "…", "arxiv": "…" },
+  "n_pages": 12,
+  "n_chunks": 118,
+  "sections": ["Abstract", "Introduction", "…"],
+  "snippet": "…"
+}
+```
+
+`identifiers` enthält nur tatsächlich erkannte Schlüssel (`doi`/`arxiv`) und kann leer sein. `sections` sind die **eindeutigen** (heuristischen) Abschnittstitel in Dokument-Reihenfolge; `snippet` ist der Ausschnitt des ersten nicht-leeren Chunks.
+
+## 4. Annahmen und Vorbedingungen
+
+- Ein Index wurde gebaut (`python -m scripts.ingest`), Index-Schema ≥ `0.3.0` (enthält `identifiers`).
+
+## 5. Grenzen (Nicht-Ziele)
+
+- **Kein** Volltext-/Chunk-Inhalt (dafür `search_basic`/`search_local`) und **kein** Referenz-/Zitationsparsing (Phase 7).
+- **Kein** Datei-Pfad-Zugriff: Eingabe ist ausschließlich eine `paper_id` (keine Pfad-Sicherheitsgrenze nötig).
+- Keine LLM-Formulierung im Tool – nur strukturierte Metadaten + Provenienz.
+
+## 6. Fehlerverhalten
+
+- `invalid_input`: leere `paper_id`.
+- `not_found`: Index-Datei fehlt **oder** `paper_id` ist unbekannt.
+
+Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
+
+## 7. Provenienz
+
+- `source_uri` (Quelle zum Original), `identifiers` (DOI/arXiv), `sections`, `snippet`.
+
+## 8. Reproduzierbarkeit
+
+- Deterministisch: direkte Index-Reads (SQLite), keine stochastischen Anteile.
+
+## 9. Testabdeckung
+
+- `tests/retrieval/test_paper.py`: Funktions-/Provenienz-Test, `not_found` (fehlender Index, unbekannte ID), `invalid_input`.
+- `tests/mcp_server/test_server.py`: Tool-Contract über einen In-Memory-Client (Erfolg + Fehler-Envelope).

@@ -1,10 +1,16 @@
 """MCP-Server (stdio): stellt Retrieval als Tools für GitHub Copilot bereit.
 
-Platzhalter für **Phase 5** (siehe Roadmap.md). Enthält künftig den
-Server-Einstiegspunkt (`python -m research_graphrag.mcp_server`), die Tools
-(`search_local`, `search_global`, `search_drift`, `search_basic`, `get_paper`,
-`list_topics`), die Fehlertaxonomie (`errors.py`) und die LLM-Bridge über
-MCP-Sampling (siehe docs/adr/0004-llm-bridge-via-mcp-sampling.md).
+Registriert die Phase-4-Retrieval-Modi (`search_basic`, `search_local`, `search_global`,
+`search_drift`) sowie die Katalog-Tools `get_paper` und `list_topics` als MCP-Tools und
+startet den `stdio`-Transport (Einstiegspunkt `python -m research_graphrag.mcp_server`;
+Implementierung in :mod:`research_graphrag.mcp_server.server`). Grundsatz:
+docs/adr/0009-mcp-server-stdio-phase5.md – die Tools liefern strukturierte Evidenz +
+Provenienz, die Antwort formuliert der aufrufende Agent (kein serverseitiges LLM-Sampling,
+vgl. docs/adr/0004-llm-bridge-via-mcp-sampling.md).
 """
 
 from __future__ import annotations
+
+from research_graphrag.mcp_server.server import main, mcp
+
+__all__ = ["main", "mcp"]

@@ -18,13 +18,13 @@ tests/
 ├─ test_pipeline.py       # Drop-in-Ingestion
 ├─ extraction/            # Extraktion: pdf/structure/chunking/quality (Phase 2)
 ├─ indexing/              # TF-IDF/SQLite-Index (0b) + Graph/Communities (Phase 3)
-├─ retrieval/            # Basic/Local/Global/DRIFT + Router + Provenienz (Phase 4)
+├─ retrieval/            # Basic/Local/Global/DRIFT + Router + Provenienz + get_paper (Phase 4/5)
 ├─ overview/              # Übersicht-Entwürfe (Phase 2)
 ├─ integration/           # End-to-End-Durchstich (M1)
-└─ mcp_server/            # (Phase 5) je Tool ein test_<tool>.py
+└─ mcp_server/            # (Phase 5) Server-Contract via In-Memory-Client (test_server.py)
 ```
 
-> **Aktueller Stand (Phase 4):** Die Kernmodule (`errors`, `extraction/*` inkl. `model`/`structure`/`chunking`/`quality`, `indexing` inkl. `graph_index`, `retrieval/*` inkl. `basic`/`local`/`global_search`/`drift`/`router`/`provenance`, `overview`, `pipeline`) sind mit Funktions-, Fehler- und Property-Tests abgedeckt (Kernmodule ≥ 96 % Zeilenabdeckung, retrieval-Module 100 %; **145 Tests**). Der **Contract-Test** (Abschnitt 2.1) greift ab Phase 5, sobald die Tools über MCP registriert sind.
+> **Aktueller Stand (Phase 5):** Die Kernmodule (`errors`, `extraction/*` inkl. `model`/`structure`/`chunking`/`quality`, `indexing` inkl. `graph_index`, `retrieval/*` inkl. `basic`/`local`/`global_search`/`drift`/`router`/`provenance`/`paper`, `overview`, `pipeline`, `mcp_server/server`) sind mit Funktions-, Fehler-, Contract- und Property-Tests abgedeckt (Kernmodule ≥ 92 % Zeilenabdeckung, retrieval-Module 100 %; **162 Tests**). Der **Contract-Test** (Abschnitt 2.1) ist umgesetzt: ein **In-Memory-Client-Roundtrip** (`tests/mcp_server/test_server.py`) prüft alle sechs Tools über das echte MCP-Protokoll (Erfolg + strukturierte Fehlerausgabe).
 
 ---
 

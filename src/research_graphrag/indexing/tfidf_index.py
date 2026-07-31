@@ -12,6 +12,7 @@ Ties werden über die ``chunk_id`` stabil gebrochen.
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -24,9 +25,11 @@ from sklearn.metrics.pairwise import linear_kernel
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.pdf import CanonicalPaper
 
-SCHEMA_VERSION = "0.2.0"
-"""Version des Index-Schemas. ``0.1.0 -> 0.2.0``: Chunk-Provenienz um ``section_title``
-erweitert (Abschnitts-Provenienz für Phase-4-Retrieval, siehe
+SCHEMA_VERSION = "0.3.0"
+"""Version des Index-Schemas. ``0.2.0 -> 0.3.0``: ``papers`` um die JSON-Spalte
+``identifiers`` (DOI/arXiv) erweitert, damit ``get_paper`` zitierfähige Identifikatoren aus der
+Source of Truth liefert (siehe docs/adr/0009-mcp-server-stdio-phase5.md). ``0.1.0 -> 0.2.0``:
+Chunk-Provenienz um ``section_title`` ergänzt (siehe
 docs/adr/0008-retrieval-and-query-router-phase4.md). Voller Re-Index genügt (keine Migration)."""
 
 _SCHEMA = """
@@ -35,7 +38,8 @@ CREATE TABLE papers (
     paper_id      TEXT PRIMARY KEY,
     source_uri    TEXT NOT NULL,
     source_sha256 TEXT NOT NULL,
-    n_pages       INTEGER NOT NULL
+    n_pages       INTEGER NOT NULL,
+    identifiers   TEXT NOT NULL DEFAULT '{}'
 );
 CREATE TABLE chunks (
     chunk_id      TEXT PRIMARY KEY,
@@ -131,9 +135,18 @@ def build_index(papers: Sequence[CanonicalPaper], db_path: str | Path) -> int:
                 continue
             seen_papers.add(paper.paper_id)
             connection.execute(
-                "INSERT INTO papers (paper_id, source_uri, source_sha256, n_pages) "
-                "VALUES (?, ?, ?, ?)",
-                (paper.paper_id, paper.source_uri, paper.source_sha256, paper.n_pages),
+                "INSERT INTO papers (paper_id, source_uri, source_sha256, n_pages, identifiers) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (
+                    paper.paper_id,
+                    paper.source_uri,
+                    paper.source_sha256,
+                    paper.n_pages,
+                    json.dumps(
+                        {key: paper.identifiers[key] for key in sorted(paper.identifiers)},
+                        ensure_ascii=False,
+                    ),
+                ),
             )
         for row_index, (chunk, _paper) in enumerate(indexable):
             connection.execute(

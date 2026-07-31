@@ -8,9 +8,9 @@ docs/adr/0003-offline-test-and-coverage-tooling.md.
 Vorgehen:
 
 1. Die pytest-Suite wird **einmal in-process unter ``trace.Trace``** ausgeführt.
-2. Für jedes Kernmodul (``src/research_graphrag/**/*.py`` ohne ``__init__.py``)
-   werden die ausführbaren Zeilen (über ``code.co_lines()`` des kompilierten
-   Moduls) den tatsächlich ausgeführten Zeilen gegenübergestellt.
+2. Für jedes Kernmodul (``src/research_graphrag/**/*.py`` ohne ``__init__.py``
+   und ``__main__.py``) werden die ausführbaren Zeilen (über ``code.co_lines()``
+   des kompilierten Moduls) den tatsächlich ausgeführten Zeilen gegenübergestellt.
 3. Je Modul werden Prozentsatz und fehlende Zeilen berichtet.
 4. Liegt ein Kernmodul unter der Schwelle (Richtwert 80 %), endet das Skript mit
    Exit-Code ``1``.
@@ -83,12 +83,17 @@ def _executable_linenos(path: str) -> set[int]:
 
 
 def _collect_core_modules() -> list[str]:
-    """Ermittelt alle Kernmodul-Dateien unter src/research_graphrag (ohne ``__init__.py``)."""
+    """Ermittelt alle Kernmodul-Dateien unter src/research_graphrag.
+
+    Ausgeschlossen sind reine Paket-/Bootstrap-Einstiegspunkte ohne testbare Logik
+    (``__init__.py`` und ``__main__.py``); Letzterer ruft nur ``main()`` auf und wird
+    beim ``python -m``-Start ausgeführt, nicht in Unit-Tests.
+    """
     pattern = os.path.join(REPO_ROOT, "src", "research_graphrag", "**", "*.py")
     modules = [
         path
         for path in glob.glob(pattern, recursive=True)
-        if os.path.basename(path) != "__init__.py"
+        if os.path.basename(path) not in ("__init__.py", "__main__.py")
     ]
     return sorted(modules)
 
