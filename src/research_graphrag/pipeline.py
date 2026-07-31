@@ -1,9 +1,10 @@
 """Drop-in-Ingestion: papers/ → Canonical JSON → Offline-Hybrid-Index (Option B).
 
-Bindet Extraktion (``pypdf``), Dedup (``manifest.json`` über den Datei-Hash) und Index-Bau
-(TF-IDF/SQLite) zu einem Schritt zusammen. Nur neue/geänderte PDFs werden extrahiert; der
-Index wird als **voller Re-Index** aus allen Canonical-JSONs gebaut (Standard, siehe
-Roadmap.md). Grundsatz: docs/adr/0005-graphrag-index-backend-open.md.
+Bindet Extraktion (``pypdf``), Dedup (``manifest.json`` über den Datei-Hash), Index-Bau
+(TF-IDF/SQLite) und den Paper-Ähnlichkeitsgraphen samt Louvain-Communities zu einem Schritt
+zusammen. Nur neue/geänderte PDFs werden extrahiert; Index und Graph werden als **voller
+Re-Index** aus allen Canonical-JSONs gebaut (Standard, siehe Roadmap.md). Grundsätze:
+docs/adr/0005-graphrag-index-backend-open.md, docs/adr/0007-graphrag-index-phase3-option-b.md.
 """
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ from pathlib import Path
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.model import SCHEMA_VERSION, read_schema_version
 from research_graphrag.extraction.pdf import CanonicalPaper, extract_pdf
+from research_graphrag.indexing.graph_index import build_graph
 from research_graphrag.indexing.tfidf_index import build_index
 
 
@@ -29,6 +31,9 @@ class IngestReport:
     indexed_chunks: int
     flagged_papers: int
     total_flags: int
+    n_nodes: int
+    n_edges: int
+    n_communities: int
 
 
 def _load_manifest(path: Path) -> dict[str, dict[str, str]]:
@@ -177,6 +182,7 @@ def ingest(papers_dir: str | Path, data_dir: str | Path) -> IngestReport:
         )
 
     indexed_chunks = build_index(papers, index_path)
+    graph_report = build_graph(papers, index_path)
     _write_quality_report(papers, data_path)
     return IngestReport(
         extracted=extracted,
@@ -185,4 +191,7 @@ def ingest(papers_dir: str | Path, data_dir: str | Path) -> IngestReport:
         indexed_chunks=indexed_chunks,
         flagged_papers=sum(1 for paper in papers if paper.quality_flags),
         total_flags=sum(len(paper.quality_flags) for paper in papers),
+        n_nodes=graph_report.n_nodes,
+        n_edges=graph_report.n_edges,
+        n_communities=graph_report.n_communities,
     )

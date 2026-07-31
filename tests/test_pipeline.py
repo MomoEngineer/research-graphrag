@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from research_graphrag.errors import DomainError, ErrorCode
+from research_graphrag.indexing.graph_index import load_communities
 from research_graphrag.pipeline import ingest
 from research_graphrag.retrieval.basic import search_basic
 
@@ -34,6 +35,21 @@ def test_ingest_extracts_indexes_and_is_queryable(make_pdf: MakePdf, tmp_path: P
     result = search_basic(data / "index" / "index.sqlite", "dataset evaluation", k=3)
     assert result.citations
     assert result.citations[0].source_uri.startswith("file:")
+
+
+def test_ingest_builds_graph_and_communities(make_pdf: MakePdf, tmp_path: Path) -> None:
+    """Der Ingest baut zusätzlich Graph + Communities; der IngestReport zählt sie."""
+    make_pdf(["alpha attention transformer method"], "papers/a.pdf")
+    make_pdf(["beta dataset evaluation reports F1 metric"], "papers/b.pdf")
+    data = tmp_path / "data"
+
+    report = ingest(tmp_path / "papers", data)
+
+    assert report.n_nodes == 2
+    assert report.n_communities >= 1
+    assert report.n_edges >= 0
+    communities = load_communities(data / "index" / "index.sqlite")
+    assert sum(community.size for community in communities) == 2
 
 
 def test_ingest_skips_unchanged_on_second_run(make_pdf: MakePdf, tmp_path: Path) -> None:

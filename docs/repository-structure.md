@@ -24,7 +24,7 @@ research-graphrag/
 │  ├─ glossary.md
 │  └─ adr/
 │     ├─ README.md
-│     └─ 0001-*.md … 0005-*.md
+│     └─ 0001-*.md … 0007-*.md
 ├─ templates/
 │  ├─ tool-spec.md
 │  ├─ tool-code-walkthrough.md
@@ -36,7 +36,8 @@ research-graphrag/
 │  ├─ coverage_offline.py        # Offline-Coverage-Gate (ADR 0003)
 │  ├─ ingest.py                  # Drop-in → Canonical JSON → Index (Option B)
 │  ├─ ask.py                     # Frage → Basic Search (Provenienz)
-│  └─ update_overview.py         # Übersicht-Entwürfe → data/overview_drafts.md (Option B)
+│  ├─ update_overview.py         # Übersicht-Entwürfe → data/overview_drafts.md (Option B)
+│  └─ graph_info.py              # Community-Übersicht (read-only, Phase 3)
 ├─ src/research_graphrag/
 │  ├─ __init__.py                # Paket-Version
 │  ├─ errors.py                  # gemeinsame Fehlertaxonomie (docs/error-model.md)
@@ -47,7 +48,9 @@ research-graphrag/
 │  │  ├─ chunking.py             #   größenbasiertes Chunking
 │  │  ├─ quality.py              #   Qualitäts-Gates (Flags)
 │  │  └─ pdf.py                  #   Orchestrator extract_pdf
-│  ├─ indexing/tfidf_index.py    # TF-IDF-Index über SQLite (Option B)
+│  ├─ indexing/                  # Canonical JSON → Offline-Hybrid-Index (Option B)
+│  │  ├─ tfidf_index.py          #   TF-IDF-Index über SQLite
+│  │  └─ graph_index.py          #   Paper-Ähnlichkeitsgraph + Louvain-Communities (Phase 3)
 │  ├─ retrieval/basic.py         # Basic Search (search_basic) mit Provenienz
 │  ├─ overview/drafts.py         # Übersicht-Entwürfe (Staging, Phase 2)
 │  └─ mcp_server/                # (Phase 5) MCP-Server (stdio) + specs/
@@ -68,7 +71,7 @@ research-graphrag/
    └─ integration/               # End-to-End-Durchstich (M1)
 ```
 
-> **Phasen-Hinweis:** Einträge mit „(Phase n)" markieren die Phase der **vollen** Ausbaustufe. In **Phase 0b** sind bereits lauffähige Offline-Hybrid-Implementierungen vorhanden (`errors.py`, `pipeline.py`, `extraction/pdf.py`, `indexing/tfidf_index.py`, `retrieval/basic.py`, `scripts/ingest.py`, `scripts/ask.py`). In **Phase 2** kamen die Extraktions-Submodule (`extraction/model.py`, `structure.py`, `chunking.py`, `quality.py`), das Paket `overview/` und `scripts/update_overview.py` hinzu. Der Ordner `recherche/` wird erst in seiner Phase angelegt; `mcp_server/` wird in Phase 5 registriert.
+> **Phasen-Hinweis:** Einträge mit „(Phase n)" markieren die Phase der **vollen** Ausbaustufe. In **Phase 0b** sind bereits lauffähige Offline-Hybrid-Implementierungen vorhanden (`errors.py`, `pipeline.py`, `extraction/pdf.py`, `indexing/tfidf_index.py`, `retrieval/basic.py`, `scripts/ingest.py`, `scripts/ask.py`). In **Phase 2** kamen die Extraktions-Submodule (`extraction/model.py`, `structure.py`, `chunking.py`, `quality.py`), das Paket `overview/` und `scripts/update_overview.py` hinzu. In **Phase 3** kamen `indexing/graph_index.py` (Paper-Ähnlichkeitsgraph + Louvain-Communities) und `scripts/graph_info.py` hinzu. Der Ordner `recherche/` wird erst in seiner Phase angelegt; `mcp_server/` wird in Phase 5 registriert.
 
 ### Zuordnung zu den Roadmap-Phasen
 

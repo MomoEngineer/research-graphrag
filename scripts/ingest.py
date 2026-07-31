@@ -34,6 +34,10 @@ def main() -> int:
         f"Paper={report.n_papers} Chunks={report.indexed_chunks} "
         f"geflaggt={report.flagged_papers} Flags={report.total_flags}"
     )
+    print(
+        f"[ingest] Graph: Knoten={report.n_nodes} Kanten={report.n_edges} "
+        f"Communities={report.n_communities}"
+    )
     print(f"[ingest] Qualitätsreport: {Path(args.data) / 'quality_report.json'}")
     return 0
 

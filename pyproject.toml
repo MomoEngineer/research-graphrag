@@ -79,8 +79,8 @@ module = "mcp.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-# scikit-learn / scipy liefern offline keine vollständigen Typstubs.
-module = ["sklearn.*", "scipy.*"]
+# scikit-learn / scipy / networkx liefern offline keine vollständigen Typstubs.
+module = ["sklearn.*", "scipy.*", "networkx.*"]
 ignore_missing_imports = true
 
 # ---------------------------------------------------------------------------

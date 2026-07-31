@@ -7,7 +7,7 @@ ausgeschlossen), da vollständig regenerierbar.
 - `manifest.json` – Datei-Hash → Paper-ID (Dedup, Phase 2).
 - `quality_report.json` / `quality_report.md` – aggregierter Qualitätsreport der Ingestion (Phase 2).
 - `overview_drafts.md` – append-only Staging für Übersicht-Entwürfe (`scripts/update_overview.py`, Phase 2).
-- `index/` – Offline-Hybrid-Index: **SQLite** (Chunks/Graph) + TF-IDF-Artefakte (Phase 3, Option B).
+- `index/` – Offline-Hybrid-Index in **SQLite** (Source of Truth): Papers/Chunks (0b) + Graph/Communities (Phase 3); der **TF-IDF-Raum wird beim Laden deterministisch rekonstruiert** (keine serialisierten Modelle, Option B).
 
 Diese Struktur entsteht schrittweise ab Phase 2; in Phase 0 ist der Ordner
 (bis auf diese README) leer.

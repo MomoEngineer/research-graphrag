@@ -9,6 +9,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from pathlib import Path
 
+import pytest
+
+from research_graphrag.indexing.graph_index import load_communities
 from research_graphrag.pipeline import ingest
 from research_graphrag.retrieval.basic import search_basic
 
@@ -37,3 +40,38 @@ def test_m1_durchstich_answers_with_page_provenance(make_pdf: MakePdf, tmp_path:
     assert top.page_number == 2  # die F1-Aussage steht auf Seite 2
     assert top.score > 0.0
     assert top.source_uri.startswith("file:")
+
+
+def test_phase3_ingest_builds_graph_and_graph_info_lists_communities(
+    make_pdf: MakePdf,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """End-to-End (Phase 3): Ingestion baut den Graphen; graph_info listet die Communities."""
+    make_pdf(
+        ["transformer attention mechanism encoder", "self attention transformer heads"],
+        "papers/a.pdf",
+    )
+    make_pdf(
+        ["citation network louvain community detection", "graph clustering modularity communities"],
+        "papers/b.pdf",
+    )
+    data = tmp_path / "data"
+
+    report = ingest(tmp_path / "papers", data)
+    db = data / "index" / "index.sqlite"
+
+    assert report.n_nodes == 2
+    assert report.n_communities >= 1
+    communities = load_communities(db)
+    assert communities
+
+    from scripts.graph_info import main
+
+    monkeypatch.setattr("sys.argv", ["graph_info", "--index", str(db)])
+    exit_code = main()
+    output = capsys.readouterr().out
+
+    assert exit_code == 0
+    assert "Communities" in output
