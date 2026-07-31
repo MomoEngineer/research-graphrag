@@ -1,93 +1,199 @@
 # Research-GraphRAG
 
+**Ein schlanker, container-freier Scientific-GraphRAG als persönlicher Forschungsassistent für lokale wissenschaftliche PDF-Paper – direkt nutzbar aus GitHub Copilot über einen MCP-Server.**
 
+> **Status:** 🚧 Konzept- & Planungsphase. Dieses Repository beschreibt aktuell das Zielbild und das Vorgehen; die Implementierung folgt der [Roadmap](Roadmap.md). Es ist noch kein lauffähiger Code enthalten.
 
-## Getting started
+---
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Ziel & Kontext
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+Dieses Projekt baut ein **GraphRAG-System** über einer lokalen Sammlung wissenschaftlicher Paper (PDF). Ziel ist ein **persönlicher Forschungsassistent**, der die Inhalte der Paper für einen AI-Agenten (GitHub Copilot) deutlich besser nutzbar macht – von präzisen Detailfragen bis zu corpusweiten Zusammenhängen.
 
-## Add your files
+- **Kein Teil einer wissenschaftlichen Arbeit**, sondern ein Werkzeug, das die tägliche Arbeit mit Papern erleichtert (u. a. begleitend zu einer Masterarbeit genutzt).
+- **Konsolidierte Forschungsbasis:** ersetzt den bisherigen separaten `Recherche`-Ordner und vereint PDFs, die kuratierte [Literaturübersicht](Übersicht.md) und den GraphRAG-Index an einem Ort.
+- **Klein & lokal:** aktuell ~140 Paper, ausgelegt auf max. ~500.
+- **Container-frei:** reine Python-Umgebung, kein Docker- oder Datenbank-Server nötig.
+- **Drop-in-Workflow:** neue PDFs in einen Ordner legen, kurz ein Skript ausführen – fertig.
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+### Welche Fragen soll der Assistent beantworten?
+
+| Fragetyp                          | Beispiel                                                       |
+| --------------------------------- | -------------------------------------------------------------- |
+| Präzise Detailfragen             | „Welche Methode verwendet Paper X in Abschnitt 4?"            |
+| Cross-Paper-Synthese              | „Welche Forschungsrichtungen zeichnen sich im Korpus ab?"     |
+| Zitations-/Autoren-/Methodennetze | „Welche Paper bauen auf Methode Y auf?"                       |
+| Exakte Fakten                     | „Wie lautet die DOI bzw. der berichtete F1-Score in Paper Z?" |
+| Widersprüche & Vergleiche        | „Wo widersprechen sich die Ergebnisse zu Thema T?"            |
+
+## Literaturbasis & Übersicht
+
+Die Paper stammen aus der Literaturrecherche zur Masterarbeit. Dieses Repo wird der **zentrale Ort** dafür und löst den bisherigen `Recherche`-Ordner ab: die PDFs liegen in `papers/`, die zugehörige Recherche (Prompts, Zusammenfassungen, Forschungslücken) unter `recherche/`.
+
+Ergänzend zum GraphRAG-Index bleibt die **kuratierte Quellen-Tabelle** [`Übersicht.md`](Übersicht.md) erhalten – eine menschlich gepflegte Landkarte der Literatur nach **Themenclustern** und **Sub-Forschungsfragen (SRQ)**. Sie beantwortet, *welche* Quellen es gibt und wie relevant sie sind; der GraphRAG-Index beantwortet, *was inhaltlich* in ihnen steht.
+
+| Aspekt | `Übersicht.md` (kuratiert) | GraphRAG-Index (automatisch) |
+|---|---|---|
+| Zweck | Quellen einordnen, bewerten, SRQ zuordnen | Inhalte durchsuchbar/fragbar machen |
+| Pflege | menschlich, mit Pipeline-Entwurf | vollautomatisch bei Ingestion |
+| Stärke | Relevanz, Struktur, Nachvollziehbarkeit | Detail-, Synthese- und Multi-Hop-Fragen |
+
+Die Ingestion kann für neue PDFs **Entwurfszeilen** der Übersicht vorbefüllen (Titel, Links, Keywords, Kurzzusammenfassung); die wertenden Spalten (Relevanz, SRQ-Zuordnung) bleiben in deiner Hand.
+
+## Kernidee: Lean Scientific GraphRAG
+
+Statt Roh-PDFs „blind" in ein RAG zu werfen, trennen wir sauber in zwei Schichten:
+
+1. **PDF-Verstehen zuerst:** hochwertige Extraktion in ein **kanonisches Paper-Modell** (Struktur, Metadaten, Referenzen, Provenienz).
+2. **GraphRAG darüber:** Microsoft GraphRAG erzeugt aus diesem sauberen Zwischenformat einen Wissensgraphen mit Entitäten, Beziehungen, Communities und Community-Reports und beantwortet Fragen über **Local / Global / DRIFT / Basic Search**.
+
+Der Zugriff erfolgt über einen **MCP-Server** (stdio), den GitHub Copilot in VS Code als Werkzeugquelle einbindet. Jede Antwort liefert **Provenienz** (Paper, Abschnitt, Seite/Chunk) zurück, damit Aussagen überprüfbar bleiben.
+
+> **Warum GraphRAG und nicht nur klassisches Vektor-RAG?** Für reine „finde die Passage"-Fragen genügt hybride Vektor-Suche. Sobald **Zusammenhänge über mehrere Paper** (Methoden, Zitationen, Themen, Widersprüche) gefragt sind, spielt GraphRAG seine Stärken aus. Bei ~140 Papern ist der Nutzen der globalen/Community-Suche noch moderat und wächst mit dem Bestand mit.
+
+## Architektur-Überblick
+
+- ```mermaid
+  flowchart LR
+      A[papers/*.pdf<br/>Drop-in-Ordner]
+      subgraph Ingestion["Ingestion · scripts/ingest.py"]
+          B[Extraktion<br/>Docling / Marker]
+          C[Canonical Paper JSON<br/>Struktur · Referenzen · Provenienz]
+          D[Microsoft GraphRAG<br/>Entities · Relationships<br/>Communities · Reports]
+      end
+      E[(File-based Store<br/>Parquet + LanceDB)]
+      subgraph Retrieval["Retrieval · MCP"]
+          F[Query-Router<br/>Local · Global · DRIFT · Basic]
+          G[MCP-Server<br/>stdio · Tools + Provenienz]
+      end
+      H[GitHub Copilot<br/>in VS Code]
+
+      A --> B --> C --> D --> E --> F --> G --> H
+  ```
+- **Ingestion** (links): PDF → kanonisches JSON → GraphRAG-Index. Angestoßen durch ein manuelles Skript; nur neue/geänderte PDFs werden neu verarbeitet (Dedup per Datei-Hash).
+- **Retrieval** (rechts): Der Query-Router wählt den passenden Suchmodus; der MCP-Server stellt die Ergebnisse Copilot als Werkzeuge bereit.
+
+## Workflow: neue Paper hinzufügen
+
+1. PDF(s) in den Ordner `papers/` legen.
+2. Skript ausführen: `python scripts/ingest.py`
+3. Das Skript extrahiert **nur neue/geänderte** PDFs, aktualisiert das kanonische JSON und baut den GraphRAG-Index neu (voller Re-Index ist bei diesem Umfang günstig und konsistent).
+4. Für neue Paper werden **Entwurfszeilen** in [`Übersicht.md`](Übersicht.md) ergänzt (Titel, Links, Keywords, Kurzzusammenfassung) – Relevanz und SRQ-Zuordnung pflegst du manuell nach.
+5. Der MCP-Server nutzt die aktualisierten Artefakte – die neuen Paper sind in Copilot sofort verfügbar.
+
+## Fragetypen → Suchmodus
+
+| Fragetyp                             | Primärer Suchmodus | Warum                                                                                      |
+| ------------------------------------ | ------------------- | ------------------------------------------------------------------------------------------ |
+| Detailfrage zu einem Paper           | Local + Basic       | Startet an relevanten Entitäten, zieht TextUnits/Beziehungen; Basic für exakte Passagen. |
+| Cross-Paper-Synthese / Themen        | Global              | Nutzt Community-Reports (Map-Reduce) für corpusweite Fragen.                              |
+| Zitations-/Methodennetze (Multi-Hop) | Local (Fan-out)     | Folgt Beziehungen im Graphen; später ergänzt durch Text2Cypher (siehe Roadmap).          |
+| Exakte Fakten (DOI, Metrik, Abk.)    | Basic               | Top-k-Vektorsuche auf Chunks; später Hybrid/BM25.                                         |
+| Widersprüche / Vergleiche           | DRIFT               | Verbindet globale Community-Info mit lokaler Verfeinerung.                                 |
+
+## Datenmodell (Überblick)
+
+Zwei komplementäre Graph-Sichten:
+
+- **Lexical/Document Graph:** `Paper` → `Section` → `Chunk` (+ `Figure`, `Table`, `Reference`) – erhält Struktur & Provenienz.
+- **Domain Graph:** `Concept`, `Method`, `Dataset`, `Metric`, `Result`, `Claim`, `Author` und Beziehungen wie `CITES`, `USES_METHOD`, `EVALUATES_ON`, `SUPPORTED_BY`.
+
+Details und Ausbaustufen siehe [Roadmap](Roadmap.md).
+
+## Tech-Stack
+
+| Schicht                | Wahl (MVP)                                                                                                                         | Später / Optional                                                                  |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| PDF-Extraktion         | **Docling** (pure Python)                                                                                                    | **Marker** (formel-/layoutlastig), GROBID (Referenzen, benötigt Docker/Java) |
+| Zwischenformat         | Canonical Paper**JSON/JSONL**                                                                                                | —                                                                                  |
+| Index & Retrieval      | **Microsoft GraphRAG** (file-based)                                                                                          | Inkrementelles`graphrag update`                                                   |
+| Vektor-/Speicher       | **LanceDB + Parquet** (eingebettet)                                                                                          | Qdrant/Weaviate (bei starkem Wachstum)                                              |
+| Graph (Erweiterung)    | —                                                                                                                                 | **Kuzu** (embedded, Cypher, Text2Cypher)                                      |
+| Agent-Anbindung        | **MCP-Server (Python, stdio)**                                                                                               | HTTP/SSE (Remote/Multi-User)                                                        |
+| Consumer-Agent         | **GitHub Copilot** (VS Code)                                                                                                 | weitere MCP-Clients                                                                 |
+| LLM/Embeddings (Index) | **offene Entscheidung** – Cloud-API (empfohlen für Qualität) *oder* lokal via Ollama (kostenlos/privat, kein Container) | —                                                                                  |
+
+Alle MVP-Komponenten laufen **ohne Container** unter Windows in einer Python-Umgebung.
+
+## Geplante Projektstruktur
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.devops.telekom.de/moritz.heilemann/research-graphrag.git
-git branch -M main
-git push -uf origin main
+research-graphrag/
+├─ papers/                     # Alle Paper-PDFs (migriert aus Recherche/, nicht versioniert)
+├─ Übersicht.md                # Kuratierte Literaturübersicht (Quellen-Tabelle)
+├─ recherche/                  # Migrierte Rechercheartefakte
+│  ├─ prompts/                 # Research-Prompts (Suchstrategien)
+│  ├─ zusammenfassungen/       # Zusammenfassungen je Recherche-Runde
+│  └─ forschungsluecken.md     # Themencluster × SRQ (Gap-Analyse)
+├─ data/
+│  ├─ canonical/               # extrahiertes Canonical Paper JSON (Cache)
+│  ├─ manifest.json            # Datei-Hash → Paper-ID (Dedup)
+│  └─ graphrag/                # GraphRAG-Workspace (input/output/cache)
+├─ scripts/
+│  ├─ ingest.py                # Drop-in → Extraktion → Index-Update
+│  └─ update_overview.py       # Entwurfszeilen für Übersicht.md erzeugen
+├─ src/research_graphrag/
+│  ├─ extraction/              # Docling/Marker → Canonical JSON
+│  ├─ indexing/                # GraphRAG-Orchestrierung
+│  ├─ retrieval/               # Query-Router (Local/Global/DRIFT/Basic)
+│  └─ mcp_server/              # MCP-Server (stdio) mit Tools
+├─ eval/                       # Prüf-Fragen & Stichproben (pragmatische QS)
+├─ pyproject.toml
+├─ README.md
+└─ Roadmap.md
 ```
 
-## Integrate with your tools
+## Voraussetzungen (geplant)
 
-* [Set up project integrations](https://gitlab.devops.telekom.de/moritz.heilemann/research-graphrag/-/settings/integrations)
+- **Python** (aktuelle 3.x-Version) in einer virtuellen Umgebung.
+- **Kein Docker** für den MVP nötig.
+- **LLM-/Embedding-Backend** (eine der Optionen):
+  - **Cloud-API** (Azure OpenAI / OpenAI) – beste Extraktionsqualität, geringe Kosten bei kleinem Korpus.
+  - **Ollama** (nativer Windows-Installer, kein Container) – lokal, kostenlos, datenschutzfreundlich.
+- **VS Code** mit GitHub Copilot für die MCP-Anbindung.
 
-## Collaborate with your team
+## Nutzung (geplant)
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+```powershell
+# 1. Umgebung einrichten
+python -m venv .venv; .\.venv\Scripts\Activate.ps1
+pip install -e .
 
-## Test and Deploy
+# 2. Paper hinzufügen und indexieren
+#    (PDFs nach papers/ kopieren)
+python scripts/ingest.py
 
-Use the built-in continuous integration in GitLab.
+# 3. MCP-Server in VS Code registrieren (.vscode/mcp.json)
+#    danach in Copilot Chat die bereitgestellten Werkzeuge nutzen
+```
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+Der MCP-Server stellt u. a. Werkzeuge bereit wie `search_local`, `search_global`, `search_drift`, `search_basic`, `get_paper` und `list_topics` – jeweils mit Quellenangaben.
 
-***
+## Qualitätssicherung (pragmatisch)
 
-# Editing this README
+Da dies ein persönliches Werkzeug ist: keine formale Evaluation, aber gezielte Prüfungen.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+- Kleines, festes **Prüf-Fragen-Set** über alle Fragetypen.
+- **Stichproben** der Provenienz (stimmen Quelle/Seite?).
+- **Qualitäts-Gates** in der Ingestion (fehlender Abstract, kaputte Referenzen, OCR-Rauschen, leere Tabellen).
 
-## Suggestions for a good README
+## Projektstatus & Roadmap
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Das Projekt startet in der Konzeptphase. Der konkrete, phasenweise Umsetzungsplan mit „Definition of Done" steht in der [Roadmap](Roadmap.md).
 
-## Name
-Choose a self-explaining name for your project.
+## Wichtigste Risiken
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+- **PDF-Extraktionsrauschen** (Mehrspaltenlayout, Formeln, Scans) → Qualitäts-Gates, Marker-Fallback, Provenienz zum Original.
+- **Entity Resolution** (z. B. „BERT" vs. Langform; gleichnamige Autoren) → leichte Alias-Kuratierung, Stichproben.
+- **Scheinsicherheit durch Summaries** → jede Antwort mit Quellenankern / Original-TextUnits.
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+## Quellen & Inspiration
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- Microsoft GraphRAG – Doku & Dataflow: [https://microsoft.github.io/graphrag/](https://microsoft.github.io/graphrag/)
+- GraphRAG Pattern Catalog (Neo4j): [https://graphrag.com/concepts/intro-to-graphrag/](https://graphrag.com/concepts/intro-to-graphrag/)
+- Model Context Protocol: [https://modelcontextprotocol.io/](https://modelcontextprotocol.io/)
+- Docling: [https://www.docling.ai/](https://www.docling.ai/) · Marker: [https://github.com/datalab-to/marker](https://github.com/datalab-to/marker) · Kuzu: [https://kuzudb.github.io/](https://kuzudb.github.io/)
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+## Lizenz
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Noch festzulegen.
