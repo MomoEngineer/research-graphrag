@@ -4,7 +4,7 @@ Dieses Dokument definiert, **wie MCP-Tools Fehler melden**. Ziel ist ein einheit
 
 > **Leitprinzip:** Fehler sind Teil des Vertrags eines Tools. Jeder zugesagte Fehlerfall wird definiert, getestet und einer Fehlerkategorie zugeordnet.
 >
-> Die Fehlertaxonomie wird ab Phase 5 im Code umgesetzt (geplant: `src/research_graphrag/mcp_server/errors.py`).
+> Die Fehlertaxonomie ist unter `src/research_graphrag/errors.py` umgesetzt (cross-cutting; genutzt von Extraktion, Index, Retrieval und ab Phase 5 vom MCP-Server).
 
 ---
 

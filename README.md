@@ -2,7 +2,7 @@
 
 **Ein schlanker, container-freier Scientific-GraphRAG als persönlicher Forschungsassistent für lokale wissenschaftliche PDF-Paper – direkt nutzbar aus GitHub Copilot über einen MCP-Server.**
 
-> **Status:** 🚧 Konzept- & Planungsphase. Dieses Repository beschreibt aktuell das Zielbild und das Vorgehen; die Implementierung folgt der [Roadmap](Roadmap.md). Es ist noch kein lauffähiger Code enthalten.
+> **Status:** � **Phase 0 umgesetzt** (Fundament + **Offline-Hybrid-Durchstich**, Roadmap-M1): `pip install -e .`, Ingestion (`pypdf` → TF-IDF/SQLite) und belegte Basic-Search-Antworten laufen und sind getestet. Die weiteren Phasen folgen der [Roadmap](Roadmap.md); die Umsetzung ist die **Offline-Variante (Option B, [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md))**.
 
 ---
 
@@ -147,27 +147,27 @@ research-graphrag/
 └─ Roadmap.md
 ```
 
-## Voraussetzungen (geplant)
+## Voraussetzungen
 
-- **Python** (aktuelle 3.x-Version) in einer virtuellen Umgebung.
-- **Kein Docker** für den MVP nötig.
-- **LLM-/Embedding-Backend** (eine der Optionen):
-  - **Cloud-API** (Azure OpenAI / OpenAI) – beste Extraktionsqualität, geringe Kosten bei kleinem Korpus.
-  - **Ollama** (nativer Windows-Installer, kein Container) – lokal, kostenlos, datenschutzfreundlich.
-- **VS Code** mit GitHub Copilot für die MCP-Anbindung.
+- **Python 3.11+** (WinPython-Basis: 3.13) in einer virtuellen Umgebung (`.venv`).
+- **Kein Docker**, kein externer Dienst.
+- **LLM/Embeddings (Option B):** Der Index nutzt offline **TF-IDF** (kein externes Backend, keine Secrets); ein LLM kommt nur **zur Abfragezeit** über die **LLM-Bridge** (Copilot via MCP-Sampling, [ADR 0004](docs/adr/0004-llm-bridge-via-mcp-sampling.md)). Cloud-API/Ollama bleiben Zielbild ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).
+- **VS Code** mit GitHub Copilot für die MCP-Anbindung (Phase 5).
 
-## Nutzung (geplant)
+## Nutzung
 
 ```powershell
-# 1. Umgebung einrichten
-python -m venv .venv; .\.venv\Scripts\Activate.ps1
-pip install -e .
+# 1. Umgebung einrichten (venv nutzt die WinPython-Toolchain wieder, offline)
+python -m venv --system-site-packages .venv; .\.venv\Scripts\Activate.ps1
+pip install -e . --no-build-isolation
 
-# 2. Paper hinzufügen und indexieren
-#    (PDFs nach papers/ kopieren)
-python scripts/ingest.py
+# 2. Paper hinzufügen und indexieren (PDFs nach papers/ kopieren)
+python -m scripts.ingest
 
-# 3. MCP-Server in VS Code registrieren (.vscode/mcp.json)
+# 3. Frage mit belegter Quelle stellen (bereits lauffähig, Basic Search)
+python -m scripts.ask "Welcher F1-Score wird berichtet?"
+
+# 4. (Phase 5) MCP-Server in VS Code registrieren (.vscode/mcp.json),
 #    danach in Copilot Chat die bereitgestellten Werkzeuge nutzen
 ```
 
@@ -183,11 +183,11 @@ Da dies ein persönliches Werkzeug ist: keine formale Evaluation, aber gezielte 
 
 ## Projektstatus & Roadmap
 
-Das Projekt startet in der Konzeptphase. Der konkrete, phasenweise Umsetzungsplan mit „Definition of Done" steht in der [Roadmap](Roadmap.md).
+**Phase 0 ist umgesetzt** (Fundament + Offline-Hybrid-Durchstich, Roadmap-M1: 1 PDF → Index → belegte Antwort). Der weitere phasenweise Umsetzungsplan mit „Definition of Done" steht in der [Roadmap](Roadmap.md); als Nächstes folgen Phase 4 (weitere Suchmodi) und Phase 5 (MCP-Server).
 
 ## Wichtigste Risiken
 
-- **PDF-Extraktionsrauschen** (Mehrspaltenlayout, Formeln, Scans) → Qualitäts-Gates, Marker-Fallback, Provenienz zum Original.
+- **PDF-Extraktionsrauschen** (Mehrspaltenlayout, Formeln, Scans) → Qualitäts-Gates, Provenienz zum Original, Stichproben; Docling/Marker als späterer Ausbau ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).
 - **Entity Resolution** (z. B. „BERT" vs. Langform; gleichnamige Autoren) → leichte Alias-Kuratierung, Stichproben.
 - **Scheinsicherheit durch Summaries** → jede Antwort mit Quellenankern / Original-TextUnits.
 

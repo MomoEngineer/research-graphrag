@@ -32,12 +32,15 @@ dependencies = [
 # Entwicklungswerkzeuge mit exakten Pins. Diese Versionen sind in der
 # WinPython-Basis vorhanden. Bewusst NICHT enthalten sind pytest-cov/coverage und
 # pytest-asyncio – sie sind offline nicht installierbar; die Ersatzstrategie steht
-# in docs/adr/0003-offline-test-and-coverage-tooling.md.
+# in docs/adr/0003-offline-test-and-coverage-tooling.md. reportlab dient nur der
+# Erzeugung von PDF-Test-Fixtures.
 dev = [
     "ruff==0.14.7",
     "mypy==1.19.0",
     "pytest==8.4.1",
     "anyio==4.12.0",
+    "reportlab==4.4.2",
+    "hypothesis==6.148.7",
 ]
 
 [tool.setuptools.packages.find]
@@ -75,6 +78,11 @@ mypy_path = "src"
 module = "mcp.*"
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+# scikit-learn / scipy liefern offline keine vollständigen Typstubs.
+module = ["sklearn.*", "scipy.*"]
+ignore_missing_imports = true
+
 # ---------------------------------------------------------------------------
 # pytest
 # ---------------------------------------------------------------------------
@@ -83,6 +91,10 @@ testpaths = ["tests"]
 addopts = "-ra"
 markers = [
     "anyio: markiert asynchrone Tests (ausgeführt über das anyio-Pytest-Plugin).",
+]
+filterwarnings = [
+    # Dritt-Warnung aus dateutil (via reportlab); nicht unser Code.
+    "ignore:.*utcfromtimestamp.*:DeprecationWarning",
 ]
 
 # ---------------------------------------------------------------------------

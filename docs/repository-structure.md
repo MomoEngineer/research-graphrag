@@ -34,25 +34,34 @@ research-graphrag/
 │  ├─ __init__.py
 │  ├─ README.md
 │  ├─ coverage_offline.py        # Offline-Coverage-Gate (ADR 0003)
-│  ├─ ingest.py                  # (Phase 2/6, noch nicht vorhanden)
+│  ├─ ingest.py                  # Drop-in → Canonical JSON → Index (Option B)
+│  ├─ ask.py                     # Frage → Basic Search (Provenienz)
 │  └─ update_overview.py         # (Phase 2, noch nicht vorhanden)
 ├─ src/research_graphrag/
 │  ├─ __init__.py                # Paket-Version
-│  ├─ extraction/                # (Phase 2) pypdf → Canonical JSON (Option B)
-│  ├─ indexing/                  # (Phase 3) Index-Orchestrierung (TF-IDF + networkx/SQLite)
-│  ├─ retrieval/                 # (Phase 4) Query-Router (Local/Global/DRIFT/Basic)
-│  └─ mcp_server/                # (Phase 5) MCP-Server (stdio) mit Tools + specs/
+│  ├─ errors.py                  # gemeinsame Fehlertaxonomie (docs/error-model.md)
+│  ├─ pipeline.py                # Drop-in-Ingestion (papers/ → Canonical → Index)
+│  ├─ extraction/pdf.py          # pypdf → Canonical Paper JSON (Option B)
+│  ├─ indexing/tfidf_index.py    # TF-IDF-Index über SQLite (Option B)
+│  ├─ retrieval/basic.py         # Basic Search (search_basic) mit Provenienz
+│  └─ mcp_server/                # (Phase 5) MCP-Server (stdio) + specs/
 ├─ eval/
 │  └─ pruef-fragen.md            # Prüf-Fragen über alle 5 Fragetypen
 ├─ recherche/                    # (Phase 1) migrierte Rechercheartefakte (noch nicht vorhanden)
 ├─ papers/                       # PDF-Korpus (nicht versioniert)
 ├─ data/                         # Canonical JSON, manifest.json, index/ (SQLite, nicht versioniert)
 └─ tests/                        # gespiegelt zu src/research_graphrag/
-   ├─ conftest.py
-   └─ test_smoke.py
+   ├─ conftest.py                # anyio-Backend + make_pdf-Fixture
+   ├─ test_smoke.py
+   ├─ test_errors.py
+   ├─ test_pipeline.py
+   ├─ extraction/                # PDF-Extraktion (0b)
+   ├─ indexing/                  # TF-IDF/SQLite-Index (0b)
+   ├─ retrieval/                 # Basic Search (0b)
+   └─ integration/               # End-to-End-Durchstich (M1)
 ```
 
-> **Phasen-Hinweis:** Einträge mit „(Phase n)" sind der jeweiligen Roadmap-Phase zugeordnet. In Phase 0 existieren die Unterpakete unter `src/research_graphrag/` als **importierbare Platzhalter**; `scripts/ingest.py`, `scripts/update_overview.py` und der Ordner `recherche/` werden erst in ihrer Phase angelegt.
+> **Phasen-Hinweis:** Einträge mit „(Phase n)" markieren die Phase der **vollen** Ausbaustufe. In **Phase 0b** sind bereits lauffähige Offline-Hybrid-Implementierungen vorhanden (`errors.py`, `pipeline.py`, `extraction/pdf.py`, `indexing/tfidf_index.py`, `retrieval/basic.py`, `scripts/ingest.py`, `scripts/ask.py`). `scripts/update_overview.py` und der Ordner `recherche/` werden erst in ihrer Phase angelegt; `mcp_server/` wird in Phase 5 registriert.
 
 ### Zuordnung zu den Roadmap-Phasen
 

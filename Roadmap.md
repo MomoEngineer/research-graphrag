@@ -41,6 +41,8 @@ Diese Punkte werden spätestens in der jeweiligen Phase final entschieden und hi
 
 **DoD:** `pip install -e .` läuft; Backend erreichbar; Dummy-Durchlauf über 1 Dokument erzeugt Artefakte.
 
+> **Status:** ✅ umgesetzt – 0a (Gerüst) und 0b (Offline-Hybrid-Durchstich) fertig; **M1 erreicht** (1 PDF → Index → belegte Antwort). Umsetzung als Option B ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)); Backend = TF-IDF offline + LLM-Bridge zur Abfragezeit. Kernmodule 100 % Zeilenabdeckung.
+
 ### Phase 1 – Migration der bestehenden Recherche
 **Ziel:** bestehende Literatur & Recherche vollständig ins Repo übernommen.
 
@@ -130,7 +132,7 @@ Das Repo übernimmt die Rolle des bisherigen `Recherche`-Ordners:
 
 | Risiko | Gegenmaßnahme |
 |---|---|
-| PDF-Extraktionsrauschen (Layout, Formeln, Scans) | Qualitäts-Gates, Marker-Fallback, Provenienz zum Original, Stichproben. |
+| PDF-Extraktionsrauschen (Layout, Formeln, Scans) | Qualitäts-Gates, Provenienz zum Original, Stichproben; Docling/Marker als späterer Ausbau (ADR 0005). |
 | Entity Resolution (Synonyme, gleichnamige Autoren) | Leichte Alias-/Synonym-Kuratierung; bei kleinem Korpus manuell handhabbar. |
 | Scheinsicherheit durch Summaries | Antworten immer mit Quellenankern/Original-TextUnits; für Fakten Local/Basic bevorzugen. |
 | Inkonsistenz bei inkrementellen Updates | Standard = voller Re-Index (konsistent); inkrementell nur dokumentiert/optional. |
@@ -139,7 +141,7 @@ Das Repo übernimmt die Rolle des bisherigen `Recherche`-Ordners:
 ## Meilensteine
 
 - **M0 – Migration:** PDFs, Recherche und `Übersicht.md` ins Repo übernommen (Phase 1).
-- **M1 – Erster Durchstich:** 1 PDF → Index → 1 Frage mit Quelle beantwortet (Phasen 2–4 minimal, auf Basis von Phase 0).
+- **M1 – Erster Durchstich:** ✅ erreicht – 1 PDF → Index → 1 Frage mit Quelle beantwortet (Offline-Hybrid, `python -m scripts.ingest` + `python -m scripts.ask`).
 - **M2 – Copilot nutzt es:** MCP-Server in VS Code aktiv, Pilot-Korpus abfragbar (Phase 5).
 - **M3 – Drop & Use:** nahtlose inkrementelle Ingestion + pragmatische QS (Phase 6).
 - **M4 – Erweiterungen:** Graph-/Zitationsfunktionen nach Bedarf (Phase 7).
