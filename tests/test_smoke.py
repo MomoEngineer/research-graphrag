@@ -1,0 +1,23 @@
+"""Smoke-Test: Das Paket und seine Unterpakete sind importierbar und versioniert.
+
+Dieser Test hält die Test-Suite in Phase 0 grün, bevor Fachlogik entsteht, und
+prüft die zugesagte Struktur (src-Layout mit vier Unterpaketen).
+"""
+
+from __future__ import annotations
+
+import importlib
+
+import research_graphrag
+
+
+def test_version_is_exposed() -> None:
+    """Die Paket-Version ist gesetzt und entspricht pyproject.toml."""
+    assert research_graphrag.__version__ == "0.1.0"
+
+
+def test_subpackages_importable() -> None:
+    """Die vier Pipeline-/Server-Unterpakete sind importierbar (Platzhalter)."""
+    for name in ("extraction", "indexing", "retrieval", "mcp_server"):
+        module = importlib.import_module(f"research_graphrag.{name}")
+        assert module is not None

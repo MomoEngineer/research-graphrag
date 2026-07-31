@@ -1,0 +1,28 @@
+# Virtuelle Umgebung
+.venv/
+venv/
+
+# Python-Artefakte
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Secrets & lokale Konfiguration
+.env
+
+# Korpus (nicht versioniert – siehe README.md, "Geplante Projektstruktur")
+papers/*
+!papers/README.md
+
+# Abgeleitete, regenerierbare Artefakte (nicht versioniert)
+data/*
+!data/README.md
+
+# Betriebssystem
+Thumbs.db
+.DS_Store

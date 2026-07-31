@@ -1,0 +1,106 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "research-graphrag"
+version = "0.1.0"
+description = "Schlanker, container-freier Scientific-GraphRAG als persönlicher Forschungsassistent für lokale wissenschaftliche PDF-Paper, nutzbar aus GitHub Copilot über einen MCP-Server (stdio)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+
+# ---------------------------------------------------------------------------
+# Kern-Laufzeitabhängigkeiten mit exakten Pins (Reproduzierbarkeit).
+#
+# Bewusst MINIMAL gehalten, damit `pip install -e .` auch im Offline-Umfeld
+# durchläuft: Die hier gelisteten Pakete sind in der WinPython-Basis bereits
+# vorhanden (siehe docs/adr/0002-venv-and-offline-dependency-strategy.md).
+#
+# Der schwere Pipeline-Stack (Docling, Microsoft GraphRAG, LanceDB) liegt im
+# optionalen Extra [pipeline] und wird erst in Phase 0b/2 beschafft, sobald die
+# Wheels verfügbar sind (siehe ADR 0002 und den offenen ADR 0005).
+# ---------------------------------------------------------------------------
+dependencies = [
+    "mcp==1.21.0",
+]
+
+[project.optional-dependencies]
+# Schwerer Pipeline-Stack (Extraktion + Index + Vektor-Store). Offline ggf. NICHT
+# beschaffbar (ADR 0005). Die Versionen – und die Python-Kompatibilität von graphrag –
+# werden beim Beschaffen geprüft und final gepinnt; bis dahin bewusst ohne == (kein
+# Anspruch auf reproduzierbare Auflösung).
+pipeline = [
+    "docling",
+    "graphrag",
+    "lancedb",
+]
+
+# Entwicklungswerkzeuge mit exakten Pins. Diese Versionen sind in der
+# WinPython-Basis vorhanden. Bewusst NICHT enthalten sind pytest-cov/coverage und
+# pytest-asyncio – sie sind offline nicht installierbar; die Ersatzstrategie steht
+# in docs/adr/0003-offline-test-and-coverage-tooling.md.
+dev = [
+    "ruff==0.14.7",
+    "mypy==1.19.0",
+    "pytest==8.4.1",
+    "anyio==4.12.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["research_graphrag*"]
+
+# ---------------------------------------------------------------------------
+# Ruff (Linting + Formatierung)
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "W", "N"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests dürfen assert-Vielfalt und lange Beispiel-Zeilen enthalten.
+"tests/**" = ["E501"]
+
+# ---------------------------------------------------------------------------
+# mypy (statische Typprüfung)
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_ignores = false
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+# Der mcp-Client stellt teils dynamische Attribute bereit.
+module = "mcp.*"
+ignore_missing_imports = true
+
+# ---------------------------------------------------------------------------
+# pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "anyio: markiert asynchrone Tests (ausgeführt über das anyio-Pytest-Plugin).",
+]
+
+# ---------------------------------------------------------------------------
+# Coverage (Konfiguration für den Moment, in dem coverage/pytest-cov verfügbar
+# werden – siehe docs/adr/0003-offline-test-and-coverage-tooling.md). Bis dahin
+# misst scripts/coverage_offline.py die Zeilenabdeckung über die stdlib.
+# ---------------------------------------------------------------------------
+[tool.coverage.run]
+branch = true
+source = ["src/research_graphrag"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
