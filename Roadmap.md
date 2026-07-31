@@ -58,13 +58,15 @@ Diese Punkte werden spätestens in der jeweiligen Phase final entschieden und hi
 **Ziel:** robuste PDF → kanonisches JSON, nur neue/geänderte Dateien; Übersicht-Entwürfe.
 
 - `pypdf`-Extraktor integrieren (Option B, [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)); Docling/Marker als späterer Ausbau, falls beschaffbar.
-- **Canonical Paper JSON** definieren: stabile IDs, Section-Hierarchie, Chunk-IDs, Referenzen, Seiten-/Bounding-Box-Provenienz, Extraktions-Qualitätsflags.
+- **Canonical Paper JSON** definieren: stabile IDs, Section-Hierarchie (heuristisch), Chunk-IDs, Referenz-Abschnitt, Seiten-/Section-Provenienz, Extraktions-Qualitätsflags. **Bounding-Box-Provenienz** und tiefes Referenz-Parsing sind bewusst zurückgestellt ([ADR 0006](docs/adr/0006-canonical-model-phase2-scope.md), Phase 7).
 - **Dedup & Cache:** `manifest.json` (Datei-Hash → Paper-ID); unveränderte PDFs überspringen.
 - **Qualitäts-Gates:** fehlender Abstract, kaputte Referenzen, OCR-Rauschen, leere/kopflose Tabellen, zu kurze/lange Chunks.
-- **Übersicht-Entwurf:** `scripts/update_overview.py` erzeugt Entwurfszeilen für `Übersicht.md` (Name, Interner/Externer Link, Keyword, Kurzzusammenfassung); wertende Spalten bleiben manuell.
+- **Übersicht-Entwurf:** `scripts/update_overview.py` erzeugt **deterministische, extraktive** Entwurfszeilen (Name, Interner/Externer Link, Keyword, Kurzzusammenfassung) **append-only** nach `data/overview_drafts.md` (Staging, kuratierte `Übersicht.md` bleibt unangetastet); wertende Spalten bleiben manuell.
 - Grundgerüst `scripts/ingest.py`.
 
-**DoD:** PDFs in `papers/` + `ingest.py` erzeugen Canonical JSON nur für neue/geänderte Dateien inkl. Qualitätsreport; neue Paper erscheinen als Entwurfszeile in `Übersicht.md`.
+**DoD:** PDFs in `papers/` + `ingest.py` erzeugen Canonical JSON nur für neue/geänderte Dateien inkl. Qualitätsreport; neue Paper erscheinen als Entwurfszeile in `data/overview_drafts.md`.
+
+> **Status:** ✅ umgesetzt – Canonical-Schema **0.2.0** (Section-Heuristik, größenbasiertes Chunking, DOI/arXiv, Qualitätsflags), Qualitätsreport (`data/quality_report.json`/`.md`) und `scripts/update_overview.py` (Staging-Entwürfe) laufen und sind getestet (84 Tests grün, Kernmodule ≥ 96 % Zeilenabdeckung). Umfangsabgrenzung (keine Bounding-Boxes, kein tiefes Referenz-/Tabellen-Parsing): [ADR 0006](docs/adr/0006-canonical-model-phase2-scope.md).
 
 ### Phase 3 – GraphRAG-Index (file-based)
 **Ziel:** Wissensgraph + Community-Reports aus Canonical JSON.

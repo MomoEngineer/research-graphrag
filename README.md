@@ -2,7 +2,7 @@
 
 **Ein schlanker, container-freier Scientific-GraphRAG als persönlicher Forschungsassistent für lokale wissenschaftliche PDF-Paper – direkt nutzbar aus GitHub Copilot über einen MCP-Server.**
 
-> **Status:** **Phase 0 + Phase 1 (Migration) umgesetzt.** Phase 0: Fundament + **Offline-Hybrid-Durchstich** (Roadmap-M1) – `pip install -e .`, Ingestion (`pypdf` → TF-IDF/SQLite) und belegte Basic-Search-Antworten laufen und sind getestet. Phase 1: **145 Paper** aus dem bisherigen `Recherche`-Ordner nach `papers/` migriert und [`Übersicht.md`](Übersicht.md) portiert (reduzierter Umfang – `recherche/`-Artefakte bewusst ausgelassen). Die weiteren Phasen folgen der [Roadmap](Roadmap.md); die Umsetzung ist die **Offline-Variante (Option B, [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md))**.
+> **Status:** **Phase 0–2 umgesetzt.** Phase 0: Fundament + **Offline-Hybrid-Durchstich** (Roadmap-M1) – `pip install -e .`, Ingestion (`pypdf` → TF-IDF/SQLite) und belegte Basic-Search-Antworten laufen und sind getestet. Phase 1: **145 Paper** aus dem bisherigen `Recherche`-Ordner nach `papers/` migriert und [`Übersicht.md`](Übersicht.md) portiert (reduzierter Umfang – `recherche/`-Artefakte bewusst ausgelassen). Phase 2: **robuste Extraktion** (Canonical-Schema **0.2.0** mit Section-Heuristik, größenbasiertem Chunking, DOI/arXiv, Qualitätsflags), **Qualitätsreport** und **Übersicht-Entwürfe** (`scripts/update_overview.py` → `data/overview_drafts.md`) – Umfangsabgrenzung in [ADR 0006](docs/adr/0006-canonical-model-phase2-scope.md). Die weiteren Phasen folgen der [Roadmap](Roadmap.md); die Umsetzung ist die **Offline-Variante (Option B, [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md))**.
 
 ---
 
@@ -80,7 +80,7 @@ Der Zugriff erfolgt über einen **MCP-Server** (stdio), den GitHub Copilot in VS
 1. PDF(s) in den Ordner `papers/` legen.
 2. Skript ausführen: `python scripts/ingest.py`
 3. Das Skript extrahiert **nur neue/geänderte** PDFs, aktualisiert das kanonische JSON und baut den GraphRAG-Index neu (voller Re-Index ist bei diesem Umfang günstig und konsistent).
-4. Für neue Paper werden **Entwurfszeilen** in [`Übersicht.md`](Übersicht.md) ergänzt (Titel, Links, Keywords, Kurzzusammenfassung) – Relevanz und SRQ-Zuordnung pflegst du manuell nach.
+4. Für neue Paper erzeugt `python -m scripts.update_overview` **Entwurfszeilen** (Titel, Links, Keywords, Kurzzusammenfassung) append-only in `data/overview_drafts.md` – die kuratierte [`Übersicht.md`](Übersicht.md) bleibt unangetastet; Relevanz und SRQ-Zuordnung pflegst du dort manuell nach.
 5. Der MCP-Server nutzt die aktualisierten Artefakte – die neuen Paper sind in Copilot sofort verfügbar.
 
 ## Fragetypen → Suchmodus
@@ -132,14 +132,17 @@ research-graphrag/
 ├─ data/
 │  ├─ canonical/               # extrahiertes Canonical Paper JSON (Cache)
 │  ├─ manifest.json            # Datei-Hash → Paper-ID (Dedup)
-│  └─ index/                   # Offline-Hybrid-Index (SQLite + TF-IDF)
+│  ├─ index/                   # Offline-Hybrid-Index (SQLite + TF-IDF)
+│  ├─ quality_report.json      # Qualitätsreport der Ingestion (+ .md)
+│  └─ overview_drafts.md       # Übersicht-Entwürfe (Staging, append-only)
 ├─ scripts/
 │  ├─ ingest.py                # Drop-in → Extraktion → Index-Update
-│  └─ update_overview.py       # Entwurfszeilen für Übersicht.md erzeugen
+│  └─ update_overview.py       # Entwurfszeilen → data/overview_drafts.md (Staging)
 ├─ src/research_graphrag/
 │  ├─ extraction/              # pypdf → Canonical JSON (Option B)
 │  ├─ indexing/                # Index-Orchestrierung (TF-IDF + networkx/SQLite)
 │  ├─ retrieval/               # Query-Router (Local/Global/DRIFT/Basic)
+│  ├─ overview/                # Übersicht-Entwürfe (Staging, Phase 2)
 │  └─ mcp_server/              # MCP-Server (stdio) mit Tools
 ├─ eval/                       # Prüf-Fragen & Stichproben (pragmatische QS)
 ├─ pyproject.toml
@@ -164,6 +167,9 @@ pip install -e . --no-build-isolation
 # 2. Paper hinzufügen und indexieren (PDFs nach papers/ kopieren)
 python -m scripts.ingest
 
+# 2b. (optional) Entwurfszeilen für die Übersicht erzeugen (Staging)
+python -m scripts.update_overview
+
 # 3. Frage mit belegter Quelle stellen (bereits lauffähig, Basic Search)
 python -m scripts.ask "Welcher F1-Score wird berichtet?"
 
@@ -183,7 +189,7 @@ Da dies ein persönliches Werkzeug ist: keine formale Evaluation, aber gezielte 
 
 ## Projektstatus & Roadmap
 
-**Phase 0 ist umgesetzt** (Fundament + Offline-Hybrid-Durchstich, Roadmap-M1: 1 PDF → Index → belegte Antwort). **Phase 1 (Migration) ist im reduzierten Umfang umgesetzt:** 145 Paper aus dem bisherigen `Recherche`-Ordner nach `papers/` übernommen und [`Übersicht.md`](Übersicht.md) portiert (mit funktionierenden internen Links); die `recherche/`-Artefakte wurden bewusst ausgelassen, der Pilot-Korpus liegt als Vorschlag in [`eval/pilot-korpus.md`](eval/pilot-korpus.md). Der weitere phasenweise Umsetzungsplan mit „Definition of Done" steht in der [Roadmap](Roadmap.md); als Nächstes folgen Phase 4 (weitere Suchmodi) und Phase 5 (MCP-Server).
+**Phase 0 ist umgesetzt** (Fundament + Offline-Hybrid-Durchstich, Roadmap-M1: 1 PDF → Index → belegte Antwort). **Phase 1 (Migration) ist im reduzierten Umfang umgesetzt:** 145 Paper aus dem bisherigen `Recherche`-Ordner nach `papers/` übernommen und [`Übersicht.md`](Übersicht.md) portiert (mit funktionierenden internen Links); die `recherche/`-Artefakte wurden bewusst ausgelassen, der Pilot-Korpus liegt als Vorschlag in [`eval/pilot-korpus.md`](eval/pilot-korpus.md). **Phase 2 ist umgesetzt:** robuste PDF-Extraktion (Canonical-Schema 0.2.0), Qualitätsreport und Übersicht-Entwürfe ([ADR 0006](docs/adr/0006-canonical-model-phase2-scope.md)). Der weitere phasenweise Umsetzungsplan mit „Definition of Done" steht in der [Roadmap](Roadmap.md); als Nächstes folgt Phase 3 (GraphRAG-Index) und danach Phase 4/5 (Suchmodi, MCP-Server).
 
 ## Wichtigste Risiken
 

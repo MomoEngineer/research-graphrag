@@ -31,8 +31,10 @@ def main() -> int:
 
     print(
         f"[ingest] extrahiert={report.extracted} übersprungen={report.skipped} "
-        f"Paper={report.n_papers} Chunks={report.indexed_chunks}"
+        f"Paper={report.n_papers} Chunks={report.indexed_chunks} "
+        f"geflaggt={report.flagged_papers} Flags={report.total_flags}"
     )
+    print(f"[ingest] Qualitätsreport: {Path(args.data) / 'quality_report.json'}")
     return 0
 
 

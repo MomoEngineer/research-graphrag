@@ -14,8 +14,9 @@ Zentrale Fachbegriffe dieses Repositories. Etablierte englische Fachbegriffe ble
 | **Community-Report** | Von GraphRAG erzeugte Zusammenfassung einer Graph-Community; Grundlage der Global Search. |
 | **Leiden** | Community-Detection-Algorithmus. Offline nicht verfügbar (`leidenalg`/`igraph` fehlen); der Offline-Hybrid nutzt **Louvain** (`networkx`). |
 | **Louvain** | Community-Detection über `networkx`; Ersatz für Leiden im Offline-Hybrid ([ADR 0005](adr/0005-graphrag-index-backend-open.md)). |
-| **Canonical Paper JSON** | Kanonisches Zwischenformat je Paper: Struktur, Section-Hierarchie, Chunk-IDs, Referenzen, Seiten-/Bounding-Box-Provenienz, Qualitätsflags. |
-| **Chunk / TextUnit** | Kleinste retrievbare Texteinheit mit Provenienz. |
+| **Canonical Paper JSON** | Kanonisches Zwischenformat je Paper (Schema 0.2.0): heuristische Section-Hierarchie, Chunk-IDs, Referenz-Abschnitt, DOI/arXiv-Identifikatoren, Seiten-/Section-Provenienz, Qualitätsflags. Bounding-Box-Provenienz ist zurückgestellt ([ADR 0006](adr/0006-canonical-model-phase2-scope.md)). |
+| **Chunk / TextUnit** | Kleinste retrievbare Texteinheit mit Provenienz; in Phase 2 abschnitts-/größenbasiert gebildet (Seite = harte Grenze). |
+| **Qualitäts-Gate / -Flag** | Heuristisches Signal der Extraktion (z. B. `missing_abstract`, `ocr_noise`, `short_chunk`); aggregiert im `data/quality_report.*` ([ADR 0006](adr/0006-canonical-model-phase2-scope.md)). |
 | **Provenienz** | Herkunftsnachweis einer abgeleiteten Aussage: Paper-ID, Abschnitt, Seite/Chunk (ggf. Bounding-Box), Score (siehe [documentation-standards.md](documentation-standards.md), Abschnitt 5). |
 | **Docling / Marker** | PDF-Extraktoren (Docling pure Python, Marker für formel-/layoutlastige PDFs). Offline **nicht beschaffbar**; der Offline-Hybrid nutzt `pypdf` (Text). Docling/Marker sind späterer Ausbau ([ADR 0005](adr/0005-graphrag-index-backend-open.md)). |
 | **LanceDB / Parquet** | Eingebetteter Vektor-/Spaltenspeicher der MS-GraphRAG-Artefakte. Offline **nicht beschaffbar**; der Offline-Hybrid nutzt **SQLite** (stdlib) + TF-IDF-Matrix ([ADR 0005](adr/0005-graphrag-index-backend-open.md)). |

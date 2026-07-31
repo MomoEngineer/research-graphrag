@@ -16,14 +16,15 @@ tests/
 ├─ test_smoke.py          # Paket-Smoke-Test
 ├─ test_errors.py         # Fehlertaxonomie
 ├─ test_pipeline.py       # Drop-in-Ingestion
-├─ extraction/            # PDF-Extraktion (0b)
+├─ extraction/            # Extraktion: pdf/structure/chunking/quality (Phase 2)
 ├─ indexing/              # TF-IDF/SQLite-Index (0b)
 ├─ retrieval/             # Basic Search (0b)
+├─ overview/              # Übersicht-Entwürfe (Phase 2)
 ├─ integration/           # End-to-End-Durchstich (M1)
 └─ mcp_server/            # (Phase 5) je Tool ein test_<tool>.py
 ```
 
-> **Aktueller Stand (0b):** Die Kernmodule (`errors`, `extraction`, `indexing`, `retrieval`, `pipeline`) sind mit Funktions-, Fehler- und Property-Tests abgedeckt (Kernmodule 100 % Zeilenabdeckung). Der **Contract-Test** (Abschnitt 2.1) greift ab Phase 5, sobald die Tools über MCP registriert sind.
+> **Aktueller Stand (Phase 2):** Die Kernmodule (`errors`, `extraction/*` inkl. `model`/`structure`/`chunking`/`quality`, `indexing`, `retrieval`, `overview`, `pipeline`) sind mit Funktions-, Fehler- und Property-Tests abgedeckt (Kernmodule ≥ 96 % Zeilenabdeckung, Richtwert erfüllt). Der **Contract-Test** (Abschnitt 2.1) greift ab Phase 5, sobald die Tools über MCP registriert sind.
 
 ---
 

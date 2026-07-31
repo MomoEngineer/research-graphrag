@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from pathlib import Path
 
@@ -106,3 +107,36 @@ def test_ingest_indexes_only_non_empty_pages(make_pdf: MakePdf, tmp_path: Path) 
 
     assert report.n_papers == 1
     assert report.indexed_chunks == 1
+
+
+def test_ingest_writes_quality_report(make_pdf: MakePdf, tmp_path: Path) -> None:
+    """Der Ingest schreibt einen Qualitätsreport (JSON + Markdown) und zählt Flags."""
+    make_pdf(["short page"], "papers/a.pdf")
+    data = tmp_path / "data"
+
+    report = ingest(tmp_path / "papers", data)
+
+    assert (data / "quality_report.json").is_file()
+    assert (data / "quality_report.md").is_file()
+    payload = json.loads((data / "quality_report.json").read_text(encoding="utf-8"))
+    assert payload["n_papers"] == report.n_papers
+    assert report.flagged_papers >= 1
+    assert report.total_flags >= report.flagged_papers
+
+
+def test_ingest_reextracts_on_schema_upgrade(make_pdf: MakePdf, tmp_path: Path) -> None:
+    """Ein Canonical mit veralteter Schema-Version wird neu extrahiert."""
+    make_pdf(["stable content for schema test"], "papers/a.pdf")
+    papers = tmp_path / "papers"
+    data = tmp_path / "data"
+    ingest(papers, data)
+
+    for canonical in (data / "canonical").glob("*.json"):
+        obj = json.loads(canonical.read_text(encoding="utf-8"))
+        obj["schema_version"] = "0.1.0"
+        canonical.write_text(json.dumps(obj), encoding="utf-8")
+
+    report = ingest(papers, data)
+
+    assert report.extracted == 1
+    assert report.skipped == 0

@@ -1,116 +1,39 @@
 """PDF-Extraktion in ein kanonisches Paper-Modell (Offline-Hybrid, Option B).
 
-Nutzt ``pypdf`` (offline, siehe docs/adr/0005-graphrag-index-backend-open.md) und liefert
-je Seite einen retrievbaren ``Chunk`` mit Seiten-Provenienz. Das Ergebnis ist ein
-deterministisches, serialisierbares :class:`CanonicalPaper` (Canonical JSON), das die
-Indexierung konsumiert.
+Orchestriert die Phase-2-Extraktion mit ``pypdf`` (offline, siehe
+docs/adr/0005-graphrag-index-backend-open.md): Seitentext lesen → Struktur/Abschnitte erkennen
+(:mod:`~research_graphrag.extraction.structure`) → größenbasiert chunken
+(:mod:`~research_graphrag.extraction.chunking`) → Qualitäts-Gates
+(:mod:`~research_graphrag.extraction.quality`). Das Ergebnis ist ein deterministisches,
+serialisierbares :class:`CanonicalPaper` (Canonical JSON, Schema 0.2.0).
 
-Chunk-Granularität in Phase 0b: **eine Seite = ein Chunk** (feinere Chunking-Strategien
-folgen in Phase 2).
+Umfang und Grenzen der Heuristik (keine Bounding-Boxes, kein tiefes Referenz-/Tabellen-Parsing):
+docs/adr/0006-canonical-model-phase2-scope.md.
 """
 
 from __future__ import annotations
 
 import hashlib
 import io
-import json
-from collections.abc import Mapping
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 from pypdf import PdfReader
 from pypdf.errors import PyPdfError
 
 from research_graphrag.errors import DomainError, ErrorCode
+from research_graphrag.extraction import chunking, quality, structure
+from research_graphrag.extraction.model import (
+    SCHEMA_VERSION,
+    CanonicalPaper,
+    Chunk,
+    Section,
+)
 
-SCHEMA_VERSION = "0.1.0"
-"""Version des Canonical-JSON-Schemas (für spätere Migrationen)."""
-
-
-@dataclass(frozen=True)
-class Chunk:
-    """Kleinste retrievbare Einheit mit Provenienz (Phase 0b: eine Seite)."""
-
-    chunk_id: str
-    paper_id: str
-    page_number: int
-    text: str
-    char_count: int
-
-
-@dataclass(frozen=True)
-class CanonicalPaper:
-    """Kanonische, serialisierbare Repräsentation eines extrahierten Papers."""
-
-    paper_id: str
-    source_uri: str
-    source_sha256: str
-    n_pages: int
-    chunks: tuple[Chunk, ...]
-    quality_flags: tuple[str, ...]
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialisiert das Paper als Canonical-JSON-kompatibles Dict."""
-        return {
-            "schema_version": SCHEMA_VERSION,
-            "paper_id": self.paper_id,
-            "source_uri": self.source_uri,
-            "source_sha256": self.source_sha256,
-            "n_pages": self.n_pages,
-            "quality_flags": list(self.quality_flags),
-            "chunks": [
-                {
-                    "chunk_id": chunk.chunk_id,
-                    "paper_id": chunk.paper_id,
-                    "page_number": chunk.page_number,
-                    "text": chunk.text,
-                    "char_count": chunk.char_count,
-                }
-                for chunk in self.chunks
-            ],
-        }
-
-    @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> CanonicalPaper:
-        """Rekonstruiert ein :class:`CanonicalPaper` aus Canonical JSON."""
-        chunks = tuple(
-            Chunk(
-                chunk_id=str(entry["chunk_id"]),
-                paper_id=str(entry["paper_id"]),
-                page_number=int(entry["page_number"]),
-                text=str(entry["text"]),
-                char_count=int(entry["char_count"]),
-            )
-            for entry in data["chunks"]
-        )
-        return cls(
-            paper_id=str(data["paper_id"]),
-            source_uri=str(data["source_uri"]),
-            source_sha256=str(data["source_sha256"]),
-            n_pages=int(data["n_pages"]),
-            chunks=chunks,
-            quality_flags=tuple(str(flag) for flag in data.get("quality_flags", [])),
-        )
-
-    def save_json(self, path: str | Path) -> None:
-        """Schreibt das Canonical JSON (UTF-8) und legt Elternordner an."""
-        target = Path(path)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(
-            json.dumps(self.to_dict(), ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
-
-    @classmethod
-    def load_json(cls, path: str | Path) -> CanonicalPaper:
-        """Lädt ein Canonical JSON und rekonstruiert das :class:`CanonicalPaper`."""
-        data = json.loads(Path(path).read_text(encoding="utf-8"))
-        return cls.from_dict(data)
+__all__ = ["SCHEMA_VERSION", "CanonicalPaper", "Chunk", "Section", "extract_pdf"]
 
 
 def extract_pdf(path: str | Path, *, source_uri: str | None = None) -> CanonicalPaper:
-    """Extrahiert ein PDF in ein :class:`CanonicalPaper` (eine Seite = ein Chunk).
+    """Extrahiert ein PDF in ein :class:`CanonicalPaper` (Struktur, Chunks, Qualität).
 
     Args:
         path: Dateisystempfad zur PDF-Datei.
@@ -118,7 +41,8 @@ def extract_pdf(path: str | Path, *, source_uri: str | None = None) -> Canonical
             des aufgelösten Pfads.
 
     Returns:
-        Ein :class:`CanonicalPaper` mit Seiten-Chunks, Rohbyte-SHA-256 und Qualitäts-Flags.
+        Ein :class:`CanonicalPaper` mit Abschnitten, größenbasierten Chunks (Seiten-/Section-
+        Provenienz), DOI/arXiv-Identifikatoren und Qualitäts-Flags.
 
     Raises:
         DomainError: ``invalid_input`` bei leerem Pfad; ``not_found`` wenn die Datei fehlt;
@@ -152,27 +76,23 @@ def extract_pdf(path: str | Path, *, source_uri: str | None = None) -> Canonical
             ErrorCode.PARSE_ERROR, f"PDF nicht parsebar: {exc}", {"uri": uri}
         ) from exc
 
-    chunks: list[Chunk] = []
-    quality_flags: list[str] = []
-    for index, text in enumerate(page_texts):
-        page_number = index + 1
-        if not text:
-            quality_flags.append(f"empty_page:{page_number}")
-        chunks.append(
-            Chunk(
-                chunk_id=f"{paper_id}-p{page_number}",
-                paper_id=paper_id,
-                page_number=page_number,
-                text=text,
-                char_count=len(text),
-            )
-        )
+    pages = [(index + 1, text) for index, text in enumerate(page_texts)]
+    sectioning = structure.analyze(paper_id, pages)
+    # Identifikatoren bevorzugt von der Titelseite lesen (die eigene DOI/arXiv-ID steht dort);
+    # erst bei Fehlanzeige den Volltext heranziehen (dort meist nur zitierte Referenzen).
+    identifiers = structure.extract_identifiers("\n".join(page_texts[:2])) or (
+        structure.extract_identifiers("\n".join(page_texts))
+    )
+    chunks = chunking.build_chunks(paper_id, sectioning.blocks, sectioning.title_by_id())
+    quality_flags = quality.assess(pages, sectioning.sections, chunks)
 
     return CanonicalPaper(
         paper_id=paper_id,
         source_uri=uri,
         source_sha256=source_sha256,
         n_pages=len(page_texts),
-        chunks=tuple(chunks),
-        quality_flags=tuple(quality_flags),
+        chunks=chunks,
+        quality_flags=quality_flags,
+        sections=sectioning.sections,
+        identifiers=identifiers,
     )
