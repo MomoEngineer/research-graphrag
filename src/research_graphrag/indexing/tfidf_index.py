@@ -24,7 +24,10 @@ from sklearn.metrics.pairwise import linear_kernel
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.pdf import CanonicalPaper
 
-SCHEMA_VERSION = "0.1.0"
+SCHEMA_VERSION = "0.2.0"
+"""Version des Index-Schemas. ``0.1.0 -> 0.2.0``: Chunk-Provenienz um ``section_title``
+erweitert (Abschnitts-Provenienz für Phase-4-Retrieval, siehe
+docs/adr/0008-retrieval-and-query-router-phase4.md). Voller Re-Index genügt (keine Migration)."""
 
 _SCHEMA = """
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -35,12 +38,13 @@ CREATE TABLE papers (
     n_pages       INTEGER NOT NULL
 );
 CREATE TABLE chunks (
-    chunk_id    TEXT PRIMARY KEY,
-    paper_id    TEXT NOT NULL,
-    page_number INTEGER NOT NULL,
-    text        TEXT NOT NULL,
-    char_count  INTEGER NOT NULL,
-    row_index   INTEGER NOT NULL,
+    chunk_id      TEXT PRIMARY KEY,
+    paper_id      TEXT NOT NULL,
+    page_number   INTEGER NOT NULL,
+    text          TEXT NOT NULL,
+    char_count    INTEGER NOT NULL,
+    section_title TEXT NOT NULL DEFAULT '',
+    row_index     INTEGER NOT NULL,
     FOREIGN KEY (paper_id) REFERENCES papers (paper_id)
 );
 """
@@ -56,6 +60,7 @@ class Hit:
     score: float
     snippet: str
     source_uri: str
+    section_title: str = ""
 
 
 @dataclass(frozen=True)
@@ -67,6 +72,7 @@ class _ChunkRef:
     page_number: int
     text: str
     source_uri: str
+    section_title: str = ""
 
 
 def _snippet(text: str, limit: int = 200) -> str:
@@ -75,6 +81,19 @@ def _snippet(text: str, limit: int = 200) -> str:
     if len(collapsed) <= limit:
         return collapsed
     return collapsed[: limit - 1].rstrip() + "…"
+
+
+def _hit(ref: _ChunkRef, score: float) -> Hit:
+    """Bildet eine interne Chunk-Referenz und einen Score auf einen :class:`Hit` ab."""
+    return Hit(
+        chunk_id=ref.chunk_id,
+        paper_id=ref.paper_id,
+        page_number=ref.page_number,
+        score=score,
+        snippet=_snippet(ref.text),
+        source_uri=ref.source_uri,
+        section_title=ref.section_title,
+    )
 
 
 def build_index(papers: Sequence[CanonicalPaper], db_path: str | Path) -> int:
@@ -119,14 +138,15 @@ def build_index(papers: Sequence[CanonicalPaper], db_path: str | Path) -> int:
         for row_index, (chunk, _paper) in enumerate(indexable):
             connection.execute(
                 "INSERT INTO chunks "
-                "(chunk_id, paper_id, page_number, text, char_count, row_index) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
+                "(chunk_id, paper_id, page_number, text, char_count, section_title, row_index) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
                 (
                     chunk.chunk_id,
                     chunk.paper_id,
                     chunk.page_number,
                     chunk.text,
                     chunk.char_count,
+                    chunk.section_title,
                     row_index,
                 ),
             )
@@ -165,7 +185,8 @@ class TfidfIndex:
         connection = sqlite3.connect(str(path))
         try:
             rows = connection.execute(
-                "SELECT c.chunk_id, c.paper_id, c.page_number, c.text, p.source_uri "
+                "SELECT c.chunk_id, c.paper_id, c.page_number, c.text, p.source_uri, "
+                "c.section_title "
                 "FROM chunks c JOIN papers p ON p.paper_id = c.paper_id "
                 "ORDER BY c.row_index"
             ).fetchall()
@@ -182,6 +203,7 @@ class TfidfIndex:
                 page_number=int(row[2]),
                 text=str(row[3]),
                 source_uri=str(row[4]),
+                section_title=str(row[5]),
             )
             for row in rows
         )
@@ -189,12 +211,14 @@ class TfidfIndex:
         matrix = vectorizer.fit_transform([ref.text for ref in refs])
         return cls(refs=refs, vectorizer=vectorizer, matrix=matrix)
 
-    def search(self, query: str, k: int = 5) -> list[Hit]:
+    def search(self, query: str, k: int = 5, *, paper_ids: set[str] | None = None) -> list[Hit]:
         """Liefert die Top-k-Chunks per Kosinus-Ähnlichkeit (TF-IDF) mit Provenienz.
 
         Args:
             query: Natürlichsprachige Anfrage.
             k: Maximale Trefferzahl (> 0).
+            paper_ids: Optionaler Filter – nur Chunks dieser Paper werden berücksichtigt
+                (z. B. Local-Fan-out je Nachbarpaper oder DRIFT innerhalb einer Community).
 
         Returns:
             Absteigend sortierte Treffer mit Score > 0; leere Liste ohne Übereinstimmung.
@@ -215,19 +239,56 @@ class TfidfIndex:
         )
 
         hits: list[Hit] = []
-        for i in order[:k]:
+        for i in order:
+            if len(hits) >= k:
+                break
+            ref = self._refs[i]
+            if paper_ids is not None and ref.paper_id not in paper_ids:
+                continue
             score = float(scores[i])
             if score <= 0.0:
                 continue
-            ref = self._refs[i]
-            hits.append(
-                Hit(
-                    chunk_id=ref.chunk_id,
-                    paper_id=ref.paper_id,
-                    page_number=ref.page_number,
-                    score=score,
-                    snippet=_snippet(ref.text),
-                    source_uri=ref.source_uri,
-                )
-            )
+            hits.append(_hit(ref, score))
+        return hits
+
+    def neighbors_of_chunk(self, chunk_id: str, k: int = 5) -> list[Hit]:
+        """Liefert die nächsten Chunks zu einem gegebenen Chunk (Chunk↔Chunk-Kosinus).
+
+        Grundlage der Local-Search-Chunk-Nachbarschaft: bewertet die Ähnlichkeit des
+        angegebenen Chunks zu allen anderen Chunks und liefert die Top-k **ohne** den
+        Chunk selbst, absteigend sortiert (Tie-Break über ``chunk_id``).
+
+        Args:
+            chunk_id: Ausgangs-Chunk (muss im Index liegen).
+            k: Maximale Nachbarzahl (> 0).
+
+        Returns:
+            Absteigend sortierte Nachbar-Treffer mit Score > 0; leer ohne Übereinstimmung.
+
+        Raises:
+            DomainError: ``invalid_input`` bei ``k <= 0``; ``not_found`` wenn die ``chunk_id``
+                unbekannt ist.
+        """
+        if k <= 0:
+            raise DomainError(ErrorCode.INVALID_INPUT, "k muss > 0 sein.")
+        seed_row = next((i for i, ref in enumerate(self._refs) if ref.chunk_id == chunk_id), None)
+        if seed_row is None:
+            raise DomainError(ErrorCode.NOT_FOUND, f"Chunk nicht gefunden: {chunk_id}")
+
+        scores = linear_kernel(self._matrix[seed_row], self._matrix).ravel()
+        order = sorted(
+            range(len(self._refs)),
+            key=lambda i: (-float(scores[i]), self._refs[i].chunk_id),
+        )
+
+        hits: list[Hit] = []
+        for i in order:
+            if len(hits) >= k:
+                break
+            if i == seed_row:
+                continue
+            score = float(scores[i])
+            if score <= 0.0:
+                continue
+            hits.append(_hit(self._refs[i], score))
         return hits

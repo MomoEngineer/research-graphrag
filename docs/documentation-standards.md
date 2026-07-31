@@ -12,18 +12,24 @@ Dieses Dokument definiert die Anforderungen an die Dokumentation von Code und Er
 - Stil: einheitlich (empfohlen: Google-Stil), konsistent über das Repo.
 
 ```python
-def search_local(query: str, top_k: int = 10) -> LocalSearchResult:
-    """Beantwortet eine Detailfrage über Local Search mit Provenienz.
+def search_local(
+    db_path: str | Path, query: str, *, k: int = 5, fan_out: int = 5
+) -> LocalSearchResult:
+    """Beantwortet eine Detail-/Netz-Frage über Local Search mit Provenienz.
 
     Args:
-        query: Natürlichsprachige Frage zu einem Paper/Abschnitt.
-        top_k: Anzahl der maximal berücksichtigten TextUnits.
+        db_path: Pfad zur SQLite-Index-Datei.
+        query: Natürlichsprachige Frage zu einem Paper/Abschnitt (nicht leer).
+        k: Maximale Zahl der Chunk-Nachbarn (> 0).
+        fan_out: Maximale Zahl der Graph-Nachbarpaper (>= 0).
 
     Returns:
-        LocalSearchResult mit Antwortkontext und Provenienz (Paper-ID, Abschnitt, Seite/Chunk).
+        LocalSearchResult mit Seed, Chunk-Nachbarschaft und Paper-Fan-out (je mit
+        Provenienz: Paper-ID, Abschnitt, Seite/Chunk).
 
     Raises:
-        DomainError: `invalid_input` bei leerer Frage; `constraint_violation`, wenn kein Index existiert.
+        DomainError: `invalid_input` bei leerer Frage/`k <= 0`/`fan_out < 0`;
+            `not_found`, wenn kein Index existiert; `constraint_violation` ohne Chunks/Graph.
     """
 ```
 

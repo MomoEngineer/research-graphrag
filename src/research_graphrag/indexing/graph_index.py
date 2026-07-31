@@ -397,3 +397,49 @@ def load_communities(db_path: str | Path) -> list[CommunityView]:
         )
         for cid, size, keywords, summary in community_rows
     ]
+
+
+def load_neighbors(db_path: str | Path, paper_id: str) -> list[tuple[str, float]]:
+    """Lädt die Graph-Nachbarn eines Papers (für den Local-Fan-out, Phase 4).
+
+    Die ``graph_edges`` sind ungerichtet einmal gespeichert (``source < target``); ein Paper
+    kann daher Quelle **oder** Ziel einer Kante sein. Nachbarn werden über beide Richtungen
+    gesammelt und absteigend nach Kantengewicht sortiert (Tie-Break ``paper_id``).
+
+    Args:
+        db_path: Pfad zur SQLite-Index-Datei.
+        paper_id: Ausgangspaper.
+
+    Returns:
+        Liste aus ``(neighbor_paper_id, weight)``; leer, wenn das Paper keine Kanten hat
+        (z. B. Singleton-Community).
+
+    Raises:
+        DomainError: ``not_found`` wenn die Index-Datei fehlt; ``constraint_violation`` wenn
+            kein Graph gebaut wurde (siehe docs/error-model.md).
+    """
+    path = Path(db_path)
+    if not path.is_file():
+        raise DomainError(ErrorCode.NOT_FOUND, f"Index nicht gefunden: {path}")
+
+    connection = sqlite3.connect(str(path))
+    try:
+        has_table = connection.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'graph_edges'"
+        ).fetchone()
+        if has_table is None:
+            raise DomainError(
+                ErrorCode.CONSTRAINT_VIOLATION, "Kein Graph im Index (Phase 3 nicht gebaut?)."
+            )
+        rows = connection.execute(
+            "SELECT target_paper_id, weight FROM graph_edges WHERE source_paper_id = ? "
+            "UNION ALL "
+            "SELECT source_paper_id, weight FROM graph_edges WHERE target_paper_id = ?",
+            (paper_id, paper_id),
+        ).fetchall()
+    finally:
+        connection.close()
+
+    neighbors = [(str(target), float(weight)) for target, weight in rows]
+    neighbors.sort(key=lambda item: (-item[1], item[0]))
+    return neighbors

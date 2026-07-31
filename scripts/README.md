@@ -7,7 +7,7 @@ vom Repository-Wurzelverzeichnis (WinPython-Konsolenskripte liegen nicht im `PAT
 | --- | --- |
 | `coverage_offline.py` | Offline-Coverage-Gate: Zeilenabdeckung je Kernmodul via stdlib `trace` ([ADR 0003](../docs/adr/0003-offline-test-and-coverage-tooling.md)). Aufruf: `python -m scripts.coverage_offline`. |
 | `ingest.py` | Drop-in-Ingestion: `papers/*.pdf` → Canonical JSON → TF-IDF/SQLite-Index **+ Paper-Ähnlichkeitsgraph mit Louvain-Communities** (Option B, [ADR 0007](../docs/adr/0007-graphrag-index-phase3-option-b.md)). Aufruf: `python -m scripts.ingest`. |
-| `ask.py` | Frage über Basic Search mit Provenienz beantworten. Aufruf: `python -m scripts.ask "<Frage>"`. |
+| `ask.py` | Frage über die Retrieval-Modi (Basic/Local/Global/DRIFT) mit Provenienz beantworten; `--mode auto` routet heuristisch ([ADR 0008](../docs/adr/0008-retrieval-and-query-router-phase4.md)). Aufruf: `python -m scripts.ask "<Frage>" [--mode …]`. |
 | `graph_info.py` | Read-only-Übersicht der Graph-Communities (Keywords, Vertreter, Auszug); Phase-3-Nachweis ([ADR 0007](../docs/adr/0007-graphrag-index-phase3-option-b.md)). Aufruf: `python -m scripts.graph_info`. |
 | `update_overview.py` | Übersicht-Entwürfe: deterministische, extraktive Entwurfszeilen **append-only** nach `data/overview_drafts.md` (kuratierte `Übersicht.md` bleibt unangetastet, [ADR 0006](../docs/adr/0006-canonical-model-phase2-scope.md)). Aufruf: `python -m scripts.update_overview`. |
 

@@ -81,6 +81,7 @@ def test_result_to_dict_shape(tmp_path: Path) -> None:
     assert set(payload) == {"query", "citations"}
     assert set(payload["citations"][0]) == {
         "paper_id",
+        "section_title",
         "page_number",
         "chunk_id",
         "score",

@@ -24,7 +24,7 @@ research-graphrag/
 │  ├─ glossary.md
 │  └─ adr/
 │     ├─ README.md
-│     └─ 0001-*.md … 0007-*.md
+│     └─ 0001-*.md … 0008-*.md
 ├─ templates/
 │  ├─ tool-spec.md
 │  ├─ tool-code-walkthrough.md
@@ -35,7 +35,7 @@ research-graphrag/
 │  ├─ README.md
 │  ├─ coverage_offline.py        # Offline-Coverage-Gate (ADR 0003)
 │  ├─ ingest.py                  # Drop-in → Canonical JSON → Index (Option B)
-│  ├─ ask.py                     # Frage → Basic Search (Provenienz)
+│  ├─ ask.py                     # Frage → Retrieval-Modi (Basic/Local/Global/DRIFT + Router)
 │  ├─ update_overview.py         # Übersicht-Entwürfe → data/overview_drafts.md (Option B)
 │  └─ graph_info.py              # Community-Übersicht (read-only, Phase 3)
 ├─ src/research_graphrag/
@@ -51,7 +51,13 @@ research-graphrag/
 │  ├─ indexing/                  # Canonical JSON → Offline-Hybrid-Index (Option B)
 │  │  ├─ tfidf_index.py          #   TF-IDF-Index über SQLite
 │  │  └─ graph_index.py          #   Paper-Ähnlichkeitsgraph + Louvain-Communities (Phase 3)
-│  ├─ retrieval/basic.py         # Basic Search (search_basic) mit Provenienz
+│  ├─ retrieval/                 # Query-Router: Basic/Local/Global/DRIFT (Phase 4)
+│  │  ├─ basic.py                #   search_basic (TF-IDF-Top-k)
+│  │  ├─ local.py                #   search_local (Chunk-Nachbarschaft + Paper-Fan-out)
+│  │  ├─ global_search.py        #   search_global (Community-Ranking)
+│  │  ├─ drift.py                #   search_drift (Global→Local-Hybrid)
+│  │  ├─ router.py               #   Heuristik-Router (Fragetyp → Modus)
+│  │  └─ provenance.py           #   Citation/PaperRef + Provenienz-Assembler
 │  ├─ overview/drafts.py         # Übersicht-Entwürfe (Staging, Phase 2)
 │  └─ mcp_server/                # (Phase 5) MCP-Server (stdio) + specs/
 ├─ eval/
@@ -66,12 +72,12 @@ research-graphrag/
    ├─ test_pipeline.py
    ├─ extraction/                # PDF-Extraktion + Struktur/Chunking/Qualität (Phase 2)
    ├─ indexing/                  # TF-IDF/SQLite-Index (0b)
-   ├─ retrieval/                 # Basic Search (0b)
+   ├─ retrieval/                 # Basic/Local/Global/DRIFT + Router + Provenienz (Phase 4)
    ├─ overview/                  # Übersicht-Entwürfe (Phase 2)
    └─ integration/               # End-to-End-Durchstich (M1)
 ```
 
-> **Phasen-Hinweis:** Einträge mit „(Phase n)" markieren die Phase der **vollen** Ausbaustufe. In **Phase 0b** sind bereits lauffähige Offline-Hybrid-Implementierungen vorhanden (`errors.py`, `pipeline.py`, `extraction/pdf.py`, `indexing/tfidf_index.py`, `retrieval/basic.py`, `scripts/ingest.py`, `scripts/ask.py`). In **Phase 2** kamen die Extraktions-Submodule (`extraction/model.py`, `structure.py`, `chunking.py`, `quality.py`), das Paket `overview/` und `scripts/update_overview.py` hinzu. In **Phase 3** kamen `indexing/graph_index.py` (Paper-Ähnlichkeitsgraph + Louvain-Communities) und `scripts/graph_info.py` hinzu. Der Ordner `recherche/` wird erst in seiner Phase angelegt; `mcp_server/` wird in Phase 5 registriert.
+> **Phasen-Hinweis:** Einträge mit „(Phase n)" markieren die Phase der **vollen** Ausbaustufe. In **Phase 0b** sind bereits lauffähige Offline-Hybrid-Implementierungen vorhanden (`errors.py`, `pipeline.py`, `extraction/pdf.py`, `indexing/tfidf_index.py`, `retrieval/basic.py`, `scripts/ingest.py`, `scripts/ask.py`). In **Phase 2** kamen die Extraktions-Submodule (`extraction/model.py`, `structure.py`, `chunking.py`, `quality.py`), das Paket `overview/` und `scripts/update_overview.py` hinzu. In **Phase 3** kamen `indexing/graph_index.py` (Paper-Ähnlichkeitsgraph + Louvain-Communities) und `scripts/graph_info.py` hinzu. In **Phase 4** kamen die Retrieval-Module (`retrieval/local.py`, `global_search.py`, `drift.py`, `router.py`, `provenance.py`) hinzu; der Index wurde additiv um `section_title` erweitert (Schema 0.2.0, [ADR 0008](adr/0008-retrieval-and-query-router-phase4.md)). Der Ordner `recherche/` wird erst in seiner Phase angelegt; `mcp_server/` wird in Phase 5 registriert.
 
 ### Zuordnung zu den Roadmap-Phasen
 

@@ -2,9 +2,10 @@
 
 Kapselt das Laden des Index und die Suche zu einem stabilen, MCP-tauglichen Ergebnis
 (:class:`BasicSearchResult`). Entspricht dem GraphRAG-Suchmodus **Basic** (Top-k auf
-Chunks); Local/Global/DRIFT folgen in Phase 4. Die eigentliche natürlichsprachige
-Antwort formuliert der aufrufende Agent (Copilot) über die LLM-Bridge (ADR 0004) aus
-den hier gelieferten, belegten Zitaten.
+Chunks); Local/Global/DRIFT ergänzen dies in Phase 4 (siehe
+docs/adr/0008-retrieval-and-query-router-phase4.md). Die eigentliche natürlichsprachige
+Antwort formuliert der aufrufende Agent (Copilot) über die LLM-Bridge (ADR 0004) aus den
+hier gelieferten, belegten Zitaten.
 """
 
 from __future__ import annotations
@@ -13,42 +14,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from research_graphrag.indexing.tfidf_index import Hit, TfidfIndex
+from research_graphrag.indexing.tfidf_index import TfidfIndex
+from research_graphrag.retrieval.provenance import Citation
 
-
-@dataclass(frozen=True)
-class Citation:
-    """Belegte Quelle eines Treffers (Provenienz)."""
-
-    paper_id: str
-    page_number: int
-    chunk_id: str
-    score: float
-    source_uri: str
-    snippet: str
-
-    @classmethod
-    def from_hit(cls, hit: Hit) -> Citation:
-        """Bildet einen Index-:class:`Hit` auf ein stabiles Zitat ab."""
-        return cls(
-            paper_id=hit.paper_id,
-            page_number=hit.page_number,
-            chunk_id=hit.chunk_id,
-            score=hit.score,
-            source_uri=hit.source_uri,
-            snippet=hit.snippet,
-        )
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialisiert das Zitat (Output-Schema des Tools ``search_basic``)."""
-        return {
-            "paper_id": self.paper_id,
-            "page_number": self.page_number,
-            "chunk_id": self.chunk_id,
-            "score": self.score,
-            "source_uri": self.source_uri,
-            "snippet": self.snippet,
-        }
+__all__ = ["BasicSearchResult", "Citation", "search_basic"]
 
 
 @dataclass(frozen=True)

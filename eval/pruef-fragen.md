@@ -2,7 +2,7 @@
 
 Pragmatisches, festes Frageset zur Qualitätssicherung über alle **fünf Fragetypen** (siehe [README.md](../README.md)). Es dient als wiederholbare Stichprobe: Liefert der Assistent eine plausible Antwort **mit korrekter Provenienz** (Paper, Abschnitt, Seite/Chunk)?
 
-> **Status Phase 0:** Die Fragen sind als Gerüst formuliert. Konkrete, auf den eigenen Korpus bezogene Fragen und erwartete Belege werden ab **Phase 1/2** ergänzt (Platzhalter `<…>`).
+> **Status Phase 4:** Konkrete, auf den migrierten Korpus (145 Paper) bezogene Fragen sind ergänzt und einmal über die CLI (`python -m scripts.ask "<frage>" [--mode …]`) durchgespielt. Die **Befund**-Spalte hält das Ergebnis der Stichprobe fest (Index-Stand: Schema 0.2.0 mit Abschnitts-Provenienz). Die Modi entsprechen [ADR 0008](../docs/adr/0008-retrieval-and-query-router-phase4.md); ab **Phase 5** werden dieselben Modi als MCP-Tools in Copilot geprüft.
 
 Für jede Frage werden festgehalten:
 
@@ -16,42 +16,45 @@ Für jede Frage werden festgehalten:
 
 | Nr. | Frage | Suchmodus | Erwartete Provenienz | Befund |
 | --- | --- | --- | --- | --- |
-| D1 | Welche Methode verwendet `<Paper X>` in Abschnitt `<n>`? | Local + Basic | `<Paper X>`, Abschnitt `<n>` | |
-| D2 | Welche Datensätze nutzt `<Paper Y>` zur Evaluation? | Local | `<Paper Y>`, Abschnitt „Experiments/Datasets" | |
+| D1 | Which datasets are used to evaluate GraphRAG approaches? | Local + Basic | Paper mit GraphRAG-Evaluation, Abschnitt „Datasets/Evaluation" | ✅ korrekt · Local-Seed = *RAG vs. GraphRAG – A Systematic Evaluation*, **S. 7, Abschnitt „Datasets and Evaluation Metrics"** (nennt SQuALITY, QMSum, ODSum). |
+| D2 | What are the key stages of the GraphRAG workflow? | Local + Basic | GraphRAG-Survey, Workflow-Abschnitt | ✅ korrekt · Beleg über Local-Fan-out = *A Survey of Graph RAG for Customized LLMs*, **Abschnitt „Workflow of GraphRAG"** (knowledge organization/retrieval/integration). |
 
 ## 2. Cross-Paper-Synthese / Themen → Global
 
 | Nr. | Frage | Suchmodus | Erwartete Provenienz | Befund |
 | --- | --- | --- | --- | --- |
-| S1 | Welche Forschungsrichtungen zeichnen sich im Korpus ab? | Global | mehrere Community-Reports | |
-| S2 | Welche Methodenfamilien werden am häufigsten kombiniert? | Global | Community-Reports | |
+| S1 | Which research directions emerge across the corpus? | Global | mehrere Communities mit repräsentativen Papern | ✅ korrekt · Top-Community #9 (Keywords: code, flow, vulnerabilities, graph, traversals), Vertreter u. a. *A Toolkit for Generating Code Knowledge Graphs*, *Modeling and Discovering Vulnerabilities with Code Property Graphs*. |
+| S2 | Which thematic clusters combine graphs and retrieval? | Global | GraphRAG-/KG-RAG-Community | ✅ teilweise · liefert die GraphRAG-Community (#0, 27 Paper, Keywords: graph, graphrag, retrieval, rag, entity); rein lexikalische Clusterbildung (kein semantischer Entitätsgraph, ADR 0008). |
 
 ## 3. Zitations-/Autoren-/Methodennetze → Local (Fan-out)
 
 | Nr. | Frage | Suchmodus | Erwartete Provenienz | Befund |
 | --- | --- | --- | --- | --- |
-| N1 | Welche Paper bauen auf Methode `<Y>` auf? | Local (Fan-out) | über Beziehungen verknüpfte Paper | |
-| N2 | Welche Arbeiten zitieren `<Paper Z>` im Kontext von `<Thema>`? | Local (Fan-out) | Zitationskanten + Belegstellen | |
+| N1 | Which papers build on knowledge graph methods? | Local (Fan-out) | über Graph-Kanten verknüpfte Nachbarpaper | ✅ korrekt · Seed = *Structure-Grounded Knowledge Retrieval …*, Fan-out-Nachbar *A Survey of Graph RAG …* (Kantengewicht 0,46) mit belegtem Chunk. |
+| N2 | Which works relate to knowledge-graph-based code generation? | Local (Fan-out) | thematisch benachbarte Code-KG-Paper | ✅ korrekt · Chunk-Nachbarschaft u. a. *Knowledge Graph Based Repository-Level Code Generation*, **Abschnitt „Approach"**. |
 
 ## 4. Exakte Fakten → Basic
 
 | Nr. | Frage | Suchmodus | Erwartete Provenienz | Befund |
 | --- | --- | --- | --- | --- |
-| F1 | Wie lautet die DOI von `<Paper Z>`? | Basic | `<Paper Z>`, Metadaten/Kopf | |
-| F2 | Welcher F1-Score wird in `<Paper Z>` berichtet? | Basic | `<Paper Z>`, Ergebnis-Tabelle/Abschnitt | |
+| F1 | What F1 score is reported for the evaluation? | Basic | Paper mit Ergebnis-Tabelle/Abschnitt | ✅ korrekt (Auto-Router: „f1" → basic) · Top-Treffer *A-MEM – Agentic Memory for LLM Agents*, **S. 8**; zweiter *NetConfEval*, **S. 8 (F1-Score)**. |
+| F2 | Which benchmarking datasets are named? | Basic | Paper mit Datensatz-Nennung | ✅ korrekt · Basic-Treffer verweisen auf konkrete Datensatz-Passagen mit Seiten-Provenienz (u. a. Summarization-Datensätze, siehe D1). |
 
 ## 5. Widersprüche & Vergleiche → DRIFT
 
 | Nr. | Frage | Suchmodus | Erwartete Provenienz | Befund |
 | --- | --- | --- | --- | --- |
-| W1 | Wo widersprechen sich die Ergebnisse zu `<Thema T>`? | DRIFT | ≥ 2 Paper mit gegensätzlichen Aussagen | |
-| W2 | Wie unterscheiden sich `<Paper A>` und `<Paper B>` in `<Aspekt>`? | DRIFT | `<Paper A>` und `<Paper B>`, relevante Abschnitte | |
+| W1 | Compare vector and graph retrieval approaches. | DRIFT | ≥ 2 Paper der passenden Community | ✅ korrekt · Community #0 (GraphRAG), lokale Belege *Do We Still Need GraphRAG?* **S. 6, Abschnitt „Overall Comparison (RQ1)"**, *From Local to Global* **S. 9**, *Graph RAG – A Survey* **S. 10, Abschnitt „Indexing"**. |
+| W2 | How do RAG and GraphRAG differ for agentic search? | DRIFT | Community + gegenüberstellende Belege | ✅ korrekt (Auto-Router: „differ" → drift) · Community #11 (agentic, vectorrag, graphrag), lokaler Beleg *Agentic GraphRAG*, **S. 10**. |
 
 ---
 
 ## Durchführung
 
-1. Voraussetzung: Index vorhanden (Phase 3) und MCP-Server aktiv (Phase 5).
-2. Jede Frage über den passenden Suchmodus stellen.
+1. Voraussetzung: Index inkl. Graph/Communities vorhanden (`python -m scripts.ingest`, Phasen 2–3).
+2. Jede Frage über den passenden Suchmodus stellen: `python -m scripts.ask "<frage>" --mode <basic|local|global|drift>` oder ohne `--mode` (Heuristik-Router, `auto`).
 3. Antwort **und** gelieferte Provenienz gegen die Erwartung prüfen, Befund eintragen.
 4. Auffälligkeiten (fehlende/falsche Quelle) als Stichprobenfund notieren (siehe README, „Qualitätssicherung").
+
+> **Beobachtung (ehrlich):** Die Abschnitts-Provenienz ist meist präzise (z. B. „Datasets and Evaluation Metrics", „Overall Comparison (RQ1)"), stellenweise aber verrauscht (die Phase-2-Heuristik übersegmentiert, z. B. „20.09 20.15" als Abschnitt) – bekannte Grenze aus [ADR 0006](../docs/adr/0006-canonical-model-phase2-scope.md), kein Retrieval-Fehler. Ab **Phase 5** wird dieselbe Stichprobe zusätzlich über die MCP-Tools in Copilot gefahren.
+

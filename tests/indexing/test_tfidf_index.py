@@ -170,3 +170,82 @@ def test_non_positive_k_raises_invalid_input(tmp_path: Path) -> None:
     with pytest.raises(DomainError) as excinfo:
         TfidfIndex.load(db).search("content", k=0)
     assert excinfo.value.code is ErrorCode.INVALID_INPUT
+
+
+def _sectioned_paper(paper_id: str, texts: Sequence[str], section: str) -> CanonicalPaper:
+    chunks = tuple(
+        Chunk(
+            chunk_id=f"{paper_id}-c{index + 1:04d}",
+            paper_id=paper_id,
+            page_number=index + 1,
+            text=text,
+            char_count=len(text),
+            section_title=section,
+        )
+        for index, text in enumerate(texts)
+    )
+    return CanonicalPaper(
+        paper_id=paper_id,
+        source_uri=f"file:///{paper_id}.pdf",
+        source_sha256="0" * 64,
+        n_pages=len(texts),
+        chunks=chunks,
+        quality_flags=(),
+    )
+
+
+def test_section_title_is_persisted_and_returned(tmp_path: Path) -> None:
+    """Die Abschnitts-Provenienz (section_title) überlebt Persistenz und Laden (Schema 0.2.0)."""
+    db = tmp_path / "index.sqlite"
+    build_index([_sectioned_paper("aaaa0001", ["transformer attention mechanism"], "Methoden")], db)
+
+    hit = TfidfIndex.load(db).search("attention", k=1)[0]
+
+    assert hit.section_title == "Methoden"
+
+
+def test_search_paper_ids_filter_restricts_results(tmp_path: Path) -> None:
+    """Der paper_ids-Filter beschränkt die Treffer auf die erlaubten Paper."""
+    p1 = _paper("aaaa0001", ["gradient descent optimization", "neural network training"])
+    p2 = _paper("bbbb0002", ["gradient boosting trees", "bayesian inference methods"])
+    db = tmp_path / "index.sqlite"
+    build_index([p1, p2], db)
+
+    hits = TfidfIndex.load(db).search("gradient", k=5, paper_ids={"bbbb0002"})
+
+    assert hits
+    assert all(hit.paper_id == "bbbb0002" for hit in hits)
+
+
+def test_neighbors_of_chunk_excludes_seed(tmp_path: Path) -> None:
+    """Die Chunk-Nachbarschaft enthält den Ausgangs-Chunk nicht und rankt Ähnliches vorn."""
+    paper = _paper(
+        "aaaa0001",
+        ["transformer attention encoder", "transformer attention decoder", "unrelated cooking"],
+    )
+    db = tmp_path / "index.sqlite"
+    build_index([paper], db)
+
+    neighbors = TfidfIndex.load(db).neighbors_of_chunk("aaaa0001-p1", k=5)
+
+    chunk_ids = [hit.chunk_id for hit in neighbors]
+    assert "aaaa0001-p1" not in chunk_ids
+    assert "aaaa0001-p2" in chunk_ids  # thematisch ähnlichster Nachbar
+
+
+def test_neighbors_of_chunk_unknown_chunk_raises_not_found(tmp_path: Path) -> None:
+    """Eine unbekannte chunk_id -> not_found."""
+    db = tmp_path / "index.sqlite"
+    build_index([_paper("aaaa0001", ["transformer attention encoder"])], db)
+    with pytest.raises(DomainError) as excinfo:
+        TfidfIndex.load(db).neighbors_of_chunk("does-not-exist", k=3)
+    assert excinfo.value.code is ErrorCode.NOT_FOUND
+
+
+def test_neighbors_of_chunk_non_positive_k_raises_invalid_input(tmp_path: Path) -> None:
+    """k <= 0 -> invalid_input."""
+    db = tmp_path / "index.sqlite"
+    build_index([_paper("aaaa0001", ["transformer attention encoder"])], db)
+    with pytest.raises(DomainError) as excinfo:
+        TfidfIndex.load(db).neighbors_of_chunk("aaaa0001-p1", k=0)
+    assert excinfo.value.code is ErrorCode.INVALID_INPUT

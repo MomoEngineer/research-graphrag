@@ -1,0 +1,112 @@
+"""Tests für den Provenienz-Assembler & die gemeinsamen Zitat-Typen (Phase 4)."""
+
+from __future__ import annotations
+
+from collections.abc import Sequence
+from pathlib import Path
+
+import pytest
+
+from research_graphrag.errors import DomainError, ErrorCode
+from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
+from research_graphrag.indexing.tfidf_index import TfidfIndex, build_index
+from research_graphrag.retrieval.provenance import Citation, PaperRef, ProvenanceAssembler
+
+
+def _paper(paper_id: str, texts: Sequence[str], section: str = "") -> CanonicalPaper:
+    chunks = tuple(
+        Chunk(
+            chunk_id=f"{paper_id}-c{index + 1:04d}",
+            paper_id=paper_id,
+            page_number=index + 1,
+            text=text,
+            char_count=len(text),
+            section_title=section,
+        )
+        for index, text in enumerate(texts)
+    )
+    return CanonicalPaper(
+        paper_id=paper_id,
+        source_uri=f"file:///{paper_id}.pdf",
+        source_sha256="0" * 64,
+        n_pages=len(texts),
+        chunks=chunks,
+        quality_flags=(),
+    )
+
+
+def _build(tmp_path: Path) -> Path:
+    paper = _paper(
+        "aaaa1111", ["transformer attention mechanism", "graph message passing"], "Methoden"
+    )
+    db = tmp_path / "index" / "index.sqlite"
+    build_index([paper], db)
+    return db
+
+
+def test_citation_from_hit_carries_section_title(tmp_path: Path) -> None:
+    """Ein Hit mit Section wird als Zitat inkl. Abschnitts-Provenienz abgebildet."""
+    hit = TfidfIndex.load(_build(tmp_path)).search("attention", k=1)[0]
+    citation = Citation.from_hit(hit)
+
+    assert citation.section_title == "Methoden"
+    assert citation.paper_id == "aaaa1111"
+    assert citation.page_number == 1
+
+
+def test_citation_to_dict_shape(tmp_path: Path) -> None:
+    """Das Zitat-Dict trägt genau die dokumentierten Schlüssel (inkl. section_title)."""
+    hit = TfidfIndex.load(_build(tmp_path)).search("attention", k=1)[0]
+    payload = Citation.from_hit(hit).to_dict()
+
+    assert set(payload) == {
+        "paper_id",
+        "section_title",
+        "page_number",
+        "chunk_id",
+        "score",
+        "source_uri",
+        "snippet",
+    }
+
+
+def test_assembler_builds_paper_ref(tmp_path: Path) -> None:
+    """Der Assembler liefert source_uri und ein Leit-Snippet aus dem ersten Chunk."""
+    assembler = ProvenanceAssembler.load(_build(tmp_path))
+    ref = assembler.paper_ref("aaaa1111")
+
+    assert isinstance(ref, PaperRef)
+    assert ref.source_uri == "file:///aaaa1111.pdf"
+    assert "transformer" in ref.snippet
+    assert ref.to_dict() == {
+        "paper_id": "aaaa1111",
+        "source_uri": "file:///aaaa1111.pdf",
+        "snippet": ref.snippet,
+    }
+
+
+def test_assembler_unknown_paper_raises_not_found(tmp_path: Path) -> None:
+    """Ein unbekanntes Paper -> not_found."""
+    assembler = ProvenanceAssembler.load(_build(tmp_path))
+    with pytest.raises(DomainError) as excinfo:
+        assembler.paper_ref("zzzz9999")
+    assert excinfo.value.code is ErrorCode.NOT_FOUND
+
+
+def test_assembler_truncates_long_leading_snippet(tmp_path: Path) -> None:
+    """Ein langes Leit-Snippet wird auf das Limit gekürzt (endet mit Auslassung)."""
+    long_text = "attention " + "lorem ipsum dolor sit amet consectetur " * 20
+    db = tmp_path / "index.sqlite"
+    build_index([_paper("bbbb2222", [long_text])], db)
+
+    ref = ProvenanceAssembler.load(db).paper_ref("bbbb2222")
+
+    assert len(ref.snippet) <= 200
+    assert ref.snippet.endswith("…")
+
+
+def test_assembler_missing_index_raises_not_found(tmp_path: Path) -> None:
+    """Fehlende Index-Datei -> not_found."""
+    with pytest.raises(DomainError) as excinfo:
+        ProvenanceAssembler.load(tmp_path / "absent.sqlite")
+    assert excinfo.value.code is ErrorCode.NOT_FOUND

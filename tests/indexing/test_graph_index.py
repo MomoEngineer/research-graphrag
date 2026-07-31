@@ -14,6 +14,7 @@ from research_graphrag.indexing.graph_index import (
     TOP_REPRESENTATIVES,
     build_graph,
     load_communities,
+    load_neighbors,
 )
 from research_graphrag.indexing.tfidf_index import build_index
 
@@ -208,3 +209,43 @@ def test_build_graph_preserves_existing_index_tables(tmp_path: Path) -> None:
     assert n_chunks == 8  # 4 Paper × 2 Chunks
     assert n_nodes == 4
     assert graph_version == "0.1.0"
+
+
+def test_load_neighbors_returns_weighted_neighbor(tmp_path: Path) -> None:
+    """Innerhalb eines Clusters liefert load_neighbors den Partner mit Kantengewicht."""
+    db = tmp_path / "index.sqlite"
+    build_graph(_two_cluster_papers(), db)
+
+    neighbors = load_neighbors(db, "aaaa0001")
+
+    assert neighbors == [("aaaa0002", pytest.approx(neighbors[0][1]))]
+    assert 0.0 < neighbors[0][1] <= 1.0 + 1e-9
+
+
+def test_load_neighbors_isolated_paper_is_empty(tmp_path: Path) -> None:
+    """Ein Singleton-Paper ohne Kanten hat keine Nachbarn."""
+    papers = [
+        _paper("cccc0001", ["semantic parsing of natural language queries"]),
+        _paper("dddd0002", ["hardware accelerator throughput benchmarks"]),
+    ]
+    db = tmp_path / "index.sqlite"
+    build_graph(papers, db)
+
+    assert load_neighbors(db, "cccc0001") == []
+
+
+def test_load_neighbors_missing_db_raises_not_found(tmp_path: Path) -> None:
+    """Fehlende Index-Datei -> not_found."""
+    with pytest.raises(DomainError) as excinfo:
+        load_neighbors(tmp_path / "absent.sqlite", "aaaa0001")
+    assert excinfo.value.code is ErrorCode.NOT_FOUND
+
+
+def test_load_neighbors_without_graph_raises_constraint_violation(tmp_path: Path) -> None:
+    """Ein Index ohne gebauten Graphen -> constraint_violation."""
+    db = tmp_path / "index.sqlite"
+    build_index([_paper("aaaa0001", ["content without a graph build"])], db)
+
+    with pytest.raises(DomainError) as excinfo:
+        load_neighbors(db, "aaaa0001")
+    assert excinfo.value.code is ErrorCode.CONSTRAINT_VIOLATION

@@ -38,6 +38,7 @@ Beantwortet exakte/faktische Fragen über **Top-k-Vektorsuche (TF-IDF)** auf Pap
   "citations": [
     {
       "paper_id": "…",
+      "section_title": "…",
       "page_number": 1,
       "chunk_id": "…",
       "score": 0.42,
@@ -69,7 +70,7 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 
 ## 7. Provenienz
 
-- Je Zitat: `paper_id`, `page_number`, `chunk_id`, `score`, `source_uri`, `snippet`.
+- Je Zitat: `paper_id`, `section_title`, `page_number`, `chunk_id`, `score`, `source_uri`, `snippet`.
 
 ## 8. Reproduzierbarkeit
 
