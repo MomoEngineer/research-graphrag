@@ -19,7 +19,7 @@
 
 ## 1. Zweck
 
-Beantwortet exakte/faktische Fragen über **Top-k-Vektorsuche (TF-IDF)** auf Paper-Chunks und liefert **belegte Zitate** (Provenienz). Entspricht dem GraphRAG-Suchmodus **Basic**; die natürlichsprachige Antwort formuliert der aufrufende Agent (Copilot) über die LLM-Bridge ([ADR 0004](../../../docs/adr/0004-llm-bridge-via-mcp-sampling.md)).
+Beantwortet exakte/faktische Fragen über **Top-k-Vektorsuche (TF-IDF)** auf Paper-Chunks und liefert **belegte Zitate** (Provenienz). Entspricht dem GraphRAG-Suchmodus **Basic**; die natürlichsprachige Antwort formuliert der aufrufende Agent (Copilot) über die LLM-Bridge ([ADR 0004](../../../../docs/adr/0004-llm-bridge-via-mcp-sampling.md)).
 
 ## 2. Input-Schema
 
@@ -65,7 +65,7 @@ Beantwortet exakte/faktische Fragen über **Top-k-Vektorsuche (TF-IDF)** auf Pap
 - `not_found`: Index-Datei fehlt.
 - `constraint_violation`: Index enthält keine Chunks.
 
-Kategorien gemäß [docs/error-model.md](../../../docs/error-model.md).
+Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 
 ## 7. Provenienz
 
