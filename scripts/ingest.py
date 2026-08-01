@@ -38,6 +38,10 @@ def main() -> int:
         f"[ingest] Graph: Knoten={report.n_nodes} Kanten={report.n_edges} "
         f"Communities={report.n_communities}"
     )
+    print(
+        f"[ingest] Zitationen: Kanten={report.n_citation_edges} "
+        f"Paper mit Referenzabschnitt={report.n_papers_with_refs}"
+    )
     print(f"[ingest] Qualitätsreport: {Path(args.data) / 'quality_report.json'}")
     return 0
 

@@ -35,6 +35,8 @@ Für jede Frage werden festgehalten:
 | N1 | Which papers build on knowledge graph methods? | Local (Fan-out) | über Graph-Kanten verknüpfte Nachbarpaper | ✅ korrekt · Seed = *Structure-Grounded Knowledge Retrieval …*, Fan-out-Nachbar *A Survey of Graph RAG …* (Kantengewicht 0,46) mit belegtem Chunk. |
 | N2 | Which works relate to knowledge-graph-based code generation? | Local (Fan-out) | thematisch benachbarte Code-KG-Paper | ✅ korrekt · Chunk-Nachbarschaft u. a. *Knowledge Graph Based Repository-Level Code Generation*, **Abschnitt „Approach"**. |
 
+> **Hinweis (Phase 7 / A2):** Der Local-Fan-out folgt **Ähnlichkeits**-Kanten, nicht Zitationen. Fragen der Form „welche Paper bauen auf *diesem* Paper auf?" beantwortet der **Zitationsgraph** – `python -m scripts.citations <paper_id>` bzw. das MCP-Tool `get_citations` (Intra-Korpus, [ADR 0011](../docs/adr/0011-intra-corpus-citation-graph-phase7.md)).
+
 ## 4. Exakte Fakten → Basic
 
 | Nr. | Frage | Suchmodus | Erwartete Provenienz | Befund |

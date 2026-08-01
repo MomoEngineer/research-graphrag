@@ -42,6 +42,11 @@ Phase 5 registriert die sechs Tools über **FastMCP** (`stdio`) in **einem** Ser
    [ADR 0004](0004-llm-bridge-via-mcp-sampling.md) bleibt für einen späteren, echten
    Synthese-Bedarf reserviert, wird in Phase 5 aber **nicht** gebaut (YAGNI, right-sized).
 
+   > **Nachtrag ([ADR 0012](0012-llm-bridge-and-answer-synthesis-phase7.md), Phase 7 / A1):** Diese
+   > Regel gilt weiterhin für **alle Evidenz-Tools** (`search_*`, `get_paper`, `get_citations`,
+   > `list_topics`). Ergänzt wurde ein einzelnes, ausdrücklich **opt-in** Tool `answer_question`
+   > (`synthesize = true`), das die LLM-Bridge nutzt; im Default bleibt auch dieses Tool modellfrei.
+
 2. **`get_paper` liest aus dem Index (Single Source of Truth), `paper_id`-basiert.** Eingabe ist
    eine **`paper_id`** (kein Datei-Pfad) → kein Pfad-Traversal-Vektor, unbekannte IDs ergeben
    `not_found` statt `permission_denied`. Rückgabe (AI-freundlich, stabil): `paper_id`,

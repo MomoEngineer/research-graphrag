@@ -4,12 +4,20 @@ Aufruf vom Repository-Wurzelverzeichnis:
 
     python -m scripts.ask "Welche Methode nutzt Paper X?"
     python -m scripts.ask "Welche Forschungsrichtungen zeichnen sich ab?" --mode global
+    python -m scripts.ask "Welche Datensätze werden genutzt?" --synthese
 
 Ohne ``--mode`` (bzw. ``--mode auto``) wählt ein schlanker Heuristik-Router den Modus
 (siehe docs/adr/0008-retrieval-and-query-router-phase4.md). Die natürlichsprachige Antwort
 formuliert anschließend der aufrufende Agent (Copilot) aus den hier gelieferten, belegten
 Treffern. ``-k`` steuert die Trefferzahl je Modus (Basic: Chunks, Local: Chunk-Nachbarn,
 Global: Communities, DRIFT: lokale Belege).
+
+``--synthese`` zeigt zusätzlich den Synthese-Pfad der LLM-Bridge
+(docs/adr/0012-llm-bridge-and-answer-synthesis-phase7.md): Die Belege werden modus-unabhängig
+nummeriert an den Generierungs-Port gereicht. In der CLI steht offline **kein** Modell zur
+Verfügung; sie nutzt daher den ``NoopGenerationProvider`` und degradiert **sichtbar** – die
+volle Evidenz bleibt erhalten. Eine wirklich generierte Antwort liefert das MCP-Tool
+``answer_question`` mit ``synthesize = true`` (Client-Modell via MCP-Sampling).
 """
 
 from __future__ import annotations
@@ -20,6 +28,8 @@ from collections.abc import Callable
 from pathlib import Path
 
 from research_graphrag.errors import DomainError
+from research_graphrag.generation.answer import answer_question
+from research_graphrag.generation.provider import GenerationProvider, NoopGenerationProvider
 from research_graphrag.retrieval.basic import search_basic
 from research_graphrag.retrieval.drift import search_drift
 from research_graphrag.retrieval.global_search import search_global
@@ -120,6 +130,32 @@ _RENDERERS: dict[str, Callable[[str, str, int], None]] = {
 }
 
 
+def _render_synthesis(
+    mode: str, index: str, query: str, k: int, provider: GenerationProvider
+) -> None:
+    """Synthese-Pfad: nummerierte Belege plus – falls ein Modell verfügbar ist – die Antwort."""
+    result = answer_question(index, query, mode=mode, k=k, provider=provider)
+
+    if result.generated:
+        model = result.model or "Client-Modell"
+        print(f"[ask] Antwort ({model}):")
+        print(result.answer)
+    else:
+        print(
+            "[ask] Keine generierte Antwort (kein Sampling-fähiges Modell) – "
+            "die Belege bleiben maßgeblich."
+        )
+
+    if result.evidence.is_empty():
+        print(f"[ask] Keine belegten Treffer für: {query!r}")
+        return
+    print(f"[ask] Belege ({result.mode}):")
+    for item in result.evidence.items:
+        print(f"  [{item.index}] {item.label}")
+        print(f"      {item.snippet}")
+        print(f"      Quelle: {item.source_uri}")
+
+
 def main() -> int:
     """Beantwortet eine Frage über den gewählten (oder gerouteten) Suchmodus."""
     # Robuste Unicode-Ausgabe (Snippets/Keywords enthalten Zeichen außerhalb von cp1252).
@@ -136,6 +172,11 @@ def main() -> int:
         help="Suchmodus; 'auto' wählt ihn heuristisch (Default).",
     )
     parser.add_argument("--index", default=str(_DEFAULT_INDEX), help="Pfad zur Index-SQLite")
+    parser.add_argument(
+        "--synthese",
+        action="store_true",
+        help="Belege nummeriert über die LLM-Bridge aufbereiten (CLI ohne Modell: Noop-Fallback).",
+    )
     args = parser.parse_args()
 
     mode = args.mode
@@ -145,7 +186,10 @@ def main() -> int:
         print(f"[ask] Router: {decision.rationale}")
 
     try:
-        _RENDERERS[mode](args.index, args.query, args.k)
+        if args.synthese:
+            _render_synthesis(mode, args.index, args.query, args.k, NoopGenerationProvider())
+        else:
+            _RENDERERS[mode](args.index, args.query, args.k)
     except DomainError as exc:
         print(f"[ask] Fehler [{exc.code.value}]: {exc.message}")
         return 1

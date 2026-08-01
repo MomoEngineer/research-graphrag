@@ -86,3 +86,28 @@ def test_failed_reindex_preserves_previous_index(
     assert index.is_file()
     assert not index.with_name(index.name + ".tmp").exists()
     assert search_basic(index, "alpha", k=3).citations
+
+
+def test_failed_citation_build_preserves_previous_index(
+    make_pdf: MakePdf, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Auch der Zitationsgraph wird im atomaren Fenster gebaut (ADR 0011): Fehler → Alt-Index."""
+    make_pdf(["stable alpha content token method"], "papers/a.pdf")
+    papers = tmp_path / "papers"
+    data = tmp_path / "data"
+    index = data / "index" / "index.sqlite"
+
+    ingest(papers, data)
+
+    def _boom(*_args: object, **_kwargs: object) -> None:
+        raise RuntimeError("simulierter Zitations-Fehler")
+
+    monkeypatch.setattr(pipeline, "build_citation_graph", _boom)
+    make_pdf(["changed beta content token method"], "papers/a.pdf")
+
+    with pytest.raises(RuntimeError):
+        ingest(papers, data)
+
+    assert index.is_file()
+    assert not index.with_name(index.name + ".tmp").exists()
+    assert search_basic(index, "alpha", k=3).citations

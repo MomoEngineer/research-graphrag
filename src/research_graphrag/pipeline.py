@@ -1,10 +1,12 @@
 """Drop-in-Ingestion: papers/ → Canonical JSON → Offline-Hybrid-Index (Option B).
 
 Bindet Extraktion (``pypdf``), Dedup (``manifest.json`` über den Datei-Hash), Index-Bau
-(TF-IDF/SQLite) und den Paper-Ähnlichkeitsgraphen samt Louvain-Communities zu einem Schritt
-zusammen. Nur neue/geänderte PDFs werden extrahiert; Index und Graph werden als **voller
-Re-Index** aus allen Canonical-JSONs gebaut (Standard, siehe Roadmap.md). Grundsätze:
-docs/adr/0005-graphrag-index-backend-open.md, docs/adr/0007-graphrag-index-phase3-option-b.md.
+(TF-IDF/SQLite), den Paper-Ähnlichkeitsgraphen samt Louvain-Communities und den
+Intra-Korpus-Zitationsgraphen zu einem Schritt zusammen. Nur neue/geänderte PDFs werden
+extrahiert; Index, Graph und Zitationskanten werden als **voller Re-Index** aus allen
+Canonical-JSONs gebaut (Standard, siehe Roadmap.md). Grundsätze:
+docs/adr/0005-graphrag-index-backend-open.md, docs/adr/0007-graphrag-index-phase3-option-b.md,
+docs/adr/0011-intra-corpus-citation-graph-phase7.md.
 """
 
 from __future__ import annotations
@@ -18,6 +20,7 @@ from pathlib import Path
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.model import SCHEMA_VERSION, read_schema_version
 from research_graphrag.extraction.pdf import CanonicalPaper, extract_pdf
+from research_graphrag.indexing.citation_graph import CitationBuildReport, build_citation_graph
 from research_graphrag.indexing.graph_index import GraphBuildReport, build_graph
 from research_graphrag.indexing.tfidf_index import build_index
 
@@ -35,6 +38,8 @@ class IngestReport:
     n_nodes: int
     n_edges: int
     n_communities: int
+    n_citation_edges: int
+    n_papers_with_refs: int
 
 
 def _load_manifest(path: Path) -> dict[str, dict[str, str]]:
@@ -138,31 +143,33 @@ def _write_quality_report(papers: list[CanonicalPaper], data_dir: Path) -> Path:
 
 def _build_index_atomically(
     papers: list[CanonicalPaper], index_path: Path
-) -> tuple[int, GraphBuildReport]:
-    """Baut Index **und** Graph in eine Temporärdatei und ersetzt den Zielindex atomar.
+) -> tuple[int, GraphBuildReport, CitationBuildReport]:
+    """Baut Index, Graph **und** Zitationskanten in eine Temporärdatei und ersetzt atomar.
 
     Der MCP-Server liest den Index pro Anfrage frisch (On-Read, siehe
     docs/adr/0010-drop-in-workflow-and-qa-phase6.md); ein *In-place*-Neuaufbau könnte daher
     kurzzeitig einen halbfertigen Zustand liefern. Deshalb wird zunächst vollständig nach
-    ``index.sqlite.tmp`` gebaut (TF-IDF/SQLite **und** Paper-Graph) und erst nach Erfolg per
-    :func:`os.replace` **atomar** an die Zielstelle verschoben. Schlägt der Bau fehl, bleibt der
-    bestehende Index unangetastet (Crash-Sicherheit); die Temporärdatei wird stets entfernt.
+    ``index.sqlite.tmp`` gebaut (TF-IDF/SQLite, Paper-Graph **und** Zitationsgraph) und erst
+    nach Erfolg per :func:`os.replace` **atomar** an die Zielstelle verschoben. Schlägt der Bau
+    fehl, bleibt der bestehende Index unangetastet (Crash-Sicherheit); die Temporärdatei wird
+    stets entfernt.
 
     Args:
-        papers: Extrahierte Canonical-Papers (Quelle für Index und Graph).
+        papers: Extrahierte Canonical-Papers (Quelle für Index, Graph und Zitationen).
         index_path: Zielpfad der SQLite-Index-Datei.
 
     Returns:
-        Tupel aus indexierten Chunks und :class:`GraphBuildReport`.
+        Tupel aus indexierten Chunks, :class:`GraphBuildReport` und :class:`CitationBuildReport`.
     """
     tmp_path = index_path.with_name(index_path.name + ".tmp")
     try:
         indexed_chunks = build_index(papers, tmp_path)
         graph_report = build_graph(papers, tmp_path)
+        citation_report = build_citation_graph(papers, tmp_path)
         os.replace(tmp_path, index_path)
     finally:
         tmp_path.unlink(missing_ok=True)
-    return indexed_chunks, graph_report
+    return indexed_chunks, graph_report, citation_report
 
 
 def ingest(papers_dir: str | Path, data_dir: str | Path) -> IngestReport:
@@ -211,7 +218,7 @@ def ingest(papers_dir: str | Path, data_dir: str | Path) -> IngestReport:
             ErrorCode.INVALID_INPUT, "Keine Canonical-Paper vorhanden (papers/ leer?)."
         )
 
-    indexed_chunks, graph_report = _build_index_atomically(papers, index_path)
+    indexed_chunks, graph_report, citation_report = _build_index_atomically(papers, index_path)
     _write_quality_report(papers, data_path)
     return IngestReport(
         extracted=extracted,
@@ -223,4 +230,6 @@ def ingest(papers_dir: str | Path, data_dir: str | Path) -> IngestReport:
         n_nodes=graph_report.n_nodes,
         n_edges=graph_report.n_edges,
         n_communities=graph_report.n_communities,
+        n_citation_edges=citation_report.n_edges,
+        n_papers_with_refs=citation_report.n_papers_with_refs,
     )

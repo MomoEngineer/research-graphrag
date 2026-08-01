@@ -2,11 +2,12 @@
 
 Baut aus den Canonical-Papers **gerichtete** ``CITES``-Kanten **innerhalb des eigenen Korpus**:
 Für jedes Paper wird der Text seiner **Referenz-Sektion** (Sektionen mit ``kind = references``,
-Heuristik aus Phase 2) gegen die korpuseigenen **Identifikatoren** (DOI/arXiv) und **Titel**
-(Dateiname-Stamm aus ``source_uri``) abgeglichen. Präzedenz **DOI > arXiv > Titel**; Selbstzitate
-werden ausgeschlossen. Persistiert wird **additiv** in die bestehende SQLite-Index-Datei (Tabelle
-``citation_edges`` + versioniertes Teilschema). Grundsatz und Grenzen (kein tiefes Referenz-Parsing,
-Präzision vor Recall): docs/adr/0012-intra-corpus-citation-graph-phase7.md.
+Heuristik aus Phase 2) gegen die korpuseigenen **Identifikatoren** (DOI/arXiv, sofern auf der
+eigenen Titelseite belegt) und **Titel** (Dateiname-Stamm aus ``source_uri``) abgeglichen.
+Präzedenz **DOI > arXiv > Titel**; Selbstzitate werden ausgeschlossen. Persistiert wird
+**additiv** in die bestehende SQLite-Index-Datei (Tabelle ``citation_edges`` + versioniertes
+Teilschema). Grundsatz und Grenzen (kein tiefes Referenz-Parsing, Präzision vor Recall):
+docs/adr/0011-intra-corpus-citation-graph-phase7.md.
 """
 
 from __future__ import annotations
@@ -30,6 +31,9 @@ MIN_TITLE_WORDS = 5
 
 MIN_TITLE_CHARS = 30
 """Mindestlänge (Zeichen) eines normalisierten Titels für das Titel-Matching."""
+
+TITLE_PAGE_PAGES = 2
+"""Seiten, die als Frontmatter gelten (Beleg-Fenster für die eigenen Identifikatoren)."""
 
 # Präzedenz der Match-Methoden (kleiner = präziser); bestimmt die gespeicherte ``method``.
 _METHOD_RANK = {"doi": 0, "arxiv": 1, "title": 2}
@@ -101,14 +105,36 @@ def _title_of(paper: CanonicalPaper) -> str:
     return name
 
 
-def _reference_text(paper: CanonicalPaper) -> str:
-    """Sammelt den Text der Referenz-Sektion(en) eines Papers (leer, wenn keine erkannt)."""
-    ref_ids = {
+def _reference_section_ids(paper: CanonicalPaper) -> set[str]:
+    """Liefert die IDs der heuristisch erkannten Referenz-Sektionen eines Papers."""
+    return {
         section.section_id for section in paper.sections if section.kind == SECTION_KIND_REFERENCES
     }
+
+
+def _reference_text(paper: CanonicalPaper) -> str:
+    """Sammelt den Text der Referenz-Sektion(en) eines Papers (leer, wenn keine erkannt)."""
+    ref_ids = _reference_section_ids(paper)
     if not ref_ids:
         return ""
     return "\n".join(chunk.text for chunk in paper.chunks if chunk.section_id in ref_ids)
+
+
+def _front_matter_text(paper: CanonicalPaper) -> str:
+    """Liefert den Text der Titelseite(n) **ohne** Referenzabschnitt (klein geschrieben).
+
+    Beleg-Fenster für die eigenen Identifikatoren: Die Extraktion liest DOI/arXiv bevorzugt von
+    der Titelseite, fällt aber auf den Volltext zurück; dabei kann eine **zitierte** fremde ID
+    als eigene erfasst werden. Solche Werte würden hier massenhaft falsche Kanten erzeugen (der
+    falsche Wert steht in vielen Referenzlisten), deshalb wird die Bibliografie ausgeschlossen
+    (Präzision vor Recall, docs/adr/0011-intra-corpus-citation-graph-phase7.md).
+    """
+    ref_ids = _reference_section_ids(paper)
+    return " ".join(
+        chunk.text
+        for chunk in paper.chunks
+        if chunk.page_number <= TITLE_PAGE_PAGES and chunk.section_id not in ref_ids
+    ).lower()
 
 
 def _unique(papers: Sequence[CanonicalPaper]) -> list[CanonicalPaper]:
@@ -132,16 +158,21 @@ def _consider(matches: dict[str, str], target: str, method: str) -> None:
 def _build_target_maps(
     papers: Sequence[CanonicalPaper],
 ) -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
-    """Baut die Ziel-Maps (DOI/arXiv/Titel → ``paper_id``) aus dem Korpus."""
+    """Baut die Ziel-Maps (DOI/arXiv/Titel → ``paper_id``) aus dem Korpus.
+
+    DOI/arXiv werden nur übernommen, wenn sie im Frontmatter des jeweiligen Papers belegt sind
+    (siehe :func:`_front_matter_text`); Titel gelten erst ab einer Mindestlänge.
+    """
     doi_to_pid: dict[str, str] = {}
     arxiv_to_pid: dict[str, str] = {}
     title_to_pid: dict[str, str] = {}
     for paper in papers:
+        front = _front_matter_text(paper)
         doi = paper.identifiers.get("doi")
-        if doi:
+        if doi and doi.lower() in front:
             doi_to_pid.setdefault(doi.lower(), paper.paper_id)
         arxiv = paper.identifiers.get("arxiv")
-        if arxiv:
+        if arxiv and arxiv.lower() in front:
             arxiv_to_pid.setdefault(arxiv.lower(), paper.paper_id)
         title_norm = _normalize(_title_of(paper))
         if len(title_norm) >= MIN_TITLE_CHARS and len(title_norm.split()) >= MIN_TITLE_WORDS:

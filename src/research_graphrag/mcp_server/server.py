@@ -1,14 +1,16 @@
 """MCP-Server-Einstiegspunkt von research-graphrag (Transport ``stdio``).
 
-Registriert die Retrieval-Modi aus Phase 4 (Basic/Local/Global/DRIFT) sowie die
-Katalog-Tools ``get_paper`` und ``list_topics`` als MCP-Tools und startet den
-``stdio``-Transport, über den VS Code den Server als lokalen Unterprozess betreibt
-(siehe docs/vscode-integration.md).
+Registriert die Retrieval-Modi aus Phase 4 (Basic/Local/Global/DRIFT), die Katalog-Tools
+``get_paper`` und ``list_topics``, die Zitations-Abfrage ``get_citations`` sowie die belegte
+Antwort ``answer_question`` als MCP-Tools und startet den ``stdio``-Transport, über den VS Code
+den Server als lokalen Unterprozess betreibt (siehe docs/vscode-integration.md).
 
 Grundsätze (docs/adr/0009-mcp-server-stdio-phase5.md):
 
 - Die Tools liefern **strukturierte Evidenz + Provenienz**; die natürlichsprachige Antwort
   formuliert der aufrufende Agent (Copilot) selbst – **kein** serverseitiges LLM-Sampling.
+  Einzige, ausdrücklich **opt-in** Ausnahme: ``answer_question`` mit ``synthesize = true``
+  (docs/adr/0012-llm-bridge-and-answer-synthesis-phase7.md).
 - Fachliche Fehler (:class:`DomainError`) werden an der Server-Grenze in eine strukturierte
   Ausgabe mit ``isError = true`` übersetzt (docs/error-model.md).
 - Logging erfolgt auf **stderr** – stdout ist beim ``stdio``-Transport dem MCP-Protokoll
@@ -25,12 +27,17 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+import anyio.to_thread
 import mcp.types as types
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import Context, FastMCP
 
 from research_graphrag.errors import DomainError, ErrorCode
+from research_graphrag.generation.answer import AUTO_MODE, answer_question
+from research_graphrag.generation.provider import NoopGenerationProvider
 from research_graphrag.indexing.graph_index import load_communities
+from research_graphrag.mcp_server.sampling import provider_for
 from research_graphrag.retrieval.basic import search_basic
+from research_graphrag.retrieval.citations import get_citations
 from research_graphrag.retrieval.drift import search_drift
 from research_graphrag.retrieval.global_search import search_global
 from research_graphrag.retrieval.local import search_local
@@ -167,6 +174,56 @@ def get_paper_tool(paper_id: str) -> dict[str, Any]:
     return _guard(  # type: ignore[return-value]
         "get_paper", lambda: get_paper(_index_path(), paper_id).to_dict()
     )
+
+
+@mcp.tool(
+    name="get_citations",
+    title="Zitationen (Intra-Korpus)",
+    description=(
+        "Liefert die Zitationsbeziehungen eines Papers **innerhalb des Korpus**: `cites` "
+        "(zitiert) und `cited_by` (wird zitiert von), jeweils mit Quelle und dem Kriterium "
+        "des Treffers (doi/arxiv/title). Beantwortet 'welche Paper bauen auf X auf?'. "
+        "Read-only aus dem Index; externe Referenzen werden nicht aufgelöst."
+    ),
+)
+def get_citations_tool(paper_id: str) -> dict[str, Any]:
+    """Intra-Korpus-Zitationen mit Provenienz (siehe specs/get_citations.md)."""
+    return _guard(  # type: ignore[return-value]
+        "get_citations", lambda: get_citations(_index_path(), paper_id).to_dict()
+    )
+
+
+@mcp.tool(
+    name="answer_question",
+    title="Belegte Antwort (Router + Evidenz, optional formuliert)",
+    description=(
+        "Beantwortet eine Frage in einem Aufruf: wählt den Suchmodus (`auto` = Heuristik-Router "
+        "oder explizit basic/local/global/drift), sammelt die Belege und liefert sie als "
+        "einheitliche, durchnummerierte Evidenz mit Zitier-Contract (`[1]`, `[2]` …). Empfohlen "
+        "für Agenten mit eigenem Modell: `synthesize=false` (Default) – formuliere die Antwort "
+        "selbst und zitiere die Belegnummern. Mit `synthesize=true` formuliert der Server die "
+        "Antwort über MCP-Sampling; ohne Sampling-Fähigkeit bleibt `generated=false`."
+    ),
+)
+async def answer_question_tool(
+    query: str,
+    ctx: Context,  # type: ignore[type-arg]
+    mode: str = AUTO_MODE,
+    k: int = 5,
+    synthesize: bool = False,
+) -> dict[str, Any]:
+    """Router + Evidenz, optional per Client-Sampling formuliert (specs/answer_question.md)."""
+    provider = provider_for(ctx) if synthesize else NoopGenerationProvider()
+
+    def produce() -> dict[str, Any]:
+        return answer_question(_index_path(), query, mode=mode, k=k, provider=provider).to_dict()
+
+    def guarded() -> dict[str, Any]:
+        return _guard("answer_question", produce)  # type: ignore[return-value]
+
+    # Die Kernlogik ist synchron; im Worker-Thread kann der Sampler per anyio in den
+    # Event-Loop zurückrufen (Async-Brücke nur an der Servergrenze, ADR 0004/0012).
+    return await anyio.to_thread.run_sync(guarded)
 
 
 @mcp.tool(

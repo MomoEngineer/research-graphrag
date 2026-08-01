@@ -17,14 +17,15 @@ tests/
 ├─ test_errors.py         # Fehlertaxonomie
 ├─ test_pipeline.py       # Drop-in-Ingestion
 ├─ extraction/            # Extraktion: pdf/structure/chunking/quality (Phase 2)
-├─ indexing/              # TF-IDF/SQLite-Index (0b) + Graph/Communities (Phase 3)
-├─ retrieval/            # Basic/Local/Global/DRIFT + Router + Provenienz + get_paper + QS-Harness (Phase 4/5/6)
+├─ indexing/              # TF-IDF/SQLite-Index (0b) + Graph/Communities (Phase 3) + Zitationsgraph (Phase 7)
+├─ retrieval/            # Basic/Local/Global/DRIFT + Router + Provenienz + get_paper/get_citations + QS-Harness (Phase 4/5/6/7)
 ├─ overview/              # Übersicht-Entwürfe (Phase 2)
-├─ integration/           # End-to-End-Durchstich (M1) + Drop-in-Freshness/atomarer Swap (Phase 6)
+├─ generation/            # LLM-Bridge: Port, Evidenz, Synthese, CLI-Pfad (Phase 7 / A1)
+├─ integration/           # End-to-End-Durchstich (M1) + Drop-in-Freshness/atomarer Swap (Phase 6) + Status (Phase 7)
 └─ mcp_server/            # (Phase 5) Server-Contract via In-Memory-Client (test_server.py)
 ```
 
-> **Aktueller Stand (Phase 6):** Die Kernmodule (`errors`, `extraction/*` inkl. `model`/`structure`/`chunking`/`quality`, `indexing` inkl. `graph_index`, `retrieval/*` inkl. `basic`/`local`/`global_search`/`drift`/`router`/`provenance`/`paper`, `overview`, `pipeline`, `mcp_server/server`) sind mit Funktions-, Fehler-, Contract- und Property-Tests abgedeckt (Kernmodule ≥ 92 % Zeilenabdeckung, retrieval-Module 100 %; **170 Tests**). Der **Contract-Test** (Abschnitt 2.1) ist umgesetzt: ein **In-Memory-Client-Roundtrip** (`tests/mcp_server/test_server.py`) prüft alle sechs Tools über das echte MCP-Protokoll (Erfolg + strukturierte Fehlerausgabe). **Phase 6** ergänzt einen **Freshness-/Atomaritäts-Regressionstest** (`tests/integration/test_phase6_freshness.py`: neue PDF → `ingest` → On-Read liefert sie sofort; unveränderte übersprungen; ein fehlgeschlagener Re-Index lässt den Alt-Index intakt) und eine **QS-Harness-Regression** (`tests/retrieval/test_qa.py`: das feste Prüf-Fragen-Set liefert wohlgeformte Provenienz).
+> **Aktueller Stand (Phase 7 / A1 + A2):** Die Kernmodule (`errors`, `extraction/*` inkl. `model`/`structure`/`chunking`/`quality`, `indexing` inkl. `graph_index`/`citation_graph`, `retrieval/*` inkl. `basic`/`local`/`global_search`/`drift`/`router`/`provenance`/`paper`/`citations`, `generation/*` inkl. `provider`/`synthesis`/`evidence`/`answer`, `overview`, `pipeline`, `mcp_server/server`/`sampling`) sind mit Funktions-, Fehler-, Contract- und Property-Tests abgedeckt (Kernmodule ≥ 85 % Zeilenabdeckung, retrieval-Module 100 %; **244 Tests**). Der **Contract-Test** (Abschnitt 2.1) ist umgesetzt: ein **In-Memory-Client-Roundtrip** (`tests/mcp_server/test_server.py`) prüft alle acht Tools über das echte MCP-Protokoll (Erfolg + strukturierte Fehlerausgabe) – inklusive eines **echten Sampling-Roundtrips** für `answer_question` (Sampling-Callback als Client-Modell-Attrappe) und der sichtbaren Degradation ohne Sampling-Fähigkeit. **Phase 6** ergänzt einen **Freshness-/Atomaritäts-Regressionstest** (`tests/integration/test_phase6_freshness.py`: neue PDF → `ingest` → On-Read liefert sie sofort; unveränderte übersprungen; ein fehlgeschlagener Re-Index lässt den Alt-Index intakt) und eine **QS-Harness-Regression** (`tests/retrieval/test_qa.py`: das feste Prüf-Fragen-Set liefert wohlgeformte Provenienz). **Phase 7** ergänzt die Zitationsgraph-Tests (`tests/indexing/test_citation_graph.py`, `tests/retrieval/test_citations.py`), eine Status-Regression (`tests/integration/test_status.py`), die Synthese-Tests (`tests/generation/`) und eine **Konsolen-Encoding-Regression** (`tests/integration/test_cli_encoding.py`: die CLI-Skripte laufen auch bei cp1252-Ausgabe durch).
 
 ---
 

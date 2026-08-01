@@ -1,10 +1,11 @@
 """CLI: Read-only-Status von Index, Korpus und Artefakt-Konsistenz (Phase 6).
 
 Zeigt auf einen Blick, ob die Drop-in-Artefakte konsistent sind: Index-Schema und
--Kennzahlen (Paper/Chunks/Communities), Qualitäts-Flags, Manifest-/Identifier-Abdeckung
-sowie einen Konsistenz-Check zwischen ``papers/``, ``manifest.json`` und ``canonical/``.
-Rein **lesend** – es wird kein TF-IDF-Raum rekonstruiert und nichts geschrieben. Dient der
-pragmatischen Qualitätssicherung (siehe docs/adr/0010-drop-in-workflow-and-qa-phase6.md).
+-Kennzahlen (Paper/Chunks/Communities/Zitationskanten), Qualitäts-Flags, Manifest-/
+Identifier-Abdeckung sowie einen Konsistenz-Check zwischen ``papers/``, ``manifest.json``
+und ``canonical/``. Rein **lesend** – es wird kein TF-IDF-Raum rekonstruiert und nichts
+geschrieben. Dient der pragmatischen Qualitätssicherung (siehe
+docs/adr/0010-drop-in-workflow-and-qa-phase6.md).
 
 Aufruf vom Repository-Wurzelverzeichnis:
 
@@ -35,9 +36,11 @@ class StatusReport:
     index_present: bool
     schema_version: str | None
     graph_schema_version: str | None
+    citation_schema_version: str | None
     n_papers: int
     n_chunks: int
     n_communities: int
+    n_citation_edges: int
     n_identified: int
     flagged_papers: int | None
     total_flags: int | None
@@ -108,12 +111,14 @@ def collect_status(data_dir: str | Path, papers_dir: str | Path) -> StatusReport
     index_present = index_path.is_file()
     schema_version: str | None = None
     graph_schema_version: str | None = None
-    n_papers = n_chunks = n_communities = n_identified = 0
+    citation_schema_version: str | None = None
+    n_papers = n_chunks = n_communities = n_citation_edges = n_identified = 0
     if index_present:
         connection = sqlite3.connect(str(index_path))
         try:
             schema_version = _meta_value(connection, "schema_version")
             graph_schema_version = _meta_value(connection, "graph_schema_version")
+            citation_schema_version = _meta_value(connection, "citation_schema_version")
             n_papers = _scalar(connection, "SELECT COUNT(*) FROM papers")
             n_chunks = _scalar(connection, "SELECT COUNT(*) FROM chunks")
             n_identified = _scalar(
@@ -122,6 +127,8 @@ def collect_status(data_dir: str | Path, papers_dir: str | Path) -> StatusReport
             )
             if _table_exists(connection, "communities"):
                 n_communities = _scalar(connection, "SELECT COUNT(*) FROM communities")
+            if _table_exists(connection, "citation_edges"):
+                n_citation_edges = _scalar(connection, "SELECT COUNT(*) FROM citation_edges")
         finally:
             connection.close()
 
@@ -147,9 +154,11 @@ def collect_status(data_dir: str | Path, papers_dir: str | Path) -> StatusReport
         index_present=index_present,
         schema_version=schema_version,
         graph_schema_version=graph_schema_version,
+        citation_schema_version=citation_schema_version,
         n_papers=n_papers,
         n_chunks=n_chunks,
         n_communities=n_communities,
+        n_citation_edges=n_citation_edges,
         n_identified=n_identified,
         flagged_papers=flagged_papers,
         total_flags=total_flags,
@@ -187,10 +196,11 @@ def render(status: StatusReport) -> list[str]:
     if status.index_present:
         lines.append(
             f"  Index-Schema: {status.schema_version} · Graph-Schema: {status.graph_schema_version}"
+            f" · Zitations-Schema: {status.citation_schema_version}"
         )
         lines.append(
             f"  Paper: {status.n_papers} · Chunks: {status.n_chunks} · "
-            f"Communities: {status.n_communities}"
+            f"Communities: {status.n_communities} · Zitationskanten: {status.n_citation_edges}"
         )
         lines.append(f"  Mit Identifikatoren (DOI/arXiv): {status.n_identified}/{status.n_papers}")
     else:

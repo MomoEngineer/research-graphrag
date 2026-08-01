@@ -48,13 +48,15 @@ Damit der Serverprozess die in der `.venv` verfügbaren Abhängigkeiten (mcp, sc
 
 > **Secrets:** Keine Tokens/Keys in `mcp.json`. Die Tools liefern nur strukturierte Evidenz + Provenienz; ein LLM kommt allein clientseitig (Copilot) ins Spiel ([ADR 0009](adr/0009-mcp-server-stdio-phase5.md), [ADR 0004](adr/0004-llm-bridge-via-mcp-sampling.md)). Sensible Werte – falls je nötig – über VS-Code-Inputs oder `.env`, nie committen.
 
+> **Antwort-Synthese (opt-in):** `answer_question` kann mit `synthesize = true` die Antwort über **MCP-Sampling** vom Modell des Clients formulieren lassen. VS Code fragt dafür um Zustimmung und lässt die Modellwahl zu; unterstützt der Client kein Sampling, liefert das Tool weiterhin die vollständige Evidenz mit `generated = false` ([ADR 0012](adr/0012-llm-bridge-and-answer-synthesis-phase7.md)). Für Copilot ist der Default (`synthesize = false`) der empfohlene Weg – er vermeidet eine doppelte Generierung.
+
 ---
 
 ## 4. Server aktivieren und prüfen
 
 1. `.vscode/mcp.json` speichern (bereits angelegt).
 2. Copilot-Chat öffnen und in den **Agent-Modus** wechseln.
-3. In der Werkzeug-/Tools-Auswahl prüfen, ob die Tools gelistet werden: `search_local`, `search_global`, `search_drift`, `search_basic`, `get_paper`, `list_topics`.
+3. In der Werkzeug-/Tools-Auswahl prüfen, ob die Tools gelistet werden: `search_local`, `search_global`, `search_drift`, `search_basic`, `get_paper`, `get_citations`, `list_topics`, `answer_question`.
 4. Bei Problemen: `MCP: List Servers` → Server auswählen → `Show Output` (Startfehler des Prozesses prüfen).
 
 Ist der Server korrekt eingebunden, ruft Copilot die Tools im Agent-Modus selbstständig auf und erhält belegte Antworten mit Provenienz.

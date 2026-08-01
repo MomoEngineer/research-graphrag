@@ -12,6 +12,7 @@ Aufruf vom Repository-Wurzelverzeichnis:
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
 from research_graphrag.errors import DomainError
@@ -23,6 +24,10 @@ _DEFAULT_INDEX = _REPO_ROOT / "data" / "index" / "index.sqlite"
 
 def main() -> int:
     """Gibt eine kompakte Übersicht der Communities auf stdout aus."""
+    # Robuste Unicode-Ausgabe (Keywords/Auszüge enthalten Zeichen außerhalb von cp1252).
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     parser = argparse.ArgumentParser(description="Community-Übersicht (Option B, Phase 3).")
     parser.add_argument("--index", default=str(_DEFAULT_INDEX), help="Pfad zur Index-SQLite")
     parser.add_argument("-n", type=int, default=0, help="Nur die n größten Communities (0 = alle)")

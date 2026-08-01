@@ -12,6 +12,7 @@ from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.indexing.graph_index import load_communities
 from research_graphrag.pipeline import ingest
 from research_graphrag.retrieval.basic import search_basic
+from research_graphrag.retrieval.citations import get_citations
 
 MakePdf = Callable[..., Path]
 
@@ -50,6 +51,35 @@ def test_ingest_builds_graph_and_communities(make_pdf: MakePdf, tmp_path: Path) 
     assert report.n_edges >= 0
     communities = load_communities(data / "index" / "index.sqlite")
     assert sum(community.size for community in communities) == 2
+
+
+def test_ingest_builds_citation_edges(make_pdf: MakePdf, tmp_path: Path) -> None:
+    """Ein Titel-Treffer im Referenzabschnitt wird als CITES-Kante indexiert (ADR 0011)."""
+    make_pdf(
+        ["graph retrieval augmented generation over scientific corpora"],
+        "papers/Graph Retrieval Augmented Generation for Scientific Corpora.pdf",
+    )
+    make_pdf(
+        [
+            "Introduction\n\nwe benchmark retrieval pipelines end to end",
+            "References\n\n[1] Graph Retrieval Augmented Generation for Scientific Corpora. 2026.",
+        ],
+        "papers/Benchmarking Retrieval Pipelines.pdf",
+    )
+    data = tmp_path / "data"
+
+    report = ingest(tmp_path / "papers", data)
+
+    assert report.n_papers == 2
+    assert report.n_papers_with_refs == 1
+    assert report.n_citation_edges == 1
+
+    index = data / "index" / "index.sqlite"
+    citing_id = search_basic(index, "benchmark", k=1).citations[0].paper_id
+    citations = get_citations(index, citing_id)
+    assert [link.method for link in citations.cites] == ["title"]
+    assert "Graph%20Retrieval" in citations.cites[0].paper.source_uri
+    assert citations.cited_by == ()
 
 
 def test_ingest_skips_unchanged_on_second_run(make_pdf: MakePdf, tmp_path: Path) -> None:
