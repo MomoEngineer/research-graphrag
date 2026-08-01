@@ -15,7 +15,7 @@ from research_graphrag.retrieval.basic import BasicSearchResult
 from research_graphrag.retrieval.drift import DriftSearchResult
 from research_graphrag.retrieval.global_search import GlobalSearchResult
 from research_graphrag.retrieval.local import LocalSearchResult
-from research_graphrag.retrieval.provenance import Citation, PaperRef
+from research_graphrag.retrieval.provenance import Citation, PaperRef, page_label
 
 _Entry = tuple[str, str, str, str]
 
@@ -23,7 +23,8 @@ _Entry = tuple[str, str, str, str]
 def _citation_entry(citation: Citation) -> _Entry:
     """Bildet ein Chunk-Zitat auf einen Beleg mit Abschnitts-/Seiten-Label ab."""
     section = f" · Abschnitt {citation.section_title}" if citation.section_title else ""
-    label = f"Paper {citation.paper_id}{section} · Seite {citation.page_number}"
+    pages = page_label(citation.page_number, citation.page_end)
+    label = f"Paper {citation.paper_id}{section} · {pages}"
     return citation.paper_id, label, citation.snippet, citation.source_uri
 
 

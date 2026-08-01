@@ -22,8 +22,9 @@ def test_m1_durchstich_answers_with_page_provenance(make_pdf: MakePdf, tmp_path:
     """Eine Frage nach dem F1-Score verweist auf die korrekte Seite (Provenienz)."""
     make_pdf(
         [
-            "The proposed method uses a transformer attention mechanism.",
-            "Evaluation on the benchmark dataset reports an F1 score of 0.87.",
+            "1 Method\n" + "The proposed method uses a transformer attention mechanism. " * 5,
+            "2 Evaluation\n"
+            + "Evaluation on the benchmark dataset reports an F1 score of 0.87. " * 5,
         ],
         "papers/paper.pdf",
     )

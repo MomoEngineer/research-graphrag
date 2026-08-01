@@ -79,8 +79,21 @@ def test_table_with_caption_is_not_flagged() -> None:
 
 
 def test_short_and_long_chunk_flags() -> None:
-    """Chunks außerhalb des Zielfensters werden als short/long markiert."""
-    chunks = (_chunk("pid-c0000", "x" * 10), _chunk("pid-c0001", "y" * 2000))
+    """Zu kurze Chunks werden aggregiert gezählt, zu lange einzeln markiert."""
+    chunks = (
+        _chunk("pid-c0000", "x" * 10),
+        _chunk("pid-c0001", "y" * 2000),
+        _chunk("pid-c0002", "z" * 20),
+    )
     flags = assess([(1, "body text")], (_section("pid-s001", "body"),), chunks)
-    assert "short_chunk:pid-c0000" in flags
+    assert "short_chunks:2" in flags
     assert "long_chunk:pid-c0001" in flags
+    assert not any(flag.startswith("short_chunk:") for flag in flags)
+
+
+def test_no_short_chunk_flag_without_short_chunks() -> None:
+    """Ohne zu kurze Chunks entfällt die aggregierte Kennzahl vollständig."""
+    flags = assess(
+        [(1, "body text")], (_section("pid-s001", "body"),), (_chunk("pid-c0000", "x" * 500),)
+    )
+    assert not any(flag.startswith("short_chunks") for flag in flags)

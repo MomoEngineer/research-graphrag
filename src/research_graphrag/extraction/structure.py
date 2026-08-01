@@ -5,6 +5,17 @@ deterministisch testbar. Erkennt Überschriften (numerierte Überschriften, beka
 Sektions-Schlüsselwörter, kurze Versal-Zeilen), gruppiert den Fließtext in :class:`ContentBlock`
 je Absatz und extrahiert **DOI/arXiv** per Regex. Grundsatz und Grenzen (keine Bounding-Boxes,
 kein tiefes Referenz-Parsing): docs/adr/0006-canonical-model-phase2-scope.md.
+
+Gegen die **Übersegmentierung** der Heuristik (Pseudocode-Zeilen, Tabellenzellen, Running Header
+wurden als Überschriften gelesen) wirken zwei Stufen aus
+docs/adr/0013-chunking-refinement-phase7.md:
+
+- **Reject-Regeln** in :func:`detect_heading` für eindeutige Nicht-Überschriften (Mathematik-/
+  Pseudocode-Symbole, tabellarische Zeilen, Silbentrennungsreste, ziffernlastige Zellen). Sie
+  greifen bewusst **erst nach** dem Schlüsselwort-Zweig, damit bekannte Abschnitte
+  (``Abstract``/``References`` …) niemals verworfen werden.
+- **Section-Absorption** in :func:`analyze`: Abschnitte mit zu wenig eigenem Inhalt werden in
+  ihren Vorgänger zurückgeführt (evidenzbasiert über die gemessene Textmasse).
 """
 
 from __future__ import annotations
@@ -22,6 +33,10 @@ from research_graphrag.extraction.model import (
 )
 
 _MAX_HEADING_LEN = 90
+
+MIN_SECTION_CHARS = 200
+"""Mindest-Textmasse eines eigenständigen Abschnitts (spiegelt die Chunk-Untergrenze
+``chunking.MIN_CHARS``; hier eigenständig definiert, damit kein Import-Zyklus entsteht)."""
 
 # Bekannte Sektions-Titel (normalisiert) → Klassifikation.
 _KNOWN_SECTIONS: dict[str, str] = {
@@ -73,8 +88,37 @@ _NUM_PREFIX = re.compile(r"^\s*(\d+(?:\.\d+)*)[.)]?\s+")
 _ROMAN_PREFIX = re.compile(r"^\s*([IVXLC]+)[.)]\s+")
 _SENTENCE_TAIL = (".", "!", "?", ",", ";")
 
+# Reject-Regeln gegen Übersegmentierung (docs/adr/0013-chunking-refinement-phase7.md).
+_COLUMN_SPLIT = re.compile(r" {2,}")
+_MIN_COLUMNS = 3
+_MATH_SYMBOLS = re.compile(r"[\u2190-\u21ff\u2200-\u22ff\U0001d400-\U0001d7ff]")
+"""Pfeile, mathematische Operatoren und mathematische Alphanumerics – ein starkes Signal für
+Pseudocode-/Formelzeilen (``4 𝑥 ←𝑞.𝑝𝑜𝑝();``), die keine Überschriften sind."""
+_REJECT_TAIL = ("-", ";", ",")
+_MAX_DIGIT_RATIO = 0.3
+
 _DOI = re.compile(r"10\.\d{4,9}/[-._;()/:A-Za-z0-9]+")
 _ARXIV = re.compile(r"arxiv[:\s]\s*(\d{4}\.\d{4,5})(v\d+)?", re.IGNORECASE)
+
+
+def looks_tabular(line: str) -> bool:
+    """Erkennt eine tabellarisch anmutende Zeile (≥ 3 Felder über Tab/Mehrfach-Leerzeichen)."""
+    if "\t" in line:
+        return True
+    return len([field for field in _COLUMN_SPLIT.split(line.strip()) if field]) >= _MIN_COLUMNS
+
+
+def _is_rejected(text: str, core: str) -> bool:
+    """Prüft, ob eine Zeile eindeutig **keine** Überschrift ist (siehe Modul-Docstring)."""
+    if _MATH_SYMBOLS.search(text) or looks_tabular(text):
+        return True
+    if text.rstrip().endswith(_REJECT_TAIL):
+        return True
+    compact = [char for char in core if not char.isspace()]
+    if not compact:
+        return True
+    digits = sum(1 for char in compact if char.isdigit() or char == "%")
+    return digits / len(compact) > _MAX_DIGIT_RATIO
 
 
 @dataclass(frozen=True)
@@ -110,6 +154,11 @@ class Sectioning:
 def detect_heading(line: str) -> _Heading | None:
     """Prüft, ob eine (bereits getrimmte) Zeile eine Überschrift ist.
 
+    Bekannte Sektions-Schlüsselwörter (``Abstract``, ``References`` …) werden zuerst geprüft und
+    nie verworfen. Erst danach greifen die Reject-Regeln (:func:`_is_rejected`), die die beiden
+    unscharfen Zweige (Numerierung, Versalzeile) gegen Pseudocode, Tabellenzellen und
+    Silbentrennungsreste absichern.
+
     Returns:
         Ein :class:`_Heading` mit Titel/Klassifikation/Ebene oder ``None``.
     """
@@ -138,6 +187,9 @@ def detect_heading(line: str) -> _Heading | None:
     if core_norm.startswith("abstract") and len(core_norm) <= 12:
         return _Heading(title="Abstract", kind=SECTION_KIND_ABSTRACT, level=level)
 
+    if _is_rejected(text, core):
+        return None
+
     words = core.split()
     if numbered and core and len(words) <= 8 and not core.rstrip().endswith(_SENTENCE_TAIL):
         return _Heading(title=core, kind=SECTION_KIND_BODY, level=level)
@@ -161,8 +213,56 @@ def extract_identifiers(text: str) -> dict[str, str]:
     return identifiers
 
 
+def _absorb_short_sections(
+    sections: Sequence[Section], blocks: Sequence[ContentBlock]
+) -> tuple[tuple[Section, ...], tuple[ContentBlock, ...]]:
+    """Führt inhaltsarme Abschnitte in ihren Vorgänger zurück (Anti-Übersegmentierung).
+
+    Ein Abschnitt wird absorbiert, wenn seine **eigene** Textmasse unter
+    :data:`MIN_SECTION_CHARS` liegt. Geschützt sind ``front``, ``abstract`` und ``references``
+    (sie tragen Qualitäts-Flags und den Zitationsgraphen); außerdem wird nie **in** einen
+    ``references``-Abschnitt hinein absorbiert, damit Anhänge nicht als Bibliografie gelten.
+    Die überlebenden Abschnitte behalten ihre ``section_id``/``order`` (die Numerierung bleibt
+    damit auf die erkannten Überschriften rückführbar und weist Lücken auf).
+
+    Args:
+        sections: Erkannte Abschnitte in Lese-Reihenfolge.
+        blocks: Zugeordnete Fließtext-Blöcke.
+
+    Returns:
+        Die verbleibenden Abschnitte und die auf sie umgehängten Blöcke.
+    """
+    own_chars: dict[str, int] = {}
+    for block in blocks:
+        own_chars[block.section_id] = own_chars.get(block.section_id, 0) + len(block.text.strip())
+
+    remap: dict[str, str] = {}
+    survivors: list[Section] = []
+    for section in sections:
+        previous = survivors[-1] if survivors else None
+        absorbable = (
+            section.kind == SECTION_KIND_BODY
+            and own_chars.get(section.section_id, 0) < MIN_SECTION_CHARS
+            and previous is not None
+            and previous.kind != SECTION_KIND_REFERENCES
+        )
+        if absorbable and previous is not None:
+            remap[section.section_id] = previous.section_id
+            continue
+        remap[section.section_id] = section.section_id
+        survivors.append(section)
+
+    merged = tuple(
+        ContentBlock(block.page_number, remap[block.section_id], block.text) for block in blocks
+    )
+    return tuple(survivors), merged
+
+
 def analyze(paper_id: str, pages: Sequence[tuple[int, str]]) -> Sectioning:
     """Erkennt Abschnitte und gruppiert den Fließtext absatzweise.
+
+    Inhaltsarme Abschnitte werden anschließend in ihren Vorgänger zurückgeführt
+    (:func:`_absorb_short_sections`, docs/adr/0013-chunking-refinement-phase7.md).
 
     Args:
         paper_id: Paper-ID (Grundlage der ``section_id``-Vergabe).
@@ -221,4 +321,5 @@ def analyze(paper_id: str, pages: Sequence[tuple[int, str]]) -> Sectioning:
         )
         sections.insert(0, front)
 
-    return Sectioning(sections=tuple(sections), blocks=tuple(blocks))
+    kept, merged = _absorb_short_sections(sections, blocks)
+    return Sectioning(sections=kept, blocks=merged)

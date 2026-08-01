@@ -14,19 +14,18 @@ MakePdf = Callable[..., Path]
 
 
 def test_extract_two_pages_with_provenance(make_pdf: MakePdf) -> None:
-    """Ein zweiseitiges PDF ergibt zwei Seiten-Chunks mit Provenienz."""
+    """Ein zweiseitiges PDF ergibt einen Chunk mit Seiten-Range als Provenienz."""
     pdf = make_pdf(["Alpha GraphRAG retrieval method", "Beta dataset evaluation report"])
 
     paper = extract_pdf(pdf)
 
     assert paper.n_pages == 2
-    assert len(paper.chunks) == 2
+    assert len(paper.chunks) == 1
     assert paper.chunks[0].page_number == 1
-    assert paper.chunks[1].page_number == 2
+    assert paper.chunks[0].page_end == 2
     assert "GraphRAG" in paper.chunks[0].text
-    assert "dataset" in paper.chunks[1].text
+    assert "dataset" in paper.chunks[0].text
     assert paper.chunks[0].chunk_id == f"{paper.paper_id}-c0000"
-    assert paper.chunks[1].chunk_id == f"{paper.paper_id}-c0001"
     assert len(paper.source_sha256) == 64
     assert len(paper.paper_id) == 16
     assert paper.source_uri.startswith("file:")
@@ -132,6 +131,6 @@ def test_extract_always_has_front_section(make_pdf: MakePdf) -> None:
 
 
 def test_extract_schema_version_is_current(make_pdf: MakePdf) -> None:
-    """Das Canonical JSON trägt die aktuelle Schema-Version 0.2.0."""
+    """Das Canonical JSON trägt die aktuelle Schema-Version 0.3.0."""
     paper = extract_pdf(make_pdf(["content"]))
-    assert paper.to_dict()["schema_version"] == "0.2.0"
+    assert paper.to_dict()["schema_version"] == "0.3.0"

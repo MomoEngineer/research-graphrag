@@ -5,10 +5,12 @@ Enthält die serialisierbaren Kernstrukturen der Extraktion – :class:`Section`
 die reinen Datenstrukturen unabhängig von der Extraktions-Mechanik testbar; die
 Orchestrierung liegt in :mod:`research_graphrag.extraction.pdf`.
 
-Schema-Version **0.2.0** (Phase 2): ergänzt gegenüber ``0.1.0`` die **Section-Hierarchie**
-(heuristisch), **Identifikatoren** (DOI/arXiv) sowie **Section-Provenienz je Chunk**. Die
-Chunk-Granularität ist nun **abschnitts-/größenbasiert** statt „eine Seite = ein Chunk"
-(Seite bleibt harte Chunk-Grenze). Grundsatz:
+Schema-Version **0.3.0**: Ein Chunk trägt zusätzlich ``page_end`` – die Seite ist **kein
+Segmentierungskriterium** mehr, sondern eine **Provenienz-Range** (``page_number`` = Startseite,
+``page_end`` = Endseite; siehe docs/adr/0013-chunking-refinement-phase7.md). ``0.1.0 -> 0.2.0``
+ergänzte die **Section-Hierarchie** (heuristisch), **Identifikatoren** (DOI/arXiv) sowie
+**Section-Provenienz je Chunk** und stellte die Chunk-Granularität von „eine Seite = ein Chunk"
+auf **abschnitts-/größenbasiert** um. Grundsatz:
 docs/adr/0006-canonical-model-phase2-scope.md.
 """
 
@@ -20,7 +22,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "0.2.0"
+SCHEMA_VERSION = "0.3.0"
 """Version des Canonical-JSON-Schemas (für spätere Migrationen)."""
 
 SECTION_KIND_FRONT = "front"
@@ -68,8 +70,10 @@ class Section:
 class Chunk:
     """Kleinste retrievbare Einheit mit Seiten- und Section-Provenienz.
 
-    ``page_number`` ist die (exakte) Startseite des Chunks; ``section_id``/``section_title``
-    verweisen auf den zugehörigen :class:`Section` (leer, wenn keiner erkannt wurde).
+    ``page_number`` ist die **Startseite**, ``page_end`` die **Endseite** des Chunks (identisch,
+    solange der Chunk auf einer Seite liegt – siehe
+    docs/adr/0013-chunking-refinement-phase7.md). ``section_id``/``section_title`` verweisen auf
+    den zugehörigen :class:`Section` (leer, wenn keiner erkannt wurde).
     """
 
     chunk_id: str
@@ -79,6 +83,12 @@ class Chunk:
     char_count: int
     section_id: str | None = None
     section_title: str = ""
+    page_end: int = 0
+
+    def __post_init__(self) -> None:
+        """Normalisiert die Seiten-Range: ``page_end`` fällt auf die Startseite zurück."""
+        if self.page_end < self.page_number:
+            object.__setattr__(self, "page_end", self.page_number)
 
     def to_dict(self) -> dict[str, Any]:
         """Serialisiert den Chunk als Canonical-JSON-kompatibles Dict."""
@@ -86,6 +96,7 @@ class Chunk:
             "chunk_id": self.chunk_id,
             "paper_id": self.paper_id,
             "page_number": self.page_number,
+            "page_end": self.page_end,
             "text": self.text,
             "char_count": self.char_count,
             "section_id": self.section_id,
@@ -94,7 +105,7 @@ class Chunk:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> Chunk:
-        """Rekonstruiert einen :class:`Chunk` aus Canonical JSON (0.1.0-tolerant)."""
+        """Rekonstruiert einen :class:`Chunk` aus Canonical JSON (0.1.0/0.2.0-tolerant)."""
         section_id = data.get("section_id")
         return cls(
             chunk_id=str(data["chunk_id"]),
@@ -104,6 +115,7 @@ class Chunk:
             char_count=int(data["char_count"]),
             section_id=None if section_id is None else str(section_id),
             section_title=str(data.get("section_title", "")),
+            page_end=int(data.get("page_end", 0)),
         )
 
 

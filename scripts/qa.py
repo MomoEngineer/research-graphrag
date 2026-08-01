@@ -25,6 +25,7 @@ from research_graphrag.retrieval.basic import search_basic
 from research_graphrag.retrieval.drift import search_drift
 from research_graphrag.retrieval.global_search import search_global
 from research_graphrag.retrieval.local import search_local
+from research_graphrag.retrieval.provenance import page_label
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _DEFAULT_INDEX = _REPO_ROOT / "data" / "index" / "index.sqlite"
@@ -124,6 +125,7 @@ def _from_citation(citation: Any) -> dict[str, Any]:
         "kind": "chunk",
         "paper_id": citation.paper_id,
         "page_number": citation.page_number,
+        "page_end": citation.page_end,
         "section_title": citation.section_title,
         "source_uri": citation.source_uri,
     }
@@ -182,7 +184,8 @@ def _format_prov(entry: dict[str, Any]) -> str:
     """Formatiert einen Provenienz-Eintrag als kompakte Zeile für die Anzeige."""
     if entry["kind"] == "chunk":
         section = f" · Abschnitt {entry['section_title']}" if entry["section_title"] else ""
-        return f"Paper {entry['paper_id']} · Seite {entry['page_number']}{section}"
+        pages = page_label(entry["page_number"], entry["page_end"])
+        return f"Paper {entry['paper_id']} · {pages}{section}"
     keywords = ", ".join(entry["keywords"][:5]) or "(keine)"
     reps = ", ".join(entry["representatives"]) or "(keine)"
     return (

@@ -70,3 +70,22 @@ erst in Phase 4 in Index/Retrieval ein) – die Phasen-Grenzen bleiben scharf.
 - **Folgeentscheidungen:** Bounding-Boxes und tiefes Referenz-/Tabellen-Parsing werden mit
   Docling/GROBID in **Phase 7** erneut bewertet (ggf. Folge-ADR im Rahmen von **Option C**,
   [ADR 0005](0005-graphrag-index-backend-open.md)).
+
+---
+
+## Nachtrag (2026-08-01, Phase 7 / A3)
+
+Zwei hier getroffene Festlegungen sind durch [ADR 0013](0013-chunking-refinement-phase7.md)
+**abgelöst**; der übrige Umfang dieses ADR (keine Bounding-Boxes, kein tiefes Referenz-/
+Tabellen-Parsing, heuristische Sections) gilt unverändert weiter:
+
+- **„Seite ist harte Chunk-Grenze"** – aufgehoben. Die Seite ist ein Layout-Artefakt und dient
+  nicht mehr der Segmentierung; sie wird als **Provenienz-Range** geführt (`page_number` =
+  Startseite, neu `page_end`). Auslöser: 79,6 % der Seitenumbrüche innerhalb einer Section lagen
+  mitten im Satz.
+- **Qualitäts-Flag `short_chunk:<chunk_id>`** – ersetzt durch das aggregierte `short_chunks:<n>`
+  je Paper; `long_chunk:<chunk_id>` bleibt unverändert pro Chunk.
+
+Ergänzt wurde außerdem eine **Section-Absorption** gegen die Übersegmentierung der hier
+festgelegten Überschriften-Heuristik (Messwerte und Begründung in
+[ADR 0013](0013-chunking-refinement-phase7.md)).

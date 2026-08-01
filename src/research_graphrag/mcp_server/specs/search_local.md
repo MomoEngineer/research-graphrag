@@ -40,13 +40,14 @@ Beantwortet **Detailfragen zu einem Paper** und **Zitations-/Methodennetz-Fragen
     "paper_id": "…",
     "section_title": "…",
     "page_number": 6,
+    "page_end": 6,
     "chunk_id": "…",
     "score": 0.42,
     "source_uri": "file:///…",
     "snippet": "…"
   },
-  "neighborhood": [ { "paper_id": "…", "section_title": "…", "page_number": 5, "chunk_id": "…", "score": 0.33, "source_uri": "file:///…", "snippet": "…" } ],
-  "fan_out": [ { "paper_id": "…", "weight": 0.46, "citation": { "paper_id": "…", "section_title": "…", "page_number": 6, "chunk_id": "…", "score": 0.2, "source_uri": "file:///…", "snippet": "…" } } ]
+  "neighborhood": [ { "paper_id": "…", "section_title": "…", "page_number": 5, "page_end": 5, "chunk_id": "…", "score": 0.33, "source_uri": "file:///…", "snippet": "…" } ],
+  "fan_out": [ { "paper_id": "…", "weight": 0.46, "citation": { "paper_id": "…", "section_title": "…", "page_number": 6, "page_end": 7, "chunk_id": "…", "score": 0.2, "source_uri": "file:///…", "snippet": "…" } } ]
 }
 ```
 
@@ -73,7 +74,7 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 
 ## 7. Provenienz
 
-- Seed und Chunk-Nachbarn: `paper_id`, `section_title`, `page_number`, `chunk_id`, `score`, `source_uri`, `snippet`.
+- Seed und Chunk-Nachbarn: `paper_id`, `section_title`, `page_number`, `page_end`, `chunk_id`, `score`, `source_uri`, `snippet`.
 - Fan-out: Nachbar-`paper_id`, Kanten-`weight` und (optional) ein Chunk-`citation`.
 
 ## 8. Reproduzierbarkeit

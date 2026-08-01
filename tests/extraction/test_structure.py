@@ -83,14 +83,52 @@ def test_overlong_line_is_not_a_heading() -> None:
     assert detect_heading("Introduction " * 10) is None
 
 
+def test_pseudocode_line_is_rejected() -> None:
+    """Eine numerierte Pseudocode-Zeile mit Mathe-Symbolen ist keine Überschrift."""
+    assert detect_heading("4 𝑥 ←𝑞.𝑝𝑜𝑝();") is None
+
+
+def test_table_cell_line_is_rejected() -> None:
+    """Eine ziffernlastige Versalzeile (Tabellenzelle) ist keine Überschrift."""
+    assert detect_heading("GPT-4 32.00%") is None
+
+
+def test_tabular_line_is_rejected() -> None:
+    """Eine Zeile mit drei Spalten (Mehrfach-Leerzeichen) ist keine Überschrift."""
+    assert detect_heading("MODEL    PREC    REC") is None
+
+
+def test_tab_separated_line_is_rejected() -> None:
+    """Auch eine tabgetrennte Zeile gilt als tabellarisch und ist keine Überschrift."""
+    assert detect_heading("MODEL\tPREC") is None
+
+
+def test_numbering_without_content_is_rejected() -> None:
+    """Eine Zeile aus reiner Numerierung hat keinen Titelkern und wird verworfen."""
+    assert detect_heading("3. ") is None
+
+
+def test_hyphenated_line_end_is_rejected() -> None:
+    """Ein Silbentrennungsrest am Zeilenende ist keine Überschrift."""
+    assert detect_heading("LITERATURECOLLECTION ANDTECHNOLOGI-") is None
+
+
+def test_known_section_survives_reject_rules() -> None:
+    """Bekannte Schlüsselwörter werden nie verworfen (Referenzabschnitt bleibt erhalten)."""
+    heading = detect_heading("REFERENCES")
+    assert heading is not None
+    assert heading.kind == SECTION_KIND_REFERENCES
+
+
 def test_analyze_detects_front_abstract_and_body() -> None:
     """Fließtext vor der ersten Überschrift wird front; Abstract/Body werden erkannt."""
+    body = "The introduction motivates the work in depth. " * 6
     pages = [
         (
             1,
             "Title line and authors before any heading\n\n"
             "Abstract\nWe present a study of retrieval methods.\n\n"
-            "1 Introduction\nThe introduction motivates the work.",
+            f"1 Introduction\n{body}",
         )
     ]
 
@@ -102,6 +140,42 @@ def test_analyze_detects_front_abstract_and_body() -> None:
     assert SECTION_KIND_BODY in kinds
     abstract_id = next(s.section_id for s in sectioning.sections if s.kind == SECTION_KIND_ABSTRACT)
     assert any(block.section_id == abstract_id for block in sectioning.blocks)
+
+
+def test_analyze_absorbs_content_poor_body_section() -> None:
+    """Ein inhaltsarmer body-Abschnitt verschwindet und sein Text geht an den Vorgänger."""
+    body = "The method section carries enough text to stand on its own. " * 5
+    pages = [(1, f"3 Method\n{body}\n\nGRAPHCODER\nA stray caption line.")]
+
+    sectioning = analyze("pid", pages)
+    titles = [section.title for section in sectioning.sections]
+
+    assert "Method" in titles
+    assert "Graphcoder" not in titles
+    method_id = next(s.section_id for s in sectioning.sections if s.title == "Method")
+    assert {block.section_id for block in sectioning.blocks} == {method_id}
+
+
+def test_analyze_keeps_short_reference_section() -> None:
+    """Der Referenzabschnitt bleibt trotz geringer Textmasse erhalten (Zitationsgraph)."""
+    body = "The evaluation covers several benchmark datasets in detail. " * 5
+    pages = [(1, f"2 Evaluation\n{body}\n\nReferences\n[1] A. Author, A short entry.")]
+
+    sectioning = analyze("pid", pages)
+
+    assert SECTION_KIND_REFERENCES in {section.kind for section in sectioning.sections}
+
+
+def test_analyze_does_not_absorb_into_references() -> None:
+    """Nach dem Referenzabschnitt wird nicht hinein absorbiert (Anhang bleibt getrennt)."""
+    body = "The evaluation covers several benchmark datasets in detail. " * 5
+    pages = [(1, f"2 Evaluation\n{body}\n\nReferences\n[1] A. Author.\n\nAPPENDIX\nA short note.")]
+
+    sectioning = analyze("pid", pages)
+    kinds = [section.kind for section in sectioning.sections]
+
+    assert kinds.count(SECTION_KIND_REFERENCES) == 1
+    assert "APPENDIX" in [section.title for section in sectioning.sections]
 
 
 def test_analyze_without_headings_is_all_front() -> None:

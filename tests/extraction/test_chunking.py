@@ -21,17 +21,27 @@ def test_small_paragraphs_merge_within_page_and_section() -> None:
     assert len(chunks) == 1
     assert chunks[0].section_title == "Methods"
     assert chunks[0].page_number == 1
+    assert chunks[0].page_end == 1
 
 
-def test_page_boundary_forces_split() -> None:
-    """Ein Seitenwechsel trennt Chunks (exakte Seiten-Provenienz)."""
+def test_page_break_extends_range_instead_of_splitting() -> None:
+    """Ein Seitenumbruch trennt nicht mehr, sondern erweitert die Seiten-Range."""
     chunks = build_chunks(
         "pid", _blocks((1, "pid-s001", "x" * 300), (2, "pid-s001", "y" * 300)), _TITLES
     )
 
-    assert len(chunks) == 2
+    assert len(chunks) == 1
     assert chunks[0].page_number == 1
-    assert chunks[1].page_number == 2
+    assert chunks[0].page_end == 2
+
+
+def test_size_limit_splits_across_pages_keeps_start_page() -> None:
+    """Beim Größenschnitt beginnt der Folge-Chunk auf seiner eigenen Seite."""
+    chunks = build_chunks(
+        "pid", _blocks((1, "pid-s001", "x" * 900), (2, "pid-s001", "y" * 900)), _TITLES
+    )
+
+    assert [(c.page_number, c.page_end) for c in chunks] == [(1, 1), (2, 2)]
 
 
 def test_section_boundary_forces_split() -> None:
@@ -78,7 +88,7 @@ def test_oversized_single_sentence_stays_whole() -> None:
 def test_chunk_ids_are_sequential() -> None:
     """Chunk-IDs sind fortlaufend über das gesamte Paper."""
     chunks = build_chunks(
-        "pid", _blocks((1, "pid-s001", "a" * 300), (2, "pid-s001", "b" * 300)), _TITLES
+        "pid", _blocks((1, "pid-s001", "a" * 300), (2, "pid-s002", "b" * 300)), _TITLES
     )
 
     assert [chunk.chunk_id for chunk in chunks] == ["pid-c0000", "pid-c0001"]

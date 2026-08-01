@@ -34,7 +34,7 @@ from research_graphrag.retrieval.basic import search_basic
 from research_graphrag.retrieval.drift import search_drift
 from research_graphrag.retrieval.global_search import search_global
 from research_graphrag.retrieval.local import search_local
-from research_graphrag.retrieval.provenance import Citation
+from research_graphrag.retrieval.provenance import Citation, page_label
 from research_graphrag.retrieval.router import MODES, route
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -44,10 +44,8 @@ _DEFAULT_INDEX = _REPO_ROOT / "data" / "index" / "index.sqlite"
 def _print_citation(rank: int, citation: Citation) -> None:
     """Gibt ein Chunk-Zitat inkl. Abschnitts-/Seiten-Provenienz aus."""
     section = f" · Abschnitt {citation.section_title}" if citation.section_title else ""
-    print(
-        f"  {rank}. Paper {citation.paper_id} · Seite {citation.page_number}{section} "
-        f"· Score {citation.score:.3f}"
-    )
+    pages = page_label(citation.page_number, citation.page_end)
+    print(f"  {rank}. Paper {citation.paper_id} · {pages}{section} · Score {citation.score:.3f}")
     print(f"     {citation.snippet}")
     print(f"     Quelle: {citation.source_uri}")
 

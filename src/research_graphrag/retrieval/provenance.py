@@ -28,12 +28,27 @@ def _snippet(text: str, limit: int = _SNIPPET_LIMIT) -> str:
     return collapsed[: limit - 1].rstrip() + "…"
 
 
+def page_label(page_number: int, page_end: int) -> str:
+    """Anzeigeform der Seiten-Provenienz: „Seite 7" bzw. „Seiten 7–8".
+
+    Single Source of Truth für alle Ausgabekanäle (CLI, QS-Harness, Evidenz-Aufbereitung),
+    seit ein Chunk über einen Seitenumbruch laufen darf
+    (docs/adr/0013-chunking-refinement-phase7.md).
+    """
+    if page_end <= page_number:
+        return f"Seite {page_number}"
+    return f"Seiten {page_number}–{page_end}"
+
+
 @dataclass(frozen=True)
 class Citation:
     """Belegte Quelle auf **Chunk-Ebene** (Paper · Abschnitt · Seite · Chunk).
 
-    ``section_title`` ist die (heuristische) Abschnittsüberschrift des Chunks; leer, wenn
-    keine Section erkannt wurde (siehe docs/adr/0006-canonical-model-phase2-scope.md).
+    ``page_number`` ist die Startseite, ``page_end`` die Endseite des Chunks; beide sind
+    identisch, solange der Chunk auf einer Seite liegt (Seiten-Range statt harter Seitengrenze,
+    siehe docs/adr/0013-chunking-refinement-phase7.md). ``section_title`` ist die (heuristische)
+    Abschnittsüberschrift des Chunks; leer, wenn keine Section erkannt wurde (siehe
+    docs/adr/0006-canonical-model-phase2-scope.md).
     """
 
     paper_id: str
@@ -43,6 +58,12 @@ class Citation:
     source_uri: str
     snippet: str
     section_title: str = ""
+    page_end: int = 0
+
+    def __post_init__(self) -> None:
+        """Normalisiert die Seiten-Range: ``page_end`` fällt auf die Startseite zurück."""
+        if self.page_end < self.page_number:
+            object.__setattr__(self, "page_end", self.page_number)
 
     @classmethod
     def from_hit(cls, hit: Hit) -> Citation:
@@ -55,6 +76,7 @@ class Citation:
             source_uri=hit.source_uri,
             snippet=hit.snippet,
             section_title=hit.section_title,
+            page_end=hit.page_end,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -63,6 +85,7 @@ class Citation:
             "paper_id": self.paper_id,
             "section_title": self.section_title,
             "page_number": self.page_number,
+            "page_end": self.page_end,
             "chunk_id": self.chunk_id,
             "score": self.score,
             "source_uri": self.source_uri,

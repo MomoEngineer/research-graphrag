@@ -5,7 +5,7 @@ docs/adr/0005-graphrag-index-backend-open.md): Seitentext lesen → Struktur/Abs
 (:mod:`~research_graphrag.extraction.structure`) → größenbasiert chunken
 (:mod:`~research_graphrag.extraction.chunking`) → Qualitäts-Gates
 (:mod:`~research_graphrag.extraction.quality`). Das Ergebnis ist ein deterministisches,
-serialisierbares :class:`CanonicalPaper` (Canonical JSON, Schema 0.2.0).
+serialisierbares :class:`CanonicalPaper` (Canonical JSON, Schema 0.3.0).
 
 Umfang und Grenzen der Heuristik (keine Bounding-Boxes, kein tiefes Referenz-/Tabellen-Parsing):
 docs/adr/0006-canonical-model-phase2-scope.md.

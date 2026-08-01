@@ -62,7 +62,7 @@ Für Clients mit eigenem Modell (GitHub Copilot) ist der **Default ohne Synthese
 ```
 
 - `mode` ist der **tatsächlich verwendete** Modus (bei `auto` die Router-Entscheidung).
-- `evidence.items` sind **deterministisch nummeriert** (`index` = Zitatmarke `[n]`); `label` bündelt die Provenienz (Paper · Abschnitt · Seite bzw. Community-Vertreter).
+- `evidence.items` sind **deterministisch nummeriert** (`index` = Zitatmarke `[n]`); `label` bündelt die Provenienz (Paper · Abschnitt · Seite bzw. Community-Vertreter). Läuft ein Chunk über einen Seitenumbruch, nennt das Label eine Range („Seiten 7–8", [ADR 0013](../../../../docs/adr/0013-chunking-refinement-phase7.md)).
 - `answer` ist bei `generated = false` leer; `model` benennt bei erfolgreichem Sampling das Client-Modell.
 - `citation_contract` ist die verbindliche Vorgabe für die Formulierung (auch für den Aufrufer, der selbst formuliert).
 

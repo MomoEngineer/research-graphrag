@@ -10,7 +10,12 @@ import pytest
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
 from research_graphrag.indexing.tfidf_index import TfidfIndex, build_index
-from research_graphrag.retrieval.provenance import Citation, PaperRef, ProvenanceAssembler
+from research_graphrag.retrieval.provenance import (
+    Citation,
+    PaperRef,
+    ProvenanceAssembler,
+    page_label,
+)
 
 
 def _paper(paper_id: str, texts: Sequence[str], section: str = "") -> CanonicalPaper:
@@ -55,7 +60,7 @@ def test_citation_from_hit_carries_section_title(tmp_path: Path) -> None:
 
 
 def test_citation_to_dict_shape(tmp_path: Path) -> None:
-    """Das Zitat-Dict trägt genau die dokumentierten Schlüssel (inkl. section_title)."""
+    """Das Zitat-Dict trägt genau die dokumentierten Schlüssel (inkl. Seiten-Range)."""
     hit = TfidfIndex.load(_build(tmp_path)).search("attention", k=1)[0]
     payload = Citation.from_hit(hit).to_dict()
 
@@ -63,11 +68,31 @@ def test_citation_to_dict_shape(tmp_path: Path) -> None:
         "paper_id",
         "section_title",
         "page_number",
+        "page_end",
         "chunk_id",
         "score",
         "source_uri",
         "snippet",
     }
+
+
+def test_citation_page_end_defaults_to_start_page() -> None:
+    """Ohne eigene Endseite fällt ``page_end`` auf die Startseite zurück."""
+    citation = Citation(
+        paper_id="pid",
+        page_number=7,
+        chunk_id="pid-c0000",
+        score=0.5,
+        source_uri="file:///x.pdf",
+        snippet="…",
+    )
+    assert citation.page_end == 7
+
+
+def test_page_label_renders_single_page_and_range() -> None:
+    """Die Anzeigeform unterscheidet Einzelseite und Seiten-Range."""
+    assert page_label(7, 7) == "Seite 7"
+    assert page_label(7, 8) == "Seiten 7–8"
 
 
 def test_assembler_builds_paper_ref(tmp_path: Path) -> None:

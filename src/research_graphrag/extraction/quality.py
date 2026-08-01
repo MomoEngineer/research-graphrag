@@ -13,12 +13,15 @@ Flag-Katalog:
 - ``no_sections_detected`` – keinerlei Überschrift erkannt (nur ``front``).
 - ``ocr_noise`` – auffällig niedriger Alphanumerik-Anteil / viele Ein-Zeichen-Token.
 - ``possible_headless_table:<n>`` – tabellarischer Block ohne „Table/Tabelle"-Caption.
-- ``short_chunk:<id>`` / ``long_chunk:<id>`` – Chunk außerhalb des Zielfensters.
+- ``short_chunks:<n>`` – **aggregierte** Anzahl der Chunks unterhalb des Zielfensters (bewusst
+  nicht pro Chunk: die Einzel-IDs waren nicht handlungsleitend und haben den Report dominiert,
+  siehe docs/adr/0013-chunking-refinement-phase7.md).
+- ``long_chunk:<id>`` – Chunk oberhalb des Zielfensters (bleibt pro Chunk: selten und einzeln
+  handlungsleitend, weil ein unteilbarer Übersatz dahintersteht).
 """
 
 from __future__ import annotations
 
-import re
 from collections.abc import Sequence
 
 from research_graphrag.extraction.chunking import MAX_CHARS, MIN_CHARS
@@ -29,11 +32,11 @@ from research_graphrag.extraction.model import (
     Chunk,
     Section,
 )
+from research_graphrag.extraction.structure import looks_tabular
 
 _MIN_OCR_LEN = 200
 _OCR_ALNUM_RATIO = 0.55
 _OCR_SINGLE_TOKEN_RATIO = 0.4
-_COLUMN_SPLIT = re.compile(r" {2,}")
 _CAPTION_PREFIXES = ("table", "tabelle")
 
 
@@ -49,13 +52,6 @@ def _looks_like_ocr_noise(text: str) -> bool:
     tokens = stripped.split()
     single_ratio = sum(1 for token in tokens if len(token) == 1) / len(tokens) if tokens else 0.0
     return alnum_ratio < _OCR_ALNUM_RATIO or single_ratio > _OCR_SINGLE_TOKEN_RATIO
-
-
-def _has_columns(line: str) -> bool:
-    """Erkennt eine tabellarisch anmutende Zeile (≥ 3 Spalten über Tab/Mehrfach-Leerzeichen)."""
-    if "\t" in line:
-        return True
-    return len([field for field in _COLUMN_SPLIT.split(line.strip()) if field]) >= 3
 
 
 def _has_caption_above(lines: Sequence[str], start: int) -> bool:
@@ -80,9 +76,9 @@ def _flag_headless_tables(pages: Sequence[tuple[int, str]]) -> list[str]:
         index = 0
         flagged = False
         while index < len(lines):
-            if _has_columns(lines[index]):
+            if looks_tabular(lines[index]):
                 end = index
-                while end < len(lines) and _has_columns(lines[end]):
+                while end < len(lines) and looks_tabular(lines[end]):
                     end += 1
                 if end - index >= 3 and not _has_caption_above(lines, index):
                     flagged = True
@@ -137,10 +133,9 @@ def assess(
 
     flags.extend(_flag_headless_tables(pages))
 
-    for chunk in chunks:
-        if chunk.char_count < min_chars:
-            flags.append(f"short_chunk:{chunk.chunk_id}")
-        elif chunk.char_count > max_chars:
-            flags.append(f"long_chunk:{chunk.chunk_id}")
+    short = sum(1 for chunk in chunks if chunk.char_count < min_chars)
+    if short:
+        flags.append(f"short_chunks:{short}")
+    flags.extend(f"long_chunk:{chunk.chunk_id}" for chunk in chunks if chunk.char_count > max_chars)
 
     return tuple(sorted(set(flags)))

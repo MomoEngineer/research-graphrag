@@ -128,12 +128,16 @@ def _front_matter_text(paper: CanonicalPaper) -> str:
     als eigene erfasst werden. Solche Werte würden hier massenhaft falsche Kanten erzeugen (der
     falsche Wert steht in vielen Referenzlisten), deshalb wird die Bibliografie ausgeschlossen
     (Präzision vor Recall, docs/adr/0011-intra-corpus-citation-graph-phase7.md).
+
+    Seit der Seiten-Range (docs/adr/0013-chunking-refinement-phase7.md) zählt bewusst
+    ``page_end``: Ein Chunk, der von der Titelseite auf eine Folgeseite überläuft, gilt **nicht**
+    mehr als Frontmatter – das Fenster bleibt damit mindestens so streng wie zuvor.
     """
     ref_ids = _reference_section_ids(paper)
     return " ".join(
         chunk.text
         for chunk in paper.chunks
-        if chunk.page_number <= TITLE_PAGE_PAGES and chunk.section_id not in ref_ids
+        if chunk.page_end <= TITLE_PAGE_PAGES and chunk.section_id not in ref_ids
     ).lower()
 
 

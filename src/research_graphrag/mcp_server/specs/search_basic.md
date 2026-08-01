@@ -40,6 +40,7 @@ Beantwortet exakte/faktische Fragen über **Top-k-Vektorsuche (TF-IDF)** auf Pap
       "paper_id": "…",
       "section_title": "…",
       "page_number": 1,
+      "page_end": 1,
       "chunk_id": "…",
       "score": 0.42,
       "source_uri": "file:///…",
@@ -70,7 +71,8 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 
 ## 7. Provenienz
 
-- Je Zitat: `paper_id`, `section_title`, `page_number`, `chunk_id`, `score`, `source_uri`, `snippet`.
+- Je Zitat: `paper_id`, `section_title`, `page_number`, `page_end`, `chunk_id`, `score`, `source_uri`, `snippet`.
+- `page_number` ist die Start-, `page_end` die Endseite des Chunks; beide sind identisch, solange der Chunk auf einer Seite liegt ([ADR 0013](../../../../docs/adr/0013-chunking-refinement-phase7.md)).
 
 ## 8. Reproduzierbarkeit
 

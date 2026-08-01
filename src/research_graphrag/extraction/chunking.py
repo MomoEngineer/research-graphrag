@@ -1,17 +1,20 @@
-"""Abschnitts-/größenbasiertes Chunking (Phase 2, Option B).
+"""Abschnitts-/größenbasiertes Chunking (Phase 2, verfeinert in Phase 7 / A3).
 
 Wandelt die absatzweisen :class:`~research_graphrag.extraction.structure.ContentBlock` in
 retrievbare :class:`~research_graphrag.extraction.model.Chunk` um. Leitlinien:
 
 - **Zielfenster** ``[MIN_CHARS, MAX_CHARS]``: Absätze werden bis ``MAX_CHARS`` zusammengefasst.
-- **Seite = harte Grenze**: ein Chunk umfasst nie mehrere Seiten → exakte Seiten-Provenienz.
 - **Section-Grenze**: Chunks überschreiten keine Abschnittswechsel.
+- **Seite ist keine Grenze, sondern Provenienz**: Ein Chunk darf über einen Seitenumbruch laufen
+  und trägt dann die Range ``page_number`` (Startseite) … ``page_end`` (Endseite). Die harte
+  Seitengrenze aus Phase 2 zerschnitt rund vier von fünf Seitenumbrüchen mitten im Satz
+  (docs/adr/0013-chunking-refinement-phase7.md).
 - **Satz-Split**: übergroße Absätze werden an Satzgrenzen getrennt; ein einzelner übergroßer Satz
   bleibt erhalten und wird später als ``long_chunk`` markiert (siehe
-  :mod:`research_graphrag.extraction.quality`). Ganze Seiten-/Abschnitts-Reste unterhalb von
-  ``MIN_CHARS`` werden als ``short_chunk`` markiert.
+  :mod:`research_graphrag.extraction.quality`). Reste unterhalb von ``MIN_CHARS`` gehen in die
+  aggregierte Kennzahl ``short_chunks`` ein.
 
-Das Verfahren ist deterministisch. Grundsatz: docs/adr/0006-canonical-model-phase2-scope.md.
+Das Verfahren ist deterministisch.
 """
 
 from __future__ import annotations
@@ -24,7 +27,7 @@ from research_graphrag.extraction.model import Chunk
 from research_graphrag.extraction.structure import ContentBlock
 
 MIN_CHARS = 200
-"""Untergrenze des Chunk-Zielfensters (kürzere Chunks werden als ``short_chunk`` markiert)."""
+"""Untergrenze des Chunk-Zielfensters (kürzere Chunks zählen in ``short_chunks``)."""
 
 MAX_CHARS = 1500
 """Obergrenze des Chunk-Zielfensters (längere Chunks werden als ``long_chunk`` markiert)."""
@@ -36,7 +39,8 @@ _SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
 class _Record:
     """Interner Chunk-Zwischenstand (vor der ID-Vergabe)."""
 
-    page_number: int
+    page_start: int
+    page_end: int
     section_id: str
     text: str
 
@@ -74,7 +78,10 @@ def build_chunks(
     *,
     max_chars: int = MAX_CHARS,
 ) -> tuple[Chunk, ...]:
-    """Baut größenbegrenzte, section-/seitentreue Chunks aus Fließtext-Blöcken.
+    """Baut größenbegrenzte, sectiontreue Chunks mit Seiten-Range aus Fließtext-Blöcken.
+
+    Der Puffer wird ausschließlich bei **Abschnittswechsel** oder **Größenüberschreitung**
+    geleert; ein Seitenumbruch erweitert lediglich die Provenienz-Range.
 
     Args:
         paper_id: Paper-ID (Grundlage der ``chunk_id``-Vergabe).
@@ -88,29 +95,31 @@ def build_chunks(
     """
     records: list[_Record] = []
     buf_parts: list[str] = []
-    buf_page: int | None = None
+    buf_start: int | None = None
+    buf_end: int | None = None
     buf_section: str | None = None
 
     def flush() -> None:
-        nonlocal buf_parts, buf_page, buf_section
-        if buf_parts and buf_page is not None and buf_section is not None:
+        nonlocal buf_parts, buf_start, buf_end, buf_section
+        if buf_parts and buf_start is not None and buf_end is not None and buf_section is not None:
             text = "\n\n".join(buf_parts).strip()
             if text:
-                records.append(_Record(buf_page, buf_section, text))
-        buf_parts, buf_page, buf_section = [], None, None
+                records.append(_Record(buf_start, buf_end, buf_section, text))
+        buf_parts, buf_start, buf_end, buf_section = [], None, None, None
 
     for block in blocks:
         paragraph = block.text.strip()
         if not paragraph:
             continue
-        if buf_parts and (block.page_number != buf_page or block.section_id != buf_section):
+        if buf_parts and block.section_id != buf_section:
             flush()
         for piece in _split_to_max(paragraph, max_chars):
             projected = len("\n\n".join([*buf_parts, piece]))
             if buf_parts and projected > max_chars:
                 flush()
             if not buf_parts:
-                buf_page, buf_section = block.page_number, block.section_id
+                buf_start, buf_section = block.page_number, block.section_id
+            buf_end = block.page_number
             buf_parts.append(piece)
     flush()
 
@@ -118,7 +127,8 @@ def build_chunks(
         Chunk(
             chunk_id=f"{paper_id}-c{index:04d}",
             paper_id=paper_id,
-            page_number=record.page_number,
+            page_number=record.page_start,
+            page_end=record.page_end,
             text=record.text,
             char_count=len(record.text),
             section_id=record.section_id,

@@ -43,7 +43,7 @@ Beantwortet **Widerspruchs-/Vergleichsfragen** über einen **pragmatischen Globa
     "representatives": [ { "paper_id": "…", "source_uri": "file:///…", "snippet": "…" } ]
   },
   "citations": [
-    { "paper_id": "…", "section_title": "…", "page_number": 6, "chunk_id": "…", "score": 0.3, "source_uri": "file:///…", "snippet": "…" }
+    { "paper_id": "…", "section_title": "…", "page_number": 6, "page_end": 6, "chunk_id": "…", "score": 0.3, "source_uri": "file:///…", "snippet": "…" }
   ]
 }
 ```
@@ -70,7 +70,7 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 ## 7. Provenienz
 
 - **Community-Kontext**: `community_id`, `score`, `size`, `keywords`, repräsentative Paper.
-- **Lokale Belege**: Chunk-Zitate (`paper_id`, `section_title`, `page_number`, `chunk_id`, `score`, `source_uri`, `snippet`), beschränkt auf die Mitglieds-Paper der Community.
+- **Lokale Belege**: Chunk-Zitate (`paper_id`, `section_title`, `page_number`, `page_end`, `chunk_id`, `score`, `source_uri`, `snippet`), beschränkt auf die Mitglieds-Paper der Community.
 
 ## 8. Reproduzierbarkeit
 

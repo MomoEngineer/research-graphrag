@@ -25,8 +25,10 @@ from sklearn.metrics.pairwise import linear_kernel
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.pdf import CanonicalPaper
 
-SCHEMA_VERSION = "0.3.0"
-"""Version des Index-Schemas. ``0.2.0 -> 0.3.0``: ``papers`` um die JSON-Spalte
+SCHEMA_VERSION = "0.4.0"
+"""Version des Index-Schemas. ``0.3.0 -> 0.4.0``: ``chunks`` um ``page_end`` erweitert – die
+Seite ist keine Chunk-Grenze mehr, sondern eine Provenienz-Range (siehe
+docs/adr/0013-chunking-refinement-phase7.md). ``0.2.0 -> 0.3.0``: ``papers`` um die JSON-Spalte
 ``identifiers`` (DOI/arXiv) erweitert, damit ``get_paper`` zitierfähige Identifikatoren aus der
 Source of Truth liefert (siehe docs/adr/0009-mcp-server-stdio-phase5.md). ``0.1.0 -> 0.2.0``:
 Chunk-Provenienz um ``section_title`` ergänzt (siehe
@@ -45,6 +47,7 @@ CREATE TABLE chunks (
     chunk_id      TEXT PRIMARY KEY,
     paper_id      TEXT NOT NULL,
     page_number   INTEGER NOT NULL,
+    page_end      INTEGER NOT NULL DEFAULT 0,
     text          TEXT NOT NULL,
     char_count    INTEGER NOT NULL,
     section_title TEXT NOT NULL DEFAULT '',
@@ -56,7 +59,7 @@ CREATE TABLE chunks (
 
 @dataclass(frozen=True)
 class Hit:
-    """Ein Retrieval-Treffer mit Provenienz."""
+    """Ein Retrieval-Treffer mit Provenienz (``page_number`` = Start-, ``page_end`` = Endseite)."""
 
     chunk_id: str
     paper_id: str
@@ -65,6 +68,7 @@ class Hit:
     snippet: str
     source_uri: str
     section_title: str = ""
+    page_end: int = 0
 
 
 @dataclass(frozen=True)
@@ -77,6 +81,7 @@ class _ChunkRef:
     text: str
     source_uri: str
     section_title: str = ""
+    page_end: int = 0
 
 
 def _snippet(text: str, limit: int = 200) -> str:
@@ -97,6 +102,7 @@ def _hit(ref: _ChunkRef, score: float) -> Hit:
         snippet=_snippet(ref.text),
         source_uri=ref.source_uri,
         section_title=ref.section_title,
+        page_end=ref.page_end,
     )
 
 
@@ -151,12 +157,14 @@ def build_index(papers: Sequence[CanonicalPaper], db_path: str | Path) -> int:
         for row_index, (chunk, _paper) in enumerate(indexable):
             connection.execute(
                 "INSERT INTO chunks "
-                "(chunk_id, paper_id, page_number, text, char_count, section_title, row_index) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "(chunk_id, paper_id, page_number, page_end, text, char_count, section_title, "
+                "row_index) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     chunk.chunk_id,
                     chunk.paper_id,
                     chunk.page_number,
+                    chunk.page_end,
                     chunk.text,
                     chunk.char_count,
                     chunk.section_title,
@@ -199,7 +207,7 @@ class TfidfIndex:
         try:
             rows = connection.execute(
                 "SELECT c.chunk_id, c.paper_id, c.page_number, c.text, p.source_uri, "
-                "c.section_title "
+                "c.section_title, c.page_end "
                 "FROM chunks c JOIN papers p ON p.paper_id = c.paper_id "
                 "ORDER BY c.row_index"
             ).fetchall()
@@ -217,6 +225,7 @@ class TfidfIndex:
                 text=str(row[3]),
                 source_uri=str(row[4]),
                 section_title=str(row[5]),
+                page_end=int(row[6]),
             )
             for row in rows
         )

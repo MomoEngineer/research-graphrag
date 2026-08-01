@@ -6,6 +6,8 @@ Pragmatisches, festes Frageset zur Qualitätssicherung über alle **fünf Fraget
 
 > **Status Phase 6:** Dasselbe Set ist jetzt **wiederholbar** als QS-Harness `python -m scripts.qa` hinterlegt (Single Source of Truth: `QUESTIONS` in [scripts/qa.py](../scripts/qa.py)); ein struktureller Regressionstest ([tests/retrieval/test_qa.py](../tests/retrieval/test_qa.py)) sichert die Provenienz-Form. Erneuter Durchlauf am Korpus (Index-Schema **0.3.0**) liefert für **alle 10 Fragen belegte Provenienz (10/10)**; die Befunde decken sich mit Phase 4 (u. a. D1 → „Datasets and Evaluation Metrics", W1 → Community #0/„Overall Comparison (RQ1)", W2 → Community #11 „agentic/vectorrag"). Vereinzeltes **Abschnitts-Rauschen** einzelner Treffer (z. B. „20.09 20.15", OCR-Ligaturen) bleibt die bekannte Heuristik-Grenze ([ADR 0006](../docs/adr/0006-canonical-model-phase2-scope.md)), kein Retrieval-Fehler ([ADR 0010](../docs/adr/0010-drop-in-workflow-and-qa-phase6.md)).
 
+> **Status Phase 7 / A3:** Nach der Chunking-Verfeinerung ([ADR 0013](../docs/adr/0013-chunking-refinement-phase7.md), Index-Schema **0.4.0**) liefert `python -m scripts.qa` weiterhin **10/10** belegte Antworten. Sichtbar geändert hat sich die **Provenienz-Form**: Chunks, die über einen Seitenumbruch laufen, werden als Range angezeigt („Seiten 10–11"); die Abschnittstitel sind spürbar sauberer (u. a. „Datasets and Evaluation Metrics", „Code Knowledge Base Construction", „Multi-path Code Retrieval"). Restliches Titel-Rauschen (z. B. „Gpt", „F1 =2 ·P ·R") bleibt der Keyword-/Titel-Bereinigung in **A5** vorbehalten.
+
 Für jede Frage werden festgehalten:
 
 - **Erwarteter Suchmodus** (gemäß Fragetyp-Mapping der README),

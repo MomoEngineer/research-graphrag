@@ -132,6 +132,7 @@ def test_local_to_dict_shape(tmp_path: Path) -> None:
         "paper_id",
         "section_title",
         "page_number",
+        "page_end",
         "chunk_id",
         "score",
         "source_uri",
