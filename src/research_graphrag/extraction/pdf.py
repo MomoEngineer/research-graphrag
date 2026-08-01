@@ -1,11 +1,12 @@
 """PDF-Extraktion in ein kanonisches Paper-Modell (Offline-Hybrid, Option B).
 
 Orchestriert die Phase-2-Extraktion mit ``pypdf`` (offline, siehe
-docs/adr/0005-graphrag-index-backend-open.md): Seitentext lesen → Struktur/Abschnitte erkennen
+docs/adr/0005-graphrag-index-backend-open.md): Seitentext lesen → **normalisieren**
+(:mod:`~research_graphrag.extraction.normalization`) → Struktur/Abschnitte erkennen
 (:mod:`~research_graphrag.extraction.structure`) → größenbasiert chunken
 (:mod:`~research_graphrag.extraction.chunking`) → Qualitäts-Gates
 (:mod:`~research_graphrag.extraction.quality`). Das Ergebnis ist ein deterministisches,
-serialisierbares :class:`CanonicalPaper` (Canonical JSON, Schema 0.3.0).
+serialisierbares :class:`CanonicalPaper` (Canonical JSON, Schema 0.4.0).
 
 Umfang und Grenzen der Heuristik (keine Bounding-Boxes, kein tiefes Referenz-/Tabellen-Parsing):
 docs/adr/0006-canonical-model-phase2-scope.md.
@@ -21,7 +22,7 @@ from pypdf import PdfReader
 from pypdf.errors import PyPdfError
 
 from research_graphrag.errors import DomainError, ErrorCode
-from research_graphrag.extraction import chunking, quality, structure
+from research_graphrag.extraction import chunking, normalization, quality, structure
 from research_graphrag.extraction.model import (
     SCHEMA_VERSION,
     CanonicalPaper,
@@ -70,7 +71,9 @@ def extract_pdf(path: str | Path, *, source_uri: str | None = None) -> Canonical
 
     try:
         reader = PdfReader(io.BytesIO(raw))
-        page_texts = [(page.extract_text() or "").strip() for page in reader.pages]
+        page_texts = [
+            normalization.normalize_text(page.extract_text() or "").strip() for page in reader.pages
+        ]
     except PyPdfError as exc:
         raise DomainError(
             ErrorCode.PARSE_ERROR, f"PDF nicht parsebar: {exc}", {"uri": uri}

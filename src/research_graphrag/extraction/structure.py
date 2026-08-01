@@ -16,6 +16,13 @@ docs/adr/0013-chunking-refinement-phase7.md:
   (``Abstract``/``References`` …) niemals verworfen werden.
 - **Section-Absorption** in :func:`analyze`: Abschnitte mit zu wenig eigenem Inhalt werden in
   ihren Vorgänger zurückgeführt (evidenzbasiert über die gemessene Textmasse).
+
+Gegen **Bibliografie-Rauschen** in den Abschnittstiteln wirken drei weitere Stufen aus
+docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md: eine Regel **vor** dem
+Schlüsselwort-Zweig (kleingeschriebene Fließtextreste wie ``methods.`` sind keine Abschnitte),
+vier weitere Zeilenregeln danach (Satzpunkt-Ende, URL-/DOI-Marker, ``et al``, JSON-/Code-Zeichen)
+und der **Referenzkontext** – innerhalb der Bibliografie ist der Numerierungs-Zweig abgeschaltet,
+weil dort die laufende Nummer eines Literatureintrags sonst als Abschnittsnummer gelesen wird.
 """
 
 from __future__ import annotations
@@ -94,8 +101,15 @@ _MIN_COLUMNS = 3
 _MATH_SYMBOLS = re.compile(r"[\u2190-\u21ff\u2200-\u22ff\U0001d400-\U0001d7ff]")
 """Pfeile, mathematische Operatoren und mathematische Alphanumerics – ein starkes Signal für
 Pseudocode-/Formelzeilen (``4 𝑥 ←𝑞.𝑝𝑜𝑝();``), die keine Überschriften sind."""
-_REJECT_TAIL = ("-", ";", ",")
+_REJECT_TAIL = ("-", ";", ",", ".")
 _MAX_DIGIT_RATIO = 0.3
+
+# Bibliografie-Rejects (docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md).
+_BIB_MARKERS = ("http://", "https://", "www.", "doi:", "doi.org/", "arxiv:")
+"""Marker eines Literatureintrags bzw. einer Linkzeile – keine Überschrift."""
+_CITATION = re.compile(r"\bet\s+al\b", re.IGNORECASE)
+_CODE_CHARS = frozenset('"{}[]=<>|')
+"""Zeichen aus JSON-/Code-Fragmenten und Formeln, die in Überschriften nicht vorkommen."""
 
 _DOI = re.compile(r"10\.\d{4,9}/[-._;()/:A-Za-z0-9]+")
 _ARXIV = re.compile(r"arxiv[:\s]\s*(\d{4}\.\d{4,5})(v\d+)?", re.IGNORECASE)
@@ -113,6 +127,13 @@ def _is_rejected(text: str, core: str) -> bool:
     if _MATH_SYMBOLS.search(text) or looks_tabular(text):
         return True
     if text.rstrip().endswith(_REJECT_TAIL):
+        return True
+    lowered = text.lower()
+    if any(marker in lowered for marker in _BIB_MARKERS):
+        return True
+    if _CITATION.search(text):
+        return True
+    if any(char in _CODE_CHARS for char in text):
         return True
     compact = [char for char in core if not char.isspace()]
     if not compact:
@@ -151,13 +172,22 @@ class Sectioning:
         return {section.section_id: section.title for section in self.sections}
 
 
-def detect_heading(line: str) -> _Heading | None:
+def detect_heading(line: str, *, in_references: bool = False) -> _Heading | None:
     """Prüft, ob eine (bereits getrimmte) Zeile eine Überschrift ist.
 
-    Bekannte Sektions-Schlüsselwörter (``Abstract``, ``References`` …) werden zuerst geprüft und
-    nie verworfen. Erst danach greifen die Reject-Regeln (:func:`_is_rejected`), die die beiden
-    unscharfen Zweige (Numerierung, Versalzeile) gegen Pseudocode, Tabellenzellen und
-    Silbentrennungsreste absichern.
+    Reihenfolge der Prüfungen: Zuerst wird ein **kleingeschriebener Fließtextrest** mit
+    Satzzeichen abgewiesen (``methods.`` ist kein Abschnitt, auch wenn ``methods`` ein bekanntes
+    Schlüsselwort ist). Danach greifen die bekannten Sektions-Schlüsselwörter (``Abstract``,
+    ``References`` …), die in üblicher Schreibweise nie verworfen werden. Erst zuletzt greifen die
+    Reject-Regeln (:func:`_is_rejected`), die die beiden unscharfen Zweige (Numerierung,
+    Versalzeile) gegen Pseudocode, Tabellenzellen, Silbentrennungsreste und Bibliografie-Zeilen
+    absichern.
+
+    Args:
+        line: Getrimmte Zeile des Seitentexts.
+        in_references: Ob die Zeile innerhalb eines Referenzabschnitts steht. Dort ist der
+            Numerierungs-Zweig abgeschaltet, weil eine numerierte Zeile ein Literatureintrag ist
+            (docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md).
 
     Returns:
         Ein :class:`_Heading` mit Titel/Klassifikation/Ebene oder ``None``.
@@ -180,6 +210,12 @@ def detect_heading(line: str) -> _Heading | None:
             numbered = True
             core = text[roman_match.end() :].strip()
 
+    if not numbered and core[:1].islower() and text.rstrip().endswith(_SENTENCE_TAIL):
+        # Fließtextrest wie „methods." – muss VOR dem Schlüsselwort-Zweig greifen, weil er sonst
+        # als bekannter Abschnitt gilt und den Folgetext an sich zieht (ADR 0015). Echte
+        # Überschriften beginnen nicht mit einem Kleinbuchstaben.
+        return None
+
     core_norm = re.sub(r"\s+", " ", core.rstrip(" .:—-")).lower()
 
     if core_norm in _KNOWN_SECTIONS:
@@ -191,7 +227,13 @@ def detect_heading(line: str) -> _Heading | None:
         return None
 
     words = core.split()
-    if numbered and core and len(words) <= 8 and not core.rstrip().endswith(_SENTENCE_TAIL):
+    if (
+        numbered
+        and not in_references
+        and core
+        and len(words) <= 8
+        and not core.rstrip().endswith(_SENTENCE_TAIL)
+    ):
         return _Heading(title=core, kind=SECTION_KIND_BODY, level=level)
 
     letters = [char for char in text if char.isalpha()]
@@ -277,6 +319,7 @@ def analyze(paper_id: str, pages: Sequence[tuple[int, str]]) -> Sectioning:
     blocks: list[ContentBlock] = []
     current_id = front_id
     heading_count = 0
+    in_references = False
 
     for page_number, text in pages:
         paragraph: list[str] = []
@@ -287,7 +330,7 @@ def analyze(paper_id: str, pages: Sequence[tuple[int, str]]) -> Sectioning:
                     blocks.append(ContentBlock(page_number, current_id, " ".join(paragraph)))
                     paragraph = []
                 continue
-            heading = detect_heading(stripped)
+            heading = detect_heading(stripped, in_references=in_references)
             if heading is None:
                 paragraph.append(stripped)
                 continue
@@ -305,6 +348,7 @@ def analyze(paper_id: str, pages: Sequence[tuple[int, str]]) -> Sectioning:
             )
             sections.append(section)
             current_id = section.section_id
+            in_references = heading.kind == SECTION_KIND_REFERENCES
         if paragraph:
             blocks.append(ContentBlock(page_number, current_id, " ".join(paragraph)))
 

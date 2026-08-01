@@ -131,6 +131,6 @@ def test_extract_always_has_front_section(make_pdf: MakePdf) -> None:
 
 
 def test_extract_schema_version_is_current(make_pdf: MakePdf) -> None:
-    """Das Canonical JSON trägt die aktuelle Schema-Version 0.3.0."""
+    """Das Canonical JSON trägt die aktuelle Schema-Version 0.4.0."""
     paper = extract_pdf(make_pdf(["content"]))
-    assert paper.to_dict()["schema_version"] == "0.3.0"
+    assert paper.to_dict()["schema_version"] == "0.4.0"

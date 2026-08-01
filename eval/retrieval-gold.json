@@ -1,10 +1,11 @@
 {
-  "gold_set_version": "1.1.0",
+  "gold_set_version": "1.2.0",
   "created_for": "Roadmap A4 (Hybrid-Retrieval BM25 + TF-IDF), docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md; Teil-Vorgriff auf A6",
+  "updated_for": "Roadmap A5 (Rausch-Reduktion), docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md – Labels nach dem Re-Ingest mechanisch neu abgeleitet (G12/G16: je ein Paper kommt hinzu, weil eine faelschlich als Ueberschrift gelesene URL-Zeile wieder im Chunk-Text steht)",
   "index_schema_version": "0.4.0",
   "corpus": {
     "papers": 145,
-    "chunks": 11339
+    "chunks": 11181
   },
   "label_rule": "Ein Paper gilt als relevant, wenn mindestens einer seiner Chunks alle Strings aus match_all (case-insensitive) enthaelt. Die Labels sind damit unabhaengig von jeder Ranking-Funktion und ueber 'python -m scripts.eval_retrieval --verify-labels' reproduzierbar.",
   "questions": [
@@ -157,6 +158,7 @@
       "expected_paper_ids": [
         "49a1dd856125d8b8",
         "704e94c0df21a463",
+        "81d183cbee9f22a7",
         "dd89cb4ae314295e",
         "de2c2e96399d6d6b",
         "e545127b265144cb",
@@ -216,6 +218,7 @@
       "expected_paper_ids": [
         "49a1dd856125d8b8",
         "704e94c0df21a463",
+        "81d183cbee9f22a7",
         "dd89cb4ae314295e",
         "de2c2e96399d6d6b",
         "e545127b265144cb",

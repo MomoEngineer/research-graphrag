@@ -31,6 +31,7 @@ from research_graphrag.extraction.model import (
     SECTION_KIND_ABSTRACT,
     CanonicalPaper,
 )
+from research_graphrag.keywords import filter_terms
 
 _logger = logging.getLogger(__name__)
 
@@ -139,7 +140,12 @@ def _cell(text: str) -> str:
 
 
 def keyword_table(corpus: list[str], top_k: int = _KEYWORD_TOP_K) -> list[list[str]]:
-    """Bestimmt je Dokument die extraktiven TF-IDF-Top-Terme (deterministisch, Tie-Break Term)."""
+    """Bestimmt je Dokument die extraktiven TF-IDF-Top-Terme (deterministisch, Tie-Break Term).
+
+    Rausch-Terme werden über :func:`research_graphrag.keywords.filter_terms` **vor** dem
+    Anschnitt entfernt – dieselbe Politik wie bei den Community-Keywords
+    (docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md).
+    """
     empty: list[list[str]] = [[] for _ in corpus]
     if not any(doc.strip() for doc in corpus):
         return empty
@@ -156,7 +162,7 @@ def keyword_table(corpus: list[str], top_k: int = _KEYWORD_TOP_K) -> list[list[s
             zip(row.col.tolist(), row.data.tolist(), strict=True),
             key=lambda item: (-item[1], features[item[0]]),
         )
-        result.append([str(features[col]) for col, _ in pairs[:top_k]])
+        result.append(filter_terms((str(features[col]) for col, _ in pairs), top_k))
     return result
 
 

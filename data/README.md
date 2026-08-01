@@ -3,7 +3,7 @@
 Abgeleitete Artefakte der Pipeline. **Nicht versioniert** (per `.gitignore`
 ausgeschlossen), da vollständig regenerierbar.
 
-- `canonical/` – extrahiertes Canonical Paper JSON (Schema **0.3.0**: Sections, Chunks mit Seiten-Range `page_number`/`page_end`, Identifikatoren, Qualitätsflags; Cache, Phase 2 / verfeinert in Phase 7 / A3, [ADR 0013](../docs/adr/0013-chunking-refinement-phase7.md)).
+- `canonical/` – extrahiertes Canonical Paper JSON (Schema **0.4.0**: Sections, Chunks mit Seiten-Range `page_number`/`page_end`, Identifikatoren, Qualitätsflags; Cache, Phase 2 / verfeinert in Phase 7 / A3 und A5 – der Seitentext ist **normalisiert** und die Überschriften-Erkennung verwirft Bibliografie-Zeilen, [ADR 0013](../docs/adr/0013-chunking-refinement-phase7.md), [ADR 0015](../docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md)).
 - `manifest.json` – Datei-Hash → Paper-ID (Dedup, Phase 2).
 - `quality_report.json` / `quality_report.md` – aggregierter Qualitätsreport der Ingestion (Phase 2); zu kurze Chunks werden seit Phase 7 / A3 als **aggregiertes** `short_chunks:<n>` je Paper geführt.
 - `overview_drafts.md` – append-only Staging für Übersicht-Entwürfe (`scripts/update_overview.py`, Phase 2).

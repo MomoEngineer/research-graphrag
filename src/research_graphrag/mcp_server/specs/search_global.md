@@ -75,7 +75,7 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 
 ## 8. Reproduzierbarkeit
 
-- Deterministisch: Communities/Keywords aus Phase 3 (fixer Louvain-Seed); Query-Ranking über `TfidfVectorizer(stop_words="english")` mit Tie-Break über `community_id`.
+- Deterministisch: Communities/Keywords aus Phase 3 (fixer Louvain-Seed); Query-Ranking über `TfidfVectorizer(stop_words="english")` mit Tie-Break über `community_id`. Die Keywords sind zusätzlich über die kuratierte **Keyword-Politik** gefiltert ([ADR 0015](../../../../docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md)).
 
 ## 9. Testabdeckung
 

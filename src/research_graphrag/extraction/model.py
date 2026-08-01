@@ -5,12 +5,16 @@ Enthält die serialisierbaren Kernstrukturen der Extraktion – :class:`Section`
 die reinen Datenstrukturen unabhängig von der Extraktions-Mechanik testbar; die
 Orchestrierung liegt in :mod:`research_graphrag.extraction.pdf`.
 
-Schema-Version **0.3.0**: Ein Chunk trägt zusätzlich ``page_end`` – die Seite ist **kein
-Segmentierungskriterium** mehr, sondern eine **Provenienz-Range** (``page_number`` = Startseite,
-``page_end`` = Endseite; siehe docs/adr/0013-chunking-refinement-phase7.md). ``0.1.0 -> 0.2.0``
-ergänzte die **Section-Hierarchie** (heuristisch), **Identifikatoren** (DOI/arXiv) sowie
-**Section-Provenienz je Chunk** und stellte die Chunk-Granularität von „eine Seite = ein Chunk"
-auf **abschnitts-/größenbasiert** um. Grundsatz:
+Schema-Version **0.4.0**: Die Struktur ist unverändert, der **Inhalts-Contract** ist geschärft –
+der Seitentext wird vor der Analyse normalisiert (Ligaturen repariert, Glyph-Artefakte entfernt)
+und die Überschriften-Erkennung verwirft Bibliografie-Zeilen (siehe
+docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md); die Anhebung ist zugleich der
+Trigger für die Re-Extraktion. ``0.2.0 -> 0.3.0`` gab dem Chunk ``page_end`` – die Seite ist
+**kein Segmentierungskriterium** mehr, sondern eine **Provenienz-Range** (``page_number`` =
+Startseite, ``page_end`` = Endseite; siehe docs/adr/0013-chunking-refinement-phase7.md).
+``0.1.0 -> 0.2.0`` ergänzte die **Section-Hierarchie** (heuristisch), **Identifikatoren**
+(DOI/arXiv) sowie **Section-Provenienz je Chunk** und stellte die Chunk-Granularität von „eine
+Seite = ein Chunk" auf **abschnitts-/größenbasiert** um. Grundsatz:
 docs/adr/0006-canonical-model-phase2-scope.md.
 """
 
@@ -22,7 +26,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "0.3.0"
+SCHEMA_VERSION = "0.4.0"
 """Version des Canonical-JSON-Schemas (für spätere Migrationen)."""
 
 SECTION_KIND_FRONT = "front"

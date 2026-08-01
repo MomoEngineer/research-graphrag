@@ -28,6 +28,7 @@ from sklearn.metrics.pairwise import linear_kernel
 
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.pdf import CanonicalPaper
+from research_graphrag.keywords import filter_terms
 
 GRAPH_SCHEMA_VERSION = "0.1.0"
 """Version des Graph-Teilschemas in ``index.sqlite`` (für spätere Migrationen)."""
@@ -198,7 +199,14 @@ def _mutual_topk_edges(
 
 
 def _community_keywords(rows: list[int], matrix: Any, features: Any) -> tuple[str, ...]:
-    """Ermittelt die Top-TF-IDF-Keywords über die aggregierten Zeilen der Community-Paper."""
+    """Ermittelt die Top-TF-IDF-Keywords über die aggregierten Zeilen der Community-Paper.
+
+    Rausch-Terme (Bibliografie-Vokabular, rein numerische Token, Glyph-Artefakte) werden über
+    :func:`research_graphrag.keywords.filter_terms` **vor** dem Anschnitt entfernt, damit die
+    frei werdenden Plätze mit echten Themenbegriffen aufgefüllt werden
+    (docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md). Der Vektorraum bleibt davon
+    unberührt – die Ähnlichkeitskanten und Communities ändern sich durch den Filter nicht.
+    """
     summed = matrix[rows].sum(axis=0).A1
     scored = [
         (float(summed[term]), str(features[term]))
@@ -206,7 +214,7 @@ def _community_keywords(rows: list[int], matrix: Any, features: Any) -> tuple[st
         if float(summed[term]) > 0.0
     ]
     scored.sort(key=lambda item: (-item[0], item[1]))
-    return tuple(term for _score, term in scored[:TOP_KEYWORDS])
+    return tuple(filter_terms((term for _score, term in scored), TOP_KEYWORDS))
 
 
 def build_graph(

@@ -21,6 +21,8 @@
 
 Listet die **Themencluster des Korpus** – die Louvain-Communities des Paper-Ähnlichkeitsgraphen ([ADR 0007](../../../../docs/adr/0007-graphrag-index-phase3-option-b.md)) – mit Größe, Keywords, Mitglieds- und Vertreter-Papern. Gibt einem Agenten einen corpusweiten Überblick und hilft, eine Community für `search_global`/`search_drift` auszuwählen.
 
+> Die `keywords` durchlaufen die kuratierte **Keyword-Politik** (`research_graphrag.keywords`): Bibliografie-Vokabular, rein numerische Token und Glyph-Artefakte werden **vor** dem Top-10-Anschnitt entfernt, sodass die frei werdenden Plätze mit Themenbegriffen aufgefüllt werden ([ADR 0015](../../../../docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md)).
+
 ## 2. Input-Schema
 
 Keine Parameter.

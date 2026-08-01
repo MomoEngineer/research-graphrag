@@ -120,6 +120,72 @@ def test_known_section_survives_reject_rules() -> None:
     assert heading.kind == SECTION_KIND_REFERENCES
 
 
+def test_sentence_tail_in_capital_line_is_rejected() -> None:
+    """Eine Versalzeile mit Satzpunkt ist ein Zeilenrest, keine Überschrift (ADR 0015)."""
+    assert detect_heading("EVALUATION METRICS.") is None
+
+
+def test_lowercase_sentence_remainder_is_rejected() -> None:
+    """Ein kleingeschriebener Zeilenrest gilt auch dann nicht, wenn er einem Keyword gleicht."""
+    assert detect_heading("methods.") is None
+    assert detect_heading("evaluation.") is None
+
+
+def test_capitalised_known_section_still_wins() -> None:
+    """Groß geschriebene bzw. numerierte Schlüsselwörter bleiben trotz Punkt erhalten."""
+    assert detect_heading("METHODS.") is not None
+    assert detect_heading("3. Methods") is not None
+
+
+def test_bibliography_url_line_is_rejected() -> None:
+    """Zeilen mit URL-/DOI-Markern stammen aus der Bibliografie (ADR 0015)."""
+    assert detect_heading("HTTPS://GITHUB.COM/EXAMPLE/REPO") is None
+    assert detect_heading("6 Leaderboard at https://example.org/spaces/Research") is None
+    assert detect_heading("6 Leaderboard at Example Spaces Research") is not None
+
+
+def test_citation_line_is_rejected() -> None:
+    """Eine Zeile mit ``et al`` ist ein Zitat, keine Überschrift (ADR 0015)."""
+    assert detect_heading("7 CONVFINQA (Chen et al., 2022) and") is None
+
+
+def test_code_fragment_line_is_rejected() -> None:
+    """Zeilen mit JSON-/Code-Zeichen sind keine Überschriften (ADR 0015)."""
+    assert detect_heading('"INSERT QUESTION"') is None
+    assert detect_heading("3 Kg= PHI(D)") is None
+
+
+def test_numbered_line_inside_references_is_rejected() -> None:
+    """Im Referenzabschnitt ist eine numerierte Zeile ein Literatureintrag (ADR 0015)."""
+    line = "27 REALM: Retrieval-Augmented Language Model Pre-training"
+    assert detect_heading(line) is not None
+    assert detect_heading(line, in_references=True) is None
+
+
+def test_known_and_capital_headings_still_end_the_references() -> None:
+    """Auch im Referenzkontext beenden Schlüsselwörter und Versalzeilen die Bibliografie."""
+    assert detect_heading("Appendix", in_references=True) is not None
+    assert detect_heading("SUPPLEMENTARY MATERIAL", in_references=True) is not None
+
+
+def test_analyze_keeps_bibliography_entries_inside_references() -> None:
+    """Numerierte Literatureinträge zerschneiden den Referenzabschnitt nicht mehr."""
+    body = "The evaluation covers several benchmark datasets in detail. " * 5
+    entries = "\n".join(
+        f"{index} Author Name and Other Author: A Study of Retrieval Methods"
+        for index in range(1, 12)
+    )
+    pages = [(1, f"2 Evaluation\n{body}\n\nReferences\n{entries}")]
+
+    sectioning = analyze("pid", pages)
+    references = [s for s in sectioning.sections if s.kind == SECTION_KIND_REFERENCES]
+
+    assert len(references) == 1
+    reference_id = references[0].section_id
+    assert sectioning.sections[-1].section_id == reference_id
+    assert any(block.section_id == reference_id for block in sectioning.blocks)
+
+
 def test_analyze_detects_front_abstract_and_body() -> None:
     """Fließtext vor der ersten Überschrift wird front; Abstract/Body werden erkannt."""
     body = "The introduction motivates the work in depth. " * 6
