@@ -34,7 +34,7 @@ aufrufende Agent selbst (kein serverseitiges LLM-Sampling, siehe
 ## Abhängigkeiten
 
 - Python ≥ 3.11 (WinPython-Basis: 3.13), `mcp` (SDK, inkl. FastMCP).
-- Offline-Hybrid-Stack als Kern: `pypdf`, `scikit-learn` (TF-IDF), `networkx`, SQLite (stdlib) –
+- Offline-Hybrid-Stack als Kern: `pypdf`, `scikit-learn` (TF-IDF), `numpy` (BM25-Wertung), `networkx`, SQLite (stdlib) –
   Option B, [ADR 0005](../../../docs/adr/0005-graphrag-index-backend-open.md).
 
 ## Start (Transport `stdio`)

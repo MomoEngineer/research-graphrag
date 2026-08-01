@@ -40,7 +40,7 @@ Dieses Dokument ist das zentrale Regelwerk für die Arbeit am Repository **Resea
 - **Primärsprache: Python** (WinPython-Basis: 3.13; Mindestversion 3.11, daher `requires-python = ">=3.11"`).
 - **MCP-Server** mit dem offiziellen **MCP Python SDK** (`mcp`, inkl. FastMCP), Transport `stdio`.
 - **PDF-Extraktion:** `pypdf` (Offline-Hybrid, [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)); Docling/Marker als späterer Ausbau, falls offline beschaffbar.
-- **Index & Retrieval:** Offline-Hybrid – TF-IDF (`scikit-learn`) + `networkx`/Louvain + SQLite ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).
+- **Index & Retrieval:** Offline-Hybrid – TF-IDF (`scikit-learn`) + handimplementiertes BM25 mit Rang-Fusion (`numpy`, [ADR 0014](docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)) + `networkx`/Louvain + SQLite ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).
 - **Tests:** `pytest`; asynchrone Tests über das `anyio`-Plugin (offline, siehe [ADR 0003](docs/adr/0003-offline-test-and-coverage-tooling.md)).
 - **Statische Qualität:** `ruff` (Lint + Format) und `mypy` (Typen).
 - **Dependencies/Lockfile:** `pip` + `requirements.lock` (Offline-Kompromiss, [ADR 0002](docs/adr/0002-venv-and-offline-dependency-strategy.md)). `uv` ist das bevorzugte Ziel, sobald ein Mirror verfügbar ist.

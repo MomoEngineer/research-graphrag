@@ -1,7 +1,7 @@
 # requirements.lock - eingefrorene Gesamtaufloesung der Umgebung (pip freeze).
 # Offline-Kompromiss: spiegelt die WinPython-Basis wider (keine Hashes, keine strikte
 # Trennung direkt/transitiv). Grundsatz: docs/adr/0002-venv-and-offline-dependency-strategy.md.
-# Kern-Deps des Offline-Hybrid (pypdf/scikit-learn/networkx, Option B) sind enthalten;
+# Kern-Deps des Offline-Hybrid (pypdf/scikit-learn/networkx/numpy, Option B) sind enthalten;
 # der MS-GraphRAG-Stack (docling/graphrag/lancedb) ist offline nicht beschaffbar (ADR 0005).
 #
 absl-py==2.3.0

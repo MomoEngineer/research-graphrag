@@ -49,6 +49,11 @@ class Citation:
     siehe docs/adr/0013-chunking-refinement-phase7.md). ``section_title`` ist die (heuristische)
     Abschnittsüberschrift des Chunks; leer, wenn keine Section erkannt wurde (siehe
     docs/adr/0006-canonical-model-phase2-scope.md).
+
+    ``score`` ist der Wert der verwendeten Wertung – bei der Standard-Wertung ``hybrid`` also
+    ein **Fusionswert** und keine Ähnlichkeit; er ist nur *innerhalb* einer Antwort
+    vergleichbar. ``score_tfidf`` und ``score_bm25`` weisen die Beiträge der beiden Verfahren
+    aus (siehe docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md).
     """
 
     paper_id: str
@@ -59,6 +64,8 @@ class Citation:
     snippet: str
     section_title: str = ""
     page_end: int = 0
+    score_tfidf: float = 0.0
+    score_bm25: float = 0.0
 
     def __post_init__(self) -> None:
         """Normalisiert die Seiten-Range: ``page_end`` fällt auf die Startseite zurück."""
@@ -77,6 +84,8 @@ class Citation:
             snippet=hit.snippet,
             section_title=hit.section_title,
             page_end=hit.page_end,
+            score_tfidf=hit.score_tfidf,
+            score_bm25=hit.score_bm25,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -88,6 +97,8 @@ class Citation:
             "page_end": self.page_end,
             "chunk_id": self.chunk_id,
             "score": self.score,
+            "score_tfidf": self.score_tfidf,
+            "score_bm25": self.score_bm25,
             "source_uri": self.source_uri,
             "snippet": self.snippet,
         }

@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from research_graphrag.indexing.tfidf_index import TfidfIndex
+from research_graphrag.indexing.tfidf_index import DEFAULT_SCORING, Scoring, TfidfIndex
 from research_graphrag.retrieval.provenance import Citation
 
 __all__ = ["BasicSearchResult", "Citation", "search_basic"]
@@ -35,22 +35,27 @@ class BasicSearchResult:
         }
 
 
-def search_basic(db_path: str | Path, query: str, k: int = 5) -> BasicSearchResult:
-    """Beantwortet eine Frage über Basic Search (TF-IDF) mit Provenienz.
+def search_basic(
+    db_path: str | Path, query: str, k: int = 5, *, scoring: Scoring = DEFAULT_SCORING
+) -> BasicSearchResult:
+    """Beantwortet eine Frage über Basic Search (Hybrid-Wertung) mit Provenienz.
 
     Args:
         db_path: Pfad zur SQLite-Index-Datei.
         query: Natürlichsprachige Anfrage (nicht leer).
         k: Maximale Trefferzahl (> 0).
+        scoring: Wertung – ``hybrid`` (Default), ``tfidf`` oder ``bm25`` (siehe
+            docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md).
 
     Returns:
         :class:`BasicSearchResult` mit belegten Zitaten (Paper, Seite, Score, Snippet).
 
     Raises:
         DomainError: ``not_found``/``constraint_violation`` wenn kein Index vorliegt;
-            ``invalid_input`` bei leerer Anfrage oder ``k <= 0`` (siehe docs/error-model.md).
+            ``invalid_input`` bei leerer Anfrage, ``k <= 0`` oder unbekannter Wertung
+            (siehe docs/error-model.md).
     """
     index = TfidfIndex.load(db_path)
-    hits = index.search(query, k)
+    hits = index.search(query, k, scoring=scoring)
     citations = tuple(Citation.from_hit(hit) for hit in hits)
     return BasicSearchResult(query=query, citations=citations)

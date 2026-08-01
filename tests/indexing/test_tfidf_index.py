@@ -9,9 +9,11 @@ from pathlib import Path
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
+from research_graphrag.indexing.fusion import RRF_K
 from research_graphrag.indexing.tfidf_index import TfidfIndex, _snippet, build_index
 
 
@@ -249,3 +251,121 @@ def test_neighbors_of_chunk_non_positive_k_raises_invalid_input(tmp_path: Path) 
     with pytest.raises(DomainError) as excinfo:
         TfidfIndex.load(db).neighbors_of_chunk("aaaa0001-p1", k=0)
     assert excinfo.value.code is ErrorCode.INVALID_INPUT
+
+
+# --------------------------------------------------------------------------------------
+# Hybrid-Wertung (BM25 + TF-IDF), siehe docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md
+# --------------------------------------------------------------------------------------
+
+
+def _hybrid_corpus(tmp_path: Path) -> Path:
+    papers = [
+        _paper("aaaa0001", ["transformer attention mechanism", "graph neural message passing"]),
+        _paper("bbbb0002", ["retrieval augmented generation with faiss", "evaluation protocol"]),
+        _paper("cccc0003", ["knowledge graph construction", "attention attention attention"]),
+    ]
+    db = tmp_path / "index.sqlite"
+    build_index(papers, db)
+    return db
+
+
+def test_tfidf_space_matches_the_previous_vectorizer(tmp_path: Path) -> None:
+    """Regressionsbeweis: CountVectorizer + TfidfTransformer == früherer TfidfVectorizer."""
+    index = TfidfIndex.load(_hybrid_corpus(tmp_path))
+    texts = [ref.text for ref in index._refs]
+
+    reference = TfidfVectorizer()
+    expected = reference.fit_transform(texts)
+    expected_query = reference.transform(["attention mechanism"])
+    actual_query = index._transformer.transform(
+        index._vectorizer.transform(["attention mechanism"])
+    )
+
+    assert index._matrix.toarray() == pytest.approx(expected.toarray())
+    assert actual_query.toarray() == pytest.approx(expected_query.toarray())
+
+
+def test_tfidf_scoring_returns_cosine_values(tmp_path: Path) -> None:
+    """Mit ``scoring='tfidf'`` ist ``score`` weiterhin der Kosinus (Rückwärtskompatibilität)."""
+    hits = TfidfIndex.load(_hybrid_corpus(tmp_path)).search("attention", k=3, scoring="tfidf")
+
+    assert hits
+    assert all(0.0 < hit.score <= 1.0 for hit in hits)
+    assert all(hit.score == hit.score_tfidf for hit in hits)
+    assert hits == sorted(hits, key=lambda hit: -hit.score)
+
+
+def test_bm25_scoring_returns_bm25_values(tmp_path: Path) -> None:
+    """Mit ``scoring='bm25'`` ist ``score`` der BM25-Wert."""
+    hits = TfidfIndex.load(_hybrid_corpus(tmp_path)).search("attention", k=3, scoring="bm25")
+
+    assert hits
+    assert all(hit.score == hit.score_bm25 for hit in hits)
+    assert all(hit.score > 0.0 for hit in hits)
+
+
+def test_hybrid_reports_both_component_scores(tmp_path: Path) -> None:
+    """Die Standard-Wertung liefert den Fusionswert plus beide Rohwerte."""
+    hits = TfidfIndex.load(_hybrid_corpus(tmp_path)).search("attention", k=3)
+
+    assert hits
+    top = hits[0]
+    assert top.score_tfidf > 0.0
+    assert top.score_bm25 > 0.0
+    assert 0.0 < top.score <= 2.0 / (RRF_K + 1)
+
+
+def test_hybrid_prefers_agreement_of_both_rankings(tmp_path: Path) -> None:
+    """Ein Chunk, den beide Verfahren vorn sehen, gewinnt gegen einen einseitigen Favoriten."""
+    index = TfidfIndex.load(_hybrid_corpus(tmp_path))
+
+    hybrid_top = index.search("attention mechanism", k=1)[0]
+    tfidf_top = index.search("attention mechanism", k=1, scoring="tfidf")[0]
+    bm25_top = index.search("attention mechanism", k=1, scoring="bm25")[0]
+
+    assert hybrid_top.chunk_id in {tfidf_top.chunk_id, bm25_top.chunk_id}
+
+
+def test_hybrid_no_match_stays_empty(tmp_path: Path) -> None:
+    """Ohne lexikalische Überschneidung bleibt jede Wertung leer."""
+    index = TfidfIndex.load(_hybrid_corpus(tmp_path))
+
+    assert index.search("zzzqqqwww xxyyzzq", k=5) == []
+    assert index.search("zzzqqqwww xxyyzzq", k=5, scoring="tfidf") == []
+    assert index.search("zzzqqqwww xxyyzzq", k=5, scoring="bm25") == []
+
+
+def test_hybrid_respects_paper_ids_filter(tmp_path: Path) -> None:
+    """Der paper_ids-Filter wirkt auch in der Fusion."""
+    hits = TfidfIndex.load(_hybrid_corpus(tmp_path)).search(
+        "attention", k=5, paper_ids={"cccc0003"}
+    )
+
+    assert hits
+    assert all(hit.paper_id == "cccc0003" for hit in hits)
+
+
+def test_unknown_scoring_raises_invalid_input(tmp_path: Path) -> None:
+    """Eine unbekannte Wertung -> invalid_input (statt stiller Rückfall auf hybrid)."""
+    with pytest.raises(DomainError) as excinfo:
+        TfidfIndex.load(_hybrid_corpus(tmp_path)).search("attention", k=3, scoring="fuzzy")  # type: ignore[arg-type]
+    assert excinfo.value.code is ErrorCode.INVALID_INPUT
+
+
+def test_search_is_deterministic_across_loads(tmp_path: Path) -> None:
+    """Zwei unabhängige Ladevorgänge liefern identische Trefferlisten."""
+    db = _hybrid_corpus(tmp_path)
+
+    first = TfidfIndex.load(db).search("attention mechanism", k=5)
+    second = TfidfIndex.load(db).search("attention mechanism", k=5)
+
+    assert first == second
+
+
+def test_neighbors_of_chunk_stays_tfidf_only(tmp_path: Path) -> None:
+    """Die Chunk-Nachbarschaft bleibt Kosinus – BM25 trägt dort bewusst nicht bei."""
+    neighbors = TfidfIndex.load(_hybrid_corpus(tmp_path)).neighbors_of_chunk("aaaa0001-p1", k=3)
+
+    assert neighbors
+    assert all(hit.score_bm25 == 0.0 for hit in neighbors)
+    assert all(hit.score == hit.score_tfidf for hit in neighbors)

@@ -65,7 +65,9 @@ def test_noop_degrades_visibly_but_keeps_evidence(
     index_db: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """Ohne Modell erscheint der Hinweis auf die Degradation – die Belege bleiben vollständig."""
-    _render_synthesis("basic", index_db, "transformer attention", 3, NoopGenerationProvider())
+    _render_synthesis(
+        "basic", index_db, "transformer attention", 3, NoopGenerationProvider(), "hybrid"
+    )
 
     out = capsys.readouterr().out
     assert "Keine generierte Antwort" in out
@@ -85,7 +87,7 @@ def test_generated_answer_is_printed_with_model(
         return GenerationResult(text="Aufmerksamkeit ist zentral [1].", generated=True, model="m-1")
 
     _render_synthesis(
-        "basic", index_db, "transformer attention", 3, SamplingGenerationProvider(sampler)
+        "basic", index_db, "transformer attention", 3, SamplingGenerationProvider(sampler), "hybrid"
     )
 
     out = capsys.readouterr().out
@@ -99,7 +101,7 @@ def test_no_match_reports_missing_evidence(
     index_db: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """Ohne Treffer wird das ehrlich gemeldet, statt eine Antwort zu erfinden."""
-    _render_synthesis("basic", index_db, "zzzqqqwww xxyyzzq", 3, NoopGenerationProvider())
+    _render_synthesis("basic", index_db, "zzzqqqwww xxyyzzq", 3, NoopGenerationProvider(), "hybrid")
 
     out = capsys.readouterr().out
     assert "Keine belegten Treffer" in out
@@ -110,6 +112,8 @@ def test_all_modes_are_supported(
     index_db: str, mode: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """Der Synthese-Pfad steht für alle vier Modi bereit."""
-    _render_synthesis(mode, index_db, "transformer attention", 3, NoopGenerationProvider())
+    _render_synthesis(
+        mode, index_db, "transformer attention", 3, NoopGenerationProvider(), "hybrid"
+    )
 
     assert capsys.readouterr().out

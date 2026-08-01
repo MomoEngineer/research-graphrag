@@ -40,7 +40,8 @@ research-graphrag/
 │  ├─ graph_info.py              # Community-Übersicht (read-only, Phase 3)
 │  ├─ citations.py               # Zitationen eines Papers (read-only, Phase 7 / A2)
 │  ├─ status.py                  # Read-only Index-/Korpus-Status + Konsistenz (Phase 6)
-│  └─ qa.py                      # Prüf-Fragen je Modus durchspielen (QS-Harness, Phase 6)
+│  ├─ qa.py                      # Prüf-Fragen je Modus durchspielen (QS-Harness, Phase 6)
+│  └─ eval_retrieval.py          # Retrieval-Evaluation Hit@k/MRR gegen das Gold-Set (Phase 7 / A4)
 ├─ src/research_graphrag/
 │  ├─ __init__.py                # Paket-Version
 │  ├─ errors.py                  # gemeinsame Fehlertaxonomie (docs/error-model.md)
@@ -52,11 +53,13 @@ research-graphrag/
 │  │  ├─ quality.py              #   Qualitäts-Gates (Flags)
 │  │  └─ pdf.py                  #   Orchestrator extract_pdf
 │  ├─ indexing/                  # Canonical JSON → Offline-Hybrid-Index (Option B)
-│  │  ├─ tfidf_index.py          #   TF-IDF-Index über SQLite
+│  │  ├─ tfidf_index.py          #   Chunk-Index über SQLite (TF-IDF + BM25, Hybrid-Wertung)
+│  │  ├─ bm25.py                 #   BM25-Gewichte, handimplementiert (Phase 7 / A4)
+│  │  ├─ fusion.py               #   Reciprocal Rank Fusion (Phase 7 / A4)
 │  │  ├─ graph_index.py          #   Paper-Ähnlichkeitsgraph + Louvain-Communities (Phase 3)
 │  │  └─ citation_graph.py       #   Intra-Korpus-Zitationsgraph (CITES, Phase 7 / A2)
 │  ├─ retrieval/                 # Query-Router: Basic/Local/Global/DRIFT (Phase 4)
-│  │  ├─ basic.py                #   search_basic (TF-IDF-Top-k)
+│  │  ├─ basic.py                #   search_basic (Top-k über die Hybrid-Wertung)
 │  │  ├─ local.py                #   search_local (Chunk-Nachbarschaft + Paper-Fan-out)
 │  │  ├─ global_search.py        #   search_global (Community-Ranking)
 │  │  ├─ drift.py                #   search_drift (Global→Local-Hybrid)
@@ -77,7 +80,8 @@ research-graphrag/
 │     ├─ README.md               #   Server-README
 │     └─ specs/                  #   Pro-Tool-Spezifikationen (8 Tools)
 ├─ eval/
-│  └─ pruef-fragen.md            # Prüf-Fragen über alle 5 Fragetypen
+│  ├─ pruef-fragen.md            # Prüf-Fragen über alle 5 Fragetypen
+│  └─ retrieval-gold.json        # versioniertes Gold-Set für Hit@k/MRR (Phase 7 / A4)
 ├─ recherche/                    # (Phase 1) migrierte Rechercheartefakte (noch nicht vorhanden)
 ├─ papers/                       # PDF-Korpus (nicht versioniert)
 ├─ data/                         # Canonical JSON 0.3.0, manifest.json, index/, quality_report.*, overview_drafts.md (nicht versioniert)
@@ -87,22 +91,22 @@ research-graphrag/
    ├─ test_errors.py
    ├─ test_pipeline.py
    ├─ extraction/                # PDF-Extraktion + Struktur/Chunking/Qualität (Phase 2)
-   ├─ indexing/                  # TF-IDF/SQLite-Index (0b) + Graph (Phase 3) + Zitationen (Phase 7)
-   ├─ retrieval/                 # Basic/Local/Global/DRIFT + Router + Provenienz + get_paper/get_citations + QS-Harness (Phase 4/5/6/7)
+   ├─ indexing/                  # TF-IDF/SQLite-Index (0b) + BM25/Fusion (Phase 7 / A4) + Graph (Phase 3) + Zitationen (Phase 7)
+   ├─ retrieval/                 # Basic/Local/Global/DRIFT + Router + Provenienz + get_paper/get_citations + QS-Harness + Eval-Harness (Phase 4/5/6/7)
    ├─ overview/                  # Übersicht-Entwürfe (Phase 2)
    ├─ generation/                # LLM-Bridge: Port, Evidenz, Synthese, CLI-Pfad (Phase 7 / A1)
    ├─ mcp_server/                # Server-Contract via In-Memory-Client (Phase 5) + Sampling (Phase 7)
    └─ integration/               # End-to-End-Durchstich (M1) + Drop-in-Freshness/atomarer Swap + Status (Phase 6/7)
 ```
 
-> **Phasen-Hinweis:** Einträge mit „(Phase n)" markieren die Phase der **vollen** Ausbaustufe. In **Phase 0b** sind bereits lauffähige Offline-Hybrid-Implementierungen vorhanden (`errors.py`, `pipeline.py`, `extraction/pdf.py`, `indexing/tfidf_index.py`, `retrieval/basic.py`, `scripts/ingest.py`, `scripts/ask.py`). In **Phase 2** kamen die Extraktions-Submodule (`extraction/model.py`, `structure.py`, `chunking.py`, `quality.py`), das Paket `overview/` und `scripts/update_overview.py` hinzu. In **Phase 3** kamen `indexing/graph_index.py` (Paper-Ähnlichkeitsgraph + Louvain-Communities) und `scripts/graph_info.py` hinzu. In **Phase 4** kamen die Retrieval-Module (`retrieval/local.py`, `global_search.py`, `drift.py`, `router.py`, `provenance.py`) hinzu; der Index wurde additiv um `section_title` erweitert (Schema 0.2.0, [ADR 0008](adr/0008-retrieval-and-query-router-phase4.md)). In **Phase 5** kamen der MCP-Server (`mcp_server/server.py`, `__main__.py`, `README.md`) und `retrieval/paper.py` (`get_paper`) hinzu; der Index wurde additiv um `identifiers` (DOI/arXiv) erweitert (Schema 0.3.0, [ADR 0009](adr/0009-mcp-server-stdio-phase5.md)). In **Phase 6** kamen `scripts/status.py` (read-only Status/Konsistenz) und `scripts/qa.py` (QS-Harness) sowie der **atomare Index-Swap** in `pipeline.py` hinzu (On-Read gehärtet, [ADR 0010](adr/0010-drop-in-workflow-and-qa-phase6.md)); Index-/Canonical-Schema bleiben unverändert. In **Phase 7 / A2** kamen `indexing/citation_graph.py`, `retrieval/citations.py` und `scripts/citations.py` hinzu; der Index wurde additiv um das Zitations-Teilschema (`citation_edges`, `meta.citation_schema_version`) erweitert, das im selben atomaren Swap gebaut wird ([ADR 0011](adr/0011-intra-corpus-citation-graph-phase7.md)). In **Phase 7 / A1** kam das Paket `generation/` (Generierungs-Port, Evidenz, Synthese, Orchestrierung) samt `mcp_server/sampling.py`, dem Tool `answer_question` und dem CLI-Flag `--synthese` hinzu ([ADR 0012](adr/0012-llm-bridge-and-answer-synthesis-phase7.md)). In **Phase 7 / A3** wurde die Extraktion verfeinert – `extraction/structure.py` erhielt Reject-Regeln und die **Section-Absorption**, `extraction/chunking.py` gibt die Seitengrenze zugunsten einer **Seiten-Range** auf; Canonical-Schema `0.3.0`, Index-Schema `0.4.0` (`chunks.page_end`), `Citation` additiv um `page_end` erweitert ([ADR 0013](adr/0013-chunking-refinement-phase7.md)). Der Ordner `recherche/` wird erst in seiner Phase angelegt.
+> **Phasen-Hinweis:** Einträge mit „(Phase n)" markieren die Phase der **vollen** Ausbaustufe. In **Phase 0b** sind bereits lauffähige Offline-Hybrid-Implementierungen vorhanden (`errors.py`, `pipeline.py`, `extraction/pdf.py`, `indexing/tfidf_index.py`, `retrieval/basic.py`, `scripts/ingest.py`, `scripts/ask.py`). In **Phase 2** kamen die Extraktions-Submodule (`extraction/model.py`, `structure.py`, `chunking.py`, `quality.py`), das Paket `overview/` und `scripts/update_overview.py` hinzu. In **Phase 3** kamen `indexing/graph_index.py` (Paper-Ähnlichkeitsgraph + Louvain-Communities) und `scripts/graph_info.py` hinzu. In **Phase 4** kamen die Retrieval-Module (`retrieval/local.py`, `global_search.py`, `drift.py`, `router.py`, `provenance.py`) hinzu; der Index wurde additiv um `section_title` erweitert (Schema 0.2.0, [ADR 0008](adr/0008-retrieval-and-query-router-phase4.md)). In **Phase 5** kamen der MCP-Server (`mcp_server/server.py`, `__main__.py`, `README.md`) und `retrieval/paper.py` (`get_paper`) hinzu; der Index wurde additiv um `identifiers` (DOI/arXiv) erweitert (Schema 0.3.0, [ADR 0009](adr/0009-mcp-server-stdio-phase5.md)). In **Phase 6** kamen `scripts/status.py` (read-only Status/Konsistenz) und `scripts/qa.py` (QS-Harness) sowie der **atomare Index-Swap** in `pipeline.py` hinzu (On-Read gehärtet, [ADR 0010](adr/0010-drop-in-workflow-and-qa-phase6.md)); Index-/Canonical-Schema bleiben unverändert. In **Phase 7 / A2** kamen `indexing/citation_graph.py`, `retrieval/citations.py` und `scripts/citations.py` hinzu; der Index wurde additiv um das Zitations-Teilschema (`citation_edges`, `meta.citation_schema_version`) erweitert, das im selben atomaren Swap gebaut wird ([ADR 0011](adr/0011-intra-corpus-citation-graph-phase7.md)). In **Phase 7 / A1** kam das Paket `generation/` (Generierungs-Port, Evidenz, Synthese, Orchestrierung) samt `mcp_server/sampling.py`, dem Tool `answer_question` und dem CLI-Flag `--synthese` hinzu ([ADR 0012](adr/0012-llm-bridge-and-answer-synthesis-phase7.md)). In **Phase 7 / A3** wurde die Extraktion verfeinert – `extraction/structure.py` erhielt Reject-Regeln und die **Section-Absorption**, `extraction/chunking.py` gibt die Seitengrenze zugunsten einer **Seiten-Range** auf; Canonical-Schema `0.3.0`, Index-Schema `0.4.0` (`chunks.page_end`), `Citation` additiv um `page_end` erweitert ([ADR 0013](adr/0013-chunking-refinement-phase7.md)). In **Phase 7 / A4** kamen `indexing/bm25.py` und `indexing/fusion.py` hinzu; `indexing/tfidf_index.py` baut beide Wertungen über **einer** Tokenisierung und liefert per Default die Rang-Fusion, `Citation` trägt additiv `score_tfidf`/`score_bm25` (Laufzeit-Schema; **Index-Schema unverändert** `0.4.0`), dazu `scripts/eval_retrieval.py` und `eval/retrieval-gold.json` ([ADR 0014](adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)). Der Ordner `recherche/` wird erst in seiner Phase angelegt.
 
 ### Zuordnung zu den Roadmap-Phasen
 
 | Ordner | Verantwortung | Phase |
 | --- | --- | --- |
 | `src/research_graphrag/extraction/` | PDF → Canonical Paper JSON (`pypdf`) | 2 |
-| `src/research_graphrag/indexing/` | Canonical JSON → Offline-Hybrid-Index (TF-IDF + networkx/SQLite) + Zitationsgraph | 3 / 7 |
+| `src/research_graphrag/indexing/` | Canonical JSON → Offline-Hybrid-Index (TF-IDF + BM25 + networkx/SQLite) + Zitationsgraph | 3 / 7 |
 | `src/research_graphrag/retrieval/` | Query-Router (Local/Global/DRIFT/Basic) | 4 |
 | `src/research_graphrag/mcp_server/` | MCP-Server (stdio) mit Tools + Provenienz | 5 |
 | `src/research_graphrag/generation/` | LLM-Bridge: Evidenz-Aufbereitung + optionale Antwort-Synthese | 7 |

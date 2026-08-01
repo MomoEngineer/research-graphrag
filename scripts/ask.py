@@ -12,6 +12,11 @@ formuliert anschließend der aufrufende Agent (Copilot) aus den hier gelieferten
 Treffern. ``-k`` steuert die Trefferzahl je Modus (Basic: Chunks, Local: Chunk-Nachbarn,
 Global: Communities, DRIFT: lokale Belege).
 
+``--scoring`` wählt die Wertung der Chunk-Modi: ``hybrid`` (Default, Rang-Fusion aus BM25 und
+TF-IDF), ``tfidf`` oder ``bm25`` – gedacht für Vergleichsläufe und als Notausgang
+(docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md). Bei ``--mode global`` bleibt sie ohne
+Wirkung, weil dort Communities und keine Chunks gerankt werden.
+
 ``--synthese`` zeigt zusätzlich den Synthese-Pfad der LLM-Bridge
 (docs/adr/0012-llm-bridge-and-answer-synthesis-phase7.md): Die Belege werden modus-unabhängig
 nummeriert an den Generierungs-Port gereicht. In der CLI steht offline **kein** Modell zur
@@ -30,6 +35,7 @@ from pathlib import Path
 from research_graphrag.errors import DomainError
 from research_graphrag.generation.answer import answer_question
 from research_graphrag.generation.provider import GenerationProvider, NoopGenerationProvider
+from research_graphrag.indexing.tfidf_index import DEFAULT_SCORING, Scoring
 from research_graphrag.retrieval.basic import search_basic
 from research_graphrag.retrieval.drift import search_drift
 from research_graphrag.retrieval.global_search import search_global
@@ -42,17 +48,18 @@ _DEFAULT_INDEX = _REPO_ROOT / "data" / "index" / "index.sqlite"
 
 
 def _print_citation(rank: int, citation: Citation) -> None:
-    """Gibt ein Chunk-Zitat inkl. Abschnitts-/Seiten-Provenienz aus."""
+    """Gibt ein Chunk-Zitat inkl. Abschnitts-/Seiten-Provenienz und Teil-Scores aus."""
     section = f" · Abschnitt {citation.section_title}" if citation.section_title else ""
     pages = page_label(citation.page_number, citation.page_end)
-    print(f"  {rank}. Paper {citation.paper_id} · {pages}{section} · Score {citation.score:.3f}")
+    print(f"  {rank}. Paper {citation.paper_id} · {pages}{section} · Score {citation.score:.4f}")
+    print(f"     TF-IDF {citation.score_tfidf:.3f} · BM25 {citation.score_bm25:.2f}")
     print(f"     {citation.snippet}")
     print(f"     Quelle: {citation.source_uri}")
 
 
-def _render_basic(index: str, query: str, k: int) -> None:
+def _render_basic(index: str, query: str, k: int, scoring: Scoring) -> None:
     """Basic Search: Top-k-Chunk-Zitate."""
-    result = search_basic(index, query, k)
+    result = search_basic(index, query, k, scoring=scoring)
     if not result.citations:
         print(f"[ask] Keine belegten Treffer für: {query!r}")
         return
@@ -61,9 +68,9 @@ def _render_basic(index: str, query: str, k: int) -> None:
         _print_citation(rank, citation)
 
 
-def _render_local(index: str, query: str, k: int) -> None:
+def _render_local(index: str, query: str, k: int, scoring: Scoring) -> None:
     """Local Search: Seed-Chunk, Chunk-Nachbarschaft und Paper-Fan-out."""
-    result = search_local(index, query, k=k)
+    result = search_local(index, query, k=k, scoring=scoring)
     if result.seed is None:
         print(f"[ask] Kein Seed-Treffer für: {query!r}")
         return
@@ -81,8 +88,11 @@ def _render_local(index: str, query: str, k: int) -> None:
                 _print_citation(1, neighbor.citation)
 
 
-def _render_global(index: str, query: str, k: int) -> None:
-    """Global Search: query-relevante Communities mit repräsentativer Paper-Provenienz."""
+def _render_global(index: str, query: str, k: int, _scoring: Scoring) -> None:
+    """Global Search: query-relevante Communities mit repräsentativer Paper-Provenienz.
+
+    Die Chunk-Wertung ist hier ohne Wirkung – Global rankt Communities.
+    """
     result = search_global(index, query, k)
     if not result.communities:
         print(f"[ask] Keine passende Community für: {query!r}")
@@ -100,9 +110,9 @@ def _render_global(index: str, query: str, k: int) -> None:
                 print(f"       {ref.snippet}")
 
 
-def _render_drift(index: str, query: str, k: int) -> None:
+def _render_drift(index: str, query: str, k: int, scoring: Scoring) -> None:
     """DRIFT Search: gewählte Community (Kontext) + lokale Chunk-Belege."""
-    result = search_drift(index, query, k=k)
+    result = search_drift(index, query, k=k, scoring=scoring)
     if result.community is None:
         print(f"[ask] Keine passende Community für: {query!r}")
         return
@@ -120,7 +130,7 @@ def _render_drift(index: str, query: str, k: int) -> None:
         _print_citation(rank, citation)
 
 
-_RENDERERS: dict[str, Callable[[str, str, int], None]] = {
+_RENDERERS: dict[str, Callable[[str, str, int, Scoring], None]] = {
     "basic": _render_basic,
     "local": _render_local,
     "global": _render_global,
@@ -129,10 +139,10 @@ _RENDERERS: dict[str, Callable[[str, str, int], None]] = {
 
 
 def _render_synthesis(
-    mode: str, index: str, query: str, k: int, provider: GenerationProvider
+    mode: str, index: str, query: str, k: int, provider: GenerationProvider, scoring: Scoring
 ) -> None:
     """Synthese-Pfad: nummerierte Belege plus – falls ein Modell verfügbar ist – die Antwort."""
-    result = answer_question(index, query, mode=mode, k=k, provider=provider)
+    result = answer_question(index, query, mode=mode, k=k, provider=provider, scoring=scoring)
 
     if result.generated:
         model = result.model or "Client-Modell"
@@ -171,6 +181,12 @@ def main() -> int:
     )
     parser.add_argument("--index", default=str(_DEFAULT_INDEX), help="Pfad zur Index-SQLite")
     parser.add_argument(
+        "--scoring",
+        choices=("hybrid", "tfidf", "bm25"),
+        default=DEFAULT_SCORING,
+        help="Wertung der Chunk-Modi (Default 'hybrid'); ohne Wirkung bei --mode global.",
+    )
+    parser.add_argument(
         "--synthese",
         action="store_true",
         help="Belege nummeriert über die LLM-Bridge aufbereiten (CLI ohne Modell: Noop-Fallback).",
@@ -185,9 +201,11 @@ def main() -> int:
 
     try:
         if args.synthese:
-            _render_synthesis(mode, args.index, args.query, args.k, NoopGenerationProvider())
+            _render_synthesis(
+                mode, args.index, args.query, args.k, NoopGenerationProvider(), args.scoring
+            )
         else:
-            _RENDERERS[mode](args.index, args.query, args.k)
+            _RENDERERS[mode](args.index, args.query, args.k, args.scoring)
     except DomainError as exc:
         print(f"[ask] Fehler [{exc.code.value}]: {exc.message}")
         return 1

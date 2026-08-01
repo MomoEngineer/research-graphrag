@@ -22,7 +22,7 @@ from typing import Any
 
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.indexing.graph_index import load_neighbors
-from research_graphrag.indexing.tfidf_index import TfidfIndex
+from research_graphrag.indexing.tfidf_index import DEFAULT_SCORING, Scoring, TfidfIndex
 from research_graphrag.retrieval.provenance import Citation
 
 DEFAULT_NEIGHBORHOOD = 5
@@ -74,6 +74,7 @@ def search_local(
     *,
     k: int = DEFAULT_NEIGHBORHOOD,
     fan_out: int = DEFAULT_FANOUT,
+    scoring: Scoring = DEFAULT_SCORING,
 ) -> LocalSearchResult:
     """Beantwortet eine Detail-/Netz-Frage über Local Search mit Provenienz.
 
@@ -83,21 +84,24 @@ def search_local(
         k: Maximale Zahl der Chunk-Nachbarn (> 0).
         fan_out: Maximale Zahl der Graph-Nachbarpaper (>= 0). ``0`` überspringt den
             Fan-out und benötigt daher **keinen** gebauten Graphen.
+        scoring: Wertung für Seed und Fan-out-Belege – ``hybrid`` (Default), ``tfidf`` oder
+            ``bm25``. Die Chunk-Nachbarschaft bleibt der TF-IDF-Kosinus (siehe
+            docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md).
 
     Returns:
         Ein :class:`LocalSearchResult`; ``seed`` ist ``None``, wenn nichts passt.
 
     Raises:
-        DomainError: ``invalid_input`` bei leerer Anfrage, ``k <= 0`` oder ``fan_out < 0``;
-            ``not_found`` wenn die Index-Datei fehlt; ``constraint_violation`` wenn der Index
-            keine Chunks enthält bzw. (bei ``fan_out > 0``) kein Graph gebaut wurde
-            (siehe docs/error-model.md).
+        DomainError: ``invalid_input`` bei leerer Anfrage, ``k <= 0``, ``fan_out < 0`` oder
+            unbekannter Wertung; ``not_found`` wenn die Index-Datei fehlt;
+            ``constraint_violation`` wenn der Index keine Chunks enthält bzw. (bei
+            ``fan_out > 0``) kein Graph gebaut wurde (siehe docs/error-model.md).
     """
     if fan_out < 0:
         raise DomainError(ErrorCode.INVALID_INPUT, "fan_out muss >= 0 sein.")
 
     index = TfidfIndex.load(db_path)
-    seed_hits = index.search(query, 1)  # validiert Anfrage/k intern
+    seed_hits = index.search(query, 1, scoring=scoring)  # validiert Anfrage/k/Wertung intern
     if not seed_hits:
         return LocalSearchResult(query=query, seed=None, neighborhood=(), fan_out=())
 
@@ -108,7 +112,7 @@ def search_local(
     neighbors: list[NeighborPaper] = []
     if fan_out > 0:
         for neighbor_id, weight in load_neighbors(db_path, seed_hit.paper_id)[:fan_out]:
-            best = index.search(query, 1, paper_ids={neighbor_id})
+            best = index.search(query, 1, paper_ids={neighbor_id}, scoring=scoring)
             citation = Citation.from_hit(best[0]) if best else None
             neighbors.append(NeighborPaper(paper_id=neighbor_id, weight=weight, citation=citation))
 

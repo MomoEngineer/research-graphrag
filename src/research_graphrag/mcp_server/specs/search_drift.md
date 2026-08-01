@@ -43,12 +43,14 @@ Beantwortet **Widerspruchs-/Vergleichsfragen** über einen **pragmatischen Globa
     "representatives": [ { "paper_id": "…", "source_uri": "file:///…", "snippet": "…" } ]
   },
   "citations": [
-    { "paper_id": "…", "section_title": "…", "page_number": 6, "page_end": 6, "chunk_id": "…", "score": 0.3, "source_uri": "file:///…", "snippet": "…" }
+    { "paper_id": "…", "section_title": "…", "page_number": 6, "page_end": 6, "chunk_id": "…", "score": 0.0325, "score_tfidf": 0.3, "score_bm25": 14.2, "source_uri": "file:///…", "snippet": "…" }
   ]
 }
 ```
 
 `community` ist `null` und `citations` leer, wenn keine Community zur Anfrage passt.
+
+`community.score` ist der TF-IDF-Score des Community-Rankings (unverändert); in den `citations` ist `score` dagegen der **Fusionswert** der Hybrid-Wertung mit den Rohwerten `score_tfidf`/`score_bm25` ([ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)). Die beiden Werte sind **nicht** miteinander vergleichbar.
 
 ## 4. Annahmen und Vorbedingungen
 
@@ -70,11 +72,11 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 ## 7. Provenienz
 
 - **Community-Kontext**: `community_id`, `score`, `size`, `keywords`, repräsentative Paper.
-- **Lokale Belege**: Chunk-Zitate (`paper_id`, `section_title`, `page_number`, `page_end`, `chunk_id`, `score`, `source_uri`, `snippet`), beschränkt auf die Mitglieds-Paper der Community.
+- **Lokale Belege**: Chunk-Zitate (`paper_id`, `section_title`, `page_number`, `page_end`, `chunk_id`, `score`, `score_tfidf`, `score_bm25`, `source_uri`, `snippet`), beschränkt auf die Mitglieds-Paper der Community.
 
 ## 8. Reproduzierbarkeit
 
-- Deterministisch: Community-Auswahl über das Global-Ranking (Phase-3-Communities, fixer Seed); lokale Verfeinerung über TF-IDF mit Tie-Break über `chunk_id`.
+- Deterministisch: Community-Auswahl über das Global-Ranking (Phase-3-Communities, fixer Seed); lokale Verfeinerung über die Hybrid-Wertung (BM25 + TF-IDF, Reciprocal Rank Fusion, [ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)) mit Tie-Break über `chunk_id`.
 
 ## 9. Testabdeckung
 

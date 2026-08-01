@@ -1,0 +1,498 @@
+{
+  "gold_set_version": "1.1.0",
+  "created_for": "Roadmap A4 (Hybrid-Retrieval BM25 + TF-IDF), docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md; Teil-Vorgriff auf A6",
+  "index_schema_version": "0.4.0",
+  "corpus": {
+    "papers": 145,
+    "chunks": 11339
+  },
+  "label_rule": "Ein Paper gilt als relevant, wenn mindestens einer seiner Chunks alle Strings aus match_all (case-insensitive) enthaelt. Die Labels sind damit unabhaengig von jeder Ranking-Funktion und ueber 'python -m scripts.eval_retrieval --verify-labels' reproduzierbar.",
+  "questions": [
+    {
+      "qid": "G01",
+      "kind": "fact",
+      "query": "Which papers use the Qdrant vector database?",
+      "match_all": [
+        "qdrant"
+      ],
+      "expected_paper_ids": [
+        "520914709c84b8df"
+      ]
+    },
+    {
+      "qid": "G02",
+      "kind": "fact",
+      "query": "Which work evaluates on the WebQuestionsSP benchmark?",
+      "match_all": [
+        "webquestionssp"
+      ],
+      "expected_paper_ids": [
+        "ab3a9bbe54430777"
+      ]
+    },
+    {
+      "qid": "G03",
+      "kind": "fact",
+      "query": "Which paper uses GROBID to parse references?",
+      "match_all": [
+        "grobid"
+      ],
+      "expected_paper_ids": [
+        "c79a2138422e9726"
+      ]
+    },
+    {
+      "qid": "G04",
+      "kind": "fact",
+      "query": "How is Text2Cypher used to query a graph database?",
+      "match_all": [
+        "text2cypher"
+      ],
+      "expected_paper_ids": [
+        "0b0325edf825337d"
+      ]
+    },
+    {
+      "qid": "G05",
+      "kind": "fact",
+      "query": "Which papers discuss the Model Context Protocol?",
+      "match_all": [
+        "model context protocol"
+      ],
+      "expected_paper_ids": [
+        "8b8ed15cfb943a55",
+        "f95fe3d53655f899"
+      ]
+    },
+    {
+      "qid": "G06",
+      "kind": "fact",
+      "query": "Which work reports results on NarrativeQA?",
+      "match_all": [
+        "narrativeqa"
+      ],
+      "expected_paper_ids": [
+        "35e7e66bb3323d8d",
+        "84300a7f375d95a1",
+        "9dcc33a10c78f08e"
+      ]
+    },
+    {
+      "qid": "G07",
+      "kind": "fact",
+      "query": "Which papers use the Milvus vector store?",
+      "match_all": [
+        "milvus"
+      ],
+      "expected_paper_ids": [
+        "1d4985b4b9701674",
+        "b0f6f9495e1ef0e7",
+        "f3875a5ede83c981"
+      ]
+    },
+    {
+      "qid": "G08",
+      "kind": "fact",
+      "query": "Which papers address O-RAN network architectures?",
+      "match_all": [
+        "o-ran"
+      ],
+      "expected_paper_ids": [
+        "11d0e759827c074d",
+        "ab11bf2204e34d35",
+        "f7e8e1df64129742"
+      ]
+    },
+    {
+      "qid": "G09",
+      "kind": "fact",
+      "query": "Which papers use NETCONF for device configuration?",
+      "match_all": [
+        "netconf"
+      ],
+      "expected_paper_ids": [
+        "9112db526ccf2e8d",
+        "c844fc20b886a5b5",
+        "f95fe3d53655f899",
+        "fdb1b5cd7eba5359"
+      ]
+    },
+    {
+      "qid": "G10",
+      "kind": "fact",
+      "query": "Which papers use FAISS for similarity search?",
+      "match_all": [
+        "faiss"
+      ],
+      "expected_paper_ids": [
+        "84300a7f375d95a1",
+        "8b61c9a5792f456b",
+        "cf462bee64728fc4",
+        "d60e93a406b54650",
+        "d610f8de8eaba97d",
+        "f3875a5ede83c981"
+      ]
+    },
+    {
+      "qid": "G11",
+      "kind": "fact",
+      "query": "Which papers apply tree-of-thought prompting?",
+      "match_all": [
+        "tree-of-thought"
+      ],
+      "expected_paper_ids": [
+        "1fc76b9c277d865a",
+        "8b8ed15cfb943a55",
+        "8d42bef1737d7ea5",
+        "cf462bee64728fc4"
+      ]
+    },
+    {
+      "qid": "G12",
+      "kind": "fact",
+      "query": "Which papers use Terraform to define infrastructure?",
+      "match_all": [
+        "terraform"
+      ],
+      "expected_paper_ids": [
+        "49a1dd856125d8b8",
+        "704e94c0df21a463",
+        "dd89cb4ae314295e",
+        "de2c2e96399d6d6b",
+        "e545127b265144cb",
+        "f7afd15cb0cd2d65"
+      ]
+    },
+    {
+      "qid": "G13",
+      "kind": "paraphrase",
+      "query": "How can network devices be configured through a standardized management protocol?",
+      "match_all": [
+        "netconf"
+      ],
+      "expected_paper_ids": [
+        "9112db526ccf2e8d",
+        "c844fc20b886a5b5",
+        "f95fe3d53655f899",
+        "fdb1b5cd7eba5359"
+      ]
+    },
+    {
+      "qid": "G14",
+      "kind": "paraphrase",
+      "query": "Which library enables fast approximate nearest neighbour search over embeddings?",
+      "match_all": [
+        "faiss"
+      ],
+      "expected_paper_ids": [
+        "84300a7f375d95a1",
+        "8b61c9a5792f456b",
+        "cf462bee64728fc4",
+        "d60e93a406b54650",
+        "d610f8de8eaba97d",
+        "f3875a5ede83c981"
+      ]
+    },
+    {
+      "qid": "G15",
+      "kind": "paraphrase",
+      "query": "Which benchmark evaluates question answering over long stories?",
+      "match_all": [
+        "narrativeqa"
+      ],
+      "expected_paper_ids": [
+        "35e7e66bb3323d8d",
+        "84300a7f375d95a1",
+        "9dcc33a10c78f08e"
+      ]
+    },
+    {
+      "qid": "G16",
+      "kind": "paraphrase",
+      "query": "How is cloud infrastructure declared and provisioned as code?",
+      "match_all": [
+        "terraform"
+      ],
+      "expected_paper_ids": [
+        "49a1dd856125d8b8",
+        "704e94c0df21a463",
+        "dd89cb4ae314295e",
+        "de2c2e96399d6d6b",
+        "e545127b265144cb",
+        "f7afd15cb0cd2d65"
+      ]
+    },
+    {
+      "qid": "G17",
+      "kind": "concept",
+      "query": "Which clustering algorithm builds the hierarchy of communities?",
+      "match_all": [
+        "leiden",
+        "communit"
+      ],
+      "expected_paper_ids": [
+        "18249b6f921995d8",
+        "4d59fa09443cd621",
+        "730f1a9f38d16689",
+        "84300a7f375d95a1",
+        "d09f40467cd78772",
+        "d26f7eb599540e8b",
+        "f23593e4ff0a9ba6",
+        "f3875a5ede83c981"
+      ]
+    },
+    {
+      "qid": "G18",
+      "kind": "concept",
+      "query": "How are multi-hop question answering benchmarks used for evaluation?",
+      "match_all": [
+        "musique",
+        "2wikimultihopqa"
+      ],
+      "expected_paper_ids": [
+        "06e5ddd7d50063ec",
+        "14671c78fc7de99d",
+        "616fdaafce36cbca",
+        "6ab8e76c45f157a1",
+        "6f8eb002a1b6f628",
+        "9dcc33a10c78f08e",
+        "f23593e4ff0a9ba6",
+        "f6eb7085314fbf1d"
+      ]
+    },
+    {
+      "qid": "G19",
+      "kind": "concept",
+      "query": "Which sparse ranking function is combined with dense retrieval?",
+      "match_all": [
+        "bm25",
+        "dense retrieval"
+      ],
+      "expected_paper_ids": [
+        "4adfd35def371f15",
+        "6721c087c0ecc783",
+        "71be8b8b4420056f",
+        "8e136f96c83b382b",
+        "d610f8de8eaba97d",
+        "f7e8e1df64129742"
+      ]
+    },
+    {
+      "qid": "V01",
+      "kind": "fact",
+      "query": "Which papers use SRv6 segment routing?",
+      "match_all": [
+        "srv6"
+      ],
+      "expected_paper_ids": [
+        "f95fe3d53655f899"
+      ]
+    },
+    {
+      "qid": "V02",
+      "kind": "fact",
+      "query": "Which work runs experiments on OpenStack?",
+      "match_all": [
+        "openstack"
+      ],
+      "expected_paper_ids": [
+        "81d183cbee9f22a7"
+      ]
+    },
+    {
+      "qid": "V03",
+      "kind": "fact",
+      "query": "Which papers use gRPC interfaces?",
+      "match_all": [
+        "grpc"
+      ],
+      "expected_paper_ids": [
+        "f95fe3d53655f899",
+        "fdb1b5cd7eba5359"
+      ]
+    },
+    {
+      "qid": "V04",
+      "kind": "fact",
+      "query": "Which papers apply RLHF for alignment?",
+      "match_all": [
+        "rlhf"
+      ],
+      "expected_paper_ids": [
+        "6721c087c0ecc783",
+        "f292efdb08398d46"
+      ]
+    },
+    {
+      "qid": "V05",
+      "kind": "fact",
+      "query": "Which papers build a digital twin of the network?",
+      "match_all": [
+        "digital twin"
+      ],
+      "expected_paper_ids": [
+        "0b0325edf825337d",
+        "f95fe3d53655f899"
+      ]
+    },
+    {
+      "qid": "V06",
+      "kind": "fact",
+      "query": "Which papers use Jinja templates?",
+      "match_all": [
+        "jinja"
+      ],
+      "expected_paper_ids": [
+        "2af36ee28c4db2da",
+        "ae32449cc39a77f9",
+        "f7e8e1df64129742"
+      ]
+    },
+    {
+      "qid": "V07",
+      "kind": "fact",
+      "query": "Which work evaluates on TriviaQA?",
+      "match_all": [
+        "triviaqa"
+      ],
+      "expected_paper_ids": [
+        "345fa9030560d7f9",
+        "6f8eb002a1b6f628",
+        "803d7e5295b4a7f2",
+        "ae44b1df2a415e3f",
+        "ce9ff61fcda05f80"
+      ]
+    },
+    {
+      "qid": "V08",
+      "kind": "fact",
+      "query": "Which papers use ColBERT for retrieval?",
+      "match_all": [
+        "colbert"
+      ],
+      "expected_paper_ids": [
+        "06e5ddd7d50063ec",
+        "14671c78fc7de99d",
+        "61db034d4bff7540",
+        "6721c087c0ecc783",
+        "9dcc33a10c78f08e",
+        "b29563048227483c",
+        "d60e93a406b54650"
+      ]
+    },
+    {
+      "qid": "V09",
+      "kind": "fact",
+      "query": "Which papers report NDCG scores?",
+      "match_all": [
+        "ndcg"
+      ],
+      "expected_paper_ids": [
+        "345fa9030560d7f9",
+        "46d2f97b867c4e87",
+        "520914709c84b8df",
+        "b29563048227483c",
+        "c4151fd1b8785e18",
+        "d17e1f03c0d828c7",
+        "d8999c00e664e8c6"
+      ]
+    },
+    {
+      "qid": "V10",
+      "kind": "fact",
+      "query": "Which papers use the Louvain algorithm?",
+      "match_all": [
+        "louvain"
+      ],
+      "expected_paper_ids": [
+        "08619859e06c45eb",
+        "18249b6f921995d8",
+        "4d59fa09443cd621",
+        "730f1a9f38d16689",
+        "84300a7f375d95a1",
+        "d09f40467cd78772",
+        "d26f7eb599540e8b",
+        "f23593e4ff0a9ba6"
+      ]
+    },
+    {
+      "qid": "V11",
+      "kind": "paraphrase",
+      "query": "How is human feedback used to align large language models?",
+      "match_all": [
+        "rlhf"
+      ],
+      "expected_paper_ids": [
+        "6721c087c0ecc783",
+        "f292efdb08398d46"
+      ]
+    },
+    {
+      "qid": "V12",
+      "kind": "paraphrase",
+      "query": "Which templating engine renders device configuration files?",
+      "match_all": [
+        "jinja"
+      ],
+      "expected_paper_ids": [
+        "2af36ee28c4db2da",
+        "ae32449cc39a77f9",
+        "f7e8e1df64129742"
+      ]
+    },
+    {
+      "qid": "V13",
+      "kind": "paraphrase",
+      "query": "Which ranking metric rewards placing relevant documents higher in the list?",
+      "match_all": [
+        "ndcg"
+      ],
+      "expected_paper_ids": [
+        "345fa9030560d7f9",
+        "46d2f97b867c4e87",
+        "520914709c84b8df",
+        "b29563048227483c",
+        "c4151fd1b8785e18",
+        "d17e1f03c0d828c7",
+        "d8999c00e664e8c6"
+      ]
+    },
+    {
+      "qid": "V14",
+      "kind": "concept",
+      "query": "Which papers sample several reasoning paths and take the majority answer?",
+      "match_all": [
+        "self-consistency"
+      ],
+      "expected_paper_ids": [
+        "14671c78fc7de99d",
+        "1f21265563f64f39",
+        "4436219a91566cbc",
+        "730f1a9f38d16689",
+        "8d42bef1737d7ea5",
+        "a6a5cfcd3725d74f"
+      ]
+    },
+    {
+      "qid": "V15",
+      "kind": "concept",
+      "query": "How are per-token late interaction embeddings used for ranking?",
+      "match_all": [
+        "colbert"
+      ],
+      "expected_paper_ids": [
+        "06e5ddd7d50063ec",
+        "14671c78fc7de99d",
+        "61db034d4bff7540",
+        "6721c087c0ecc783",
+        "9dcc33a10c78f08e",
+        "b29563048227483c",
+        "d60e93a406b54650"
+      ]
+    }
+  ],
+  "splits": {
+    "G*": "Entwicklungsfragen (vor der Implementierung eingefroren)",
+    "V*": "unabhaengiges Validierungsset (nach der Implementierung mechanisch abgeleitet)"
+  }
+}

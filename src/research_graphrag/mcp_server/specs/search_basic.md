@@ -42,7 +42,9 @@ Beantwortet exakte/faktische Fragen über **Top-k-Vektorsuche (TF-IDF)** auf Pap
       "page_number": 1,
       "page_end": 1,
       "chunk_id": "…",
-      "score": 0.42,
+      "score": 0.0325,
+      "score_tfidf": 0.42,
+      "score_bm25": 18.7,
       "source_uri": "file:///…",
       "snippet": "…"
     }
@@ -51,6 +53,8 @@ Beantwortet exakte/faktische Fragen über **Top-k-Vektorsuche (TF-IDF)** auf Pap
 ```
 
 `citations` ist absteigend nach `score` sortiert (Tie-Break über `chunk_id`) und **leer**, wenn keine Übereinstimmung besteht.
+
+`score` ist der **Fusionswert** der Hybrid-Wertung (Reciprocal Rank Fusion über BM25 und TF-IDF, [ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)) – ein **Rangmaß, keine Ähnlichkeit**; Werte sind nur *innerhalb* einer Antwort vergleichbar. `score_tfidf` und `score_bm25` sind die Rohwerte der beiden Verfahren und jeweils `0.0`, wenn dieses Verfahren den Chunk nicht positiv bewertet hat.
 
 ## 4. Annahmen und Vorbedingungen
 
@@ -71,12 +75,12 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 
 ## 7. Provenienz
 
-- Je Zitat: `paper_id`, `section_title`, `page_number`, `page_end`, `chunk_id`, `score`, `source_uri`, `snippet`.
+- Je Zitat: `paper_id`, `section_title`, `page_number`, `page_end`, `chunk_id`, `score`, `score_tfidf`, `score_bm25`, `source_uri`, `snippet`.
 - `page_number` ist die Start-, `page_end` die Endseite des Chunks; beide sind identisch, solange der Chunk auf einer Seite liegt ([ADR 0013](../../../../docs/adr/0013-chunking-refinement-phase7.md)).
 
 ## 8. Reproduzierbarkeit
 
-- Deterministisch: TF-IDF (`scikit-learn`), Kosinus über l2-normalisierte Vektoren, Tie-Break über `chunk_id`.
+- Deterministisch: eine gemeinsame Tokenisierung (`scikit-learn`), daraus TF-IDF-Kosinus über l2-normalisierte Vektoren **und** handimplementiertes BM25 (`k1 = 1.5`, `b = 0.75`), fusioniert per Reciprocal Rank Fusion (`K = 60`); Tie-Break über `chunk_id` ([ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)).
 
 ## 9. Testabdeckung
 

@@ -71,6 +71,8 @@ def test_citation_to_dict_shape(tmp_path: Path) -> None:
         "page_end",
         "chunk_id",
         "score",
+        "score_tfidf",
+        "score_bm25",
         "source_uri",
         "snippet",
     }

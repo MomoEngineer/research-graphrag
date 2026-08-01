@@ -21,6 +21,7 @@ from research_graphrag.generation.evidence import (
 )
 from research_graphrag.generation.provider import GenerationProvider, NoopGenerationProvider
 from research_graphrag.generation.synthesis import Evidence, SynthesisResult, synthesize_answer
+from research_graphrag.indexing.tfidf_index import DEFAULT_SCORING, Scoring
 from research_graphrag.retrieval.basic import search_basic
 from research_graphrag.retrieval.drift import search_drift
 from research_graphrag.retrieval.global_search import search_global
@@ -30,11 +31,20 @@ from research_graphrag.retrieval.router import MODES, route
 AUTO_MODE = "auto"
 """Modus-Wert, der die Heuristik des Query-Routers auswählt."""
 
-EVIDENCE_BUILDERS: dict[str, Callable[[str, str, int], Evidence]] = {
-    "basic": lambda db_path, query, k: evidence_from_basic(search_basic(db_path, query, k)),
-    "local": lambda db_path, query, k: evidence_from_local(search_local(db_path, query, k=k)),
-    "global": lambda db_path, query, k: evidence_from_global(search_global(db_path, query, k)),
-    "drift": lambda db_path, query, k: evidence_from_drift(search_drift(db_path, query, k=k)),
+EVIDENCE_BUILDERS: dict[str, Callable[[str, str, int, Scoring], Evidence]] = {
+    "basic": lambda db_path, query, k, scoring: evidence_from_basic(
+        search_basic(db_path, query, k, scoring=scoring)
+    ),
+    "local": lambda db_path, query, k, scoring: evidence_from_local(
+        search_local(db_path, query, k=k, scoring=scoring)
+    ),
+    # Global rankt Communities statt Chunks; die Chunk-Wertung bleibt dort ohne Wirkung.
+    "global": lambda db_path, query, k, _scoring: evidence_from_global(
+        search_global(db_path, query, k)
+    ),
+    "drift": lambda db_path, query, k, scoring: evidence_from_drift(
+        search_drift(db_path, query, k=k, scoring=scoring)
+    ),
 }
 """Abbildung Modus → Evidenz-Aufbau (Single Source of Truth für CLI und MCP-Tool)."""
 
@@ -69,6 +79,7 @@ def answer_question(
     mode: str = AUTO_MODE,
     k: int = 5,
     provider: GenerationProvider | None = None,
+    scoring: Scoring = DEFAULT_SCORING,
 ) -> SynthesisResult:
     """Beantwortet eine Frage über den passenden Modus – mit Belegen, optional formuliert.
 
@@ -78,15 +89,16 @@ def answer_question(
         mode: ``auto`` (Router) oder ein expliziter Modus.
         k: Trefferzahl je Modus (> 0).
         provider: Generierungs-Port; ohne Angabe der ``NoopGenerationProvider`` (keine Synthese).
+        scoring: Wertung der Chunk-Modi – ``hybrid`` (Default), ``tfidf`` oder ``bm25``.
 
     Returns:
         Ein :class:`SynthesisResult` mit vollständiger Evidenz; ``answer`` ist leer, solange
         keine Generierung stattgefunden hat.
 
     Raises:
-        DomainError: ``invalid_input`` bei unbekanntem Modus, leerer Anfrage oder ``k <= 0``;
-            ``not_found``/``constraint_violation`` wenn kein Index vorliegt.
+        DomainError: ``invalid_input`` bei unbekanntem Modus, leerer Anfrage, ``k <= 0`` oder
+            unbekannter Wertung; ``not_found``/``constraint_violation`` wenn kein Index vorliegt.
     """
     resolved = resolve_mode(query, mode)
-    evidence = EVIDENCE_BUILDERS[resolved](str(db_path), query, k)
+    evidence = EVIDENCE_BUILDERS[resolved](str(db_path), query, k, scoring)
     return synthesize_answer(evidence, provider or NoopGenerationProvider())

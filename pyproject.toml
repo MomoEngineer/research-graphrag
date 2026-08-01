@@ -15,7 +15,10 @@ license = { text = "Proprietary" }
 #
 # Der Index-Bau folgt dem Offline-Hybrid (Option B, siehe
 # docs/adr/0005-graphrag-index-backend-open.md): pypdf (Extraktion), scikit-learn
-# (TF-IDF), networkx (Graph + Louvain), SQLite (stdlib). Alle Pins sind in der
+# (TF-IDF), networkx (Graph + Louvain), SQLite (stdlib). numpy wird seit der
+# handimplementierten BM25-Wertung direkt importiert und daher explizit gepinnt
+# (siehe docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md); es war zuvor eine
+# transitive Abhängigkeit von scikit-learn. Alle Pins sind in der
 # WinPython-Basis vorhanden, sodass `pip install -e .` offline durchläuft
 # (siehe docs/adr/0002-venv-and-offline-dependency-strategy.md). Der MS-GraphRAG-
 # Stack (docling/graphrag/lancedb) ist offline nicht beschaffbar und daher NICHT
@@ -26,6 +29,7 @@ dependencies = [
     "pypdf==5.6.0",
     "scikit-learn==1.8.0",
     "networkx==3.6.1",
+    "numpy==2.3.5",
 ]
 
 [project.optional-dependencies]

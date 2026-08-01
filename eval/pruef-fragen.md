@@ -8,6 +8,8 @@ Pragmatisches, festes Frageset zur Qualitätssicherung über alle **fünf Fraget
 
 > **Status Phase 7 / A3:** Nach der Chunking-Verfeinerung ([ADR 0013](../docs/adr/0013-chunking-refinement-phase7.md), Index-Schema **0.4.0**) liefert `python -m scripts.qa` weiterhin **10/10** belegte Antworten. Sichtbar geändert hat sich die **Provenienz-Form**: Chunks, die über einen Seitenumbruch laufen, werden als Range angezeigt („Seiten 10–11"); die Abschnittstitel sind spürbar sauberer (u. a. „Datasets and Evaluation Metrics", „Code Knowledge Base Construction", „Multi-path Code Retrieval"). Restliches Titel-Rauschen (z. B. „Gpt", „F1 =2 ·P ·R") bleibt der Keyword-/Titel-Bereinigung in **A5** vorbehalten.
 
+> **Status Phase 7 / A4:** Dieses Set bleibt die **qualitative** Stichprobe (Provenienz-Sichtprüfung). Ergänzend gibt es jetzt eine **quantitative** Messung: das versionierte Gold-Set [`retrieval-gold.json`](retrieval-gold.json) (34 Fragen, Labels **mechanisch aus dem Chunk-Text abgeleitet** und über `python -m scripts.eval_retrieval --verify-labels` nachrechenbar) sowie der Harness `python -m scripts.eval_retrieval` (Hit@k/MRR je Wertung). Damit wurde die Hybrid-Wertung belegt: Hit@5 **0,735 → 0,882**, bei Fakt-Fragen **0,773 → 0,955** ([ADR 0014](../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)). `python -m scripts.qa` liefert unverändert **10/10** belegte Antworten. Der Harness misst die geteilte Chunk-Primitive, nicht die Modi als Ganzes – die Ausweitung bleibt **A6**.
+
 Für jede Frage werden festgehalten:
 
 - **Erwarteter Suchmodus** (gemäß Fragetyp-Mapping der README),
