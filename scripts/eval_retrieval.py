@@ -1,247 +1,65 @@
-"""Quantitative, offline Retrieval-Evaluation (Hit@k / MRR) gegen ein versioniertes Gold-Set.
+"""CLI: Quantitative, offline Retrieval-Evaluation (Hit@k/MRR) gegen ein versioniertes Gold-Set.
 
-Das Skript misst die **gemeinsame lexikalische Primitive** aller Chunk-Modi
-(:meth:`research_graphrag.indexing.tfidf_index.TfidfIndex.search`) – also den Pfad, den
-Basic, der Local-Seed, der Local-Fan-out und DRIFT teilen. Es ist damit das Messgerät für
-die Hybrid-Wertung aus Roadmap-Punkt A4 (siehe
-docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md).
+Das Skript ist eine **dünne Hülle** um das Paket
+:mod:`research_graphrag.evaluation`; die Logik liegt dort (typgeprüft, getestet und aus
+[scripts/qa.py](qa.py) wiederverwendbar). Gemessen werden zwei Ebenen:
 
-**Ground Truth ohne Retriever-Zirkelschluss:** Die erwarteten Paper werden nicht kuratiert,
-sondern **mechanisch aus dem Chunk-Text abgeleitet** – ein Paper gilt als relevant, wenn
-mindestens einer seiner Chunks alle Strings der Regel ``match_all`` (case-insensitive)
-enthält. Die abgeleiteten IDs sind im Gold-Set eingefroren und über ``--verify-labels``
-jederzeit gegen den Index nachprüfbar.
+* **Primitive** (Default, schnell) – die geteilte lexikalische Chunk-Suche, die Basic, der
+  Local-Seed, der Local-Fan-out und die DRIFT-Verfeinerung gemeinsam nutzen.
+* **Modi als Ganzes** (``--modi``, spürbar langsamer) – zusätzlich Local-Fan-out,
+  Community-Auswahl und DRIFT-Deckelung.
 
-Aufruf::
+Die Labels sind **mechanisch aus dem Chunk-Text abgeleitet** und über ``--verify-labels``
+nachrechenbar; ``--write-baseline``/``--check`` frieren den Stand ein und melden Regressionen
+**qid-genau** (docs/adr/0016-quantitative-retrieval-evaluation-phase7.md).
+
+Exit-Codes: ``0`` unauffällig · ``1`` Befund (Regression, nicht reproduzierbare Labels, Fehler)
+· ``2`` Baseline nicht vergleichbar. Aufruf vom Repository-Wurzelverzeichnis::
 
     python -m scripts.eval_retrieval
     python -m scripts.eval_retrieval --k 10 --scoring tfidf
     python -m scripts.eval_retrieval --verify-labels
+    python -m scripts.eval_retrieval --modi
+    python -m scripts.eval_retrieval --write-baseline
+    python -m scripts.eval_retrieval --check
 """
 
 from __future__ import annotations
 
 import argparse
-import json
-import sqlite3
 import sys
-from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
-from research_graphrag.indexing.tfidf_index import DEFAULT_SCORING, Scoring, TfidfIndex
+from research_graphrag.errors import DomainError
+from research_graphrag.evaluation import (
+    MODES,
+    RunParameters,
+    build_baseline,
+    compare,
+    evaluate_all,
+    evaluate_primitive,
+    load_baseline,
+    load_gold_set,
+    precheck,
+    read_fingerprint,
+    render_comparison,
+    render_modes,
+    render_report,
+    save_baseline,
+    verify_labels,
+)
+from research_graphrag.indexing.tfidf_index import DEFAULT_SCORING, TfidfIndex
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _DEFAULT_INDEX = _REPO_ROOT / "data" / "index" / "index.sqlite"
 _DEFAULT_GOLD = _REPO_ROOT / "eval" / "retrieval-gold.json"
+_DEFAULT_BASELINE = _REPO_ROOT / "eval" / "retrieval-baseline.json"
 
 
-@dataclass(frozen=True)
-class GoldQuestion:
-    """Eine Gold-Frage samt mechanischer Label-Regel und eingefrorenen Ziel-Papern."""
-
-    qid: str
-    query: str
-    kind: str
-    match_all: tuple[str, ...]
-    expected_paper_ids: tuple[str, ...]
-
-
-@dataclass(frozen=True)
-class GoldSet:
-    """Versioniertes Gold-Set (Datei ist die Single Source of Truth)."""
-
-    version: str
-    questions: tuple[GoldQuestion, ...]
-
-
-@dataclass(frozen=True)
-class QuestionScore:
-    """Bewertung einer Frage: Treffer und Kehrwert des ersten relevanten Rangs."""
-
-    qid: str
-    kind: str
-    hit: bool
-    reciprocal_rank: float
-    first_rank: int | None
-
-
-@dataclass(frozen=True)
-class EvaluationReport:
-    """Aggregierte Kennzahlen eines Laufs (Hit@k und MRR@k über alle Fragen)."""
-
-    k: int
-    scoring: str
-    scores: tuple[QuestionScore, ...]
-
-    @property
-    def hit_rate(self) -> float:
-        """Anteil der Fragen mit mindestens einem relevanten Paper unter den Top-k."""
-        if not self.scores:
-            return 0.0
-        return sum(1.0 for score in self.scores if score.hit) / len(self.scores)
-
-    @property
-    def mrr(self) -> float:
-        """Mittlerer Kehrwert des Rangs des ersten relevanten Papers (0.0 ohne Treffer)."""
-        if not self.scores:
-            return 0.0
-        return sum(score.reciprocal_rank for score in self.scores) / len(self.scores)
-
-    def by_kind(self) -> dict[str, tuple[float, float, int]]:
-        """Kennzahlen je Fragetyp: ``kind -> (Hit@k, MRR@k, Anzahl)``."""
-        kinds: dict[str, list[QuestionScore]] = {}
-        for score in self.scores:
-            kinds.setdefault(score.kind, []).append(score)
-        return {
-            kind: (
-                sum(1.0 for score in group if score.hit) / len(group),
-                sum(score.reciprocal_rank for score in group) / len(group),
-                len(group),
-            )
-            for kind, group in sorted(kinds.items())
-        }
-
-
-def load_gold_set(path: str | Path = _DEFAULT_GOLD) -> GoldSet:
-    """Lädt das Gold-Set aus JSON.
-
-    Args:
-        path: Pfad zur Gold-Set-Datei.
-
-    Returns:
-        Das geladene :class:`GoldSet` in Dateireihenfolge.
-    """
-    payload = json.loads(Path(path).read_text(encoding="utf-8"))
-    questions = tuple(
-        GoldQuestion(
-            qid=str(entry["qid"]),
-            query=str(entry["query"]),
-            kind=str(entry["kind"]),
-            match_all=tuple(str(term) for term in entry["match_all"]),
-            expected_paper_ids=tuple(str(pid) for pid in entry["expected_paper_ids"]),
-        )
-        for entry in payload["questions"]
-    )
-    return GoldSet(version=str(payload["gold_set_version"]), questions=questions)
-
-
-def derive_expected_papers(db_path: str | Path, match_all: tuple[str, ...]) -> tuple[str, ...]:
-    """Leitet die relevanten Paper mechanisch aus dem Chunk-Text ab (Label-Regel).
-
-    Relevant ist ein Paper, wenn mindestens **einer** seiner Chunks **alle** Strings aus
-    ``match_all`` (case-insensitive) enthält. Die Regel ist bewusst unabhängig von jeder
-    Ranking-Funktion, damit die Messung nicht das eigene Verfahren bestätigt.
-
-    Args:
-        db_path: Pfad zur SQLite-Index-Datei.
-        match_all: Nicht-leere Folge von Suchstrings.
-
-    Returns:
-        Aufsteigend sortierte Paper-IDs.
-    """
-    condition = " AND ".join("LOWER(text) LIKE ?" for _ in match_all)
-    parameters = [f"%{term.lower()}%" for term in match_all]
-    connection = sqlite3.connect(str(db_path))
-    try:
-        rows = connection.execute(
-            f"SELECT DISTINCT paper_id FROM chunks WHERE {condition}", parameters
-        ).fetchall()
-    finally:
-        connection.close()
-    return tuple(sorted(str(row[0]) for row in rows))
-
-
-def verify_labels(db_path: str | Path, gold: GoldSet) -> tuple[str, ...]:
-    """Prüft die eingefrorenen Labels gegen die Ableitung aus dem Index.
-
-    Args:
-        db_path: Pfad zur SQLite-Index-Datei.
-        gold: Das geladene Gold-Set.
-
-    Returns:
-        Meldungen zu abweichenden Fragen; leer, wenn alle Labels reproduzierbar sind.
-    """
-    findings: list[str] = []
-    for question in gold.questions:
-        derived = derive_expected_papers(db_path, question.match_all)
-        if derived != tuple(sorted(question.expected_paper_ids)):
-            findings.append(
-                f"{question.qid}: erwartet {len(question.expected_paper_ids)} Paper, "
-                f"abgeleitet {len(derived)}"
-            )
-    return tuple(findings)
-
-
-def evaluate_question(
-    index: TfidfIndex, question: GoldQuestion, k: int, scoring: Scoring = DEFAULT_SCORING
-) -> QuestionScore:
-    """Bewertet eine Gold-Frage gegen die Top-k-Chunks des Index.
-
-    Args:
-        index: Geladener Index (einmal laden, viele Fragen bewerten).
-        question: Die zu bewertende Gold-Frage.
-        k: Rang-Tiefe für Hit@k/MRR@k (> 0).
-        scoring: Zu messende Wertung (``hybrid``/``tfidf``/``bm25``).
-
-    Returns:
-        Ein :class:`QuestionScore`; ohne relevanten Treffer ist ``reciprocal_rank`` ``0.0``.
-    """
-    expected = set(question.expected_paper_ids)
-    for rank, hit in enumerate(index.search(question.query, k, scoring=scoring), start=1):
-        if hit.paper_id in expected:
-            return QuestionScore(
-                qid=question.qid,
-                kind=question.kind,
-                hit=True,
-                reciprocal_rank=1.0 / rank,
-                first_rank=rank,
-            )
-    return QuestionScore(
-        qid=question.qid, kind=question.kind, hit=False, reciprocal_rank=0.0, first_rank=None
-    )
-
-
-def evaluate(
-    index: TfidfIndex, gold: GoldSet, k: int = 5, scoring: Scoring = DEFAULT_SCORING
-) -> EvaluationReport:
-    """Bewertet das gesamte Gold-Set.
-
-    Args:
-        index: Geladener Index.
-        gold: Das Gold-Set.
-        k: Rang-Tiefe für Hit@k/MRR@k (> 0).
-        scoring: Zu messende Wertung (``hybrid``/``tfidf``/``bm25``).
-
-    Returns:
-        Der aggregierte :class:`EvaluationReport`.
-    """
-    return EvaluationReport(
-        k=k,
-        scoring=scoring,
-        scores=tuple(evaluate_question(index, question, k, scoring) for question in gold.questions),
-    )
-
-
-def render(report: EvaluationReport, gold: GoldSet) -> str:
-    """Formatiert einen Evaluationsbericht als Text (eine Zeile je Frage plus Aggregate)."""
-    lines = [
-        f"Gold-Set {gold.version} · {len(report.scores)} Fragen · k = {report.k} "
-        f"· Wertung = {report.scoring}",
-        "",
-    ]
-    for score, question in zip(report.scores, gold.questions, strict=True):
-        rank = str(score.first_rank) if score.first_rank is not None else "-"
-        lines.append(
-            f"  {score.qid} [{score.kind:10s}] Rang {rank:>2s} · RR {score.reciprocal_rank:.3f} "
-            f"· {question.query}"
-        )
-    lines.append("")
-    for kind, (hit_rate, mrr, count) in report.by_kind().items():
-        lines.append(f"  {kind:10s} (n={count:2d}): Hit@{report.k} {hit_rate:.3f} · MRR {mrr:.3f}")
-    lines.append("")
-    lines.append(f"  GESAMT      (n={len(report.scores):2d}): ")
-    lines[-1] += f"Hit@{report.k} {report.hit_rate:.3f} · MRR {report.mrr:.3f}"
-    return "\n".join(lines)
+def _parse_labels(raw: str) -> tuple[str, ...]:
+    """Zerlegt die ``--modi``-Angabe in Ebenen-Bezeichner (Reihenfolge bleibt erhalten)."""
+    return tuple(part.strip() for part in raw.split(",") if part.strip())
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -252,6 +70,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--index", default=str(_DEFAULT_INDEX), help="Pfad zur Index-Datei.")
     parser.add_argument("--gold", default=str(_DEFAULT_GOLD), help="Pfad zum Gold-Set (JSON).")
+    parser.add_argument(
+        "--baseline", default=str(_DEFAULT_BASELINE), help="Pfad zur Baseline-Datei (JSON)."
+    )
     parser.add_argument("--k", type=int, default=5, help="Rang-Tiefe für Hit@k/MRR@k.")
     parser.add_argument(
         "--scoring",
@@ -264,9 +85,29 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Nur die Labels gegen den Index nachrechnen (kein Retrieval).",
     )
+    parser.add_argument(
+        "--modi",
+        nargs="?",
+        const=",".join(MODES),
+        default=None,
+        metavar="LISTE",
+        help=f"Modi als Ganzes messen (Default alle: {', '.join(MODES)}); langsam.",
+    )
+    parser.add_argument(
+        "--write-baseline",
+        action="store_true",
+        help="Primitive und alle Modi messen und als Baseline einfrieren.",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Gegen die eingefrorene Baseline prüfen (Exit-Code 1 bei Regression).",
+    )
     args = parser.parse_args(argv)
 
     gold = load_gold_set(args.gold)
+    params = RunParameters(k=args.k, scoring=args.scoring)
+
     if args.verify_labels:
         findings = verify_labels(args.index, gold)
         for finding in findings:
@@ -274,8 +115,40 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Labels: {len(gold.questions) - len(findings)}/{len(gold.questions)} reproduzierbar")
         return 1 if findings else 0
 
-    index = TfidfIndex.load(args.index)
-    print(render(evaluate(index, gold, args.k, args.scoring), gold))
+    try:
+        if args.write_baseline:
+            reports = evaluate_all(args.index, gold, params)
+            fingerprint = read_fingerprint(args.index, gold, params)
+            baseline = build_baseline(reports, fingerprint, created=date.today().isoformat())
+            save_baseline(baseline, args.baseline)
+            print(render_modes(reports, gold))
+            print()
+            print(f"Baseline eingefroren: {args.baseline}")
+            return 0
+
+        if args.check:
+            # Vergleichbarkeit zuerst prüfen – ein voller Modus-Lauf dauert Minuten.
+            baseline = load_baseline(args.baseline)
+            fingerprint = read_fingerprint(args.index, gold, params)
+            blocked = precheck(baseline, fingerprint)
+            if blocked is not None:
+                print(render_comparison(blocked, baseline))
+                return blocked.exit_code
+            reports = evaluate_all(args.index, gold, params)
+            comparison = compare(baseline, reports, fingerprint)
+            print(render_comparison(comparison, baseline))
+            return comparison.exit_code
+
+        if args.modi is not None:
+            reports = evaluate_all(args.index, gold, params, _parse_labels(args.modi))
+            print(render_modes(reports, gold))
+            return 0
+
+        index = TfidfIndex.load(args.index)
+        print(render_report(evaluate_primitive(index, gold, params), gold))
+    except DomainError as exc:
+        print(f"  ! [{exc.code.value}] {exc.message}")
+        return 1
     return 0
 
 

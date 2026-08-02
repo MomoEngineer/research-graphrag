@@ -7,9 +7,15 @@ bleibt beim Menschen – dies ist eine **wiederholbare Stichprobe**, keine autom
 (siehe docs/adr/0010-drop-in-workflow-and-qa-phase6.md). ``QUESTIONS`` ist die Single Source of
 Truth und wird auch vom Regressionstest ``tests/retrieval/test_qa.py`` konsumiert.
 
+Optional folgt mit ``--quantitativ`` der **qid-genaue Regressions-Check** gegen die eingefrorene
+Baseline (docs/adr/0016-quantitative-retrieval-evaluation-phase7.md) – dieselbe Logik wie
+``python -m scripts.eval_retrieval --check``, nur im selben QS-Durchgang. Er dauert einige
+Minuten und liefert die Exit-Codes ``0``/``1``/``2``.
+
 Aufruf vom Repository-Wurzelverzeichnis:
 
     python -m scripts.qa
+    python -m scripts.qa --quantitativ
 """
 
 from __future__ import annotations
@@ -21,6 +27,16 @@ from pathlib import Path
 from typing import Any
 
 from research_graphrag.errors import DomainError
+from research_graphrag.evaluation import (
+    RunParameters,
+    compare,
+    evaluate_all,
+    load_baseline,
+    load_gold_set,
+    precheck,
+    read_fingerprint,
+    render_comparison,
+)
 from research_graphrag.retrieval.basic import search_basic
 from research_graphrag.retrieval.drift import search_drift
 from research_graphrag.retrieval.global_search import search_global
@@ -29,6 +45,8 @@ from research_graphrag.retrieval.provenance import page_label
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _DEFAULT_INDEX = _REPO_ROOT / "data" / "index" / "index.sqlite"
+_DEFAULT_GOLD = _REPO_ROOT / "eval" / "retrieval-gold.json"
+_DEFAULT_BASELINE = _REPO_ROOT / "eval" / "retrieval-baseline.json"
 
 
 @dataclass(frozen=True)
@@ -194,6 +212,31 @@ def _format_prov(entry: dict[str, Any]) -> str:
     )
 
 
+def run_regression_check(
+    index: str | Path, gold_path: str | Path, baseline_path: str | Path
+) -> tuple[str, int]:
+    """Spielt den quantitativen Zusatzlauf gegen die eingefrorene Baseline.
+
+    Args:
+        index: Pfad zur SQLite-Index-Datei.
+        gold_path: Pfad zum Gold-Set.
+        baseline_path: Pfad zur Baseline-Datei.
+
+    Returns:
+        ``(Bericht, Exit-Code)`` – ``0`` unauffällig, ``1`` Regression, ``2`` nicht vergleichbar
+        (siehe docs/adr/0016-quantitative-retrieval-evaluation-phase7.md).
+    """
+    gold = load_gold_set(gold_path)
+    params = RunParameters()
+    baseline = load_baseline(baseline_path)
+    fingerprint = read_fingerprint(index, gold, params)
+    blocked = precheck(baseline, fingerprint)
+    if blocked is not None:  # Vergleichbarkeit vor dem teuren Messlauf prüfen
+        return render_comparison(blocked, baseline), blocked.exit_code
+    comparison = compare(baseline, evaluate_all(index, gold, params), fingerprint)
+    return render_comparison(comparison, baseline), comparison.exit_code
+
+
 def main() -> int:
     """Spielt alle Prüf-Fragen über den Index und zeigt die Provenienz (Exit-Code 0)."""
     # Robuste Unicode-Ausgabe (Snippets/Keywords enthalten Zeichen außerhalb von cp1252).
@@ -203,6 +246,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Prüf-Fragen je Modus durchspielen (Phase 6).")
     parser.add_argument("--index", default=str(_DEFAULT_INDEX), help="Pfad zur Index-SQLite")
     parser.add_argument("-k", type=int, default=5, help="Trefferzahl je Modus (> 0)")
+    parser.add_argument(
+        "--quantitativ",
+        action="store_true",
+        help="Zusätzlich den Regressions-Check gegen eval/retrieval-baseline.json fahren.",
+    )
     args = parser.parse_args()
 
     print(f"[qa] Spiele {len(QUESTIONS)} Prüf-Fragen über den Index {args.index}:")
@@ -221,7 +269,18 @@ def main() -> int:
         if result.n_results:
             answered += 1
     print(f"[qa] {answered}/{len(QUESTIONS)} Prüf-Fragen mit belegter Provenienz.")
-    return 0
+    if not args.quantitativ:
+        return 0
+
+    print()
+    print("[qa] Quantitativer Zusatzlauf (dauert einige Minuten):")
+    try:
+        rendered, exit_code = run_regression_check(args.index, _DEFAULT_GOLD, _DEFAULT_BASELINE)
+    except DomainError as exc:
+        print(f"  ! [{exc.code.value}] {exc.message}")
+        return 1
+    print(rendered)
+    return exit_code
 
 
 if __name__ == "__main__":

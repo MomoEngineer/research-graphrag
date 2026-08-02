@@ -40,8 +40,8 @@ research-graphrag/
 │  ├─ graph_info.py              # Community-Übersicht (read-only, Phase 3)
 │  ├─ citations.py               # Zitationen eines Papers (read-only, Phase 7 / A2)
 │  ├─ status.py                  # Read-only Index-/Korpus-Status + Konsistenz (Phase 6)
-│  ├─ qa.py                      # Prüf-Fragen je Modus durchspielen (QS-Harness, Phase 6)
-│  └─ eval_retrieval.py          # Retrieval-Evaluation Hit@k/MRR gegen das Gold-Set (Phase 7 / A4)
+│  ├─ qa.py                      # Prüf-Fragen je Modus durchspielen (QS-Harness, Phase 6; `--quantitativ` seit Phase 7 / A6)
+│  └─ eval_retrieval.py          # Retrieval-Evaluation: Primitive/Modi, Baseline, Regressions-Check (Phase 7 / A4 + A6)
 ├─ src/research_graphrag/
 │  ├─ __init__.py                # Paket-Version
 │  ├─ errors.py                  # gemeinsame Fehlertaxonomie (docs/error-model.md)
@@ -75,6 +75,12 @@ research-graphrag/
 │  │  ├─ synthesis.py            #   Evidenz (nummeriert) + synthesize_answer (retrieval-frei)
 │  │  ├─ evidence.py             #   Adapter: Basic/Local/Global/DRIFT → Evidenz
 │  │  └─ answer.py               #   Router → Retrieval → Evidenz → optionale Synthese
+│  ├─ evaluation/                # Quantitative Retrieval-Evaluation (Phase 7 / A4 + A6)
+│  │  ├─ gold.py                 #   Gold-Set + mechanische Label-Regel
+│  │  ├─ metrics.py              #   Hit@k/MRR/Coverage/Lift (retrieval-frei)
+│  │  ├─ runner.py               #   Primitive + Modi gegen den realen Index
+│  │  ├─ baseline.py             #   Fingerprint, Einfrieren, qid-genauer Vergleich
+│  │  └─ report.py               #   Textausgabe
 │  └─ mcp_server/                # MCP-Server (stdio), Phase 5
 │     ├─ server.py               #   FastMCP: 8 Tools + Fehlerübersetzung an der Grenze
 │     ├─ sampling.py             #   Async-Brücke zum Client-Modell (opt-in, Phase 7 / A1)
@@ -83,7 +89,8 @@ research-graphrag/
 │     └─ specs/                  #   Pro-Tool-Spezifikationen (8 Tools)
 ├─ eval/
 │  ├─ pruef-fragen.md            # Prüf-Fragen über alle 5 Fragetypen
-│  └─ retrieval-gold.json        # versioniertes Gold-Set für Hit@k/MRR (Phase 7 / A4)
+│  ├─ retrieval-gold.json        # versioniertes Gold-Set für Hit@k/MRR (Phase 7 / A4)
+│  └─ retrieval-baseline.json    # eingefrorene Ränge je Frage/Ebene (Phase 7 / A6)
 ├─ recherche/                    # (Phase 1) migrierte Rechercheartefakte (noch nicht vorhanden)
 ├─ papers/                       # PDF-Korpus (nicht versioniert)
 ├─ data/                         # Canonical JSON 0.4.0, manifest.json, index/, quality_report.*, overview_drafts.md (nicht versioniert)
@@ -98,6 +105,7 @@ research-graphrag/
    ├─ retrieval/                 # Basic/Local/Global/DRIFT + Router + Provenienz + get_paper/get_citations + QS-Harness + Eval-Harness (Phase 4/5/6/7)
    ├─ overview/                  # Übersicht-Entwürfe (Phase 2)
    ├─ generation/                # LLM-Bridge: Port, Evidenz, Synthese, CLI-Pfad (Phase 7 / A1)
+   ├─ evaluation/                # Gold-Set, Kennzahlen, Modus-Lauf, Baseline, Ausgabe (Phase 7 / A6)
    ├─ mcp_server/                # Server-Contract via In-Memory-Client (Phase 5) + Sampling (Phase 7)
    └─ integration/               # End-to-End-Durchstich (M1) + Drop-in-Freshness/atomarer Swap + Status (Phase 6/7)
 ```
@@ -112,6 +120,14 @@ research-graphrag/
 > Re-Extraktions-Trigger); Index- und Graph-Teilschema bleiben unverändert
 > ([ADR 0015](adr/0015-noise-reduction-keywords-and-sections-phase7.md)).
 
+> **Phase 7 / A6:** Die Evaluationslogik zieht von `scripts/eval_retrieval.py` in das neue Paket
+> `evaluation/` (fünf Module) – sie unterliegt damit `mypy src`, dem Coverage-Richtwert und ist
+> aus `scripts/qa.py` wiederverwendbar. Gemessen werden jetzt auch die **Modi als Ganzes**
+> (Local-Baustein-Beitrag, Community-Auswahl mit Trivial-Baselines, DRIFT-Deckelung); neu ist das
+> eingefrorene Artefakt `eval/retrieval-baseline.json` mit qid-genauem Regressions-Check.
+> Schemata und Index bleiben unberührt – **kein Re-Ingest**
+> ([ADR 0016](adr/0016-quantitative-retrieval-evaluation-phase7.md)).
+
 ### Zuordnung zu den Roadmap-Phasen
 
 | Ordner | Verantwortung | Phase |
@@ -121,6 +137,7 @@ research-graphrag/
 | `src/research_graphrag/retrieval/` | Query-Router (Local/Global/DRIFT/Basic) | 4 |
 | `src/research_graphrag/mcp_server/` | MCP-Server (stdio) mit Tools + Provenienz | 5 |
 | `src/research_graphrag/generation/` | LLM-Bridge: Evidenz-Aufbereitung + optionale Antwort-Synthese | 7 |
+| `src/research_graphrag/evaluation/` | Quantitative Retrieval-Evaluation (Gold-Set, Kennzahlen, Baseline) | 7 |
 | `src/research_graphrag/keywords.py` | kuratierte Keyword-Politik für extraktive Keyword-Listen | 7 |
 
 ---

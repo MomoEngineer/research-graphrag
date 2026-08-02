@@ -1,4 +1,4 @@
-"""Tests für den Retrieval-Eval-Harness (Gold-Set, Hit@k/MRR), Phase 7 / A4."""
+"""Tests für das Gold-Set und die mechanische Label-Regel, Phase 7 / A4 + A6."""
 
 from __future__ import annotations
 
@@ -6,19 +6,16 @@ import json
 from collections.abc import Sequence
 from pathlib import Path
 
-from scripts.eval_retrieval import (
+from research_graphrag.evaluation.gold import (
+    MECHANICAL_LABELS,
     GoldQuestion,
     GoldSet,
     derive_expected_papers,
-    evaluate,
-    evaluate_question,
     load_gold_set,
-    render,
     verify_labels,
 )
-
 from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
-from research_graphrag.indexing.tfidf_index import TfidfIndex, build_index
+from research_graphrag.indexing.tfidf_index import build_index
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 _GOLD_SET = _REPO_ROOT / "eval" / "retrieval-gold.json"
@@ -81,58 +78,19 @@ def test_verify_labels_detects_stale_expectations(tmp_path: Path) -> None:
     assert findings[0].startswith("G02")
 
 
-def test_evaluate_question_reports_rank_and_reciprocal_rank(tmp_path: Path) -> None:
-    """Ein Treffer auf Rang 1 ergibt den Kehrwert 1.0."""
-    index = TfidfIndex.load(_build(tmp_path))
-    question = GoldQuestion("G01", "faiss benchmarks", "fact", ("faiss",), ("aaaa0001",))
+def test_verify_labels_skips_non_mechanical_sources(tmp_path: Path) -> None:
+    """Nur mechanisch abgeleitete Labels sind nachrechenbar – andere werden übersprungen."""
+    db = _build(tmp_path)
+    judged = GoldQuestion("J01", "faiss?", "fact", ("faiss",), ("bbbb0002",), label_source="judged")
 
-    score = evaluate_question(index, question, k=5)
-
-    assert score.hit is True
-    assert score.first_rank == 1
-    assert score.reciprocal_rank == 1.0
+    assert verify_labels(db, GoldSet("1.0.0", (judged,))) == ()
 
 
-def test_evaluate_question_without_hit_scores_zero(tmp_path: Path) -> None:
-    """Ohne relevanten Treffer bleibt der Kehrwert 0 und der Rang leer."""
-    index = TfidfIndex.load(_build(tmp_path))
-    question = GoldQuestion("G02", "zzzqqqwww xxyyzzq", "fact", ("faiss",), ("aaaa0001",))
+def test_gold_question_defaults_to_the_mechanical_label_source() -> None:
+    """Ohne Angabe gilt die nachrechenbare mechanische Regel."""
+    question = GoldQuestion("G01", "faiss?", "fact", ("faiss",), ("aaaa0001",))
 
-    score = evaluate_question(index, question, k=5)
-
-    assert score.hit is False
-    assert score.first_rank is None
-    assert score.reciprocal_rank == 0.0
-
-
-def test_report_aggregates_per_kind(tmp_path: Path) -> None:
-    """Die Aggregate rechnen je Fragetyp und insgesamt korrekt."""
-    index = TfidfIndex.load(_build(tmp_path))
-    gold = GoldSet(
-        "1.0.0",
-        (
-            GoldQuestion("G01", "faiss benchmarks", "fact", ("faiss",), ("aaaa0001",)),
-            GoldQuestion("G02", "zzzqqqwww xxyyzzq", "paraphrase", ("faiss",), ("aaaa0001",)),
-        ),
-    )
-
-    report = evaluate(index, gold, k=5)
-
-    assert report.hit_rate == 0.5
-    assert report.mrr == 0.5
-    assert report.by_kind()["fact"] == (1.0, 1.0, 1)
-    assert report.by_kind()["paraphrase"] == (0.0, 0.0, 1)
-    assert "Hit@5" in render(report, gold)
-
-
-def test_evaluation_is_deterministic(tmp_path: Path) -> None:
-    """Zwei Läufe über denselben Index liefern dieselben Kennzahlen."""
-    index = TfidfIndex.load(_build(tmp_path))
-    gold = GoldSet(
-        "1.0.0", (GoldQuestion("G01", "graph retrieval", "concept", ("graph",), ("aaaa0001",)),)
-    )
-
-    assert evaluate(index, gold, k=3) == evaluate(index, gold, k=3)
+    assert question.label_source in MECHANICAL_LABELS
 
 
 def test_versioned_gold_set_is_wellformed() -> None:
@@ -144,4 +102,5 @@ def test_versioned_gold_set_is_wellformed() -> None:
     assert all(question.query and question.match_all for question in gold.questions)
     assert all(question.expected_paper_ids for question in gold.questions)
     assert len({question.qid for question in gold.questions}) == len(gold.questions)
+    assert {question.label_source for question in gold.questions} == set(MECHANICAL_LABELS)
     assert "label_rule" in json.loads(_GOLD_SET.read_text(encoding="utf-8"))
