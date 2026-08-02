@@ -89,3 +89,20 @@ Tabellen-Parsing, heuristische Sections) gilt unverändert weiter:
 Ergänzt wurde außerdem eine **Section-Absorption** gegen die Übersegmentierung der hier
 festgelegten Überschriften-Heuristik (Messwerte und Begründung in
 [ADR 0013](0013-chunking-refinement-phase7.md)).
+
+---
+
+## Nachtrag (2026-08-02, Phase 8)
+
+Eine weitere hier getroffene Festlegung ist durch
+[ADR 0019](0019-corpus-intake-new-papers-phase8.md) **abgelöst**:
+
+- **„Entwurfszeilen gehen ausschließlich append-only nach `data/overview_drafts.md`; die
+  kuratierte `Übersicht.md` bleibt unangetastet"** – aufgehoben. Entwurfszeilen werden jetzt
+  **direkt an `Übersicht.md`** angehängt (append-only, byte-erhaltend, atomar, idempotent,
+  wertende Spalten leer, eigene ID-Reihe `Z1`, `Z2`, …). Die Staging-Datei wird nicht mehr
+  beschrieben; ein vorhandener Altbestand wird weiterhin gelesen, damit nichts doppelt erscheint.
+
+Der Flag-Katalog wird zudem um **`no_chunks`** **ergänzt** (Dokument mit Seitentext, aber ohne
+Fließtext) – die in [ADR 0013](0013-chunking-refinement-phase7.md) dokumentierte bekannte Grenze.
+Da kein Bestandspaper 0 Chunks hat, bleibt das Canonical-Schema unverändert.

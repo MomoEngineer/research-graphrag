@@ -2,9 +2,9 @@
 
 > Diese Datei ist die **kuratierte, menschlich gepflegte Literaturübersicht** des Repos und ersetzt die gleichnamige Datei aus dem bisherigen `Recherche`-Ordner. Sie ergänzt den GraphRAG-Index: Der Index beantwortet inhaltliche Fragen *über* die Paper, während diese Tabelle die Quellen strukturiert nach **Themenclustern** und **Sub-Forschungsfragen (SRQ)** einordnet und für Exposé/Masterarbeit nachvollziehbar hält.
 >
-> **Arbeitsteilung mit der Pipeline:** `scripts/update_overview.py` kann für neue Paper **Entwurfszeilen** vorbefüllen – `Name`, `Interner Link`, `Externer Link/Identifikator`, `Keyword` und `Kompakte Zusammenfassung` **deterministisch/extraktiv** (TF-IDF-Terme, Abstract-/Leadsätze, DOI/arXiv; **kein LLM** zur Ingest-Zeit). Die Entwürfe landen **append-only** in `data/overview_drafts.md` – diese kuratierte Datei bleibt unangetastet. **Menschlich kuratiert** bleiben die wertenden Spalten `Relevanz fuer Expose` und `SRQ-Zuordnung`. Der `Themenfokus` kann an den GraphRAG-Communities ausgerichtet werden.
+> **Arbeitsteilung mit der Pipeline:** `python -m scripts.intake` (Korpus-Zufluss) und `python -m scripts.update_overview` (Nachpflege) hängen für neue Paper **Entwurfszeilen** direkt an diese Tabelle an – `Name`, `Interner Link`, `Externer Link/Identifikator`, `Keyword` und `Kompakte Zusammenfassung` **deterministisch/extraktiv** (TF-IDF-Terme, Abstract-/Leadsätze, DOI/arXiv; **kein LLM** zur Ingest-Zeit). Der Anhang ist **append-only, byte-erhaltend und atomar**: bestehende Zeilen werden nie geändert, umsortiert oder gelöscht. Neue Zeilen tragen die maschinelle ID-Reihe `Z1`, `Z2`, … und werden beim Kuratieren umsortiert. **Menschlich kuratiert** bleiben die wertenden Spalten `Relevanz fuer Expose` und `SRQ-Zuordnung` (Eintrag `(manuell)`). Der `Themenfokus` kann an den GraphRAG-Communities ausgerichtet werden. Grundlage: [ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md).
 >
-> **Status:** Migration abgeschlossen (Phase 1). Die 145 kuratierten Quellen aus dem bisherigen `Recherche/Übersicht.md` sind übernommen und ihre internen Links auf `papers/` umgebogen; die wertenden Spalten (Relevanz, SRQ-Zuordnung) wurden unverändert übernommen. Ein unkuratiertes Korpus-PDF (ohne Zeile) ist bewusst nicht gelistet und erscheint ab Phase 2 als Entwurfszeile in `data/overview_drafts.md` (`scripts/update_overview.py`). Einzelne externe Identifikatoren (Spalte 9) sind noch nachzupflegen.
+> **Status:** Migration abgeschlossen (Phase 1). Die 145 kuratierten Quellen aus dem bisherigen `Recherche/Übersicht.md` sind übernommen und ihre internen Links auf `papers/` umgebogen; die wertenden Spalten (Relevanz, SRQ-Zuordnung) wurden unverändert übernommen. Ein unkuratiertes Korpus-PDF (ohne Zeile) ist bewusst nicht gelistet. Einzelne externe Identifikatoren (Spalte 9) sind noch nachzupflegen.
 
 ## Spaltenerklaerung und Regeln
 
@@ -27,7 +27,7 @@ Die Tabelle dient der strukturierten, nachvollziehbaren und reproduzierbaren Ein
 - Zusammenfassungen nur inhaltlich belastbar und ohne ungestuetzte Interpretationen formulieren.
 - Bei SRQ-Zuordnung nur Fragen markieren, zu denen ein klarer inhaltlicher Bezug besteht.
 - Interne und externe Links bei jeder Quelle pflegen, damit lokale Nachvollziehbarkeit und externe Verifizierbarkeit gleichzeitig gesichert sind; interne Links zeigen auf `papers/`.
-- Von der Pipeline erzeugte Entwurfszeilen vor Uebernahme pruefen; die wertenden Spalten (Relevanz, SRQ-Zuordnung) immer manuell bestaetigen.
+- Von der Pipeline erzeugte Entwurfszeilen (ID `Z1`, `Z2`, …) vor der Kuratierung pruefen; die wertenden Spalten (Relevanz, SRQ-Zuordnung) immer manuell bestaetigen und die ID anschliessend in das passende Themencluster umbenennen.
 
 ## Tabelle
 

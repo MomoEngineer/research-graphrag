@@ -27,7 +27,7 @@ research-graphrag/
 │  ├─ glossary.md
 │  └─ adr/
 │     ├─ README.md
-│     └─ 0001-*.md … 0018-*.md
+│     └─ 0001-*.md … 0019-*.md
 ├─ templates/
 │  ├─ tool-spec.md
 │  ├─ module-doc.md              # Vorlage Modul-Doku (ADR 0018)
@@ -40,7 +40,8 @@ research-graphrag/
 │  ├─ coverage_offline.py        # Offline-Coverage-Gate (ADR 0003)
 │  ├─ ingest.py                  # Drop-in → Canonical JSON → Index (Option B)
 │  ├─ ask.py                     # Frage → Retrieval-Modi (Basic/Local/Global/DRIFT + Router)
-│  ├─ update_overview.py         # Übersicht-Entwürfe → data/overview_drafts.md (Option B)
+│  ├─ intake.py                  # Korpus-Zufluss: new_papers/ → papers/ → Ingest → Übersicht (Phase 8)
+│  ├─ update_overview.py         # Entwurfszeilen → Übersicht.md (append-only, Option B)
 │  ├─ graph_info.py              # Community-Übersicht (read-only, Phase 3)
 │  ├─ citations.py               # Zitationen eines Papers (read-only, Phase 7 / A2)
 │  ├─ status.py                  # Read-only Index-/Korpus-Status + Konsistenz (Phase 6)
@@ -50,6 +51,7 @@ research-graphrag/
 │  ├─ __init__.py                # Paket-Version
 │  ├─ doc/                       # Modul-Dokus der Top-Level-Module (ADR 0018)
 │  ├─ errors.py                  # gemeinsame Fehlertaxonomie (docs/error-model.md)
+│  ├─ intake.py                  # Korpus-Zufluss mit Duplikatprüfung (Phase 8)
 │  ├─ keywords.py                # kuratierte Keyword-Politik (Stopwords/Token-Filter, Phase 7 / A5)
 │  ├─ pipeline.py                # Drop-in-Ingestion (papers/ → Canonical → Index)
 │  ├─ extraction/                # pypdf → Canonical Paper JSON 0.4.0 (Option B)
@@ -105,13 +107,15 @@ research-graphrag/
 │  ├─ retrieval-baseline.json    # eingefrorene Ränge je Frage/Ebene (Phase 7 / A6)
 │  └─ router-gold.json           # versioniertes Router-Gold-Set (Contract-Labels, Phase 7 / A7)
 ├─ recherche/                    # (Phase 1) migrierte Rechercheartefakte (noch nicht vorhanden)
-├─ new_papers/                   # (Phase 8) Eingangsordner für den Intake (noch nicht vorhanden)
+├─ new_papers/                   # Eingangsordner des Intake (nicht versioniert, außer README.md)
+│  └─ _duplikate/                #   Quarantäne der Identifikator-Duplikate (vom Intake angelegt)
 ├─ papers/                       # PDF-Korpus (nicht versioniert)
-├─ data/                         # Canonical JSON 0.4.0, manifest.json, index/, quality_report.*, overview_drafts.md (nicht versioniert)
+├─ data/                         # Canonical JSON 0.4.0, manifest.json, index/, quality_report.*, intake_log.md (nicht versioniert)
 └─ tests/                        # gespiegelt zu src/research_graphrag/
    ├─ conftest.py                # anyio-Backend + make_pdf-Fixture
    ├─ test_smoke.py
    ├─ test_errors.py
+   ├─ test_intake.py
    ├─ test_keywords.py
    ├─ test_pipeline.py
    ├─ extraction/                # PDF-Extraktion + Struktur/Chunking/Qualität (Phase 2)
@@ -151,10 +155,16 @@ research-graphrag/
 > Schema-Eingriff, **kein Re-Ingest**
 > ([ADR 0017](adr/0017-router-hardening-phase7.md)).
 
-> **Geplant (Phasen 8–11, [Roadmap.md](../Roadmap.md)):** Der Eingangsordner `new_papers/` und
-> ein Intake (`src/research_graphrag/intake.py` + dünnes `scripts/intake.py`) kommen in
-> **Phase 8** hinzu; **Phase 9** ergänzt einen separat startbaren Online-Research-Modus, der
-> ausschließlich nach `new_papers/` schreibt und den Kern netzfrei lässt. Die Phasen 10 und 11
+> **Phase 8:** Neu sind `intake.py` (Top-Level, Korpus-Zufluss) und das dünne `scripts/intake.py`
+> samt Eingangsordner `new_papers/`. Die Duplikatprüfung ist dreistufig mit **abgestufter**
+> Konsequenz; `overview/drafts.py` hängt Entwurfszeilen jetzt an die kuratierte `Übersicht.md` an
+> (byte-erhaltend, atomar, eigene ID-Reihe) – die Staging-Datei `data/overview_drafts.md` ist
+> abgelöst und wird nur noch gelesen. Der Flag-Katalog erhält `no_chunks`. Kein Schema-Eingriff,
+> **kein Re-Ingest** ([ADR 0019](adr/0019-corpus-intake-new-papers-phase8.md)).
+
+> **Geplant (Phasen 9–11, [Roadmap.md](../Roadmap.md)):** **Phase 9** ergänzt einen separat
+> startbaren Online-Research-Modus, der ausschließlich nach `new_papers/` schreibt und den Kern
+> netzfrei lässt. Die Phasen 10 und 11
 > arbeiten die in [ADR 0016](adr/0016-quantitative-retrieval-evaluation-phase7.md) belegten
 > Retrieval-Befunde sowie Betriebsthemen ab. Die abgeschlossenen Phasen 0–7 sind in der
 > [Roadmap-Historie](roadmap-historie.md) archiviert.

@@ -28,6 +28,8 @@ flowchart TD
     A["assess"] --> B{"irgendeine Seite<br/>mit Text?"}
     B -- nein --> B1["empty_document"]
     B -- ja --> C["fehlende Abschnittsarten prüfen:<br/>missing_abstract · missing_references<br/>no_sections_detected"]
+    B -- ja --> B2{"überhaupt<br/>Chunks entstanden?"}
+    B2 -- nein --> B3["no_chunks"]
     A --> D["je textlose Seite:<br/>empty_page:n"]
     A --> E{"Gesamttext wirkt<br/>wie OCR-Rauschen?"}
     E -- ja --> E1["ocr_noise"]
@@ -35,6 +37,7 @@ flowchart TD
     A --> G["Chunks unter der Untergrenze zählen:<br/>short_chunks:n"]
     A --> H["je Chunk über der Obergrenze:<br/>long_chunk:id"]
     B1 --> Z["sortieren, deduplizieren"]
+    B3 --> Z
     C --> Z
     D --> Z
     E1 --> Z
@@ -49,6 +52,7 @@ flowchart TD
 | --- | --- | --- |
 | `empty_document` | kein extrahierbarer Text | reines Scan-PDF ohne Textebene |
 | `empty_page:<n>` | Seite ohne Text | ganzseitige Abbildung |
+| `no_chunks` | Seitentext vorhanden, aber kein Fließtext-Chunk | Deckblatt, Fehlerseite, Seite nur aus Überschriften |
 | `missing_abstract` | kein Abstract-Abschnitt erkannt | abweichende Titelseite |
 | `missing_references` | kein Referenzabschnitt erkannt | fehlende oder unerkannte Bibliografie |
 | `no_sections_detected` | ausschließlich `front` | Layout ohne erkennbare Überschriften |

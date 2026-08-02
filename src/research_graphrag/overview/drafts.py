@@ -1,9 +1,9 @@
 """Entwurfszeilen für die kuratierte Literaturübersicht (Phase 2, Option B).
 
 Erzeugt aus den Canonical-Papern **deterministische, extraktive Entwurfszeilen** für neue,
-noch **nicht kuratierte** Paper und schreibt sie **append-only** in eine separate Staging-Datei
-(`data/overview_drafts.md`). Die kuratierte [Übersicht.md](../../../Übersicht.md) bleibt dabei
-**unangetastet** – die wertenden Spalten (Relevanz, SRQ-Zuordnung, Themenfokus) füllt der Mensch.
+noch **nicht** gelistete Paper und hängt sie **append-only** an die kuratierte
+[Übersicht.md](../../../Übersicht.md) an. Die wertenden Spalten (Relevanz, SRQ-Zuordnung,
+Themenfokus) bleiben leer – sie füllt der Mensch.
 
 Entwurfsinhalte ohne LLM (konform docs/adr/0005-graphrag-index-backend-open.md):
 
@@ -12,13 +12,19 @@ Entwurfsinhalte ohne LLM (konform docs/adr/0005-graphrag-index-backend-open.md):
 - **Keyword** = extraktive TF-IDF-Top-Terme (``scikit-learn``) im Korpus-Kontext.
 - **Kompakte Zusammenfassung** = extraktiver Abstract-/Leadsatz (klar als ``ENTWURF`` markiert).
 
-Der Lauf ist **idempotent**: bereits kuratierte oder bereits entworfene Paper werden übersprungen.
+Der Lauf ist **idempotent** (bereits gelistete Paper werden übersprungen), **byte-erhaltend**
+(bestehende Zeilen werden binär übernommen) und **atomar** (Temporärdatei + ``os.replace``).
+Neue Zeilen bekommen eine eigene ID-Reihe ``Z1``, ``Z2``, …, weil die kuratierten IDs
+Themencluster sind. Dass die Übersicht die **einzige** Senke ist (statt der früheren
+Staging-Datei ``data/overview_drafts.md``), entscheidet
+docs/adr/0019-corpus-intake-new-papers-phase8.md.
 """
 
 from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -41,62 +47,44 @@ _TOKEN_PATTERN = r"(?u)\b[a-zA-Z][a-zA-Z]{2,}\b"
 _LINK_TARGET = re.compile(r"\]\((.+)\)")
 _MANUAL = "(manuell)"
 
-_DRAFT_COLUMNS = [
-    "ID",
-    "Name",
-    "Themenfokus",
-    "Keyword",
-    "Kompakte Zusammenfassung",
-    "Interner Link",
-    "Relevanz fuer Expose",
-    "SRQ-Zuordnung",
-    "Externer Link/Indetifikator",
-]
+DRAFT_ID_PREFIX = "Z"
+"""Präfix der maschinell vergebenen ID-Reihe (kuratierte IDs sind Themencluster)."""
 
-_DRAFTS_INTRO = "\n".join(
-    [
-        "# Übersicht – Entwürfe (unkuratiert)",
-        "",
-        "> **Automatisch erzeugte Staging-Datei** (`scripts/update_overview.py`, Phase 2).",
-        "> Enthält **deterministische, extraktive Entwurfszeilen** für Paper, die noch **nicht**",
-        "> in der kuratierten [Übersicht.md](../Übersicht.md) stehen. Sie wird **append-only**",
-        "> fortgeschrieben und ist bewusst von der kuratierten Übersicht getrennt (siehe",
-        "> docs/adr/0006-canonical-model-phase2-scope.md).",
-        ">",
-        "> **Workflow:** Zeile prüfen → wertende Spalten (`Relevanz fuer Expose`, `SRQ-Zuordnung`,",
-        "> `Themenfokus`) ergänzen → in die kuratierte `Übersicht.md` übernehmen → hier entfernen.",
-        "> Entwurfszeilen sind an `ID = ENTWURF` erkennbar; Keyword/Zusammenfassung sind",
-        "> maschinell und **vor der Übernahme zu verifizieren**.",
-        "",
-        "",
-    ]
-)
+_DRAFT_ID = re.compile(rf"^{DRAFT_ID_PREFIX}(\d+)$")
 
+_LEGACY_DRAFTS = "overview_drafts.md"
+"""Frühere Staging-Datei (abgelöst, ADR 0019); wird nur noch **gelesen**."""
 
-def _table_header() -> str:
-    """Baut Kopf- und Trennzeile der Entwurfstabelle (aus den Spaltennamen)."""
-    header = "| " + " | ".join(_DRAFT_COLUMNS) + " |"
-    separator = "| " + " | ".join(["---"] * len(_DRAFT_COLUMNS)) + " |"
-    return f"{header}\n{separator}\n"
-
-
-_DRAFTS_HEADER = _DRAFTS_INTRO + _table_header()
+INTERNAL_LINK_COLUMN = 5
+"""Erwarteter 0-basierter Spaltenindex von ``Interner Link`` in der kuratierten Übersicht."""
 
 
 @dataclass(frozen=True)
-class DraftReport:
+class OverviewReport:
     """Zählwerte eines Entwurfs-Laufs."""
 
     n_papers: int
-    skipped_curated: int
-    skipped_existing: int
+    skipped_known: int
     written: int
-    drafts_path: str
+    target_path: str
+    row_ids: tuple[str, ...]
 
 
 def _split_row(line: str) -> list[str]:
     """Zerlegt eine Markdown-Tabellenzeile in ihre Zellen (Rand-Pipes entfernt)."""
     return line.strip().strip("|").split("|")
+
+
+def link_column(markdown: str) -> int | None:
+    """Ermittelt den 0-basierten Index der ``Interner Link``-Spalte (``None`` ohne Tabellenkopf)."""
+    for raw in markdown.splitlines():
+        line = raw.strip()
+        if not line.startswith("|"):
+            continue
+        for index, cell in enumerate(_split_row(line)):
+            if cell.strip().lower() == "interner link":
+                return index
+    return None
 
 
 def parse_internal_links(markdown: str) -> set[str]:
@@ -106,25 +94,21 @@ def parse_internal_links(markdown: str) -> set[str]:
     Migrations-Erfahrung). Nicht-Tabellenzeilen und die Trennzeile werden ignoriert.
     """
     links: set[str] = set()
-    link_col: int | None = None
+    column = link_column(markdown)
+    if column is None:
+        return links
     for raw in markdown.splitlines():
         line = raw.strip()
         if not line.startswith("|"):
             continue
         cells = _split_row(line)
-        if link_col is None:
-            for index, cell in enumerate(cells):
-                if cell.strip().lower() == "interner link":
-                    link_col = index
+        if column >= len(cells):
             continue
-        if all(set(cell.strip()) <= set("-: ") for cell in cells):
-            continue
-        if link_col < len(cells):
-            match = _LINK_TARGET.search(cells[link_col])
-            if match:
-                target = match.group(1).strip()
-                name = target.split("/", 1)[1] if "/" in target else target
-                links.add(unquote(name))
+        match = _LINK_TARGET.search(cells[column])
+        if match:
+            target = match.group(1).strip()
+            name = target.split("/", 1)[1] if "/" in target else target
+            links.add(unquote(name))
     return links
 
 
@@ -197,8 +181,13 @@ def _external_link(identifiers: dict[str, str]) -> str:
     return "(zu ergänzen)"
 
 
-def build_draft_row(filename: str, paper: CanonicalPaper, keywords: list[str]) -> str:
-    """Baut eine 9-spaltige Markdown-Entwurfszeile (ID = ``ENTWURF``)."""
+def build_draft_row(row_id: str, filename: str, paper: CanonicalPaper, keywords: list[str]) -> str:
+    """Baut eine 9-spaltige Markdown-Entwurfszeile in der Spaltenordnung der Übersicht.
+
+    Spalten: ``ID``, ``Name``, ``Themenfokus``, ``Keyword``, ``Kompakte Zusammenfassung``,
+    ``Interner Link``, ``Relevanz fuer Expose``, ``SRQ-Zuordnung``,
+    ``Externer Link/Indetifikator``. Die drei wertenden Spalten bleiben ``(manuell)``.
+    """
     name = filename[:-4] if filename.lower().endswith(".pdf") else filename
     internal = f"[Quelle](papers/{quote(filename)})"
     keyword_cell = _cell(", ".join(keywords)) if keywords else _MANUAL
@@ -206,7 +195,7 @@ def build_draft_row(filename: str, paper: CanonicalPaper, keywords: list[str]) -
     summary_cell = f"ENTWURF: {_cell(summary)}" if summary else "ENTWURF"
     external = _cell(_external_link(dict(paper.identifiers)))
     columns = [
-        "ENTWURF",
+        row_id,
         _cell(name),
         _MANUAL,
         keyword_cell,
@@ -219,45 +208,110 @@ def build_draft_row(filename: str, paper: CanonicalPaper, keywords: list[str]) -
     return "| " + " | ".join(columns) + " |"
 
 
-def generate_drafts(
+def next_draft_number(markdown: str) -> int:
+    """Ermittelt die nächste freie Nummer der maschinellen ID-Reihe (``Z1``, ``Z2``, …)."""
+    highest = 0
+    for raw in markdown.splitlines():
+        line = raw.strip()
+        if not line.startswith("|"):
+            continue
+        match = _DRAFT_ID.match(_split_row(line)[0].strip())
+        if match:
+            highest = max(highest, int(match.group(1)))
+    return highest + 1
+
+
+def _known_links(markdown: str, data_path: Path) -> set[str]:
+    """Sammelt die bereits gelisteten ``papers/``-Dateinamen (Ziel **und** Alt-Staging).
+
+    Die abgelöste Staging-Datei ``data/overview_drafts.md`` wird weiterhin gelesen, damit ein
+    noch nicht übernommener Altbestand nicht ein zweites Mal in der Übersicht landet
+    (docs/adr/0019-corpus-intake-new-papers-phase8.md).
+    """
+    known = parse_internal_links(markdown)
+    legacy = data_path / _LEGACY_DRAFTS
+    if legacy.is_file():
+        known |= parse_internal_links(legacy.read_text(encoding="utf-8"))
+    return known
+
+
+def _append_rows(target: Path, rows: list[str]) -> None:
+    """Hängt Zeilen **byte-erhaltend und atomar** an eine bestehende Markdown-Datei an.
+
+    Der vorhandene Inhalt wird binär übernommen (kein Umschreiben von Zeilenenden – ``write_text``
+    würde unter Windows CRLF erzeugen und damit jede kuratierte Zeile verändern); geschrieben wird
+    über eine Temporärdatei mit :func:`os.replace`, damit ein Abbruch die Datei nicht halbfertig
+    zurücklässt (Muster aus docs/adr/0010-drop-in-workflow-and-qa-phase6.md).
+    """
+    existing = target.read_bytes()
+    newline = b"\r\n" if b"\r\n" in existing else b"\n"
+    if existing and not existing.endswith((b"\n", b"\r")):
+        existing += newline
+    payload = newline.join(row.encode("utf-8") for row in rows) + newline
+    tmp_path = target.with_name(target.name + ".tmp")
+    try:
+        tmp_path.write_bytes(existing + payload)
+        os.replace(tmp_path, target)
+    finally:
+        tmp_path.unlink(missing_ok=True)
+
+
+def ensure_overview_target(target_path: str | Path) -> Path:
+    """Prüft die Zieldatei **vorab** und liefert ihren Pfad.
+
+    Vorbedingung für jeden Schreibvorgang – auch für den Korpus-Intake, der sie **vor** der ersten
+    Dateioperation aufruft. Andernfalls würden PDFs verschoben und der Index neu gebaut, nur damit
+    der Lauf danach an einem falschen Pfad scheitert.
+
+    Args:
+        target_path: Pfad zur kuratierten ``Übersicht.md``.
+
+    Returns:
+        Den geprüften Pfad.
+
+    Raises:
+        DomainError: ``not_found`` wenn die Datei fehlt; ``constraint_violation`` wenn die Tabelle
+            nicht das erwartete Spaltenlayout hat (siehe docs/error-model.md).
+    """
+    target = Path(target_path)
+    if not target.is_file():
+        raise DomainError(ErrorCode.NOT_FOUND, f"Übersicht nicht gefunden: {target}")
+    if link_column(target.read_text(encoding="utf-8")) != INTERNAL_LINK_COLUMN:
+        raise DomainError(
+            ErrorCode.CONSTRAINT_VIOLATION,
+            f"Unerwartetes Spaltenlayout in {target}: 'Interner Link' muss die "
+            f"{INTERNAL_LINK_COLUMN + 1}. Spalte sein.",
+        )
+    return target
+
+
+def append_overview_rows(
     *,
     data_dir: str | Path,
-    uebersicht_path: str | Path,
-    drafts_path: str | Path,
-) -> DraftReport:
-    """Erzeugt Entwurfszeilen für nicht kuratierte Paper und hängt sie append-only an.
+    target_path: str | Path,
+) -> OverviewReport:
+    """Hängt Entwurfszeilen für noch nicht gelistete Paper an die kuratierte Übersicht an.
 
     Args:
         data_dir: Datenordner mit ``canonical/`` und optional ``manifest.json``.
-        uebersicht_path: Pfad zur kuratierten ``Übersicht.md`` (nur gelesen).
-        drafts_path: Ziel-Staging-Datei (wird bei Bedarf mit Kopf angelegt).
+        target_path: Pfad zur kuratierten ``Übersicht.md`` (wird append-only ergänzt).
 
     Returns:
-        Ein :class:`DraftReport` mit Zählwerten.
+        Ein :class:`OverviewReport` mit Zählwerten und den vergebenen IDs.
 
     Raises:
-        DomainError: ``not_found`` wenn ``canonical/`` fehlt (siehe docs/error-model.md).
+        DomainError: ``not_found`` wenn ``canonical/`` oder die Zieldatei fehlt;
+            ``constraint_violation`` wenn die Zieltabelle nicht das erwartete Spaltenlayout hat
+            (siehe docs/error-model.md).
     """
     data_path = Path(data_dir)
     canonical_dir = data_path / "canonical"
     if not canonical_dir.is_dir():
         raise DomainError(ErrorCode.NOT_FOUND, f"canonical-Ordner fehlt: {canonical_dir}")
 
-    uebersicht = Path(uebersicht_path)
-    drafts = Path(drafts_path)
-    if not uebersicht.is_file():
-        _logger.warning(
-            "Kuratierte Übersicht nicht gefunden (%s); alle Paper gelten als unkuratiert.",
-            uebersicht,
-        )
-    curated = (
-        parse_internal_links(uebersicht.read_text(encoding="utf-8"))
-        if uebersicht.is_file()
-        else set()
-    )
-    existing = (
-        parse_internal_links(drafts.read_text(encoding="utf-8")) if drafts.is_file() else set()
-    )
+    target = ensure_overview_target(target_path)
+    markdown = target.read_text(encoding="utf-8")
+    known = _known_links(markdown, data_path)
 
     manifest_path = data_path / "manifest.json"
     paper_id_to_name: dict[str, str] = {}
@@ -278,29 +332,27 @@ def generate_drafts(
         key=lambda item: item[0].lower(),
     )
 
-    skipped_curated = 0
-    skipped_existing = 0
+    skipped_known = 0
     new_rows: list[str] = []
+    row_ids: list[str] = []
+    number = next_draft_number(markdown)
     for filename, paper, terms in candidates:
-        if filename in curated:
-            skipped_curated += 1
+        if filename in known:
+            skipped_known += 1
             continue
-        if filename in existing:
-            skipped_existing += 1
-            continue
-        new_rows.append(build_draft_row(filename, paper, terms))
+        row_id = f"{DRAFT_ID_PREFIX}{number}"
+        number += 1
+        row_ids.append(row_id)
+        new_rows.append(build_draft_row(row_id, filename, paper, terms))
 
     if new_rows:
-        drafts.parent.mkdir(parents=True, exist_ok=True)
-        if not drafts.is_file():
-            drafts.write_text(_DRAFTS_HEADER, encoding="utf-8")
-        with drafts.open("a", encoding="utf-8") as handle:
-            handle.write("\n".join(new_rows) + "\n")
+        _append_rows(target, new_rows)
+        _logger.info("Übersicht um %d Entwurfszeile(n) ergänzt: %s", len(new_rows), target)
 
-    return DraftReport(
+    return OverviewReport(
         n_papers=len(papers),
-        skipped_curated=skipped_curated,
-        skipped_existing=skipped_existing,
+        skipped_known=skipped_known,
         written=len(new_rows),
-        drafts_path=str(drafts),
+        target_path=str(target),
+        row_ids=tuple(row_ids),
     )

@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/overview/drafts.py` |
 | **Paket** | `overview` – Entwürfe für die kuratierte Literaturübersicht |
-| **Phase** | 2 (eingeführt), 7 / A5 (Keyword-Politik) |
-| **Grundlagen** | [ADR 0006](../../../../docs/adr/0006-canonical-model-phase2-scope.md), [ADR 0015](../../../../docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md) |
+| **Phase** | 2 (eingeführt), 7 / A5 (Keyword-Politik), 8 (Übersicht als einzige Senke) |
+| **Grundlagen** | [ADR 0006](../../../../docs/adr/0006-canonical-model-phase2-scope.md), [ADR 0015](../../../../docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md), [ADR 0019](../../../../docs/adr/0019-corpus-intake-new-papers-phase8.md) |
 
 ---
 
@@ -23,46 +23,62 @@ Forschungsfragen).
 
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
-| `generate_drafts` | Funktion | Erzeugt fehlende Entwurfszeilen und hängt sie an |
-| `build_draft_row` | Funktion | Baut eine einzelne Tabellenzeile |
+| `append_overview_rows` | Funktion | Hängt fehlende Entwurfszeilen an die kuratierte Übersicht an |
+| `ensure_overview_target` | Funktion | Prüft die Zieldatei vorab (Existenz + Spaltenlayout) |
+| `build_draft_row` | Funktion | Baut eine einzelne Tabellenzeile (mit vergebener ID) |
+| `next_draft_number` | Funktion | Ermittelt die nächste freie Nummer der ID-Reihe `Z1`, `Z2`, … |
 | `keyword_table` | Funktion | Extraktive Top-Terme je Dokument im Korpus-Kontext |
 | `extractive_summary` | Funktion | Kurztext aus Abstract oder erstem Fließtext |
 | `parse_internal_links` | Funktion | Liest die verlinkten Dateinamen einer Markdown-Tabelle |
-| `DraftReport` | Dataclass | Zählwerte eines Laufs |
+| `link_column` | Funktion | Spaltenindex von `Interner Link` (Layout-Prüfung) |
+| `OverviewReport` | Dataclass | Zählwerte eines Laufs samt vergebener IDs |
 
 ## 3. Ablauf
 
 ```mermaid
 flowchart TD
     A["canonical/*.json laden"] --> B["Dateinamen bestimmen:<br/>Manifest bevorzugt,<br/>sonst aus der Quell-URI"]
-    C["Übersicht.md lesen"] --> D["kuratierte Links"]
-    E["overview_drafts.md lesen"] --> F["bereits entworfene Links"]
+    C["Übersicht.md lesen"] --> L{"Spaltenlayout<br/>wie erwartet?"}
+    L -- nein --> ERR["constraint_violation"]
+    L -- ja --> D["gelistete Links"]
+    E["data/overview_drafts.md<br/>(Altbestand, falls vorhanden)"] --> D
     B --> G["Kandidaten alphabetisch"]
-    D --> H{"schon kuratiert<br/>oder entworfen?"}
-    F --> H
+    D --> H{"schon gelistet?"}
     G --> H
     H -- ja --> SKIP["überspringen"]
     H -- nein --> I["keyword_table + extractive_summary"]
-    I --> J["build_draft_row"]
-    J --> K["append-only anhängen<br/>Kopf anlegen, falls nötig"]
+    I --> J["build_draft_row mit ID Z<n>"]
+    J --> K["byte-erhaltend anhängen,<br/>atomar per os.replace"]
 ```
 
-### Append-only und getrennte Datei
+### Eine Senke, byte-erhaltend und atomar
 
-Zwei Schutzregeln, die zusammen die kuratierte Arbeit sichern:
+Seit [ADR 0019](../../../../docs/adr/0019-corpus-intake-new-papers-phase8.md) gibt es nur noch
+**ein** Ziel: die kuratierte Übersicht. Damit das gefahrlos möglich ist, gelten drei Regeln:
 
-1. Geschrieben wird in eine **eigene** Staging-Datei, nie in die kuratierte Übersicht.
-2. Geschrieben wird **nur angehängt** – bestehende Zeilen werden nie geändert oder gelöscht.
+1. **Nur anhängen.** Bestehende Zeilen werden nie geändert, gelöscht oder umsortiert.
+2. **Byte-erhaltend.** Der vorhandene Inhalt wird **binär** übernommen und das vorgefundene
+   Zeilenende weiterverwendet. Würde stattdessen der Text neu geschrieben, ersetzte Windows jedes
+   `\n` durch `\r\n` – jede kuratierte Zeile wäre verändert, obwohl sich inhaltlich nichts tut.
+3. **Atomar.** Geschrieben wird in eine Temporärdatei, die per `os.replace` an ihren Platz rückt;
+   ein Abbruch hinterlässt keine halbfertige Übersicht.
 
-Damit kann ein versehentlicher Lauf keine Handarbeit zerstören. Der vorgesehene Weg ist: Zeile
-prüfen, wertende Spalten ergänzen, in die kuratierte Übersicht übernehmen, aus dem Staging
-entfernen.
+Dazu kommt eine **Layout-Prüfung**: Steht `Interner Link` nicht an der erwarteten Stelle, wird
+gar nichts geschrieben. Das verhindert, dass ein falscher `--uebersicht`-Pfad eine fremde Tabelle
+zerschreibt.
+
+### Eigene ID-Reihe
+
+Die kuratierten IDs (`A1`, `B2`, …) sind Themencluster – eine Zuordnung, die ein Automat nicht
+vornehmen kann. Neue Zeilen bekommen daher die Reihe `Z1`, `Z2`, …, fortlaufend hinter der
+höchsten bereits vergebenen Nummer. Beim Kuratieren werden sie umsortiert und umbenannt.
 
 ### Idempotenz über die internen Links
 
 Ob ein Paper schon erfasst ist, wird nicht über eine ID entschieden, sondern über den **internen
-Link** in beiden Dateien. Der Vorteil: Die Prüfung funktioniert auch für kuratierte Zeilen, die
-nie durch dieses Modul gelaufen sind.
+Link**. Der Vorteil: Die Prüfung funktioniert auch für kuratierte Zeilen, die nie durch dieses
+Modul gelaufen sind. Eine noch vorhandene Alt-Staging-Datei wird mitgelesen, damit ein nicht
+übernommener Altbestand nicht ein zweites Mal erscheint.
 
 Für das Parsen der Links ist wichtig, dass der Link-Ausdruck **gierig** liest: Dateinamen im
 Korpus enthalten runde Klammern, an denen eine sparsame Variante vorzeitig abbräche.
@@ -95,30 +111,30 @@ bewusst vermieden, weil Markdown sie als Auszeichnung interpretieren würde.
 
 ```mermaid
 flowchart LR
-    CLI["scripts.update_overview"] --> GD["generate_drafts"]
+    CLI["scripts.update_overview"] --> GD["append_overview_rows"]
+    INT["intake.run_intake"] --> GD
     CAN["data/canonical/*.json"] --> GD
     MAN["data/manifest.json"] --> GD
-    UEB["Übersicht.md (nur gelesen)"] --> GD
     KW["keywords.filter_terms"] --> GD
-    GD --> ST["data/overview_drafts.md"]
+    GD --> UEB["Übersicht.md (append-only)"]
 ```
 
-Das Modul ist der einzige Teil des Systems, der **außerhalb** von `data/` etwas liest – die
-kuratierte Übersicht – und selbst dort nur lesend.
+Das Modul ist der einzige Teil des Systems, der **außerhalb** von `data/` schreibt – und dort nur
+anhängend.
 
 ## 5. Fehler und Grenzfälle
 
 | Situation | Verhalten |
 | --- | --- |
 | `canonical/` fehlt | `not_found` |
-| Übersicht fehlt | **kein** Fehler – Warnung im Protokoll, alle Paper gelten als unkuratiert |
-| Staging-Datei fehlt | wird mit Kopf angelegt |
+| Übersicht fehlt | `not_found` – die kuratierte Datei wird **nicht** erfunden |
+| Spaltenlayout weicht ab | `constraint_violation`, es wird nichts geschrieben |
 | Manifest fehlt | Dateinamen kommen aus der Quell-URI |
 | Korpus ohne verwertbaren Text | leere Keyword-Listen statt Ausnahme |
 
-Der Warnhinweis bei fehlender Übersicht hat einen praktischen Hintergrund: Wird der Pfad falsch
-übergeben, gilt plötzlich der gesamte Korpus als unkuratiert – ohne Hinweis wäre die Ursache
-schwer zu finden.
+Dass eine fehlende Übersicht ein **Fehler** ist (und keine Warnung wie früher), folgt direkt aus
+der Einzel-Senke: Früher wurde in eine regenerierbare Staging-Datei geschrieben, heute in ein
+kuratiertes Artefakt – ein falscher Pfad darf hier nicht stillschweigend durchgehen.
 
 ## 6. Determinismus
 

@@ -30,12 +30,13 @@ Alles, was aus einer PDF-Datei ein durchsuchbares, belegfähiges Artefakt macht.
 | Feature | Was es leistet | Einstiegspunkt | Verbaut in | Grundlage |
 | --- | --- | --- | --- | --- |
 | **Drop-in-Ingestion** | PDF ablegen, ein Befehl, fertig: Extraktion, Index, Graphen und Qualitätsreport in einem Lauf | `python -m scripts.ingest` | [pipeline](../src/research_graphrag/doc/pipeline.md) | [0005](adr/0005-graphrag-index-backend-open.md) |
+| **Korpus-Intake mit Duplikatprüfung** | Eingangsordner `new_papers/`: prüft in drei Stufen (Hash, DOI/arXiv, Titel), übernimmt Neues, indiziert und ergänzt die Übersicht – mit wirksamem `--dry-run` | `python -m scripts.intake` | [intake](../src/research_graphrag/doc/intake.md) | [0019](adr/0019-corpus-intake-new-papers-phase8.md) |
 | **Dedup über Datei-Hash** | Nur neue oder geänderte PDFs werden neu extrahiert; ein Schema-Wechsel erzwingt die Neu-Extraktion trotz unveränderter Datei | `data/manifest.json` | [pipeline](../src/research_graphrag/doc/pipeline.md) | [0006](adr/0006-canonical-model-phase2-scope.md) |
 | **PDF → Canonical JSON** | Seitentext, Abschnitte, Chunks, Identifikatoren und Qualitäts-Flags in einem versionierten Zwischenformat | `extract_pdf` | [extraction/pdf](../src/research_graphrag/extraction/doc/pdf.md), [extraction/model](../src/research_graphrag/extraction/doc/model.md) | [0005](adr/0005-graphrag-index-backend-open.md), [0006](adr/0006-canonical-model-phase2-scope.md) |
 | **Textnormalisierung** | Repariert Ligaturen, die Wörter unauffindbar machen, und entfernt nicht dekodierbare Glyph-Artefakte | in `extract_pdf` vor der Strukturanalyse | [extraction/normalization](../src/research_graphrag/extraction/doc/normalization.md) | [0015](adr/0015-noise-reduction-keywords-and-sections-phase7.md) |
 | **Abschnitts-Erkennung** | Erkennt Überschriften, verwirft Bibliografie- und Tabellenzeilen und absorbiert zu kleine Abschnitte in ihren Vorgänger | in `extract_pdf` | [extraction/structure](../src/research_graphrag/extraction/doc/structure.md) | [0006](adr/0006-canonical-model-phase2-scope.md), [0013](adr/0013-chunking-refinement-phase7.md), [0015](adr/0015-noise-reduction-keywords-and-sections-phase7.md) |
 | **Größenbasiertes Chunking** | Bildet Chunks entlang von Abschnitt und Größe statt entlang der Seite; die Seite bleibt als **Provenienz-Range** erhalten | in `extract_pdf` | [extraction/chunking](../src/research_graphrag/extraction/doc/chunking.md) | [0013](adr/0013-chunking-refinement-phase7.md) |
-| **Qualitäts-Gates** | Markiert fehlenden Abstract, fehlende Referenzen, OCR-Rauschen, verdächtige Tabellen und Chunk-Ausreißer | `data/quality_report.json` / `.md` | [extraction/quality](../src/research_graphrag/extraction/doc/quality.md) | [0006](adr/0006-canonical-model-phase2-scope.md), [0013](adr/0013-chunking-refinement-phase7.md) |
+| **Qualitäts-Gates** | Markiert fehlenden Abstract, fehlende Referenzen, OCR-Rauschen, verdächtige Tabellen, Chunk-Ausreißer und chunk-lose Dokumente | `data/quality_report.json` / `.md` | [extraction/quality](../src/research_graphrag/extraction/doc/quality.md) | [0006](adr/0006-canonical-model-phase2-scope.md), [0013](adr/0013-chunking-refinement-phase7.md), [0019](adr/0019-corpus-intake-new-papers-phase8.md) |
 | **Atomarer Index-Swap** | Der Index wird in eine temporäre Datei gebaut und erst am Ende umgehängt: ein Fehler lässt den bisherigen Index intakt | in `ingest` | [pipeline](../src/research_graphrag/doc/pipeline.md) | [0010](adr/0010-drop-in-workflow-and-qa-phase6.md) |
 
 ## B. Index und Graphen
@@ -85,7 +86,7 @@ Sprachmodell.
 | --- | --- | --- | --- | --- |
 | **MCP-Server (stdio)** | Stellt acht Werkzeuge für GitHub Copilot bereit und lädt den Index **pro Anfrage** frisch – neue Paper wirken ohne Neustart | `python -m research_graphrag.mcp_server` | [mcp_server/server](../src/research_graphrag/mcp_server/doc/server.md) | [0009](adr/0009-mcp-server-stdio-phase5.md), [0010](adr/0010-drop-in-workflow-and-qa-phase6.md) |
 | **Fehlerübersetzung an der Grenze** | Übersetzt interne Fehler in eine strukturierte, kategorisierte Ausgabe; unerwartete Fehler werden nie durchgereicht | jedes Werkzeug | [errors](../src/research_graphrag/doc/errors.md), [mcp_server/server](../src/research_graphrag/mcp_server/doc/server.md) | [error-model.md](error-model.md), [0009](adr/0009-mcp-server-stdio-phase5.md) |
-| **Kommandozeile** | Neun Skripte für Ingestion, Fragen, Status, QS und Evaluation – der vollständige Funktionsumfang ohne Copilot | `python -m scripts.<name>` | [scripts/README.md](../scripts/README.md) | — |
+| **Kommandozeile** | Zehn Skripte für Intake, Ingestion, Fragen, Status, QS und Evaluation – der vollständige Funktionsumfang ohne Copilot | `python -m scripts.<name>` | [scripts/README.md](../scripts/README.md) | — |
 
 ### Die acht MCP-Werkzeuge
 
@@ -117,7 +118,7 @@ Der Teil, der Änderungen **messbar** statt nur plausibel macht.
 
 | Feature | Was es leistet | Einstiegspunkt | Verbaut in | Grundlage |
 | --- | --- | --- | --- | --- |
-| **Übersicht-Entwürfe** | Erzeugt append-only Entwurfszeilen für die kuratierte Literaturübersicht; die wertenden Spalten bleiben manuell | `python -m scripts.update_overview` | [overview/drafts](../src/research_graphrag/overview/doc/drafts.md) | [0006](adr/0006-canonical-model-phase2-scope.md), [0015](adr/0015-noise-reduction-keywords-and-sections-phase7.md) |
+| **Übersicht-Entwürfe** | Hängt Entwurfszeilen append-only, byte-erhaltend und atomar an die kuratierte `Übersicht.md`; die wertenden Spalten bleiben manuell | `python -m scripts.update_overview`, `python -m scripts.intake` | [overview/drafts](../src/research_graphrag/overview/doc/drafts.md) | [0006](adr/0006-canonical-model-phase2-scope.md), [0015](adr/0015-noise-reduction-keywords-and-sections-phase7.md), [0019](adr/0019-corpus-intake-new-papers-phase8.md) |
 | **Fehlertaxonomie** | Eine gemeinsame Fehlersprache für alle Schichten, die an der Serverkante ohne Übersetzungstabelle ausgegeben werden kann | `DomainError` | [errors](../src/research_graphrag/doc/errors.md) | [error-model.md](error-model.md) |
 
 ---

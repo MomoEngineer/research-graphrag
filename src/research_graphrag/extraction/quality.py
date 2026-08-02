@@ -9,6 +9,10 @@ Flag-Katalog:
 
 - ``empty_document`` – kein Seitentext extrahierbar.
 - ``empty_page:<n>`` – Seite ``n`` ohne Text.
+- ``no_chunks`` – Seitentext vorhanden, aber **kein** Fließtext-Chunk erzeugt (z. B. reiner Scan
+  ohne Textebene, Deckblatt, Fehlerseite). Schließt die in
+  docs/adr/0013-chunking-refinement-phase7.md dokumentierte Lücke; entschieden in
+  docs/adr/0019-corpus-intake-new-papers-phase8.md.
 - ``missing_abstract`` / ``missing_references`` – kein Abstract-/Referenz-Abschnitt erkannt.
 - ``no_sections_detected`` – keinerlei Überschrift erkannt (nur ``front``).
 - ``ocr_noise`` – auffällig niedriger Alphanumerik-Anteil / viele Ein-Zeichen-Token.
@@ -120,6 +124,8 @@ def assess(
             flags.append(f"empty_page:{number}")
 
     if non_empty_pages:
+        if not chunks:
+            flags.append("no_chunks")
         kinds = {section.kind for section in sections}
         if SECTION_KIND_ABSTRACT not in kinds:
             flags.append("missing_abstract")

@@ -24,7 +24,11 @@ laufenden Prozess:
 ```mermaid
 flowchart LR
     subgraph K1["Aufnahme · manuell angestoßen"]
-        P["papers/*.pdf"] --> ING["scripts.ingest"]
+        NP["new_papers/*.pdf"] --> INT["scripts.intake"]
+        INT -->|"kein Duplikat"| P["papers/*.pdf"]
+        INT -->|"Entwurfszeile"| UEB["Übersicht.md"]
+        P --> ING["scripts.ingest"]
+        INT --> ING
         ING --> CAN["data/canonical/*.json"]
         ING --> IDX[("data/index/index.sqlite")]
     end
@@ -101,6 +105,31 @@ sequenceDiagram
 
 Schlägt ein Schritt fehl, bleibt der bisherige Index unangetastet und weiterhin abfragbar
 ([ADR 0010](adr/0010-drop-in-workflow-and-qa-phase6.md)).
+
+### Der Intake davor: was überhaupt in `papers/` landet
+
+`ingest` erkennt Duplikate nur an **Dateiname → Hash**. Ein inhaltsgleiches PDF unter anderem
+Namen würde deshalb ein zweites Mal indiziert. Der Intake schaltet sich davor und prüft in drei
+Stufen mit **fallender Sicherheit und fallender Konsequenz**:
+
+```mermaid
+flowchart LR
+    A["new_papers/x.pdf"] --> S1{"sha256<br/>im Manifest?"}
+    S1 -- ja --> D["löschen<br/>(byte-identisch belegt)"]
+    S1 -- nein --> S2{"DOI/arXiv trifft<br/>gehärteten Schlüssel?"}
+    S2 -- ja --> Q["Quarantäne<br/>new_papers/_duplikate/"]
+    S2 -- nein --> S3{"Titel-Ähnlichkeit<br/>≥ 0,85?"}
+    S3 -- ja --> K["liegen lassen<br/>Befund im Bericht"]
+    S3 -- nein --> M["nach papers/<br/>→ ingest → Übersicht-Zeile"]
+```
+
+Entscheidend ist, dass nur die **erste** Stufe löscht: Dort und nur dort ist bewiesen, dass kein
+Bit verloren geht. Stufe 2 vergleicht eine heuristisch extrahierte Metadate und ist deshalb
+umkehrbar; Stufe 3 ist ein Verdacht und bleibt folgenlos. Warum der Identifikator-Vergleich
+zusätzlich gehärtet werden musste – und welche zwei Fehlerquellen im eigenen Korpus dafür
+gemessen wurden – steht in
+[ADR 0019](adr/0019-corpus-intake-new-papers-phase8.md); die innere Funktionsweise beschreibt die
+[Modul-Doku](../src/research_graphrag/doc/intake.md).
 
 ---
 
@@ -418,7 +447,7 @@ erkennbar.
 
 | Paket | Modul-Dokus |
 | --- | --- |
-| Top-Level | [errors](../src/research_graphrag/doc/errors.md) · [keywords](../src/research_graphrag/doc/keywords.md) · [pipeline](../src/research_graphrag/doc/pipeline.md) |
+| Top-Level | [errors](../src/research_graphrag/doc/errors.md) · [intake](../src/research_graphrag/doc/intake.md) · [keywords](../src/research_graphrag/doc/keywords.md) · [pipeline](../src/research_graphrag/doc/pipeline.md) |
 | `extraction/` | [model](../src/research_graphrag/extraction/doc/model.md) · [normalization](../src/research_graphrag/extraction/doc/normalization.md) · [structure](../src/research_graphrag/extraction/doc/structure.md) · [chunking](../src/research_graphrag/extraction/doc/chunking.md) · [quality](../src/research_graphrag/extraction/doc/quality.md) · [pdf](../src/research_graphrag/extraction/doc/pdf.md) |
 | `indexing/` | [tfidf_index](../src/research_graphrag/indexing/doc/tfidf_index.md) · [bm25](../src/research_graphrag/indexing/doc/bm25.md) · [fusion](../src/research_graphrag/indexing/doc/fusion.md) · [graph_index](../src/research_graphrag/indexing/doc/graph_index.md) · [citation_graph](../src/research_graphrag/indexing/doc/citation_graph.md) |
 | `retrieval/` | [basic](../src/research_graphrag/retrieval/doc/basic.md) · [local](../src/research_graphrag/retrieval/doc/local.md) · [global_search](../src/research_graphrag/retrieval/doc/global_search.md) · [drift](../src/research_graphrag/retrieval/doc/drift.md) · [router](../src/research_graphrag/retrieval/doc/router.md) · [provenance](../src/research_graphrag/retrieval/doc/provenance.md) · [paper](../src/research_graphrag/retrieval/doc/paper.md) · [citations](../src/research_graphrag/retrieval/doc/citations.md) |

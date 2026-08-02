@@ -21,6 +21,10 @@ dist/
 papers/*
 !papers/README.md
 
+# Eingangsordner des Intake (nicht versioniert – siehe Roadmap.md, Phase 8)
+new_papers/*
+!new_papers/README.md
+
 # Abgeleitete, regenerierbare Artefakte (nicht versioniert)
 data/*
 !data/README.md

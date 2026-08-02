@@ -10,10 +10,11 @@ Ordners werden per `.gitignore` ausgeschlossen (siehe README.md,
 - **Migration (Phase 1) abgeschlossen:** 145 kuratierte Paper aus dem bisherigen
   `Recherche/` übernommen (flaches Layout); die Zuordnung Quelle → Zeile steht in
   [`Übersicht.md`](../Übersicht.md).
-- **Neue PDFs** werden per Drop-in ergänzt und über `scripts/ingest.py`
-  (Phase 2/6) verarbeitet; nur neue/geänderte Dateien werden neu extrahiert.
-  Ein vorgelagerter Eingangsordner `new_papers/` mit Duplikatprüfung ist als
-  Phase 8 geplant ([Roadmap.md](../Roadmap.md)).
+- **Neue PDFs** gehen über den Eingangsordner [`new_papers/`](../new_papers/README.md) und
+  `python -m scripts.intake` in den Korpus – mit Duplikatprüfung, Index-Neubau und
+  Übersicht-Zeile in einem Schritt ([ADR 0019](../docs/adr/0019-corpus-intake-new-papers-phase8.md)).
+  Der direkte Weg (PDF hier ablegen, dann `python -m scripts.ingest`) bleibt daneben bestehen;
+  er dedupliziert allerdings nur über Dateiname und Hash.
 
 Aktueller Stand: **145 PDFs** (Phase-1-Migration). Ein unkuratiertes Korpus-PDF
 wurde bewusst nicht übernommen (kein `Übersicht.md`-Eintrag). Die PDFs sind nicht

@@ -2,7 +2,7 @@
 
 Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistenten. Der Plan ist **iterativ**: erst ein dünner, lauffähiger Durchstich, dann gezielte Ausbaustufen. **Bewusst ohne Zeitschätzungen** – Fortschritt wird über die „Definition of Done" (DoD) je Phase und über Meilensteine gemessen.
 
-> Ergänzt die [README](README.md). **Die Phasen 0–7 sind abgeschlossen** und hier nur noch als Ergebnis-Tabelle zusammengefasst; die vollständigen Status-Blockquotes mit allen Kennzahlen, korrigierten Annahmen und offen dokumentierten Abweichungen stehen wörtlich in der [Roadmap-Historie](docs/roadmap-historie.md). Aktiv geplant sind die **Phasen 8–11**.
+> Ergänzt die [README](README.md). **Die Phasen 0–7 sind abgeschlossen** und hier nur noch als Ergebnis-Tabelle zusammengefasst; die vollständigen Status-Blockquotes mit allen Kennzahlen, korrigierten Annahmen und offen dokumentierten Abweichungen stehen wörtlich in der [Roadmap-Historie](docs/roadmap-historie.md). **Phase 8 ist umgesetzt** (Statusblock dort); aktiv geplant sind die **Phasen 9–11**.
 
 ---
 
@@ -45,6 +45,31 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 
 ## Phase 8 – Korpus-Zufluss: `new_papers/` + Intake
 
+> **Status: umgesetzt** ([ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md)) – mit
+> **einer begründeten Abweichung** von der Vorgabe unten. Die Vorabmessung hat das Kriterium der
+> Stufe 2 widerlegt: Im eigenen Korpus würden **17 von 155** Identifikatoren fehlleiten – der
+> unausgefüllte ACM-Vorlagen-Platzhalter `10.1145/nnnnnnn.nnnnnnn` steht bei **drei** Papern, und
+> **14** Werte stammen aus dem Volltext-Fallback der Extraktion und zeigen auf ein *zitiertes*
+> fremdes Paper (darunter der Falsch-Hub aus [ADR 0011](docs/adr/0011-intra-corpus-citation-graph-phase7.md)).
+> Ein Intake, der darauf hin löscht, vernichtet unter realistischen Bedingungen legitime Dateien.
+>
+> Umgesetzt ist daher eine **abgestufte** Konsequenz: Stufe 1 (sha256) löscht wie geplant – dort
+> ist bitgenau bewiesen, dass die Datei bereits im Korpus liegt. Stufe 2 verschiebt nach
+> `new_papers/_duplikate/` (hartes Löschen nur per `--delete-identifier-duplicates`) und
+> vergleicht nur noch **gehärtete** Schlüssel: belegt auf der eigenen Titelseite (Guard aus
+> ADR 0011) **und** im Korpus eindeutig – von 155 Identifikatoren überleben **138**. Stufe 3
+> (Schwelle **0,85**, am Korpus **ohne** Fehlalarm) bleibt folgenlos und erkennt **22 von 25**
+> künstlich umbenannten Realpapern, keines davon falsch zugeordnet.
+>
+> Ebenfalls umgesetzt: das **Robustheits-Gate** (`no_chunks`-Flag – schließt die bekannte Grenze
+> aus [ADR 0013](docs/adr/0013-chunking-refinement-phase7.md) – plus `%PDF-`-Signaturprüfung), die
+> **Übersicht als einzige Senke** (append-only, byte-erhaltend, atomar, ID-Reihe `Z1`, `Z2`, …;
+> löst eine Phase-2-Festlegung ab) und ein append-only **Protokoll** `data/intake_log.md` mit Hash
+> je gelöschter Datei. Der Nachweis erfolgte end-to-end an einer **vollständigen Kopie** des
+> 145-Paper-Korpus: alle fünf Wege einmal durchlaufen, `--dry-run` nachweislich wirkungslos
+> (Hash-Abbild identisch), kuratierte Zeilen byte-identisch, zweiter Lauf idempotent. **436 Tests**
+> grün, kein Schema-Eingriff, **kein Re-Ingest**.
+
 **Ziel:** Ein einziger Befehl übernimmt neue PDFs aus einem Eingangsordner in den Korpus, verhindert dabei **Doppelbestand**, stößt die vollständige Pipeline an und pflegt die Literaturübersicht nach.
 
 ### Warum das nötig ist (und was heute fehlt)
@@ -59,8 +84,8 @@ Der bestehende Drop-in-Workflow (PDF nach `papers/` legen, `python -m scripts.in
 
   | Stufe | Kriterium | Grundlage | Konsequenz |
   | --- | --- | --- | --- |
-  | 1 | **sha256** identisch | `data/manifest.json` | sicheres Duplikat → Datei in `new_papers/` wird **gelöscht** |
-  | 2 | **DOI oder arXiv-ID** identisch | `extract_identifiers` (Phase 2) gegen `papers.identifiers` im Index | sicheres Duplikat → **gelöscht** |
+  | 1 | **sha256** identisch | `data/manifest.json` (Beleg am Dateisystem nachgerechnet) | sicheres Duplikat → Datei in `new_papers/` wird **gelöscht** |
+  | 2 | **DOI oder arXiv-ID** identisch | `extract_identifiers` (Phase 2) gegen `papers.identifiers` im Index | **umgesetzt abweichend:** Quarantäne statt Löschung, siehe Statusblock oben |
   | 3 | **Titel-Ähnlichkeit** | normalisierter Titel/Dateiname-Stamm gegen den Korpus | **unsicher** → keine Löschung, Datei bleibt liegen, Befund im Bericht |
 
 - **Kein Treffer** → Datei wird nach `papers/` verschoben. Bei **Namenskollision mit abweichendem Hash** wird nichts überschrieben: Die Datei bleibt liegen und erscheint als Befund.
@@ -223,7 +248,7 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 
 - **Rollen-Trennung:** [`Übersicht.md`](Übersicht.md) = *welche* Quellen es gibt und wie relevant sie sind; der GraphRAG-Index = *was* inhaltlich darin steht.
 - **Laufende Pflege:** Die Ingestion erzeugt Entwurfszeilen; die wertenden Spalten (`Relevanz fuer Expose`, `SRQ-Zuordnung`) bleiben menschlich kuratiert. Der `Themenfokus` kann an den GraphRAG-Communities ausgerichtet werden.
-- **Ab Phase 8** schreibt der Intake die Entwurfszeilen direkt in die Übersicht (append-only, wertende Spalten leer) – siehe die Akzeptanzkriterien dort.
+- **Ab Phase 8** schreibt der Intake die Entwurfszeilen direkt in die Übersicht (append-only, wertende Spalten leer) – umgesetzt, siehe [ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md). `data/overview_drafts.md` ist damit abgelöst; auch `scripts/update_overview.py` schreibt jetzt in die Übersicht.
 
 ---
 
@@ -249,6 +274,6 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 - **M2 – Copilot nutzt es:** ✅ erreicht – stdio-MCP-Server registriert, Werkzeuge mit Provenienz (Phase 5).
 - **M3 – Drop & Use:** ✅ erreicht – Drop-in-Kreislauf mit atomarem Index-Swap und pragmatischer QS (Phase 6).
 - **M4 – Belegte Qualität:** ✅ erreicht – Retrieval und Router sind **quantitativ** messbar (Gold-Sets, Baseline, Regressions-Check; A4/A6/A7).
-- **M5 – Zufluss ohne Doppelbestand:** neue PDFs gehen über `new_papers/` in den Korpus, Duplikate werden erkannt, die Übersicht wächst mit (Phase 8).
+- **M5 – Zufluss ohne Doppelbestand:** ✅ erreicht – neue PDFs gehen über `new_papers/` in den Korpus, Duplikate werden erkannt, die Übersicht wächst mit (Phase 8).
 - **M6 – Online-Recherche entschieden:** S0 ist beantwortet – entweder liefert der Modus belegte Kandidaten, oder der Punkt ist dokumentiert verworfen (Phase 9).
 - **M7 – Local schlägt Basic:** der für Detailfragen vorgesehene Modus ist nicht länger schwächer als seine Rückfallebene (Phase 10 / V1).

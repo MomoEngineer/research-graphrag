@@ -92,12 +92,16 @@ class CitationView:
         }
 
 
-def _normalize(text: str) -> str:
-    """Normalisiert Text für das Titel-Matching (Kleinschreibung, nur alphanumerische Token)."""
+def normalize_title(text: str) -> str:
+    """Normalisiert Text für das Titel-Matching (Kleinschreibung, nur alphanumerische Token).
+
+    Öffentlich, weil der Korpus-Intake (docs/adr/0019-corpus-intake-new-papers-phase8.md)
+    exakt dieselbe Normalisierung für seine Titel-Verdachtsstufe verwendet.
+    """
     return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
 
 
-def _title_of(paper: CanonicalPaper) -> str:
+def title_of(paper: CanonicalPaper) -> str:
     """Leitet den Paper-Titel aus der ``source_uri`` ab (Dateiname-Stamm, URL-dekodiert)."""
     name = unquote(paper.source_uri.rsplit("/", 1)[-1])
     if name.lower().endswith(".pdf"):
@@ -178,7 +182,7 @@ def _build_target_maps(
         arxiv = paper.identifiers.get("arxiv")
         if arxiv and arxiv.lower() in front:
             arxiv_to_pid.setdefault(arxiv.lower(), paper.paper_id)
-        title_norm = _normalize(_title_of(paper))
+        title_norm = normalize_title(title_of(paper))
         if len(title_norm) >= MIN_TITLE_CHARS and len(title_norm.split()) >= MIN_TITLE_WORDS:
             title_to_pid.setdefault(title_norm, paper.paper_id)
     return doi_to_pid, arxiv_to_pid, title_to_pid
@@ -210,7 +214,7 @@ def build_citation_graph(
             continue
         n_with_refs += 1
         ref_lower = reference_text.lower()
-        ref_norm = _normalize(reference_text)
+        ref_norm = normalize_title(reference_text)
 
         matches: dict[str, str] = {}
         for doi, target in doi_to_pid.items():

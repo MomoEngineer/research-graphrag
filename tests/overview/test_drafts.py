@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -15,20 +16,27 @@ from research_graphrag.extraction.model import (
     Section,
 )
 from research_graphrag.overview.drafts import (
+    append_overview_rows,
     build_draft_row,
     extractive_summary,
-    generate_drafts,
     keyword_table,
+    link_column,
+    next_draft_number,
     parse_internal_links,
 )
 
-_UEBERSICHT = """# Übersicht
+_HEADER = (
+    "| ID | Name | Themenfokus | Keyword | Kompakte Zusammenfassung | Interner Link "
+    "| Relevanz fuer Expose | SRQ-Zuordnung | Externer Link/Indetifikator |\n"
+    "| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n"
+)
 
-| ID | Name | Themenfokus | Interner Link | Extern |
-| --- | --- | --- | --- | --- |
-| A1 | Foo | x | [Quelle](papers/Foo%20Bar.pdf) | y |
-| A2 | Baz | x | [Quelle](papers/Baz%20%28RAG%29.pdf) | y |
-"""
+_UEBERSICHT = (
+    "# Übersicht\n\n"
+    + _HEADER
+    + "| A1 | Foo | x | k | s | [Quelle](papers/Foo%20Bar.pdf) | hoch | SRQ1 | y |\n"
+    + "| A2 | Baz | x | k | s | [Quelle](papers/Baz%20%28RAG%29.pdf) | hoch | SRQ1 | y |\n"
+)
 
 
 def _save_paper(
@@ -64,6 +72,9 @@ def test_parse_internal_links_handles_parens_and_encoding() -> None:
     links = parse_internal_links(_UEBERSICHT)
     assert "Foo Bar.pdf" in links
     assert "Baz (RAG).pdf" in links
+    assert link_column(_UEBERSICHT) == 5
+    assert link_column("kein Tabellenkopf") is None
+    assert parse_internal_links("kein Tabellenkopf") == set()
 
 
 def test_keyword_table_extracts_discriminative_terms() -> None:
@@ -95,7 +106,7 @@ def test_extractive_summary_prefers_abstract() -> None:
 
 
 def test_build_draft_row_shape() -> None:
-    """Die Entwurfszeile trägt ID=ENTWURF, Name, internen Link, Keywords und DOI."""
+    """Die Entwurfszeile trägt die vergebene ID, Name, internen Link, Keywords und DOI."""
     paper = CanonicalPaper(
         "pid",
         "file:///x.pdf",
@@ -107,17 +118,24 @@ def test_build_draft_row_shape() -> None:
         {"doi": "10.1/abc"},
     )
 
-    row = build_draft_row("Paper A.pdf", paper, ["alpha", "beta"])
+    row = build_draft_row("Z1", "Paper A.pdf", paper, ["alpha", "beta"])
 
-    assert row.startswith("| ENTWURF |")
+    assert row.startswith("| Z1 |")
     assert "papers/Paper%20A.pdf" in row
     assert "Paper A" in row
     assert "10.1/abc" in row
     assert "alpha, beta" in row
+    assert row.count("(manuell)") == 3
 
 
-def test_generate_drafts_skips_curated_and_is_idempotent(tmp_path: Path) -> None:
-    """Kuratierte Paper werden übersprungen; ein zweiter Lauf schreibt nichts erneut."""
+def test_next_draft_number_continues_existing_series() -> None:
+    """Die ID-Reihe setzt hinter der höchsten vorhandenen Z-Nummer fort."""
+    assert next_draft_number(_UEBERSICHT) == 1
+    assert next_draft_number(_UEBERSICHT + "| Z2 | x | y | z | w |\n") == 3
+
+
+def test_append_overview_rows_skips_listed_and_is_idempotent(tmp_path: Path) -> None:
+    """Gelistete Paper werden übersprungen; ein zweiter Lauf schreibt nichts erneut."""
     data = tmp_path / "data"
     canonical = data / "canonical"
     canonical.mkdir(parents=True)
@@ -145,38 +163,168 @@ def test_generate_drafts_skips_curated_and_is_idempotent(tmp_path: Path) -> None
         encoding="utf-8",
     )
     uebersicht = tmp_path / "Übersicht.md"
-    uebersicht.write_text(_UEBERSICHT, encoding="utf-8")
-    drafts = data / "overview_drafts.md"
+    uebersicht.write_bytes(_UEBERSICHT.encode("utf-8"))
+    before = uebersicht.read_bytes()
 
-    first = generate_drafts(data_dir=data, uebersicht_path=uebersicht, drafts_path=drafts)
+    first = append_overview_rows(data_dir=data, target_path=uebersicht)
 
     assert first.written == 1
-    assert first.skipped_curated == 1
-    assert first.skipped_existing == 0
-    body = drafts.read_text(encoding="utf-8")
+    assert first.skipped_known == 1
+    assert first.row_ids == ("Z1",)
+    after = uebersicht.read_bytes()
+    assert after.startswith(before), "kuratierte Zeilen müssen byte-identisch bleiben"
+    body = after.decode("utf-8")
+    assert "| Z1 |" in body
     assert "New Paper" in body
     assert "papers/New%20Paper.pdf" in body
     assert "arXiv:2405.20455" in body
 
-    second = generate_drafts(data_dir=data, uebersicht_path=uebersicht, drafts_path=drafts)
+    second = append_overview_rows(data_dir=data, target_path=uebersicht)
 
     assert second.written == 0
-    assert second.skipped_existing == 1
-    assert second.skipped_curated == 1
+    assert second.skipped_known == 2
+    assert uebersicht.read_bytes() == after
+    assert not (uebersicht.parent / f"{uebersicht.name}.tmp").exists()
 
 
-def test_generate_drafts_missing_canonical_raises_not_found(tmp_path: Path) -> None:
+def test_append_overview_rows_honours_legacy_staging_file(tmp_path: Path) -> None:
+    """Ein Altbestand in data/overview_drafts.md verhindert eine zweite Zeile (ADR 0019)."""
+    data = tmp_path / "data"
+    canonical = data / "canonical"
+    canonical.mkdir(parents=True)
+    _save_paper(
+        canonical,
+        "bbbb2222bbbb2222",
+        "file:///papers/New%20Paper.pdf",
+        ["reinforcement learning agents reward"],
+        identifiers={},
+    )
+    (data / "overview_drafts.md").write_text(
+        "| ID | Name | Interner Link |\n| --- | --- | --- |\n"
+        "| ENTWURF | New Paper | [Quelle](papers/New%20Paper.pdf) |\n",
+        encoding="utf-8",
+    )
+    uebersicht = tmp_path / "Übersicht.md"
+    uebersicht.write_text(_UEBERSICHT, encoding="utf-8")
+
+    report = append_overview_rows(data_dir=data, target_path=uebersicht)
+
+    assert report.written == 0
+    assert report.skipped_known == 1
+
+
+def test_append_overview_rows_preserves_crlf_line_endings(tmp_path: Path) -> None:
+    """Eine Übersicht mit CRLF behält CRLF – ein Text-Schreibvorgang würde alle Zeilen ändern."""
+    data = tmp_path / "data"
+    canonical = data / "canonical"
+    canonical.mkdir(parents=True)
+    _save_paper(
+        canonical,
+        "ffff6666ffff6666",
+        "file:///papers/CRLF%20Paper.pdf",
+        ["content about retrieval and graphs"],
+        identifiers={},
+    )
+    uebersicht = tmp_path / "Übersicht.md"
+    uebersicht.write_bytes(_UEBERSICHT.replace("\n", "\r\n").encode("utf-8"))
+    before = uebersicht.read_bytes()
+
+    append_overview_rows(data_dir=data, target_path=uebersicht)
+
+    after = uebersicht.read_bytes()
+    assert after.startswith(before)
+    assert after[len(before) :].replace(b"\r\n", b"").count(b"\n") == 0
+
+
+def test_append_overview_rows_adds_missing_trailing_newline(tmp_path: Path) -> None:
+    """Fehlt der abschließende Zeilenumbruch, wird er ergänzt statt Zeilen zu verschmelzen."""
+    data = tmp_path / "data"
+    canonical = data / "canonical"
+    canonical.mkdir(parents=True)
+    _save_paper(
+        canonical,
+        "aaaa7777aaaa7777",
+        "file:///papers/Ohne%20Umbruch.pdf",
+        ["content about retrieval and graphs"],
+        identifiers={},
+    )
+    uebersicht = tmp_path / "Übersicht.md"
+    uebersicht.write_bytes(_UEBERSICHT.rstrip("\n").encode("utf-8"))
+
+    append_overview_rows(data_dir=data, target_path=uebersicht)
+
+    lines = uebersicht.read_text(encoding="utf-8").splitlines()
+    assert lines[-2] == _UEBERSICHT.rstrip("\n").splitlines()[-1]
+    assert lines[-1].startswith("| Z1 |")
+
+
+@pytest.mark.parametrize(
+    ("label", "transform"),
+    [
+        ("lf", lambda text: text.encode("utf-8")),
+        ("crlf", lambda text: text.replace("\n", "\r\n").encode("utf-8")),
+        ("ohne-schluss-umbruch", lambda text: text.rstrip("\n").encode("utf-8")),
+        ("mit-bom", lambda text: "\ufeff".encode() + text.encode("utf-8")),
+        ("leerzeile-am-ende", lambda text: (text + "\n\n").encode("utf-8")),
+    ],
+)
+def test_append_overview_rows_never_touches_existing_bytes(
+    tmp_path: Path, label: str, transform: Callable[[str], bytes]
+) -> None:
+    """Der bestehende Inhalt bleibt in jeder Dateiform ein **exaktes Byte-Präfix**."""
+    data = tmp_path / "data"
+    canonical = data / "canonical"
+    canonical.mkdir(parents=True)
+    _save_paper(
+        canonical,
+        "bbbb8888bbbb8888",
+        f"file:///papers/Form%20{label}.pdf",
+        ["content about graph retrieval evaluation"],
+        identifiers={},
+    )
+    uebersicht = tmp_path / "Übersicht.md"
+    uebersicht.write_bytes(transform(_UEBERSICHT))
+    before = uebersicht.read_bytes()
+
+    report = append_overview_rows(data_dir=data, target_path=uebersicht)
+
+    after = uebersicht.read_bytes()
+    assert report.written == 1
+    assert after.startswith(before), f"bestehende Bytes verändert ({label})"
+    assert after[len(before) :].strip().startswith(b"| Z1 |")
+    assert after.endswith(b"\n")
+
+
+def test_append_overview_rows_missing_canonical_raises_not_found(tmp_path: Path) -> None:
     """Fehlt der canonical-Ordner, wird not_found gemeldet."""
     with pytest.raises(DomainError) as excinfo:
-        generate_drafts(
-            data_dir=tmp_path / "nope",
-            uebersicht_path=tmp_path / "Übersicht.md",
-            drafts_path=tmp_path / "drafts.md",
-        )
+        append_overview_rows(data_dir=tmp_path / "nope", target_path=tmp_path / "Übersicht.md")
     assert excinfo.value.code is ErrorCode.NOT_FOUND
 
 
-def test_generate_drafts_uses_uri_when_manifest_absent(tmp_path: Path) -> None:
+def test_append_overview_rows_missing_target_raises_not_found(tmp_path: Path) -> None:
+    """Fehlt die kuratierte Übersicht, wird not_found gemeldet (statt sie zu erfinden)."""
+    data = tmp_path / "data"
+    (data / "canonical").mkdir(parents=True)
+
+    with pytest.raises(DomainError) as excinfo:
+        append_overview_rows(data_dir=data, target_path=tmp_path / "fehlt.md")
+    assert excinfo.value.code is ErrorCode.NOT_FOUND
+
+
+def test_append_overview_rows_rejects_unexpected_layout(tmp_path: Path) -> None:
+    """Eine Zieltabelle mit fremdem Spaltenlayout wird nicht befüllt (constraint_violation)."""
+    data = tmp_path / "data"
+    (data / "canonical").mkdir(parents=True)
+    target = tmp_path / "fremd.md"
+    target.write_text("| ID | Interner Link |\n| --- | --- |\n", encoding="utf-8")
+
+    with pytest.raises(DomainError) as excinfo:
+        append_overview_rows(data_dir=data, target_path=target)
+    assert excinfo.value.code is ErrorCode.CONSTRAINT_VIOLATION
+
+
+def test_append_overview_rows_uses_uri_when_manifest_absent(tmp_path: Path) -> None:
     """Ohne manifest.json wird der Dateiname aus der Quell-URI abgeleitet."""
     data = tmp_path / "data"
     canonical = data / "canonical"
@@ -189,34 +337,33 @@ def test_generate_drafts_uses_uri_when_manifest_absent(tmp_path: Path) -> None:
         identifiers={},
     )
     uebersicht = tmp_path / "Übersicht.md"
-    uebersicht.write_text("| ID | Name | Interner Link |\n| --- | --- | --- |\n", encoding="utf-8")
-    drafts = data / "overview_drafts.md"
+    uebersicht.write_text(_HEADER, encoding="utf-8")
 
-    report = generate_drafts(data_dir=data, uebersicht_path=uebersicht, drafts_path=drafts)
+    report = append_overview_rows(data_dir=data, target_path=uebersicht)
 
     assert report.written == 1
-    body = drafts.read_text(encoding="utf-8")
+    body = uebersicht.read_text(encoding="utf-8")
     assert "papers/Solo%20Paper.pdf" in body
     assert "Solo Paper" in body
 
 
-def test_generate_drafts_warns_when_uebersicht_absent(tmp_path: Path) -> None:
-    """Fehlt die Übersicht, gelten alle Paper als unkuratiert."""
+def test_append_overview_rows_appends_to_curated_table(tmp_path: Path) -> None:
+    """Die neue Zeile landet am Ende der Tabelle, ohne bestehende Zeilen zu verändern."""
     data = tmp_path / "data"
     canonical = data / "canonical"
     canonical.mkdir(parents=True)
     _save_paper(
         canonical,
-        "dddd4444dddd4444",
-        "file:///papers/Only%20Paper.pdf",
-        ["content about retrieval systems"],
+        "eeee5555eeee5555",
+        "file:///papers/Weiteres%20Paper.pdf",
+        ["content about graph neural retrieval"],
         identifiers={},
     )
-    drafts = data / "overview_drafts.md"
+    uebersicht = tmp_path / "Übersicht.md"
+    uebersicht.write_bytes(_UEBERSICHT.encode("utf-8"))
 
-    report = generate_drafts(
-        data_dir=data, uebersicht_path=tmp_path / "absent.md", drafts_path=drafts
-    )
+    append_overview_rows(data_dir=data, target_path=uebersicht)
 
-    assert report.written == 1
-    assert report.skipped_curated == 0
+    lines = uebersicht.read_text(encoding="utf-8").splitlines()
+    assert lines[-1].startswith("| Z1 |")
+    assert lines[:-1] == _UEBERSICHT.splitlines()

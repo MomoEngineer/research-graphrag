@@ -29,6 +29,8 @@ Korpus werden bewusst ignoriert – über sie ließe sich ohnehin nichts belegen
 | `CitationView` | Dataclass | `cites` und `cited_by` eines Papers |
 | `CitationBuildReport` | Dataclass | Zählwerte eines Baulaufs |
 | `CITATION_SCHEMA_VERSION` | Konstante | Version des Zitations-Teilschemas |
+| `normalize_title` | Funktion | Titel-Normalisierung (auch vom Korpus-Intake genutzt) |
+| `title_of` | Funktion | Paper-Titel aus der `source_uri` (Dateiname-Stamm) |
 | `MIN_TITLE_CHARS`, `MIN_TITLE_WORDS`, `TITLE_PAGE_PAGES` | Konstanten | Schwellen der Erkennung |
 
 ## 3. Ablauf
