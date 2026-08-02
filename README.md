@@ -75,6 +75,14 @@ Der Zugriff erfolgt über einen **MCP-Server** (stdio), den GitHub Copilot in VS
 
 > **Hinweis:** Das Diagramm zeigt das **Zielbild**. Die aktuelle Umsetzung folgt der **Offline-Variante (Option B)** – `pypdf` statt Docling, TF-IDF + `networkx`/Louvain + SQLite statt GraphRAG/LanceDB (siehe [Tech-Stack](#tech-stack) und [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).
 
+### Vertiefung
+
+Diese README beschreibt Ziel und Stand. Wer wissen will, **welche Features** es gibt und wo sie
+verbaut sind, liest [docs/features.md](docs/features.md); **wie** sie zusammenarbeiten, erklärt
+[docs/funktionsweise.md](docs/funktionsweise.md) mit Diagrammen; die Funktionsweise **eines
+Moduls** steht jeweils in dessen Modul-Doku unter `src/research_graphrag/<paket>/doc/`. Die
+Aufgabenteilung dieser Dokumente regelt [ADR 0018](docs/adr/0018-code-documentation-architecture.md).
+
 ## Workflow: neue Paper hinzufügen
 
 1. PDF(s) in den Ordner `papers/` legen.

@@ -21,6 +21,8 @@ Dieses Dokument ist das zentrale Regelwerk für die Arbeit am Repository **Resea
 
 | Dokument | Inhalt |
 | --- | --- |
+| [docs/features.md](docs/features.md) | Funktionale Landkarte: welche Fähigkeit über welchen Einstiegspunkt, verbaut in welchen Modulen |
+| [docs/funktionsweise.md](docs/funktionsweise.md) | Wie das System arbeitet: Abläufe und Zusammenspiel der Pakete (Mermaid) |
 | [docs/vscode-integration.md](docs/vscode-integration.md) | Einbindung des MCP-Servers in VS Code + Copilot (mit venv-Interpreter) |
 | [docs/repository-structure.md](docs/repository-structure.md) | Verbindliche Ordnerstruktur und Definition of Done |
 | [docs/testing.md](docs/testing.md) | Teststrategie (offline-tauglich) |
@@ -29,7 +31,7 @@ Dieses Dokument ist das zentrale Regelwerk für die Arbeit am Repository **Resea
 | [docs/glossary.md](docs/glossary.md) | Glossar zentraler Fachbegriffe |
 | [docs/adr/README.md](docs/adr/README.md) | Prozess für Architecture Decision Records |
 | [templates/tool-spec.md](templates/tool-spec.md) | Vorlage Pro-Tool-Spezifikation |
-| [templates/tool-code-walkthrough.md](templates/tool-code-walkthrough.md) | Vorlage Code-Walkthrough |
+| [templates/module-doc.md](templates/module-doc.md) | Vorlage Modul-Doku (löst die Walkthrough-Vorlage ab, [ADR 0018](docs/adr/0018-code-documentation-architecture.md)) |
 | [templates/server-README.md](templates/server-README.md) | Vorlage Server-README |
 | [templates/adr-template.md](templates/adr-template.md) | Vorlage ADR |
 
@@ -58,7 +60,7 @@ Die Umsetzung folgt der [Roadmap.md](Roadmap.md) (Phasen 0–7). Für neuen Code
 2. **Spezifikation vor Code** für jedes MCP-Tool ([templates/tool-spec.md](templates/tool-spec.md)) – das Input-/Output-Schema ist die Single Source of Truth.
 3. **Tests früh** (Contract-/Funktions-/Fehler-Tests, siehe [docs/testing.md](docs/testing.md)), sobald ein Tool-Skeleton existiert.
 4. **Implementieren**, bis die Tests grün sind.
-5. **Dokumentieren** (Docstrings, Tool-Spec, Code-Walkthrough), siehe [docs/documentation-standards.md](docs/documentation-standards.md).
+5. **Dokumentieren** (Docstrings, Tool-Spec, Modul-Doku), siehe [docs/documentation-standards.md](docs/documentation-standards.md).
 6. **Definition of Done prüfen** (Abschnitt 5).
 
 ---
@@ -71,13 +73,14 @@ Ein Beitrag gilt als fertig, wenn die **zutreffenden** Punkte erfüllt sind:
 - [ ] `python -m ruff check .` und `python -m ruff format --check .` ohne Befunde.
 - [ ] Docstrings für alle öffentlichen Funktionen/Tools.
 - [ ] Tests vorhanden und grün (`python -m pytest tests`).
-- [ ] Für MCP-Tools: Tool-Spezifikation + Code-Walkthrough vorhanden und aktuell.
+- [ ] Für MCP-Tools: Tool-Spezifikation vorhanden und aktuell.
+- [ ] Für jedes berührte Modul unter `src/research_graphrag/`: **Modul-Doku** unter `<paket>/doc/<modul>.md` angelegt bzw. nachgezogen ([ADR 0018](docs/adr/0018-code-documentation-architecture.md)); bei neuen Fähigkeiten zusätzlich [docs/features.md](docs/features.md) und ggf. [docs/funktionsweise.md](docs/funktionsweise.md).
 - [ ] Zeilenabdeckung als **Richtwert ≥ 80 %** pro Kernmodul (`python -m scripts.coverage_offline`) – bewusste Unterschreitungen werden kurz begründet.
 - [ ] Provenienz-Angaben, wo Ergebnisse abgeleitet werden.
 - [ ] Reproduzierbarkeit sichergestellt (Seeds/Versionen dokumentiert, wo relevant).
 - [ ] Bei Architekturentscheidungen: ADR angelegt.
 
-> **Right-sizing:** Anders als im Vorbild-Repo ist die 80-%-Abdeckung ein **Richtwert**, kein hartes Gate, und ein Code-Walkthrough wird nur für nicht-triviale Tools verlangt. Das entspricht dem Charakter als persönliches Werkzeug (README, Abschnitt „Qualitätssicherung").
+> **Right-sizing:** Anders als im Vorbild-Repo ist die 80-%-Abdeckung ein **Richtwert**, kein hartes Gate. Die Modul-Doku verlangt ein Mermaid-Diagramm nur bei mehrstufigem Ablauf; reine Datentyp-/Konstanten-Module beschreiben ihre Schnittstelle tabellarisch. Das entspricht dem Charakter als persönliches Werkzeug (README, Abschnitt „Qualitätssicherung").
 
 ---
 

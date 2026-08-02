@@ -35,13 +35,13 @@ def search_local(
 
 ---
 
-## 2. Pro-Tool-Spezifikation und Code-Walkthrough
+## 2. Pro-Tool-Spezifikation und Modul-Dokumentation
 
 - Jedes **nicht-triviale** MCP-Tool besitzt eine Spezifikation nach [templates/tool-spec.md](../templates/tool-spec.md) unter `src/research_graphrag/mcp_server/specs/<tool>.md`. Das Input-/Output-Schema ist die Single Source of Truth für Tests und Contract-Checks; die Spezifikation entsteht **vor** dem Code.
-- Ergänzend erklärt ein **Code-Walkthrough** ([templates/tool-code-walkthrough.md](../templates/tool-code-walkthrough.md)) die **Funktionsweise** des Codes (das *Wie*), abgelegt als `<tool>.code.md` neben der Spezifikation.
-- **Diagramme:** bevorzugt **Mermaid** (rendern ohne Zusatzwerkzeuge in der Markdown-Vorschau).
-- Bei Abweichung zwischen Spec und Code gilt die **Spec als verbindlicher Contract**.
-- *Right-sizing:* triviale Hilfsfunktionen brauchen keinen eigenen Walkthrough.
+- Ergänzend erklärt eine **Modul-Doku** ([templates/module-doc.md](../templates/module-doc.md)) die **Funktionsweise** des Codes (das *Wie*), abgelegt als `src/research_graphrag/<paket>/doc/<modul>.md` (Top-Level-Module unter `src/research_graphrag/doc/`). Sie tritt an die Stelle des früheren Code-Walkthroughs `<tool>.code.md`, weil die Logik in Modulen liegt und der Server nur dünne Wrapper registriert ([ADR 0018](adr/0018-code-documentation-architecture.md)).
+- **Diagramme:** bevorzugt **Mermaid** (rendern ohne Zusatzwerkzeuge in der Markdown-Vorschau). Pflicht bei mehrstufigem Ablauf; reine Datentyp-/Konstanten-Module dokumentieren ihre Schnittstelle tabellarisch.
+- Bei Abweichung zwischen Spec und Code gilt die **Spec als verbindlicher Contract**; die Modul-Doku ist **beschreibend** und wird im Konfliktfall korrigiert.
+- Die funktionale Landkarte [docs/features.md](features.md) und das Konzeptdokument [docs/funktionsweise.md](funktionsweise.md) ergänzen die Modul-Ebene; ihre Abgrenzung regelt [ADR 0018](adr/0018-code-documentation-architecture.md).
 
 ---
 

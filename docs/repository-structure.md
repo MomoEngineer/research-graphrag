@@ -16,6 +16,8 @@ research-graphrag/
 ├─ requirements.lock             # eingefrorene Gesamtauflösung (pip freeze, ADR 0002)
 ├─ .env.example                  # Beispiel-Umgebungsvariablen (keine Secrets)
 ├─ docs/
+│  ├─ features.md                # funktionale Landkarte (Feature → Einstiegspunkt → Modul → ADR)
+│  ├─ funktionsweise.md          # Konzept & Abläufe (Mermaid), Einstieg in die Modul-Dokus
 │  ├─ vscode-integration.md
 │  ├─ repository-structure.md    # dieses Dokument
 │  ├─ documentation-standards.md
@@ -27,7 +29,8 @@ research-graphrag/
 │     └─ 0001-*.md … 0010-*.md
 ├─ templates/
 │  ├─ tool-spec.md
-│  ├─ tool-code-walkthrough.md
+│  ├─ module-doc.md              # Vorlage Modul-Doku (ADR 0018)
+│  ├─ tool-code-walkthrough.md   # abgelöst durch module-doc.md (ADR 0018)
 │  ├─ server-README.md
 │  └─ adr-template.md
 ├─ scripts/
@@ -44,10 +47,12 @@ research-graphrag/
 │  └─ eval_retrieval.py          # Evaluation: Primitive/Modi, Baseline, Regressions-Check, Router (Phase 7 / A4 + A6 + A7)
 ├─ src/research_graphrag/
 │  ├─ __init__.py                # Paket-Version
+│  ├─ doc/                       # Modul-Dokus der Top-Level-Module (ADR 0018)
 │  ├─ errors.py                  # gemeinsame Fehlertaxonomie (docs/error-model.md)
 │  ├─ keywords.py                # kuratierte Keyword-Politik (Stopwords/Token-Filter, Phase 7 / A5)
 │  ├─ pipeline.py                # Drop-in-Ingestion (papers/ → Canonical → Index)
 │  ├─ extraction/                # pypdf → Canonical Paper JSON 0.4.0 (Option B)
+│  │  ├─ doc/                    #   Modul-Dokus (eine je Modul, ADR 0018)
 │  │  ├─ model.py                #   Datenmodell (Section/Chunk/CanonicalPaper)
 │  │  ├─ normalization.py        #   Textnormalisierung (Ligaturen/Glyph-Artefakte, Phase 7 / A5)
 │  │  ├─ structure.py            #   Section-/Identifier-Heuristik
@@ -55,12 +60,14 @@ research-graphrag/
 │  │  ├─ quality.py              #   Qualitäts-Gates (Flags)
 │  │  └─ pdf.py                  #   Orchestrator extract_pdf
 │  ├─ indexing/                  # Canonical JSON → Offline-Hybrid-Index (Option B)
+│  │  ├─ doc/                    #   Modul-Dokus
 │  │  ├─ tfidf_index.py          #   Chunk-Index über SQLite (TF-IDF + BM25, Hybrid-Wertung)
 │  │  ├─ bm25.py                 #   BM25-Gewichte, handimplementiert (Phase 7 / A4)
 │  │  ├─ fusion.py               #   Reciprocal Rank Fusion (Phase 7 / A4)
 │  │  ├─ graph_index.py          #   Paper-Ähnlichkeitsgraph + Louvain-Communities (Phase 3)
 │  │  └─ citation_graph.py       #   Intra-Korpus-Zitationsgraph (CITES, Phase 7 / A2)
 │  ├─ retrieval/                 # Query-Router: Basic/Local/Global/DRIFT (Phase 4)
+│  │  ├─ doc/                    #   Modul-Dokus
 │  │  ├─ basic.py                #   search_basic (Top-k über die Hybrid-Wertung)
 │  │  ├─ local.py                #   search_local (Chunk-Nachbarschaft + Paper-Fan-out)
 │  │  ├─ global_search.py        #   search_global (Community-Ranking)
@@ -69,13 +76,15 @@ research-graphrag/
 │  │  ├─ provenance.py           #   Citation/PaperRef + Provenienz-Assembler
 │  │  ├─ paper.py                #   get_paper (Paper-Metadaten aus dem Index, Phase 5)
 │  │  └─ citations.py            #   get_citations (Zitationen + Provenienz, Phase 7 / A2)
-│  ├─ overview/drafts.py         # Übersicht-Entwürfe (Staging, Phase 2)
+│  ├─ overview/drafts.py         # Übersicht-Entwürfe (Staging, Phase 2) + overview/doc/
 │  ├─ generation/                # LLM-Bridge & Antwort-Synthese (Phase 7 / A1)
+│  │  ├─ doc/                    #   Modul-Dokus
 │  │  ├─ provider.py             #   Generierungs-Port (Noop/Sampling) + Antwort-Contract
 │  │  ├─ synthesis.py            #   Evidenz (nummeriert) + synthesize_answer (retrieval-frei)
 │  │  ├─ evidence.py             #   Adapter: Basic/Local/Global/DRIFT → Evidenz
 │  │  └─ answer.py               #   Router → Retrieval → Evidenz → optionale Synthese
 │  ├─ evaluation/                # Quantitative Evaluation von Retrieval und Router (Phase 7 / A4 + A6 + A7)
+│  │  ├─ doc/                    #   Modul-Dokus
 │  │  ├─ gold.py                 #   Gold-Set + mechanische Label-Regel
 │  │  ├─ metrics.py              #   Hit@k/MRR/Coverage/Lift (retrieval-frei)
 │  │  ├─ runner.py               #   Primitive + Modi gegen den realen Index
@@ -83,6 +92,7 @@ research-graphrag/
 │  │  ├─ routing.py              #   Router-Gold-Set + Contract-Treue (Phase 7 / A7)
 │  │  └─ report.py               #   Textausgabe
 │  └─ mcp_server/                # MCP-Server (stdio), Phase 5
+│     ├─ doc/                    #   Modul-Dokus (server.py, sampling.py)
 │     ├─ server.py               #   FastMCP: 8 Tools + Fehlerübersetzung an der Grenze
 │     ├─ sampling.py             #   Async-Brücke zum Client-Modell (opt-in, Phase 7 / A1)
 │     ├─ __main__.py             #   Einstiegspunkt (python -m research_graphrag.mcp_server)
@@ -158,7 +168,7 @@ research-graphrag/
 - **Tool-Logik = ein Modul** unter `src/research_graphrag/retrieval/` (bzw. ein dediziertes Read-Modul wie `retrieval/paper.py`); `server.py` registriert die Tools als **dünne Wrapper**. Ein separates `mcp_server/tools/`-Verzeichnis ist bei diesem Zuschnitt bewusst nicht nötig (right-sized, [ADR 0009](adr/0009-mcp-server-stdio-phase5.md)).
 - **Tool-Contracts** werden in `tests/mcp_server/` über einen In-Memory-Client geprüft; die Backend-Funktionen zusätzlich in `tests/retrieval/`.
 - **Ein Tool = eine Spezifikation** unter `src/research_graphrag/mcp_server/specs/<tool>.md`.
-- **Ein nicht-triviales Tool = ein Code-Walkthrough** unter `src/research_graphrag/mcp_server/specs/<tool>.code.md` (siehe [documentation-standards.md](documentation-standards.md)).
+- **Ein Modul = eine Modul-Doku** unter `src/research_graphrag/<paket>/doc/<modul>.md` (Top-Level-Module unter `src/research_graphrag/doc/`), nach [templates/module-doc.md](../templates/module-doc.md). Ausgenommen sind `__init__.py` und `__main__.py`. Diese Regel löst den früheren Code-Walkthrough `<tool>.code.md` ab ([ADR 0018](adr/0018-code-documentation-architecture.md), siehe [documentation-standards.md](documentation-standards.md)).
 - Der Server-Einstiegspunkt (`python -m research_graphrag.mcp_server`) registriert die Tools und startet den `stdio`-Transport.
 - **Tool-Namen** sind sprechend und domänenbezogen: `search_local`, `search_global`, `search_drift`, `search_basic`, `get_paper`, `get_citations`, `list_topics`, `answer_question` (siehe [README.md](../README.md)).
 
@@ -172,7 +182,8 @@ Identisch zu [CONTRIBUTING.md](../CONTRIBUTING.md), hier als Checkliste (right-s
 - [ ] `ruff` (Lint + Format) ohne Befunde.
 - [ ] Docstrings für alle öffentlichen Funktionen/Tools.
 - [ ] Tests vorhanden und grün.
-- [ ] Für MCP-Tools: Tool-Spezifikation (+ Code-Walkthrough bei nicht-trivialen Tools).
+- [ ] Für MCP-Tools: Tool-Spezifikation.
+- [ ] Für jedes berührte Modul: Modul-Doku unter `<paket>/doc/<modul>.md` angelegt bzw. nachgezogen; bei neuen Fähigkeiten zusätzlich [features.md](features.md) und ggf. [funktionsweise.md](funktionsweise.md).
 - [ ] Zeilenabdeckung als Richtwert ≥ 80 % pro Kernmodul.
 - [ ] Provenienz-Angaben, wo Ergebnisse abgeleitet werden.
 - [ ] Reproduzierbarkeit sichergestellt (Seeds/Versionen).

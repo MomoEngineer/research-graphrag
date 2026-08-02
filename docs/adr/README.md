@@ -57,6 +57,7 @@ Ein ADR wird angelegt bei u. a.:
 | [0015](0015-noise-reduction-keywords-and-sections-phase7.md) | Rausch-Reduktion (Phase 7 / A5): Textnormalisierung, Bibliografie-Rejects & Keyword-Politik | Akzeptiert |
 | [0016](0016-quantitative-retrieval-evaluation-phase7.md) | Quantitative Retrieval-Evaluation (Phase 7 / A6): Modus-Ebene, Trivial-Baselines & Regressions-Check | Akzeptiert |
 | [0017](0017-router-hardening-phase7.md) | Router-Härtung (Phase 7 / A7): Wortgrenzen, ausgewiesene Konfidenz & Fallback | Akzeptiert |
+| [0018](0018-code-documentation-architecture.md) | Code-Dokumentations-Architektur: Feature-Landkarte, Konzeptdokument & Modul-Dokus | Akzeptiert |
 
 ---
 
