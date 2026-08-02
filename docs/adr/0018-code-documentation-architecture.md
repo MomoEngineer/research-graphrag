@@ -18,6 +18,13 @@ klar getrennte Frage beantwortet:
 | `mcp_server/specs/<tool>.md` | Der **Vertrag** eines MCP-Tools (Ein-/Ausgabe, Fehler, Grenzen) |
 | `scripts/README.md`, `data/README.md`, `mcp_server/README.md` | Bedienung eines Teilbereichs |
 
+> **Nachtrag (2026-08-02, nach diesem ADR):** Die Roadmap wurde neu geschnitten. Die Chronologie
+> der abgeschlossenen Phasen 0–7 liegt jetzt wörtlich in
+> [docs/roadmap-historie.md](../roadmap-historie.md) (Archiv, nicht fortgeschrieben);
+> [Roadmap.md](../../Roadmap.md) enthält den **aktiven** Plan und fasst die abgeschlossenen
+> Phasen nur noch als Ergebnis-Tabelle zusammen. Die Aufgabenteilung dieses ADR bleibt sonst
+> unverändert – beide Dateien sind beschreibend, nicht normativ.
+
 Zwei Lücken sind daraus **nicht** abgedeckt:
 
 1. **Es gibt keine funktionale Sicht.** Wer wissen will, welche Fähigkeiten das System besitzt

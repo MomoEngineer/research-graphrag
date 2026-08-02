@@ -1,6 +1,7 @@
 """Phase-6-Regression: Drop-in-Freshness & atomarer Index-Swap.
 
-Sichert die Definition of Done von Phase 6 ab (siehe [Roadmap.md](../../Roadmap.md) und
+Sichert die Definition of Done von Phase 6 ab (siehe
+[Roadmap-Historie](../../docs/roadmap-historie.md) und
 docs/adr/0010-drop-in-workflow-and-qa-phase6.md): Nach dem Ablegen einer neuen PDF und
 erneutem ``ingest`` liefert die **On-Read**-Retrieval-Kette sofort das neue Paper (ohne
 Cache-Reset), während unveränderte PDFs übersprungen werden. Der Index-Neuaufbau erfolgt

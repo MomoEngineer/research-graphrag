@@ -5,8 +5,9 @@ Dieses Dokument ist die **funktionale Landkarte** des Repositories: Welche Fähi
 **Warum** steht nicht hier, sondern im jeweils verlinkten ADR.
 
 > **Abgrenzung (bewusst redundanzfrei, [ADR 0018](adr/0018-code-documentation-architecture.md)):**
-> Zielbild und Projektstatus stehen in [README.md](../README.md), die Chronologie der Entstehung
-> in [Roadmap.md](../Roadmap.md), die Ordnerstruktur in
+> Zielbild und Projektstatus stehen in [README.md](../README.md), der weitere Plan in
+> [Roadmap.md](../Roadmap.md) und die Chronologie der abgeschlossenen Phasen in der
+> [Roadmap-Historie](roadmap-historie.md), die Ordnerstruktur in
 > [repository-structure.md](repository-structure.md), Begriffe im [Glossar](glossary.md), die
 > Bedienung der Kommandozeile in [scripts/README.md](../scripts/README.md) und die Verträge der
 > MCP-Werkzeuge in deren [Spezifikationen](../src/research_graphrag/mcp_server/specs).

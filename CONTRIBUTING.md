@@ -23,6 +23,7 @@ Dieses Dokument ist das zentrale Regelwerk für die Arbeit am Repository **Resea
 | --- | --- |
 | [docs/features.md](docs/features.md) | Funktionale Landkarte: welche Fähigkeit über welchen Einstiegspunkt, verbaut in welchen Modulen |
 | [docs/funktionsweise.md](docs/funktionsweise.md) | Wie das System arbeitet: Abläufe und Zusammenspiel der Pakete (Mermaid) |
+| [docs/roadmap-historie.md](docs/roadmap-historie.md) | Archiv der abgeschlossenen Phasen 0–7 (vollständige Status-Blockquotes mit Kennzahlen) |
 | [docs/vscode-integration.md](docs/vscode-integration.md) | Einbindung des MCP-Servers in VS Code + Copilot (mit venv-Interpreter) |
 | [docs/repository-structure.md](docs/repository-structure.md) | Verbindliche Ordnerstruktur und Definition of Done |
 | [docs/testing.md](docs/testing.md) | Teststrategie (offline-tauglich) |
@@ -54,7 +55,7 @@ Alle Werkzeuge werden über `python -m <tool>` gestartet (WinPython ohne Konsole
 
 ## 4. Arbeitsablauf (phasenorientiert)
 
-Die Umsetzung folgt der [Roadmap.md](Roadmap.md) (Phasen 0–7). Für neuen Code gilt:
+Die Umsetzung folgt der [Roadmap.md](Roadmap.md) (aktiv: Phasen 8–11; die abgeschlossenen Phasen 0–7 sind in der [Roadmap-Historie](docs/roadmap-historie.md) archiviert). Für neuen Code gilt:
 
 1. **Entscheidung dokumentieren**, falls architektonisch relevant (ADR, siehe [docs/adr/README.md](docs/adr/README.md)).
 2. **Spezifikation vor Code** für jedes MCP-Tool ([templates/tool-spec.md](templates/tool-spec.md)) – das Input-/Output-Schema ist die Single Source of Truth.

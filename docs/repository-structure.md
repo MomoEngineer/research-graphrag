@@ -9,7 +9,7 @@ Dieses Dokument legt die **verbindliche Ordnerstruktur** fest und fasst die **De
 ```
 research-graphrag/
 ├─ README.md                     # Zielbild & Kontext
-├─ Roadmap.md                    # Phasenplan (0–7)
+├─ Roadmap.md                    # aktiver Phasenplan (8–11)
 ├─ Übersicht.md                  # Kuratierte Literaturübersicht (Quellen-Tabelle)
 ├─ CONTRIBUTING.md               # Zentrales Regelwerk
 ├─ pyproject.toml                # src-Layout, Kern-Deps (Offline-Hybrid) + Extra [dev]
@@ -18,6 +18,7 @@ research-graphrag/
 ├─ docs/
 │  ├─ features.md                # funktionale Landkarte (Feature → Einstiegspunkt → Modul → ADR)
 │  ├─ funktionsweise.md          # Konzept & Abläufe (Mermaid), Einstieg in die Modul-Dokus
+│  ├─ roadmap-historie.md        # Archiv der abgeschlossenen Phasen 0–7 (nicht fortgeschrieben)
 │  ├─ vscode-integration.md
 │  ├─ repository-structure.md    # dieses Dokument
 │  ├─ documentation-standards.md
@@ -26,7 +27,7 @@ research-graphrag/
 │  ├─ glossary.md
 │  └─ adr/
 │     ├─ README.md
-│     └─ 0001-*.md … 0010-*.md
+│     └─ 0001-*.md … 0018-*.md
 ├─ templates/
 │  ├─ tool-spec.md
 │  ├─ module-doc.md              # Vorlage Modul-Doku (ADR 0018)
@@ -104,6 +105,7 @@ research-graphrag/
 │  ├─ retrieval-baseline.json    # eingefrorene Ränge je Frage/Ebene (Phase 7 / A6)
 │  └─ router-gold.json           # versioniertes Router-Gold-Set (Contract-Labels, Phase 7 / A7)
 ├─ recherche/                    # (Phase 1) migrierte Rechercheartefakte (noch nicht vorhanden)
+├─ new_papers/                   # (Phase 8) Eingangsordner für den Intake (noch nicht vorhanden)
 ├─ papers/                       # PDF-Korpus (nicht versioniert)
 ├─ data/                         # Canonical JSON 0.4.0, manifest.json, index/, quality_report.*, overview_drafts.md (nicht versioniert)
 └─ tests/                        # gespiegelt zu src/research_graphrag/
@@ -148,6 +150,14 @@ research-graphrag/
 > Präzedenz aus [ADR 0008](adr/0008-retrieval-and-query-router-phase4.md) ist abgelöst. Kein
 > Schema-Eingriff, **kein Re-Ingest**
 > ([ADR 0017](adr/0017-router-hardening-phase7.md)).
+
+> **Geplant (Phasen 8–11, [Roadmap.md](../Roadmap.md)):** Der Eingangsordner `new_papers/` und
+> ein Intake (`src/research_graphrag/intake.py` + dünnes `scripts/intake.py`) kommen in
+> **Phase 8** hinzu; **Phase 9** ergänzt einen separat startbaren Online-Research-Modus, der
+> ausschließlich nach `new_papers/` schreibt und den Kern netzfrei lässt. Die Phasen 10 und 11
+> arbeiten die in [ADR 0016](adr/0016-quantitative-retrieval-evaluation-phase7.md) belegten
+> Retrieval-Befunde sowie Betriebsthemen ab. Die abgeschlossenen Phasen 0–7 sind in der
+> [Roadmap-Historie](roadmap-historie.md) archiviert.
 
 ### Zuordnung zu den Roadmap-Phasen
 
