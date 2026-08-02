@@ -304,6 +304,31 @@ async def test_answer_question_returns_numbered_evidence_without_sampling(index_
 
 
 @pytest.mark.anyio
+async def test_answer_question_exposes_the_routing_decision(index_db: Path) -> None:
+    """Bei `auto` weist das Tool aus, warum der Modus gewählt wurde (A7)."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool(
+            "answer_question", {"query": "Wo widersprechen sich die Ergebnisse?"}
+        )
+    assert result.isError is False
+    routing = _structured(result)["routing"]
+    assert set(routing) == {"mode", "confidence", "signals", "rationale"}
+    assert routing["mode"] == "drift"
+    assert routing["confidence"] == "strong"
+
+
+@pytest.mark.anyio
+async def test_answer_question_omits_routing_for_an_explicit_mode(index_db: Path) -> None:
+    """Ein explizit gewählter Modus trägt kein Router-Urteil."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool(
+            "answer_question", {"query": "transformer attention", "mode": "basic"}
+        )
+    assert result.isError is False
+    assert _structured(result)["routing"] is None
+
+
+@pytest.mark.anyio
 async def test_answer_question_synthesizes_via_client_sampling(index_db: Path) -> None:
     """Mit `synthesize=true` liefert das Client-Modell die Antwort (Evidenz bleibt erhalten)."""
     async with client_session(mcp, sampling_callback=_sampling_callback) as client:

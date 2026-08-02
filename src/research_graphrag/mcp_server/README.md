@@ -24,6 +24,11 @@ aufrufende Agent selbst (kein serverseitiges LLM-Sampling, siehe
 > formulieren lassen; ohne Sampling-Fähigkeit bleibt `generated = false` und die Evidenz
 > vollständig ([ADR 0012](../../../docs/adr/0012-llm-bridge-and-answer-synthesis-phase7.md)).
 
+> **Modus-Wahl ist nachvollziehbar:** Wählt `answer_question` den Modus selbst (`mode = "auto"`,
+> Default), liefert die Antwort unter `routing` die Begründung mit – Konfidenzstufe
+> (`strong`/`weak`/`none`) und auslösende Signale. Bei explizit gewähltem Modus ist das Feld
+> `null` ([ADR 0017](../../../docs/adr/0017-router-hardening-phase7.md)).
+
 > Code-Walkthroughs werden – wie in Phase 4 – nur für nicht-triviale Tools verlangt; die hier
 > registrierten Tools sind dünne Wrapper um die getestete Kernlogik und daher **spec-only**
 > (right-sized, siehe [CONTRIBUTING.md](../../../CONTRIBUTING.md)). Das gilt auch für

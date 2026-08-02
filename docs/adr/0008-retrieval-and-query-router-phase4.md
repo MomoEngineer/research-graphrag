@@ -3,6 +3,14 @@
 - **Status:** Akzeptiert
 - **Datum:** 2026-07-31
 
+> **Nachtrag (2026-08-02, [ADR 0017](0017-router-hardening-phase7.md)):** Die unten festgelegte
+> **Präzedenz** `drift > global > local > basic` ist **abgelöst**. Der gehärtete Router behandelt
+> `basic` als Rückfallebene statt als gleichrangigen Modus, entscheidet zwischen den strukturellen
+> Modi über die Signalzahl und fällt bei Gleichstand sichtbar auf `basic` zurück. Ebenfalls
+> abgelöst ist das rohe **Substring-Matching**: Die Match-Art ist seither je Signal deklariert.
+> Unverändert gilt alles Übrige dieses ADR – insbesondere die Offline-Semantik der vier Modi, der
+> Provenienz-Assembler und die Gleichwertigkeit der expliziten Modus-Wahl.
+
 ## Kontext
 
 [Roadmap.md](../../Roadmap.md) beschreibt für **Phase 4** einen „Query-Router" mit den

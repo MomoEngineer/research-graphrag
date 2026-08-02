@@ -197,7 +197,11 @@ def main() -> int:
     if mode == "auto":
         decision = route(args.query)
         mode = decision.mode
-        print(f"[ask] Router: {decision.rationale}")
+        signals = ", ".join(decision.signals) if decision.signals else "keine"
+        print(
+            f"[ask] Router: {decision.mode} (Konfidenz {decision.confidence}, "
+            f"Signale: {signals}) – {decision.rationale}"
+        )
 
     try:
         if args.synthese:

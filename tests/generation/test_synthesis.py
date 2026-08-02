@@ -105,12 +105,14 @@ def test_result_to_dict_shape() -> None:
     assert set(payload) == {
         "query",
         "mode",
+        "routing",
         "answer",
         "generated",
         "model",
         "citation_contract",
         "evidence",
     }
+    assert payload["routing"] is None
     assert payload["citation_contract"] == DEFAULT_SYSTEM_PROMPT
     assert set(payload["evidence"]) == {"query", "mode", "items"}
     assert set(payload["evidence"]["items"][0]) == {

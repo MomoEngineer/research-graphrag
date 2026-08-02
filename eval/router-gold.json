@@ -1,0 +1,680 @@
+{
+  "router_gold_version": "1.0.0",
+  "created_for": "Roadmap A7 (Router-Haertung), docs/adr/0017-router-hardening-phase7.md",
+  "label_rule": "Die zulaessigen Modi einer Frage werden nicht kuratiert, sondern aus ihrem Fragetyp ueber die Tabelle 'Fragetypen -> Suchmodus' der README abgeleitet (CONTRACT_MODES in src/research_graphrag/evaluation/routing.py). 'detail' traegt zwei Modi, weil die README dort ausdruecklich 'Local + Basic' nennt. Nachrechenbar ueber 'python -m scripts.eval_retrieval --router --verify-labels'.",
+  "coverage_rule": "Jedes Signal des Lexikons (SIGNALS in src/research_graphrag/retrieval/router.py) wird von mindestens einer Frage beruehrt; geprueft ueber signal_coverage().",
+  "questions": [
+    {
+      "qid": "R01",
+      "kind": "contrast",
+      "language": "de",
+      "query": "Wo widersprechen sich die Ergebnisse zu Thema T?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'widerspr' (Stamm deckt widersprechen/Widerspruch ab)"
+    },
+    {
+      "qid": "R02",
+      "kind": "contrast",
+      "language": "de",
+      "query": "Welcher Gegensatz besteht zwischen symbolischem und neuronalem Retrieval?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'gegensatz'"
+    },
+    {
+      "qid": "R03",
+      "kind": "contrast",
+      "language": "de",
+      "query": "Welche Gegensätze zeigen sich in den Evaluationsergebnissen?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'gegensätz' (Umlautform)"
+    },
+    {
+      "qid": "R04",
+      "kind": "contrast",
+      "language": "de",
+      "query": "Vergleiche die beiden Retrieval-Ansätze.",
+      "expected_modes": ["drift"],
+      "note": "Signal 'vergleich'"
+    },
+    {
+      "qid": "R05",
+      "kind": "contrast",
+      "language": "de",
+      "query": "Welcher Unterschied besteht zwischen RAG und GraphRAG?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'unterschied' als ganzes Wort"
+    },
+    {
+      "qid": "R06",
+      "kind": "contrast",
+      "language": "de",
+      "query": "Welche Unterschiede bestehen zwischen den Chunking-Strategien?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'unterschiede'"
+    },
+    {
+      "qid": "R07",
+      "kind": "contrast",
+      "language": "de",
+      "query": "Worin haben sich die Ergebnisse unterschieden?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'unterschieden'"
+    },
+    {
+      "qid": "R08",
+      "kind": "contrast",
+      "language": "en",
+      "query": "Which findings contradict each other?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'contradict' (Wortanfang mit Beugung)"
+    },
+    {
+      "qid": "R09",
+      "kind": "contrast",
+      "language": "en",
+      "query": "How do the two systems compare?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'compare'"
+    },
+    {
+      "qid": "R10",
+      "kind": "contrast",
+      "language": "en",
+      "query": "Which study compares graph and vector retrieval?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'compares'"
+    },
+    {
+      "qid": "R11",
+      "kind": "contrast",
+      "language": "en",
+      "query": "How is GraphRAG compared with classical RAG?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'compared'"
+    },
+    {
+      "qid": "R12",
+      "kind": "contrast",
+      "language": "en",
+      "query": "What comparison between the pipelines is reported?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'comparison'"
+    },
+    {
+      "qid": "R13",
+      "kind": "contrast",
+      "language": "en",
+      "query": "Which comparisons between retrievers are drawn?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'comparisons'"
+    },
+    {
+      "qid": "R14",
+      "kind": "contrast",
+      "language": "en",
+      "query": "Where do the authors disagree about evaluation metrics?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'disagree'; das Fakt-Signal 'metric' darf die Entscheidung nicht verschieben"
+    },
+    {
+      "qid": "R15",
+      "kind": "contrast",
+      "language": "en",
+      "query": "Vector search versus graph search: what is reported?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'versus'"
+    },
+    {
+      "qid": "R16",
+      "kind": "contrast",
+      "language": "en",
+      "query": "How does BM25 vs. dense retrieval perform?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'vs' an Wortgrenzen (auch vor Punkt)"
+    },
+    {
+      "qid": "R17",
+      "kind": "contrast",
+      "language": "en",
+      "query": "How do RAG and GraphRAG differ for agentic search?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'differ' als ganzes Wort"
+    },
+    {
+      "qid": "R18",
+      "kind": "contrast",
+      "language": "en",
+      "query": "Which component differs between the two pipelines?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'differs'"
+    },
+    {
+      "qid": "R19",
+      "kind": "contrast",
+      "language": "en",
+      "query": "What is the difference between local and global search?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'difference'"
+    },
+    {
+      "qid": "R20",
+      "kind": "contrast",
+      "language": "en",
+      "query": "What are the differences between the indexing strategies?",
+      "expected_modes": ["drift"],
+      "note": "Signal 'differences'"
+    },
+    {
+      "qid": "R21",
+      "kind": "synthesis",
+      "language": "de",
+      "query": "Welche Forschungsrichtungen zeichnen sich ab?",
+      "expected_modes": ["global"],
+      "note": "Signal 'forschungsrichtung'"
+    },
+    {
+      "qid": "R22",
+      "kind": "synthesis",
+      "language": "de",
+      "query": "Welche Themen dominieren die Sammlung?",
+      "expected_modes": ["global"],
+      "note": "Signal 'themen'"
+    },
+    {
+      "qid": "R23",
+      "kind": "synthesis",
+      "language": "de",
+      "query": "Gib einen Überblick über die Ansätze.",
+      "expected_modes": ["global"],
+      "note": "Signal 'überblick'"
+    },
+    {
+      "qid": "R24",
+      "kind": "synthesis",
+      "language": "de",
+      "query": "Wie sieht die Forschungslandschaft zu GraphRAG aus?",
+      "expected_modes": ["global"],
+      "note": "Signal 'landschaft' im Kompositum"
+    },
+    {
+      "qid": "R25",
+      "kind": "synthesis",
+      "language": "de",
+      "query": "Welche Schwerpunkte ergeben sich insgesamt?",
+      "expected_modes": ["global"],
+      "note": "Signal 'insgesamt'"
+    },
+    {
+      "qid": "R26",
+      "kind": "synthesis",
+      "language": "de",
+      "query": "Welche übergreifenden Muster gibt es?",
+      "expected_modes": ["global"],
+      "note": "Signal 'übergreifend'"
+    },
+    {
+      "qid": "R27",
+      "kind": "synthesis",
+      "language": "de",
+      "query": "Welche Schwerpunkte lassen sich korpusweit erkennen?",
+      "expected_modes": ["global"],
+      "note": "Signal 'korpusweit'"
+    },
+    {
+      "qid": "R28",
+      "kind": "synthesis",
+      "language": "en",
+      "query": "Which research directions emerge?",
+      "expected_modes": ["global"],
+      "note": "Signal 'research direction' (Wortanfang deckt den Plural ab)"
+    },
+    {
+      "qid": "R29",
+      "kind": "synthesis",
+      "language": "en",
+      "query": "Which thematic clusters combine graphs and retrieval?",
+      "expected_modes": ["global"],
+      "note": "Signal 'thematic cluster'; Prüf-Frage S2 fiel vor A7 auf den Default"
+    },
+    {
+      "qid": "R30",
+      "kind": "synthesis",
+      "language": "en",
+      "query": "Which topics recur across the corpus?",
+      "expected_modes": ["global"],
+      "note": "Signal 'across the corpus' (Reichweite statt Gegenstand)"
+    },
+    {
+      "qid": "R31",
+      "kind": "synthesis",
+      "language": "en",
+      "query": "Which findings recur across papers?",
+      "expected_modes": ["global"],
+      "note": "Signal 'across papers'"
+    },
+    {
+      "qid": "R32",
+      "kind": "synthesis",
+      "language": "en",
+      "query": "Give a corpus-wide summary of the methods.",
+      "expected_modes": ["global"],
+      "note": "Signal 'corpus-wide'"
+    },
+    {
+      "qid": "R33",
+      "kind": "synthesis",
+      "language": "de",
+      "query": "Welche Schwerpunkte finden sich im Korpus?",
+      "expected_modes": ["global"],
+      "note": "Signal 'im korpus'"
+    },
+    {
+      "qid": "R34",
+      "kind": "synthesis",
+      "language": "de",
+      "query": "Was lässt sich über den Korpus hinweg sagen?",
+      "expected_modes": ["global"],
+      "note": "Signal 'über den korpus'"
+    },
+    {
+      "qid": "R35",
+      "kind": "synthesis",
+      "language": "en",
+      "query": "Which themes emerge from the collection?",
+      "expected_modes": ["global"],
+      "note": "Signal 'themes' (Plural markiert die Übersichtsfrage)"
+    },
+    {
+      "qid": "R36",
+      "kind": "synthesis",
+      "language": "en",
+      "query": "Describe the research landscape of retrieval augmentation.",
+      "expected_modes": ["global"],
+      "note": "Signal 'landscape'"
+    },
+    {
+      "qid": "R37",
+      "kind": "synthesis",
+      "language": "en",
+      "query": "What is the big picture of the collected work?",
+      "expected_modes": ["global"],
+      "note": "Signal 'big picture'"
+    },
+    {
+      "qid": "R38",
+      "kind": "synthesis",
+      "language": "en",
+      "query": "What is the overall direction of this research area?",
+      "expected_modes": ["global"],
+      "note": "Signal 'overall'"
+    },
+    {
+      "qid": "R39",
+      "kind": "synthesis",
+      "language": "en",
+      "query": "Which trends emerge in recent work?",
+      "expected_modes": ["global"],
+      "note": "Signal 'trends' (nur der Plural ist ein Signal)"
+    },
+    {
+      "qid": "R40",
+      "kind": "network",
+      "language": "de",
+      "query": "Welche Arbeiten zitieren dieses Paper?",
+      "expected_modes": ["local"],
+      "note": "Signal 'zitier'"
+    },
+    {
+      "qid": "R41",
+      "kind": "network",
+      "language": "de",
+      "query": "Welche Zitate verweisen auf diese Methode?",
+      "expected_modes": ["local"],
+      "note": "Signal 'zitat'"
+    },
+    {
+      "qid": "R42",
+      "kind": "network",
+      "language": "de",
+      "query": "Wie sieht das Methodennetz um Graph-Retrieval aus?",
+      "expected_modes": ["local"],
+      "note": "Signal 'methodennetz'"
+    },
+    {
+      "qid": "R43",
+      "kind": "network",
+      "language": "de",
+      "query": "Welche Folgearbeiten gibt es zu dieser Methode?",
+      "expected_modes": ["local"],
+      "note": "Signal 'folgearbeit'"
+    },
+    {
+      "qid": "R44",
+      "kind": "network",
+      "language": "en",
+      "query": "Which studies cite this approach?",
+      "expected_modes": ["local"],
+      "note": "Signal 'cite' (Wortanfang deckt cites/cited/citing ab)"
+    },
+    {
+      "qid": "R45",
+      "kind": "network",
+      "language": "en",
+      "query": "Which citations point to the GraphRAG paper?",
+      "expected_modes": ["local"],
+      "note": "Signal 'citation'"
+    },
+    {
+      "qid": "R46",
+      "kind": "network",
+      "language": "en",
+      "query": "Which papers build on GraphRAG?",
+      "expected_modes": ["local"],
+      "note": "Signal 'build on'; 'which papers' ist seit A7 kein Signal mehr"
+    },
+    {
+      "qid": "R47",
+      "kind": "network",
+      "language": "en",
+      "query": "Which study builds on the survey?",
+      "expected_modes": ["local"],
+      "note": "Signal 'builds on'"
+    },
+    {
+      "qid": "R48",
+      "kind": "network",
+      "language": "en",
+      "query": "Which methods are built on knowledge graphs?",
+      "expected_modes": ["local"],
+      "note": "Signal 'built on'"
+    },
+    {
+      "qid": "R49",
+      "kind": "network",
+      "language": "en",
+      "query": "Which approaches build upon retrieval augmentation?",
+      "expected_modes": ["local"],
+      "note": "Signal 'build upon'"
+    },
+    {
+      "qid": "R50",
+      "kind": "network",
+      "language": "en",
+      "query": "What does the related work section connect?",
+      "expected_modes": ["local"],
+      "note": "Signal 'related work'"
+    },
+    {
+      "qid": "R51",
+      "kind": "network",
+      "language": "en",
+      "query": "Which methods relate to knowledge graph construction?",
+      "expected_modes": ["local"],
+      "note": "Signal 'relate to'"
+    },
+    {
+      "qid": "R52",
+      "kind": "network",
+      "language": "en",
+      "query": "Which paper relates to code generation with graphs?",
+      "expected_modes": ["local"],
+      "note": "Signal 'relates to'"
+    },
+    {
+      "qid": "R53",
+      "kind": "network",
+      "language": "en",
+      "query": "Which approaches are related to graph traversal?",
+      "expected_modes": ["local"],
+      "note": "Signal 'related to'"
+    },
+    {
+      "qid": "R54",
+      "kind": "network",
+      "language": "de",
+      "query": "Welche Paper bauen auf dieser Methode auf?",
+      "expected_modes": ["local"],
+      "note": "Signal 'bauen auf'"
+    },
+    {
+      "qid": "R55",
+      "kind": "network",
+      "language": "de",
+      "query": "Welche Arbeit baut auf dem Survey auf?",
+      "expected_modes": ["local"],
+      "note": "Signal 'baut auf'"
+    },
+    {
+      "qid": "R56",
+      "kind": "network",
+      "language": "de",
+      "query": "Auf welchen Verfahren lässt sich hier aufbauen?",
+      "expected_modes": ["local"],
+      "note": "Signal 'aufbauen'"
+    },
+    {
+      "qid": "R57",
+      "kind": "network",
+      "language": "de",
+      "query": "Gibt es verwandte Arbeiten zu dieser Methode?",
+      "expected_modes": ["local"],
+      "note": "Signal 'verwandte arbeiten'"
+    },
+    {
+      "qid": "R58",
+      "kind": "network",
+      "language": "de",
+      "query": "Welche Methode ist verwandt mit Graph-Retrieval?",
+      "expected_modes": ["local"],
+      "note": "Signal 'verwandt mit'"
+    },
+    {
+      "qid": "R59",
+      "kind": "fact",
+      "language": "de",
+      "query": "Wie lautet die DOI von Paper Z?",
+      "expected_modes": ["basic"],
+      "note": "Fakt-Signal 'doi' bestätigt den Default"
+    },
+    {
+      "qid": "R60",
+      "kind": "fact",
+      "language": "en",
+      "query": "What F1 score is reported for the evaluation?",
+      "expected_modes": ["basic"],
+      "note": "Fakt-Signale 'f1' und 'score'"
+    },
+    {
+      "qid": "R61",
+      "kind": "fact",
+      "language": "de",
+      "query": "Welche Metrik wird für die Bewertung berichtet?",
+      "expected_modes": ["basic"],
+      "note": "Fakt-Signal 'metrik' als ganzes Wort (Teilwort würde 'Biometrika' treffen)"
+    },
+    {
+      "qid": "R61b",
+      "kind": "fact",
+      "language": "de",
+      "query": "Welche Metriken nennt die Ergebnistabelle?",
+      "expected_modes": ["basic"],
+      "note": "Fakt-Signal 'metriken' (deutsche Pluralform)"
+    },
+    {
+      "qid": "R62",
+      "kind": "fact",
+      "language": "en",
+      "query": "Which metrics are reported in the results table?",
+      "expected_modes": ["basic"],
+      "note": "Fakt-Signal 'metric'"
+    },
+    {
+      "qid": "R63",
+      "kind": "fact",
+      "language": "en",
+      "query": "What accuracy does the system reach?",
+      "expected_modes": ["basic"],
+      "note": "Fakt-Signal 'accuracy'"
+    },
+    {
+      "qid": "R64",
+      "kind": "fact",
+      "language": "en",
+      "query": "What is the exact number of parameters?",
+      "expected_modes": ["basic"],
+      "note": "Fakt-Signal 'exact'"
+    },
+    {
+      "qid": "R65",
+      "kind": "fact",
+      "language": "de",
+      "query": "Wie lautet die exakte Trefferzahl?",
+      "expected_modes": ["basic"],
+      "note": "Fakt-Signal 'exakt'"
+    },
+    {
+      "qid": "R66",
+      "kind": "fact",
+      "language": "en",
+      "query": "What does the abbreviation RAG stand for?",
+      "expected_modes": ["basic"],
+      "note": "Fakt-Signal 'abbreviation'"
+    },
+    {
+      "qid": "R67",
+      "kind": "fact",
+      "language": "de",
+      "query": "Wofür steht die Abkürzung KG?",
+      "expected_modes": ["basic"],
+      "note": "Fakt-Signal 'abkürzung'"
+    },
+    {
+      "qid": "R68",
+      "kind": "fact",
+      "language": "en",
+      "query": "Which scores are listed in the benchmark table?",
+      "expected_modes": ["basic"],
+      "note": "Fakt-Signal 'score' in gebeugter Form"
+    },
+    {
+      "qid": "R69",
+      "kind": "fact",
+      "language": "en",
+      "query": "Which papers use the Qdrant vector database?",
+      "expected_modes": ["basic"],
+      "note": "Falle: 'which papers' leitete vor A7 16 von 22 Fakt-Fragen nach local"
+    },
+    {
+      "qid": "R70",
+      "kind": "fact",
+      "language": "en",
+      "query": "Which papers report a BERTScore value?",
+      "expected_modes": ["basic"],
+      "note": "Falle: 'score' darf nicht in der Wortmitte von 'BERTScore' greifen"
+    },
+    {
+      "qid": "R71",
+      "kind": "fact",
+      "language": "de",
+      "query": "Wie groß ist der Korpus in Paper X?",
+      "expected_modes": ["basic"],
+      "note": "Falle: 'Korpus' als Gegenstand ist kein Reichweiten-Signal"
+    },
+    {
+      "qid": "R72",
+      "kind": "detail",
+      "language": "en",
+      "query": "What does the paper say about different retrieval strategies?",
+      "expected_modes": ["local", "basic"],
+      "note": "Falle: 'different' ist keine Vergleichsfrage (gemessene Hauptquelle der Fehlleitung)"
+    },
+    {
+      "qid": "R73",
+      "kind": "detail",
+      "language": "en",
+      "query": "What does the paper say about the differentiation of entities?",
+      "expected_modes": ["local", "basic"],
+      "note": "Falle: 'differentiation'"
+    },
+    {
+      "qid": "R74",
+      "kind": "detail",
+      "language": "en",
+      "query": "What does the paper report about comparable systems?",
+      "expected_modes": ["local", "basic"],
+      "note": "Falle: 'comparable' ist eine Ableitung ohne Vergleichsabsicht"
+    },
+    {
+      "qid": "R75",
+      "kind": "detail",
+      "language": "en",
+      "query": "What does the paper say about ContextCite?",
+      "expected_modes": ["local", "basic"],
+      "note": "Falle: 'cite' darf nicht in der Wortmitte eines Systemnamens greifen"
+    },
+    {
+      "qid": "R76",
+      "kind": "detail",
+      "language": "de",
+      "query": "Was steht im Paper zu unterschiedlichen Chunk-Größen?",
+      "expected_modes": ["local", "basic"],
+      "note": "Falle: 'unterschiedlich' ist das deutsche Gegenstück zu 'different'"
+    },
+    {
+      "qid": "R77",
+      "kind": "detail",
+      "language": "en",
+      "query": "What is the trend in Figure 3?",
+      "expected_modes": ["local", "basic"],
+      "note": "Falle: der Singular 'trend' bezeichnet einen Gegenstand"
+    },
+    {
+      "qid": "R78",
+      "kind": "detail",
+      "language": "en",
+      "query": "How is the corpus constructed in this study?",
+      "expected_modes": ["local", "basic"],
+      "note": "Falle: 'corpus' ohne Reichweiten-Formulierung"
+    },
+    {
+      "qid": "R79",
+      "kind": "detail",
+      "language": "en",
+      "query": "Which datasets are used to evaluate GraphRAG approaches?",
+      "expected_modes": ["local", "basic"],
+      "note": "Prüf-Frage D1 aus eval/pruef-fragen.md"
+    },
+    {
+      "qid": "R80",
+      "kind": "detail",
+      "language": "en",
+      "query": "What are the key stages of the GraphRAG workflow?",
+      "expected_modes": ["local", "basic"],
+      "note": "Prüf-Frage D2 aus eval/pruef-fragen.md"
+    },
+    {
+      "qid": "R81",
+      "kind": "detail",
+      "language": "de",
+      "query": "Welche Methode verwendet Paper X in Abschnitt 4?",
+      "expected_modes": ["local", "basic"],
+      "note": "Detailfrage aus der README-Tabelle"
+    },
+    {
+      "qid": "R82",
+      "kind": "contrast",
+      "language": "de",
+      "query": "Vergleiche die Unterschiede zwischen den Themen.",
+      "expected_modes": ["drift"],
+      "note": "Konkurrenz: zwei drift-Signale schlagen ein global-Signal"
+    },
+    {
+      "qid": "R83",
+      "kind": "contrast",
+      "language": "de",
+      "query": "Vergleiche die Themen der beiden Communities.",
+      "expected_modes": ["drift"],
+      "note": "Bekannte Grenze: Gleichstand drift/global fällt bewusst auf basic zurück (Konfidenz 'weak') und zählt als Fehlgriff"
+    }
+  ]
+}

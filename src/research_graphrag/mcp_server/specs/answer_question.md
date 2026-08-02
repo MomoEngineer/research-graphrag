@@ -29,7 +29,7 @@ Für Clients mit eigenem Modell (GitHub Copilot) ist der **Default ohne Synthese
 | Parameter | Typ | Pflicht | Beschreibung / Wertebereich |
 | --- | --- | --- | --- |
 | `query` | `str` | ja | Natürlichsprachige Frage; nicht leer. |
-| `mode` | `str` | nein | `auto` (Default, Heuristik-Router) · `basic` · `local` · `global` · `drift`. |
+| `mode` | `str` | nein | `auto` (Default, Heuristik-Router – die Entscheidung steht im Ausgabefeld `routing`) · `basic` · `local` · `global` · `drift`. |
 | `k` | `int` | nein | Trefferzahl je Modus (Default `5`, > 0). |
 | `synthesize` | `bool` | nein | `false` (Default) = nur Evidenz; `true` = Antwort per Client-Sampling formulieren lassen. |
 
@@ -41,6 +41,12 @@ Für Clients mit eigenem Modell (GitHub Copilot) ist der **Default ohne Synthese
 {
   "query": "…",
   "mode": "local",
+  "routing": {
+    "mode": "local",
+    "confidence": "strong",
+    "signals": ["build on"],
+    "rationale": "Signal 'build on' → local"
+  },
   "answer": "",
   "generated": false,
   "model": "",
@@ -62,6 +68,7 @@ Für Clients mit eigenem Modell (GitHub Copilot) ist der **Default ohne Synthese
 ```
 
 - `mode` ist der **tatsächlich verwendete** Modus (bei `auto` die Router-Entscheidung).
+- `routing` weist aus, **warum** dieser Modus gewählt wurde – `confidence` ist `strong` (eindeutiger Kandidat), `weak` (Gleichstand → Fallback `basic`) oder `none` (kein strukturelles Signal → Default `basic`), `signals` nennt die auslösenden Signale. Bei **explizit** gewähltem `mode` ist das Feld `null`, weil keine Heuristik beteiligt war ([ADR 0017](../../../../docs/adr/0017-router-hardening-phase7.md)).
 - `evidence.items` sind **deterministisch nummeriert** (`index` = Zitatmarke `[n]`); `label` bündelt die Provenienz (Paper · Abschnitt · Seite bzw. Community-Vertreter). Läuft ein Chunk über einen Seitenumbruch, nennt das Label eine Range („Seiten 7–8", [ADR 0013](../../../../docs/adr/0013-chunking-refinement-phase7.md)).
 - `answer` ist bei `generated = false` leer; `model` benennt bei erfolgreichem Sampling das Client-Modell.
 - `citation_contract` ist die verbindliche Vorgabe für die Formulierung (auch für den Aufrufer, der selbst formuliert).
@@ -93,12 +100,15 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 ## 8. Reproduzierbarkeit
 
 - Evidenz: deterministisch (gleiche Anfrage → gleiche Belege in gleicher Reihenfolge).
+- Routing: deterministisch – eine reine Textheuristik ohne Index- oder Modellzugriff
+  ([ADR 0017](../../../../docs/adr/0017-router-hardening-phase7.md)).
 - Synthese: best effort – Sampling mit `temperature = 0`; das Modell bestimmt der Client und wird im Feld `model` mitgeliefert.
 
 ## 9. Testabdeckung
 
 - `tests/generation/test_provider.py`, `test_synthesis.py`, `test_evidence.py`: Port, Fallback, Evidenz-Adapter je Modus, Nummerierung, Contract.
-- `tests/generation/test_answer.py`: Modus-Contract (`auto`/explizit/unbekannt), Evidenz ohne Provider, injizierter Provider, `k <= 0`.
+- `tests/generation/test_answer.py`: Modus-Contract (`auto`/explizit/unbekannt), ausgewiesenes `routing` bzw. `null` bei expliziter Wahl, Evidenz ohne Provider, injizierter Provider, `k <= 0`.
+- `tests/retrieval/test_router.py`, `tests/evaluation/test_routing.py`: Signal-Lexikon, Grenzfälle der Wortgrenzen, Fallback bei Gleichstand und die Contract-Treue gegen [eval/router-gold.json](../../../../eval/router-gold.json).
 - `tests/generation/test_ask_synthesis.py`: CLI-Pfad `--synthese` (Noop-Degradation und generierte Antwort).
 - `tests/mcp_server/test_sampling.py`: Capability-Fallback der Sampling-Brücke (ohne Sampling → Noop).
 - `tests/mcp_server/test_server.py`: Tool-Contract über einen In-Memory-Client – Default ohne Synthese, **echter Sampling-Roundtrip** über einen Sampling-Callback und sichtbare Degradation ohne Sampling-Fähigkeit.

@@ -50,6 +50,8 @@ Damit der Serverprozess die in der `.venv` verfügbaren Abhängigkeiten (mcp, sc
 
 > **Antwort-Synthese (opt-in):** `answer_question` kann mit `synthesize = true` die Antwort über **MCP-Sampling** vom Modell des Clients formulieren lassen. VS Code fragt dafür um Zustimmung und lässt die Modellwahl zu; unterstützt der Client kein Sampling, liefert das Tool weiterhin die vollständige Evidenz mit `generated = false` ([ADR 0012](adr/0012-llm-bridge-and-answer-synthesis-phase7.md)). Für Copilot ist der Default (`synthesize = false`) der empfohlene Weg – er vermeidet eine doppelte Generierung.
 
+> **Nachvollziehbare Modus-Wahl:** Läuft `answer_question` mit `mode = "auto"` (Default), enthält die Antwort das Feld `routing` mit Konfidenzstufe und auslösenden Signalen. Bei `weak` (Gleichstand → Fallback `basic`) oder `none` (kein Signal) lohnt sich häufig ein **expliziter** Modus ([ADR 0017](adr/0017-router-hardening-phase7.md)).
+
 ---
 
 ## 4. Server aktivieren und prüfen

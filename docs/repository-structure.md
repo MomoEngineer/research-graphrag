@@ -41,7 +41,7 @@ research-graphrag/
 │  ├─ citations.py               # Zitationen eines Papers (read-only, Phase 7 / A2)
 │  ├─ status.py                  # Read-only Index-/Korpus-Status + Konsistenz (Phase 6)
 │  ├─ qa.py                      # Prüf-Fragen je Modus durchspielen (QS-Harness, Phase 6; `--quantitativ` seit Phase 7 / A6)
-│  └─ eval_retrieval.py          # Retrieval-Evaluation: Primitive/Modi, Baseline, Regressions-Check (Phase 7 / A4 + A6)
+│  └─ eval_retrieval.py          # Evaluation: Primitive/Modi, Baseline, Regressions-Check, Router (Phase 7 / A4 + A6 + A7)
 ├─ src/research_graphrag/
 │  ├─ __init__.py                # Paket-Version
 │  ├─ errors.py                  # gemeinsame Fehlertaxonomie (docs/error-model.md)
@@ -75,11 +75,12 @@ research-graphrag/
 │  │  ├─ synthesis.py            #   Evidenz (nummeriert) + synthesize_answer (retrieval-frei)
 │  │  ├─ evidence.py             #   Adapter: Basic/Local/Global/DRIFT → Evidenz
 │  │  └─ answer.py               #   Router → Retrieval → Evidenz → optionale Synthese
-│  ├─ evaluation/                # Quantitative Retrieval-Evaluation (Phase 7 / A4 + A6)
+│  ├─ evaluation/                # Quantitative Evaluation von Retrieval und Router (Phase 7 / A4 + A6 + A7)
 │  │  ├─ gold.py                 #   Gold-Set + mechanische Label-Regel
 │  │  ├─ metrics.py              #   Hit@k/MRR/Coverage/Lift (retrieval-frei)
 │  │  ├─ runner.py               #   Primitive + Modi gegen den realen Index
 │  │  ├─ baseline.py             #   Fingerprint, Einfrieren, qid-genauer Vergleich
+│  │  ├─ routing.py              #   Router-Gold-Set + Contract-Treue (Phase 7 / A7)
 │  │  └─ report.py               #   Textausgabe
 │  └─ mcp_server/                # MCP-Server (stdio), Phase 5
 │     ├─ server.py               #   FastMCP: 8 Tools + Fehlerübersetzung an der Grenze
@@ -90,7 +91,8 @@ research-graphrag/
 ├─ eval/
 │  ├─ pruef-fragen.md            # Prüf-Fragen über alle 5 Fragetypen
 │  ├─ retrieval-gold.json        # versioniertes Gold-Set für Hit@k/MRR (Phase 7 / A4)
-│  └─ retrieval-baseline.json    # eingefrorene Ränge je Frage/Ebene (Phase 7 / A6)
+│  ├─ retrieval-baseline.json    # eingefrorene Ränge je Frage/Ebene (Phase 7 / A6)
+│  └─ router-gold.json           # versioniertes Router-Gold-Set (Contract-Labels, Phase 7 / A7)
 ├─ recherche/                    # (Phase 1) migrierte Rechercheartefakte (noch nicht vorhanden)
 ├─ papers/                       # PDF-Korpus (nicht versioniert)
 ├─ data/                         # Canonical JSON 0.4.0, manifest.json, index/, quality_report.*, overview_drafts.md (nicht versioniert)
@@ -105,7 +107,7 @@ research-graphrag/
    ├─ retrieval/                 # Basic/Local/Global/DRIFT + Router + Provenienz + get_paper/get_citations + QS-Harness + Eval-Harness (Phase 4/5/6/7)
    ├─ overview/                  # Übersicht-Entwürfe (Phase 2)
    ├─ generation/                # LLM-Bridge: Port, Evidenz, Synthese, CLI-Pfad (Phase 7 / A1)
-   ├─ evaluation/                # Gold-Set, Kennzahlen, Modus-Lauf, Baseline, Ausgabe (Phase 7 / A6)
+   ├─ evaluation/                # Gold-Set, Kennzahlen, Modus-Lauf, Baseline, Ausgabe (Phase 7 / A6) + Router-Messung (A7)
    ├─ mcp_server/                # Server-Contract via In-Memory-Client (Phase 5) + Sampling (Phase 7)
    └─ integration/               # End-to-End-Durchstich (M1) + Drop-in-Freshness/atomarer Swap + Status (Phase 6/7)
 ```
@@ -128,6 +130,15 @@ research-graphrag/
 > Schemata und Index bleiben unberührt – **kein Re-Ingest**
 > ([ADR 0016](adr/0016-quantitative-retrieval-evaluation-phase7.md)).
 
+> **Phase 7 / A7:** Der Query-Router in `retrieval/router.py` wird gehärtet: Signale tragen eine
+> **deklarierte Match-Art** (Wortgrenze/Wortanfang für Englisch, Teilwort nur für deutsche
+> Stämme), `basic` ist Rückfallebene statt gleichrangiger Modus, und die Entscheidung trägt
+> Konfidenzstufe plus auslösende Signale – ausgewiesen in der CLI und additiv als `routing` in
+> `answer_question`. Neu sind `evaluation/routing.py` und `eval/router-gold.json`; die feste
+> Präzedenz aus [ADR 0008](adr/0008-retrieval-and-query-router-phase4.md) ist abgelöst. Kein
+> Schema-Eingriff, **kein Re-Ingest**
+> ([ADR 0017](adr/0017-router-hardening-phase7.md)).
+
 ### Zuordnung zu den Roadmap-Phasen
 
 | Ordner | Verantwortung | Phase |
@@ -137,7 +148,7 @@ research-graphrag/
 | `src/research_graphrag/retrieval/` | Query-Router (Local/Global/DRIFT/Basic) | 4 |
 | `src/research_graphrag/mcp_server/` | MCP-Server (stdio) mit Tools + Provenienz | 5 |
 | `src/research_graphrag/generation/` | LLM-Bridge: Evidenz-Aufbereitung + optionale Antwort-Synthese | 7 |
-| `src/research_graphrag/evaluation/` | Quantitative Retrieval-Evaluation (Gold-Set, Kennzahlen, Baseline) | 7 |
+| `src/research_graphrag/evaluation/` | Quantitative Evaluation: Retrieval (Gold-Set, Kennzahlen, Baseline) und Router-Contract | 7 |
 | `src/research_graphrag/keywords.py` | kuratierte Keyword-Politik für extraktive Keyword-Listen | 7 |
 
 ---

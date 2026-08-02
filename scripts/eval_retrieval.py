@@ -1,16 +1,19 @@
-"""CLI: Quantitative, offline Retrieval-Evaluation (Hit@k/MRR) gegen ein versioniertes Gold-Set.
+"""CLI: Quantitative, offline Evaluation von Retrieval (Hit@k/MRR) und Query-Router.
 
 Das Skript ist eine **dünne Hülle** um das Paket
 :mod:`research_graphrag.evaluation`; die Logik liegt dort (typgeprüft, getestet und aus
-[scripts/qa.py](qa.py) wiederverwendbar). Gemessen werden zwei Ebenen:
+[scripts/qa.py](qa.py) wiederverwendbar). Gemessen werden drei Ebenen:
 
 * **Primitive** (Default, schnell) – die geteilte lexikalische Chunk-Suche, die Basic, der
   Local-Seed, der Local-Fan-out und die DRIFT-Verfeinerung gemeinsam nutzen.
 * **Modi als Ganzes** (``--modi``, spürbar langsamer) – zusätzlich Local-Fan-out,
   Community-Auswahl und DRIFT-Deckelung.
+* **Query-Router** (``--router``, ohne Index) – die Treue zum dokumentierten
+  Fragetyp→Modus-Contract (docs/adr/0017-router-hardening-phase7.md).
 
-Die Labels sind **mechanisch aus dem Chunk-Text abgeleitet** und über ``--verify-labels``
-nachrechenbar; ``--write-baseline``/``--check`` frieren den Stand ein und melden Regressionen
+Die Labels sind **mechanisch abgeleitet** – aus dem Chunk-Text bzw. aus der
+Fragetyp-Zuordnung der README – und über ``--verify-labels`` nachrechenbar;
+``--write-baseline``/``--check`` frieren den Retrieval-Stand ein und melden Regressionen
 **qid-genau** (docs/adr/0016-quantitative-retrieval-evaluation-phase7.md).
 
 Exit-Codes: ``0`` unauffällig · ``1`` Befund (Regression, nicht reproduzierbare Labels, Fehler)
@@ -20,6 +23,8 @@ Exit-Codes: ``0`` unauffällig · ``1`` Befund (Regression, nicht reproduzierbar
     python -m scripts.eval_retrieval --k 10 --scoring tfidf
     python -m scripts.eval_retrieval --verify-labels
     python -m scripts.eval_retrieval --modi
+    python -m scripts.eval_retrieval --router
+    python -m scripts.eval_retrieval --router --verify-labels
     python -m scripts.eval_retrieval --write-baseline
     python -m scripts.eval_retrieval --check
 """
@@ -39,27 +44,52 @@ from research_graphrag.evaluation import (
     compare,
     evaluate_all,
     evaluate_primitive,
+    evaluate_router,
     load_baseline,
     load_gold_set,
+    load_router_gold,
     precheck,
     read_fingerprint,
     render_comparison,
     render_modes,
     render_report,
+    render_router_report,
     save_baseline,
+    signal_coverage,
     verify_labels,
+    verify_router_labels,
 )
 from research_graphrag.indexing.tfidf_index import DEFAULT_SCORING, TfidfIndex
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _DEFAULT_INDEX = _REPO_ROOT / "data" / "index" / "index.sqlite"
 _DEFAULT_GOLD = _REPO_ROOT / "eval" / "retrieval-gold.json"
+_DEFAULT_ROUTER_GOLD = _REPO_ROOT / "eval" / "router-gold.json"
 _DEFAULT_BASELINE = _REPO_ROOT / "eval" / "retrieval-baseline.json"
 
 
 def _parse_labels(raw: str) -> tuple[str, ...]:
     """Zerlegt die ``--modi``-Angabe in Ebenen-Bezeichner (Reihenfolge bleibt erhalten)."""
     return tuple(part.strip() for part in raw.split(",") if part.strip())
+
+
+def _run_router(path: str, *, verify: bool) -> int:
+    """Führt die Router-Messung aus – wahlweise nur die Label-/Abdeckungs-Prüfung."""
+    gold = load_router_gold(path)
+    if verify:
+        findings = list(verify_router_labels(gold))
+        uncovered = signal_coverage(gold)
+        if uncovered:
+            findings.append(f"Signale ohne Gold-Frage: {', '.join(uncovered)}")
+        for finding in findings:
+            print(f"  ! {finding}")
+        print(
+            f"Router-Labels: {len(gold.questions)} Fragen gegen den Contract geprüft · "
+            f"Signal-Abdeckung {'vollständig' if not uncovered else 'unvollständig'}"
+        )
+        return 1 if findings else 0
+    print(render_router_report(evaluate_router(gold), gold))
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -70,6 +100,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--index", default=str(_DEFAULT_INDEX), help="Pfad zur Index-Datei.")
     parser.add_argument("--gold", default=str(_DEFAULT_GOLD), help="Pfad zum Gold-Set (JSON).")
+    parser.add_argument(
+        "--router-gold",
+        default=str(_DEFAULT_ROUTER_GOLD),
+        help="Pfad zum Router-Gold-Set (JSON).",
+    )
     parser.add_argument(
         "--baseline", default=str(_DEFAULT_BASELINE), help="Pfad zur Baseline-Datei (JSON)."
     )
@@ -94,6 +129,11 @@ def main(argv: list[str] | None = None) -> int:
         help=f"Modi als Ganzes messen (Default alle: {', '.join(MODES)}); langsam.",
     )
     parser.add_argument(
+        "--router",
+        action="store_true",
+        help="Contract-Treue des Query-Routers messen (ohne Index, sofort).",
+    )
+    parser.add_argument(
         "--write-baseline",
         action="store_true",
         help="Primitive und alle Modi messen und als Baseline einfrieren.",
@@ -104,6 +144,9 @@ def main(argv: list[str] | None = None) -> int:
         help="Gegen die eingefrorene Baseline prüfen (Exit-Code 1 bei Regression).",
     )
     args = parser.parse_args(argv)
+
+    if args.router:
+        return _run_router(args.router_gold, verify=args.verify_labels)
 
     gold = load_gold_set(args.gold)
     params = RunParameters(k=args.k, scoring=args.scoring)

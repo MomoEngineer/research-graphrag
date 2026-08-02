@@ -14,6 +14,7 @@ from research_graphrag.generation.answer import (
     EVIDENCE_BUILDERS,
     answer_question,
     resolve_mode,
+    resolve_routing,
 )
 from research_graphrag.generation.evidence import (
     evidence_from_basic,
@@ -56,5 +57,6 @@ __all__ = [
     "evidence_from_global",
     "evidence_from_local",
     "resolve_mode",
+    "resolve_routing",
     "synthesize_answer",
 ]

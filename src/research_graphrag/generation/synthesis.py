@@ -106,12 +106,14 @@ class SynthesisResult:
     generated: bool
     evidence: Evidence
     model: str = ""
+    routing: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Serialisiert das Ergebnis inkl. Evidenz und Zitier-Contract."""
         return {
             "query": self.query,
             "mode": self.mode,
+            "routing": self.routing,
             "answer": self.answer,
             "generated": self.generated,
             "model": self.model,
@@ -120,7 +122,12 @@ class SynthesisResult:
         }
 
 
-def synthesize_answer(evidence: Evidence, provider: GenerationProvider) -> SynthesisResult:
+def synthesize_answer(
+    evidence: Evidence,
+    provider: GenerationProvider,
+    *,
+    routing: dict[str, Any] | None = None,
+) -> SynthesisResult:
     """Synthetisiert eine belegte Antwort aus der Evidenz über den Generierungs-Port.
 
     Der Provider wird **nur** bei nicht-leerer Evidenz befragt: Ohne Belege gäbe es nichts zu
@@ -130,6 +137,9 @@ def synthesize_answer(evidence: Evidence, provider: GenerationProvider) -> Synth
     Args:
         evidence: Die deterministisch nummerierten Belege inkl. Anfrage und Modus.
         provider: Der Generierungs-Port (z. B. ``NoopGenerationProvider``).
+        routing: Serialisiertes Router-Urteil, falls der Modus heuristisch gewählt wurde. Es
+            wird bewusst als einfache Abbildung durchgereicht, damit dieses Modul retrieval-frei
+            bleibt (docs/adr/0017-router-hardening-phase7.md).
 
     Returns:
         Ein :class:`SynthesisResult`; ``answer`` ist leer, wenn nicht generiert wurde.
@@ -141,6 +151,7 @@ def synthesize_answer(evidence: Evidence, provider: GenerationProvider) -> Synth
             answer="",
             generated=False,
             evidence=evidence,
+            routing=routing,
         )
     result = provider.generate(
         GenerationRequest(query=evidence.query, context=evidence.as_context())
@@ -152,4 +163,5 @@ def synthesize_answer(evidence: Evidence, provider: GenerationProvider) -> Synth
         generated=result.generated,
         evidence=evidence,
         model=result.model,
+        routing=routing,
     )

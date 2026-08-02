@@ -9,7 +9,7 @@ import pytest
 
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
-from research_graphrag.generation.answer import answer_question, resolve_mode
+from research_graphrag.generation.answer import answer_question, resolve_mode, resolve_routing
 from research_graphrag.generation.provider import (
     GenerationRequest,
     GenerationResult,
@@ -90,6 +90,33 @@ def test_answer_question_routes_automatically(index_db: Path) -> None:
     result = answer_question(index_db, "Welcher F1-Score wird berichtet?", k=2)
 
     assert result.mode in {"basic", "local", "global", "drift"}
+
+
+def test_answer_question_reports_the_routing_decision(index_db: Path) -> None:
+    """Bei ``auto`` wird die Entscheidung ausgewiesen statt still getroffen (A7)."""
+    result = answer_question(index_db, "Wo widersprechen sich die Ergebnisse?", k=2)
+
+    assert result.routing is not None
+    assert result.routing["mode"] == result.mode == "drift"
+    assert result.routing["confidence"] == "strong"
+    assert result.routing["signals"] == ["widerspr"]
+    assert result.routing["rationale"]
+    assert result.to_dict()["routing"] == result.routing
+
+
+def test_answer_question_omits_routing_for_an_explicit_mode(index_db: Path) -> None:
+    """Bei expliziter Modus-Wahl gibt es kein Router-Urteil (kein vorgetäuschtes Routing)."""
+    result = answer_question(index_db, "transformer attention", mode="basic", k=2)
+
+    assert result.routing is None
+    assert result.to_dict()["routing"] is None
+
+
+def test_resolve_routing_returns_decision_only_for_auto() -> None:
+    """``resolve_routing`` liefert die Entscheidung ausschließlich im Auto-Modus."""
+    mode, decision = resolve_routing("Welche Themen gibt es?", "auto")
+    assert (mode, decision is None) == ("global", False)
+    assert resolve_routing("beliebig", "local") == ("local", None)
 
 
 def test_answer_question_uses_injected_provider(index_db: Path) -> None:

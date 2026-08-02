@@ -13,6 +13,7 @@ from collections.abc import Mapping
 from research_graphrag.evaluation.baseline import REGRESSION, Baseline, Comparison
 from research_graphrag.evaluation.gold import GoldSet
 from research_graphrag.evaluation.metrics import EvaluationReport
+from research_graphrag.evaluation.routing import RouterGoldSet, RouterReport
 
 LIMITATION = (
     "Aussagegrenze: Das Gold-Set ist fakt-orientiert (lexikalischer Anker je Frage). Gemessen "
@@ -20,6 +21,13 @@ LIMITATION = (
     "corpusweiten Synthese."
 )
 """Deklarierte Grenze der Messung (steht in jedem Modus-Bericht)."""
+
+ROUTER_LIMITATION = (
+    "Aussagegrenze: Gemessen wird die Treue zum dokumentierten Fragetyp→Modus-Contract, "
+    "nicht die Güte der gelieferten Antwort. Eine Optimierung auf Hit@k/MRR hätte das "
+    "triviale Optimum 'immer basic'."
+)
+"""Deklarierte Grenze der Router-Messung (steht in jedem Router-Bericht)."""
 
 
 def render_report(report: EvaluationReport, gold: GoldSet) -> str:
@@ -73,6 +81,33 @@ def render_modes(reports: Mapping[str, EvaluationReport], gold: GoldSet) -> str:
             )
     lines.append("")
     lines.append(f"  {LIMITATION}")
+    return "\n".join(lines)
+
+
+def render_router_report(report: RouterReport, gold: RouterGoldSet) -> str:
+    """Formatiert die Router-Messung: Contract-Treue je Fragetyp, Konfidenz und Fehlgriffe."""
+    lines = [
+        f"Router-Gold-Set {gold.version} · {len(report.scores)} Fragen "
+        f"· Contract-Treue {report.accuracy:.3f} "
+        f"({len(report.scores) - len(report.misses)}/{len(report.scores)})",
+        "",
+    ]
+    for kind, (rate, count) in report.by_kind().items():
+        lines.append(f"  {kind:10s} (n={count:2d}): Treue {rate:.3f}")
+    lines.append("")
+    for level, (rate, count) in report.by_confidence().items():
+        lines.append(f"  Konfidenz {level:7s} (n={count:2d}): Treue {rate:.3f}")
+    if report.misses:
+        lines.append("")
+        lines.append("  Fehlgriffe:")
+        for score in report.misses:
+            expected = "|".join(score.expected_modes)
+            lines.append(
+                f"    ! {score.qid} [{score.kind:9s}] erwartet {expected:12s} "
+                f"· geroutet {score.actual_mode} ({score.confidence})"
+            )
+    lines.append("")
+    lines.append(f"  {ROUTER_LIMITATION}")
     return "\n".join(lines)
 
 

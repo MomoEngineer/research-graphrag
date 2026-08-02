@@ -199,7 +199,9 @@ def get_citations_tool(paper_id: str) -> dict[str, Any]:
     description=(
         "Beantwortet eine Frage in einem Aufruf: wählt den Suchmodus (`auto` = Heuristik-Router "
         "oder explizit basic/local/global/drift), sammelt die Belege und liefert sie als "
-        "einheitliche, durchnummerierte Evidenz mit Zitier-Contract (`[1]`, `[2]` …). Empfohlen "
+        "einheitliche, durchnummerierte Evidenz mit Zitier-Contract (`[1]`, `[2]` …). Bei `auto` "
+        "begründet das Feld `routing` die Modus-Wahl (Konfidenz `strong`/`weak`/`none` plus "
+        "auslösende Signale); bei `weak`/`none` lohnt ggf. ein expliziter Modus. Empfohlen "
         "für Agenten mit eigenem Modell: `synthesize=false` (Default) – formuliere die Antwort "
         "selbst und zitiere die Belegnummern. Mit `synthesize=true` formuliert der Server die "
         "Antwort über MCP-Sampling; ohne Sampling-Fähigkeit bleibt `generated=false`."

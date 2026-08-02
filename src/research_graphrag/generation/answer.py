@@ -26,7 +26,7 @@ from research_graphrag.retrieval.basic import search_basic
 from research_graphrag.retrieval.drift import search_drift
 from research_graphrag.retrieval.global_search import search_global
 from research_graphrag.retrieval.local import search_local
-from research_graphrag.retrieval.router import MODES, route
+from research_graphrag.retrieval.router import MODES, RouteDecision, route
 
 AUTO_MODE = "auto"
 """Modus-Wert, der die Heuristik des Query-Routers auswählt."""
@@ -49,6 +49,31 @@ EVIDENCE_BUILDERS: dict[str, Callable[[str, str, int, Scoring], Evidence]] = {
 """Abbildung Modus → Evidenz-Aufbau (Single Source of Truth für CLI und MCP-Tool)."""
 
 
+def resolve_routing(query: str, mode: str) -> tuple[str, RouteDecision | None]:
+    """Löst ``auto`` über den Heuristik-Router auf und prüft den Modus.
+
+    Args:
+        query: Natürlichsprachige Frage (für die Router-Heuristik).
+        mode: ``auto`` oder einer der Modi aus :data:`research_graphrag.retrieval.router.MODES`.
+
+    Returns:
+        Der zu verwendende Modus und – nur bei ``auto`` – die zugehörige Router-Entscheidung.
+        Bei expliziter Modus-Wahl gibt es kein Router-Urteil (``None``).
+
+    Raises:
+        DomainError: ``invalid_input`` bei unbekanntem Modus (siehe docs/error-model.md).
+    """
+    if mode == AUTO_MODE:
+        decision = route(query)
+        return decision.mode, decision
+    if mode not in EVIDENCE_BUILDERS:
+        raise DomainError(
+            ErrorCode.INVALID_INPUT,
+            f"Unbekannter Modus: {mode!r}. Erlaubt: {AUTO_MODE}, {', '.join(MODES)}.",
+        )
+    return mode, None
+
+
 def resolve_mode(query: str, mode: str) -> str:
     """Löst ``auto`` über den Heuristik-Router auf und prüft den Modus.
 
@@ -62,14 +87,7 @@ def resolve_mode(query: str, mode: str) -> str:
     Raises:
         DomainError: ``invalid_input`` bei unbekanntem Modus (siehe docs/error-model.md).
     """
-    if mode == AUTO_MODE:
-        return route(query).mode
-    if mode not in EVIDENCE_BUILDERS:
-        raise DomainError(
-            ErrorCode.INVALID_INPUT,
-            f"Unbekannter Modus: {mode!r}. Erlaubt: {AUTO_MODE}, {', '.join(MODES)}.",
-        )
-    return mode
+    return resolve_routing(query, mode)[0]
 
 
 def answer_question(
@@ -93,12 +111,18 @@ def answer_question(
 
     Returns:
         Ein :class:`SynthesisResult` mit vollständiger Evidenz; ``answer`` ist leer, solange
-        keine Generierung stattgefunden hat.
+        keine Generierung stattgefunden hat. Wurde der Modus geroutet (``mode = "auto"``),
+        trägt ``routing`` die Begründung (Konfidenzstufe und auslösende Signale); bei
+        expliziter Modus-Wahl bleibt es ``None``.
 
     Raises:
         DomainError: ``invalid_input`` bei unbekanntem Modus, leerer Anfrage, ``k <= 0`` oder
             unbekannter Wertung; ``not_found``/``constraint_violation`` wenn kein Index vorliegt.
     """
-    resolved = resolve_mode(query, mode)
+    resolved, decision = resolve_routing(query, mode)
     evidence = EVIDENCE_BUILDERS[resolved](str(db_path), query, k, scoring)
-    return synthesize_answer(evidence, provider or NoopGenerationProvider())
+    return synthesize_answer(
+        evidence,
+        provider or NoopGenerationProvider(),
+        routing=decision.to_dict() if decision is not None else None,
+    )
