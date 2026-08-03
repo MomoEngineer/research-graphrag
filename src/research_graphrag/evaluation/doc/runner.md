@@ -25,7 +25,7 @@ Führt die Messung **gegen einen realen Index** aus – auf zwei Ebenen:
 | `evaluate_primitive` | Funktion | Misst die geteilte Chunk-Suche (ein Ladevorgang) |
 | `evaluate_mode` | Funktion | Misst einen einzelnen Modus |
 | `evaluate_all` | Funktion | Misst mehrere Ebenen in einem Lauf |
-| `RunParameters` | Dataclass | Messparameter; geht in den Fingerprint ein |
+| `RunParameters` | Dataclass | Messparameter (inkl. `seeds` der Local Search); geht in den Fingerprint ein |
 | `DEFAULT_PARAMETERS` | Konstante | Vorgabewerte als Singleton |
 | `PRIMITIVE`, `MODES`, `LABELS` | Konstanten | Die messbaren Ebenen |
 | `RANDOM_DRAWS`, `RANDOM_SEED` | Konstanten | Parameter der Zufalls-Baseline |
@@ -37,7 +37,7 @@ flowchart TD
     G["GoldSet"] --> P["evaluate_primitive:<br/>Index EINMAL laden"]
     G --> M["evaluate_mode je Ebene"]
     M --> B["basic: Zitate"]
-    M --> L["local: Seed → Nachbarschaft → Fan-out"]
+    M --> L["local: Seeds → Nachbarschaft → Fan-out"]
     M --> GL["global: Communities + Baselines"]
     M --> D["drift: Community → Zitate"]
     B --> S["first_hit → QuestionScore"]

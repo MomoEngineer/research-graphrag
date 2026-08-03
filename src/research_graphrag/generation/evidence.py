@@ -42,10 +42,8 @@ def evidence_from_basic(result: BasicSearchResult) -> Evidence:
 
 
 def evidence_from_local(result: LocalSearchResult) -> Evidence:
-    """Baut die Evidenz aus einem Local-Ergebnis (Seed, Nachbarschaft, Fan-out-Belege)."""
-    entries: list[_Entry] = []
-    if result.seed is not None:
-        entries.append(_citation_entry(result.seed))
+    """Baut die Evidenz aus einem Local-Ergebnis (Seeds, Nachbarschaft, Fan-out-Belege)."""
+    entries: list[_Entry] = [_citation_entry(citation) for citation in result.seeds]
     entries.extend(_citation_entry(c) for c in result.neighborhood)
     entries.extend(
         _citation_entry(neighbor.citation)

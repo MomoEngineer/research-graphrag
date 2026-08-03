@@ -115,13 +115,13 @@ def search_basic_tool(query: str, k: int = 5) -> dict[str, Any]:
     name="search_local",
     title="Local Search (Detailfrage & Multi-Hop)",
     description=(
-        "Beantwortet Detailfragen zu einem Paper und Zitations-/Methodennetz-Fragen: Seed-Chunk, "
+        "Beantwortet Detailfragen zu einem Paper und Zitations-/Methodennetz-Fragen: Seed-Chunks, "
         "Chunk-Nachbarschaft und Paper-Fan-out über den Ähnlichkeitsgraphen. `fan_out=0` "
         "überspringt den Graph-Fan-out. Liefert nur Evidenz + Provenienz."
     ),
 )
 def search_local_tool(query: str, k: int = 5, fan_out: int = 5) -> dict[str, Any]:
-    """Seed + Chunk-Nachbarschaft + Paper-Fan-out (siehe specs/search_local.md)."""
+    """Seeds + Chunk-Nachbarschaft + Paper-Fan-out (siehe specs/search_local.md)."""
     return _guard(  # type: ignore[return-value]
         "search_local",
         lambda: search_local(_index_path(), query, k=k, fan_out=fan_out).to_dict(),

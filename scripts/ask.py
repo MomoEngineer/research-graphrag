@@ -39,7 +39,7 @@ from research_graphrag.indexing.tfidf_index import DEFAULT_SCORING, Scoring
 from research_graphrag.retrieval.basic import search_basic
 from research_graphrag.retrieval.drift import search_drift
 from research_graphrag.retrieval.global_search import search_global
-from research_graphrag.retrieval.local import search_local
+from research_graphrag.retrieval.local import DEFAULT_SEEDS, search_local
 from research_graphrag.retrieval.provenance import Citation, page_label
 from research_graphrag.retrieval.router import MODES, route
 
@@ -57,7 +57,7 @@ def _print_citation(rank: int, citation: Citation) -> None:
     print(f"     Quelle: {citation.source_uri}")
 
 
-def _render_basic(index: str, query: str, k: int, scoring: Scoring) -> None:
+def _render_basic(index: str, query: str, k: int, scoring: Scoring, _seeds: int) -> None:
     """Basic Search: Top-k-Chunk-Zitate."""
     result = search_basic(index, query, k, scoring=scoring)
     if not result.citations:
@@ -68,14 +68,15 @@ def _render_basic(index: str, query: str, k: int, scoring: Scoring) -> None:
         _print_citation(rank, citation)
 
 
-def _render_local(index: str, query: str, k: int, scoring: Scoring) -> None:
-    """Local Search: Seed-Chunk, Chunk-Nachbarschaft und Paper-Fan-out."""
-    result = search_local(index, query, k=k, scoring=scoring)
-    if result.seed is None:
+def _render_local(index: str, query: str, k: int, scoring: Scoring, seeds: int) -> None:
+    """Local Search: Seed-Chunks, Chunk-Nachbarschaft und Paper-Fan-out."""
+    result = search_local(index, query, k=k, seeds=seeds, scoring=scoring)
+    if not result.seeds:
         print(f"[ask] Kein Seed-Treffer für: {query!r}")
         return
-    print(f"[ask] Local-Seed für {query!r}:")
-    _print_citation(1, result.seed)
+    print(f"[ask] Local-Seeds für {query!r}:")
+    for rank, citation in enumerate(result.seeds, start=1):
+        _print_citation(rank, citation)
     if result.neighborhood:
         print("[ask] Chunk-Nachbarschaft:")
         for rank, citation in enumerate(result.neighborhood, start=1):
@@ -88,7 +89,7 @@ def _render_local(index: str, query: str, k: int, scoring: Scoring) -> None:
                 _print_citation(1, neighbor.citation)
 
 
-def _render_global(index: str, query: str, k: int, _scoring: Scoring) -> None:
+def _render_global(index: str, query: str, k: int, _scoring: Scoring, _seeds: int) -> None:
     """Global Search: query-relevante Communities mit repräsentativer Paper-Provenienz.
 
     Die Chunk-Wertung ist hier ohne Wirkung – Global rankt Communities.
@@ -110,7 +111,7 @@ def _render_global(index: str, query: str, k: int, _scoring: Scoring) -> None:
                 print(f"       {ref.snippet}")
 
 
-def _render_drift(index: str, query: str, k: int, scoring: Scoring) -> None:
+def _render_drift(index: str, query: str, k: int, scoring: Scoring, _seeds: int) -> None:
     """DRIFT Search: gewählte Community (Kontext) + lokale Chunk-Belege."""
     result = search_drift(index, query, k=k, scoring=scoring)
     if result.community is None:
@@ -130,7 +131,7 @@ def _render_drift(index: str, query: str, k: int, scoring: Scoring) -> None:
         _print_citation(rank, citation)
 
 
-_RENDERERS: dict[str, Callable[[str, str, int, Scoring], None]] = {
+_RENDERERS: dict[str, Callable[[str, str, int, Scoring, int], None]] = {
     "basic": _render_basic,
     "local": _render_local,
     "global": _render_global,
@@ -139,10 +140,18 @@ _RENDERERS: dict[str, Callable[[str, str, int, Scoring], None]] = {
 
 
 def _render_synthesis(
-    mode: str, index: str, query: str, k: int, provider: GenerationProvider, scoring: Scoring
+    mode: str,
+    index: str,
+    query: str,
+    k: int,
+    provider: GenerationProvider,
+    scoring: Scoring,
+    seeds: int = DEFAULT_SEEDS,
 ) -> None:
     """Synthese-Pfad: nummerierte Belege plus – falls ein Modell verfügbar ist – die Antwort."""
-    result = answer_question(index, query, mode=mode, k=k, provider=provider, scoring=scoring)
+    result = answer_question(
+        index, query, mode=mode, k=k, provider=provider, scoring=scoring, seeds=seeds
+    )
 
     if result.generated:
         model = result.model or "Client-Modell"
@@ -187,6 +196,15 @@ def main() -> int:
         help="Wertung der Chunk-Modi (Default 'hybrid'); ohne Wirkung bei --mode global.",
     )
     parser.add_argument(
+        "--seeds",
+        type=int,
+        default=DEFAULT_SEEDS,
+        help=(
+            f"Zahl der Seed-Chunks der Local Search (Default {DEFAULT_SEEDS}); "
+            "ohne Wirkung in den übrigen Modi."
+        ),
+    )
+    parser.add_argument(
         "--synthese",
         action="store_true",
         help="Belege nummeriert über die LLM-Bridge aufbereiten (CLI ohne Modell: Noop-Fallback).",
@@ -206,10 +224,16 @@ def main() -> int:
     try:
         if args.synthese:
             _render_synthesis(
-                mode, args.index, args.query, args.k, NoopGenerationProvider(), args.scoring
+                mode,
+                args.index,
+                args.query,
+                args.k,
+                NoopGenerationProvider(),
+                args.scoring,
+                args.seeds,
             )
         else:
-            _RENDERERS[mode](args.index, args.query, args.k, args.scoring)
+            _RENDERERS[mode](args.index, args.query, args.k, args.scoring, args.seeds)
     except DomainError as exc:
         print(f"[ask] Fehler [{exc.code.value}]: {exc.message}")
         return 1

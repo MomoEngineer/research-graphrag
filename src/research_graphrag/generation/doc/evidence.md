@@ -22,7 +22,7 @@ Belege aus Passagen, aus einer Nachbarschaft oder aus Community-Vertretern stamm
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
 | `evidence_from_basic` | Funktion | Top-k-Zitate → Evidenz |
-| `evidence_from_local` | Funktion | Seed, Nachbarschaft und Fan-out-Belege → Evidenz |
+| `evidence_from_local` | Funktion | Seeds, Nachbarschaft und Fan-out-Belege → Evidenz |
 | `evidence_from_global` | Funktion | Vertreter je Top-Community → Evidenz |
 | `evidence_from_drift` | Funktion | lokal verfeinerte Zitate → Evidenz |
 
@@ -31,7 +31,7 @@ Belege aus Passagen, aus einer Nachbarschaft oder aus Community-Vertretern stamm
 ```mermaid
 flowchart TD
     B["BasicSearchResult"] --> EB["Zitate der Reihe nach"]
-    L["LocalSearchResult"] --> EL["1. Seed<br/>2. Nachbarschaft<br/>3. Fan-out-Belege, sofern vorhanden"]
+    L["LocalSearchResult"] --> EL["1. Seeds<br/>2. Nachbarschaft<br/>3. Fan-out-Belege, sofern vorhanden"]
     G["GlobalSearchResult"] --> EG["je Community:<br/>ihre Vertreter"]
     D["DriftSearchResult"] --> ED["Zitate der Reihe nach"]
     EB --> BU["Evidence.build"]

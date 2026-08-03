@@ -253,6 +253,19 @@ async def test_search_modes_smoke(index_db: Path, tool: str, arguments: dict[str
 
 
 @pytest.mark.anyio
+async def test_search_local_returns_the_seed_list(index_db: Path) -> None:
+    """Das Werkzeug liefert das Feld ``seeds`` als Liste (Spec 0.2.0, ADR 0021)."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool("search_local", {"query": "attention", "fan_out": 0})
+
+    payload = _structured(result)
+    assert result.isError is False
+    assert set(payload) == {"query", "seeds", "neighborhood", "fan_out"}
+    assert isinstance(payload["seeds"], list)
+    assert all("chunk_id" in seed for seed in payload["seeds"])
+
+
+@pytest.mark.anyio
 async def test_unknown_paper_yields_not_found_envelope(index_db: Path) -> None:
     """Unbekannte paper_id -> strukturierter not_found-Fehler (isError=true)."""
     async with client_session(mcp) as client:

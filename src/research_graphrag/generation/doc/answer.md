@@ -29,7 +29,7 @@ teilen dadurch zwingend dieselbe Semantik.
 
 ```mermaid
 flowchart TD
-    A["query, mode, k, scoring, provider"] --> B["resolve_routing"]
+    A["query, mode, k, scoring, seeds, provider"] --> B["resolve_routing"]
     B --> C{"mode = auto?"}
     C -- ja --> D["router.route → Modus + Entscheidung"]
     C -- nein --> E{"Modus bekannt?"}
@@ -49,8 +49,8 @@ die **Gültigkeitsprüfung**: Ein Modus ist genau dann erlaubt, wenn er hier ein
 gibt keine zweite Liste, die damit aus dem Tritt geraten könnte.
 
 Alle Einträge haben dieselbe Signatur, obwohl Global die Wertung nicht braucht – es rankt
-Communities, nicht Chunks. Der Parameter wird dort bewusst ignoriert, statt die Abbildung
-uneinheitlich zu machen.
+Communities, nicht Chunks – und nur Local die Zahl der Seeds. Die Parameter werden dort bewusst
+ignoriert, statt die Abbildung uneinheitlich zu machen.
 
 ### `auto` versus expliziter Modus
 

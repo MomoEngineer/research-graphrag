@@ -279,12 +279,12 @@ sich darin, *wo* sie ansetzen und *wie weit* sie ausgreifen.
 flowchart TD
     Q["Frage"]
     Q --> B["Basic:<br/>Top-k über alle Chunks"]
-    Q --> L["Local:<br/>bester Chunk als Seed"]
+    Q --> L["Local:<br/>beste Chunks als Seeds"]
     Q --> G["Global:<br/>Communities ranken"]
     Q --> D["DRIFT:<br/>beste Community wählen"]
 
-    L --> L1["ähnliche Chunks zum Seed"]
-    L --> L2["Nachbarpaper des Seed-Papers<br/>je bester Chunk"]
+    L --> L1["ähnliche Chunks je Seed<br/>rang-fusioniert"]
+    L --> L2["Nachbarpaper des Ankerpapers<br/>je bester Chunk"]
     G --> G1["Vertreter-Paper je Community"]
     D --> D1["Top-k Chunks<br/>nur innerhalb der Mitglieder"]
 
@@ -298,12 +298,14 @@ flowchart TD
 | Modus | Ansatzpunkt | Belegebene | Charakteristische Schwäche |
 | --- | --- | --- | --- |
 | Basic | ganzer Chunk-Bestand | Chunk | kein Kontext über die Passage hinaus |
-| Local | bester Chunk (Seed) | Chunk | das gesamte Ergebnis hängt an **einem** Seed |
+| Local | beste Chunks (Seeds) | Chunk | greift über die Passagen hinaus nur über Ähnlichkeit aus |
 | Global | Community-Dokumente | Paper | keine Passagen-Provenienz möglich |
 | DRIFT | beste Community | Chunk | steht und fällt mit der Community-Wahl |
 
-Die Schwächen sind nicht Vermutung, sondern gemessen: Bei Fakt-Fragen liegt Local hinter Basic,
-weil ein einziger falscher Seed das ganze Bündel entwertet; bei DRIFT entstehen **alle**
+Die Schwächen sind nicht Vermutung, sondern gemessen: Local hing ursprünglich an **einem** Seed
+und lag damit hinter Basic – seit der Verankerung an mehreren Seeds ist das behoben, der Gewinn
+ist allerdings teilweise definitorisch
+([ADR 0021](adr/0021-local-multi-seed-phase10.md)). Bei DRIFT entstehen **alle**
 Fehlschläge in der Community-Wahl, während die lokale Verfeinerung fehlerfrei arbeitet
 ([ADR 0016](adr/0016-quantitative-retrieval-evaluation-phase7.md)).
 

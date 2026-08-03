@@ -178,8 +178,7 @@ def run_question(index: str | Path, question: Question, k: int = 5) -> QAResult:
         provenance.extend(_from_citation(c) for c in result_basic.citations)
     elif question.mode == "local":
         local_result = search_local(index, question.query, k=k)
-        if local_result.seed is not None:
-            provenance.append(_from_citation(local_result.seed))
+        provenance.extend(_from_citation(c) for c in local_result.seeds)
         provenance.extend(_from_citation(c) for c in local_result.neighborhood)
         provenance.extend(
             _from_citation(n.citation) for n in local_result.fan_out if n.citation is not None

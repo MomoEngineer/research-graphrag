@@ -25,28 +25,32 @@ from research_graphrag.indexing.tfidf_index import DEFAULT_SCORING, Scoring
 from research_graphrag.retrieval.basic import search_basic
 from research_graphrag.retrieval.drift import search_drift
 from research_graphrag.retrieval.global_search import search_global
-from research_graphrag.retrieval.local import search_local
+from research_graphrag.retrieval.local import DEFAULT_SEEDS, search_local
 from research_graphrag.retrieval.router import MODES, RouteDecision, route
 
 AUTO_MODE = "auto"
 """Modus-Wert, der die Heuristik des Query-Routers auswählt."""
 
-EVIDENCE_BUILDERS: dict[str, Callable[[str, str, int, Scoring], Evidence]] = {
-    "basic": lambda db_path, query, k, scoring: evidence_from_basic(
+EVIDENCE_BUILDERS: dict[str, Callable[[str, str, int, Scoring, int], Evidence]] = {
+    "basic": lambda db_path, query, k, scoring, _seeds: evidence_from_basic(
         search_basic(db_path, query, k, scoring=scoring)
     ),
-    "local": lambda db_path, query, k, scoring: evidence_from_local(
-        search_local(db_path, query, k=k, scoring=scoring)
+    "local": lambda db_path, query, k, scoring, seeds: evidence_from_local(
+        search_local(db_path, query, k=k, seeds=seeds, scoring=scoring)
     ),
     # Global rankt Communities statt Chunks; die Chunk-Wertung bleibt dort ohne Wirkung.
-    "global": lambda db_path, query, k, _scoring: evidence_from_global(
+    "global": lambda db_path, query, k, _scoring, _seeds: evidence_from_global(
         search_global(db_path, query, k)
     ),
-    "drift": lambda db_path, query, k, scoring: evidence_from_drift(
+    "drift": lambda db_path, query, k, scoring, _seeds: evidence_from_drift(
         search_drift(db_path, query, k=k, scoring=scoring)
     ),
 }
-"""Abbildung Modus → Evidenz-Aufbau (Single Source of Truth für CLI und MCP-Tool)."""
+"""Abbildung Modus → Evidenz-Aufbau (Single Source of Truth für CLI und MCP-Tool).
+
+Die Zahl der Seeds wirkt ausschließlich in der Local Search
+(docs/adr/0021-local-multi-seed-phase10.md); die übrigen Modi ignorieren sie – wie Global die
+Chunk-Wertung."""
 
 
 def resolve_routing(query: str, mode: str) -> tuple[str, RouteDecision | None]:
@@ -98,6 +102,7 @@ def answer_question(
     k: int = 5,
     provider: GenerationProvider | None = None,
     scoring: Scoring = DEFAULT_SCORING,
+    seeds: int = DEFAULT_SEEDS,
 ) -> SynthesisResult:
     """Beantwortet eine Frage über den passenden Modus – mit Belegen, optional formuliert.
 
@@ -108,6 +113,7 @@ def answer_question(
         k: Trefferzahl je Modus (> 0).
         provider: Generierungs-Port; ohne Angabe der ``NoopGenerationProvider`` (keine Synthese).
         scoring: Wertung der Chunk-Modi – ``hybrid`` (Default), ``tfidf`` oder ``bm25``.
+        seeds: Zahl der Seed-Chunks der Local Search (> 0); ohne Wirkung in den übrigen Modi.
 
     Returns:
         Ein :class:`SynthesisResult` mit vollständiger Evidenz; ``answer`` ist leer, solange
@@ -116,11 +122,12 @@ def answer_question(
         expliziter Modus-Wahl bleibt es ``None``.
 
     Raises:
-        DomainError: ``invalid_input`` bei unbekanntem Modus, leerer Anfrage, ``k <= 0`` oder
-            unbekannter Wertung; ``not_found``/``constraint_violation`` wenn kein Index vorliegt.
+        DomainError: ``invalid_input`` bei unbekanntem Modus, leerer Anfrage, ``k <= 0``,
+            ``seeds <= 0`` oder unbekannter Wertung; ``not_found``/``constraint_violation``
+            wenn kein Index vorliegt.
     """
     resolved, decision = resolve_routing(query, mode)
-    evidence = EVIDENCE_BUILDERS[resolved](str(db_path), query, k, scoring)
+    evidence = EVIDENCE_BUILDERS[resolved](str(db_path), query, k, scoring, seeds)
     return synthesize_answer(
         evidence,
         provider or NoopGenerationProvider(),

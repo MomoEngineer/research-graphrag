@@ -84,19 +84,19 @@ def test_basic_evidence_carries_chunk_provenance(tmp_path: Path) -> None:
 
 
 def test_local_evidence_covers_seed_neighborhood_and_fanout(tmp_path: Path) -> None:
-    """Local liefert Seed, Chunk-Nachbarschaft und belegte Fan-out-Nachbarn als eine Liste."""
+    """Local liefert Seeds, Chunk-Nachbarschaft und belegte Fan-out-Nachbarn als eine Liste."""
     result = search_local(_build(tmp_path), "transformer attention", k=3)
 
     evidence = evidence_from_local(result)
 
     expected = (
-        (1 if result.seed is not None else 0)
+        len(result.seeds)
         + len(result.neighborhood)
         + sum(1 for neighbor in result.fan_out if neighbor.citation is not None)
     )
     assert evidence.mode == "local"
     assert len(evidence.items) == expected
-    assert evidence.items[0].paper_id == result.seed.paper_id if result.seed else True
+    assert evidence.items[0].paper_id == result.seeds[0].paper_id if result.seeds else True
 
 
 def test_global_evidence_uses_community_representatives(tmp_path: Path) -> None:

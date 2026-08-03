@@ -182,11 +182,19 @@ research-graphrag/
 > Schema-Eingriff, **kein Re-Ingest**, **kein** MCP-Werkzeug
 > ([ADR 0020](adr/0020-online-candidate-search-phase9.md)).
 
+> **Phase 10 / V1** ändert keine Datei-Struktur: `retrieval/local.py` verankert sein Ergebnis an
+> mehreren Seeds und nutzt dafür den bestehenden Baustein `indexing/fusion.py`. Sichtbar wird die
+> Umstellung nur im Contract – `LocalSearchResult.seed` heißt `seeds` und ist eine Liste (Tool-Spec
+> `search_local` auf `0.2.0`). Die Zahl der Seeds ist ein Messparameter und geht in den
+> Baseline-Fingerprint ein; kein Schema-Eingriff, **kein Re-Ingest**
+> ([ADR 0021](adr/0021-local-multi-seed-phase10.md)).
+
 > **Geplant (Phasen 9–11, [Roadmap.md](../Roadmap.md)):** Aus **Phase 9** sind S0 (Machbarkeit)
 > und S1 (Kandidatensuche) erledigt; **S2** (Volltext-Download) bleibt zurückgestellt, weil die
-> Lizenzangaben der Quellen keine belastbare Whitelist tragen. Die Phasen 10 und 11
-> arbeiten die in [ADR 0016](adr/0016-quantitative-retrieval-evaluation-phase7.md) belegten
-> Retrieval-Befunde sowie Betriebsthemen ab. Die abgeschlossenen Phasen 0–7 sind in der
+> Lizenzangaben der Quellen keine belastbare Whitelist tragen. Aus **Phase 10** ist **V1**
+> (Local Multi-Seed) erledigt; **V2–V4** und die Betriebsthemen der Phase 11 arbeiten die
+> übrigen in [ADR 0016](adr/0016-quantitative-retrieval-evaluation-phase7.md) belegten
+> Retrieval-Befunde ab. Die abgeschlossenen Phasen 0–7 sind in der
 > [Roadmap-Historie](roadmap-historie.md) archiviert.
 
 ### Zuordnung zu den Roadmap-Phasen

@@ -11,6 +11,13 @@
 > Unverändert gilt alles Übrige dieses ADR – insbesondere die Offline-Semantik der vier Modi, der
 > Provenienz-Assembler und die Gleichwertigkeit der expliziten Modus-Wahl.
 
+> **Nachtrag (2026-08-03, [ADR 0021](0021-local-multi-seed-phase10.md)):** Die unten für **Local**
+> festgelegte Verankerung an **einem** Seed-Chunk ist **abgelöst**. Local nutzt die Top-*m* der
+> Hybrid-Wertung als Seeds (Default 5), bildet die Chunk-Nachbarschaft je Seed und führt die
+> Teilranglisten per Reciprocal Rank Fusion zusammen; `LocalSearchResult.seed` heißt seither
+> `seeds` und ist eine Liste. Unverändert bleiben die drei Bausteine als solche, der Fan-out über
+> den Paper-Ähnlichkeitsgraphen (weiterhin am Paper des ersten Seeds) und die Provenienz.
+
 ## Kontext
 
 [Roadmap.md](../../Roadmap.md) beschreibt für **Phase 4** einen „Query-Router" mit den

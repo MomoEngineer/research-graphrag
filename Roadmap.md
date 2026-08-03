@@ -264,6 +264,40 @@ S0 ist beantwortet und dokumentiert (auch ein „lohnt sich nicht" ist ein gült
 
 ### V1 – Local: mehrere Seeds statt eines
 
+> **Status: umgesetzt** ([ADR 0021](docs/adr/0021-local-multi-seed-phase10.md)) – mit einem
+> **größeren *m*** als hier vorgeschlagen und einer **verworfenen** Teilmaßnahme.
+>
+> Das Abbruchkriterium wurde geprüft und **nicht** ausgelöst: *m* = 3 hebt die erreichbare
+> Deckelung von **17 auf 28** von 34 Gold-Fragen. Wie schon in den Punkten A3–A7 hat die
+> Vorabmessung die Vorgabe aber korrigiert – gleich dreifach.
+>
+> **1. *m* = 3 genügt nicht.** Das volle Bündel erreicht bei *m* = 3 nur 0,853 / 0,642 und bei
+> *m* = 4 nur 0,882 / **0,648** – beide bleiben unter Basics MRR von 0,650. Nach der **vorab**
+> festgelegten Regel (kleinstes *m*, das auf **beiden** Kennzahlen nicht unterlegen ist) fällt die
+> Wahl auf **`DEFAULT_SEEDS = 5`**: **0,912 / 0,654** gegen Basic 0,882 / 0,650. Die
+> Diagnose-Verteilung verschiebt sich wie erwartet von seed **17** auf **30**.
+>
+> **2. Das Akzeptanzkriterium dieser Vorgabe misst weniger, als es verspricht.** „Local erreicht
+> mindestens die Basic-Werte" ist bei *m* = *k* **definitorisch** erfüllt, weil Locals Bündel dann
+> Basics Top-*k* enthält. Es taugt – wie das End-to-End-Maß in A7 – nur als **Veto**. Der
+> substanzielle Nachweis ist deshalb ein anderer: **0 Regressionen** bei **13** qid-genauen
+> Verbesserungen, und **eine** Frage (G11), die Local findet und Basic@5 verfehlt. Offen
+> ausgewiesen bleibt, dass Nachbarschaft (1 Treffer) und Fan-out (0) zur Kennzahl kaum beitragen –
+> ihr Wert ist Kontext, und der ist mit diesem Gold-Set nicht messbar.
+>
+> **3. Der Fan-out wurde erweitert gemessen und **nicht** erweitert.** Die naheliegende
+> Vereinigung über alle Seed-Paper ändert bei *m* = 5 **keine** der 34 Fragen; er bleibt daher am
+> Ankerpaper. Ebenfalls verworfen – obwohl **besser** messend (0,941 / 0,664) – ist die Variante
+> „Seeds aus verschiedenen Papern": Die paper-basierten Labels bilden ihren Preis nicht ab, denn
+> sie verdrängt die zweitbeste Passage **desselben** Papers, also genau die Evidenz einer
+> Detailfrage.
+>
+> **Über die Vorgabe hinaus** ist der Contract ehrlich gemacht: `LocalSearchResult.seed` heißt
+> jetzt `seeds` und ist eine Liste (Spec `0.2.0`, bewusster Bruch). Eine Festlegung aus
+> [ADR 0008](docs/adr/0008-retrieval-and-query-router-phase4.md) ist damit abgelöst. Kein
+> Schema-Eingriff, **kein Re-Ingest**; `--check` belegt qid-genau, dass Primitive, Basic, Global
+> und DRIFT **unberührt** bleiben.
+
 *Befund:* Local erreicht Hit@5 **0,618** / MRR **0,532**, Basic dagegen **0,882** / **0,650**. Der Modus, den der Fragetyp-Contract der README für **Detailfragen** vorsieht, ist damit schwächer als seine eigene Rückfallebene. Die Diagnose zeigt warum: Von den Treffern stammen **17** vom Seed, **3** aus der Chunk-Nachbarschaft und **1** aus dem Paper-Fan-out. Das ist kein Ranking-, sondern ein Strukturproblem – Nachbarschaft und Fan-out messen Ähnlichkeit **zum Seed**, nicht zur Frage. Ist der Top-1-Seed falsch, ist das ganze Bündel verloren.
 
 *Vorschlag:* Statt eines Seeds die Top-*m* der Hybrid-Wertung verwenden, die Nachbarschaft je Seed bilden und die Teilrankings per **Reciprocal Rank Fusion** zusammenführen – der Baustein liegt seit A4 in `indexing/fusion.py`.
@@ -367,4 +401,4 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 - **M4 – Belegte Qualität:** ✅ erreicht – Retrieval und Router sind **quantitativ** messbar (Gold-Sets, Baseline, Regressions-Check; A4/A6/A7).
 - **M5 – Zufluss ohne Doppelbestand:** ✅ erreicht – neue PDFs gehen über `new_papers/` in den Korpus, Duplikate werden erkannt, die Übersicht wächst mit (Phase 8).
 - **M6 – Online-Recherche entschieden:** ✅ erreicht – S0 ist beantwortet: Die Quellen sind über den authentifizierten Unternehmens-Proxy erreichbar (arXiv/OpenAlex/Crossref mit HTTP 200), und die Handprobe liegt mit 76–82 % deutlich über der vorab festgelegten Schwelle von 30 %. Empfohlen ist ein **engerer Zuschnitt** als geplant: S1 nur mit arXiv + OpenAlex, S2 zurückgestellt (Phase 9).
-- **M7 – Local schlägt Basic:** der für Detailfragen vorgesehene Modus ist nicht länger schwächer als seine Rückfallebene (Phase 10 / V1).
+- **M7 – Local schlägt Basic:** ✅ erreicht – der für Detailfragen vorgesehene Modus ist nicht länger schwächer als seine Rückfallebene (Hit 0,618 → **0,912**, MRR 0,532 → **0,654** gegen Basic 0,882 / 0,650). **Ehrlich dazu:** Der Zugewinn ist teilweise definitorisch, weil Locals Bündel mit fünf Seeds die Top-5 der Chunk-Suche enthält; belastbar sind die **13 qid-genauen Verbesserungen ohne Regression** (Phase 10 / V1).

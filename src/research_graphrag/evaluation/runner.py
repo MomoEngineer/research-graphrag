@@ -38,7 +38,7 @@ from research_graphrag.indexing.tfidf_index import DEFAULT_SCORING, Scoring, Tfi
 from research_graphrag.retrieval.basic import search_basic
 from research_graphrag.retrieval.drift import search_drift
 from research_graphrag.retrieval.global_search import search_global
-from research_graphrag.retrieval.local import search_local
+from research_graphrag.retrieval.local import DEFAULT_SEEDS, search_local
 
 PRIMITIVE = "primitive"
 """Bezeichner der geteilten Chunk-Primitive (kein Suchmodus)."""
@@ -62,6 +62,7 @@ class RunParameters:
 
     k: int = 5
     fan_out: int = 5
+    seeds: int = DEFAULT_SEEDS
     drift_k: int = 6
     global_n: int = 5
     scoring: Scoring = DEFAULT_SCORING
@@ -71,6 +72,7 @@ class RunParameters:
         return {
             "k": self.k,
             "fan_out": self.fan_out,
+            "seeds": self.seeds,
             "drift_k": self.drift_k,
             "global_n": self.global_n,
             "scoring": self.scoring,
@@ -125,13 +127,16 @@ def _basic_bundle(
 def _local_bundle(
     db_path: str | Path, question: GoldQuestion, params: RunParameters
 ) -> list[tuple[str, str]]:
-    """Evidenz-Bündel der Local Search: Seed → Chunk-Nachbarschaft → Paper-Fan-out."""
+    """Evidenz-Bündel der Local Search: Seeds → Chunk-Nachbarschaft → Paper-Fan-out."""
     result = search_local(
-        db_path, question.query, k=params.k, fan_out=params.fan_out, scoring=params.scoring
+        db_path,
+        question.query,
+        k=params.k,
+        fan_out=params.fan_out,
+        seeds=params.seeds,
+        scoring=params.scoring,
     )
-    entries: list[tuple[str, str]] = []
-    if result.seed is not None:
-        entries.append((result.seed.paper_id, "seed"))
+    entries: list[tuple[str, str]] = [(citation.paper_id, "seed") for citation in result.seeds]
     entries.extend((citation.paper_id, "neighborhood") for citation in result.neighborhood)
     entries.extend((neighbor.paper_id, "fan_out") for neighbor in result.fan_out)
     return entries

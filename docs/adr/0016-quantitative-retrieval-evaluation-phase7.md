@@ -3,6 +3,15 @@
 - **Status:** Akzeptiert
 - **Datum:** 2026-08-02
 
+> **Nachtrag (2026-08-03, [ADR 0021](0021-local-multi-seed-phase10.md)):** Der hier belegte, aber
+> bewusst nicht behobene Befund „Local ist schwächer als Basic" ist adressiert – die unten
+> genannten Local-Werte (0,618 / 0,532) und die Diagnose-Verteilung (seed 17 / neighborhood 3 /
+> fan_out 1) sind damit **historisch**; aktuell sind 0,912 / 0,654 bei seed 30 / neighborhood 1.
+> Der Messapparat selbst ist unverändert; die **Baseline wurde neu eingefroren**, und
+> `RunParameters` trägt zusätzlich die Zahl der Seeds. Alles Übrige dieses ADR gilt unverändert –
+> insbesondere die Trennung von steuerndem Maß und Veto, der Lift als Vergleichsinstrument und
+> der Fingerprint-Guard, der genau diesen Parameterwechsel sichtbar gemacht hat.
+
 ## Kontext
 
 Die [Roadmap.md](../../Roadmap.md) führt **Phase 7 / A6** („Quantitative, offline

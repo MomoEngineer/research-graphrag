@@ -13,7 +13,7 @@ Dieses Dokument definiert die Anforderungen an die Dokumentation von Code und Er
 
 ```python
 def search_local(
-    db_path: str | Path, query: str, *, k: int = 5, fan_out: int = 5
+    db_path: str | Path, query: str, *, k: int = 5, fan_out: int = 5, seeds: int = 5
 ) -> LocalSearchResult:
     """Beantwortet eine Detail-/Netz-Frage über Local Search mit Provenienz.
 
@@ -22,13 +22,14 @@ def search_local(
         query: Natürlichsprachige Frage zu einem Paper/Abschnitt (nicht leer).
         k: Maximale Zahl der Chunk-Nachbarn (> 0).
         fan_out: Maximale Zahl der Graph-Nachbarpaper (>= 0).
+        seeds: Maximale Zahl der Seed-Chunks (> 0).
 
     Returns:
-        LocalSearchResult mit Seed, Chunk-Nachbarschaft und Paper-Fan-out (je mit
+        LocalSearchResult mit Seeds, Chunk-Nachbarschaft und Paper-Fan-out (je mit
         Provenienz: Paper-ID, Abschnitt, Seite/Chunk).
 
     Raises:
-        DomainError: `invalid_input` bei leerer Frage/`k <= 0`/`fan_out < 0`;
+        DomainError: `invalid_input` bei leerer Frage/`k <= 0`/`fan_out < 0`/`seeds <= 0`;
             `not_found`, wenn kein Index existiert; `constraint_violation` ohne Chunks/Graph.
     """
 ```
