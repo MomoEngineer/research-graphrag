@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/evaluation/baseline.py` |
 | **Paket** | `evaluation` – quantitative Messung |
-| **Phase** | 7 / A6 |
-| **Grundlagen** | [ADR 0016](../../../../docs/adr/0016-quantitative-retrieval-evaluation-phase7.md) |
+| **Phase** | 7 / A6 (entkoppelt in Phase 10 / V3) |
+| **Grundlagen** | [ADR 0016](../../../../docs/adr/0016-quantitative-retrieval-evaluation-phase7.md), [ADR 0023](../../../../docs/adr/0023-multihop-citation-evaluation-phase10.md) |
 
 ---
 
@@ -93,16 +93,25 @@ eingefroren, kann ein Lauf über alle Modi nicht dagegen geprüft werden.
 `build_baseline` bekommt das Datum als Argument, statt es selbst zu lesen. Damit bleiben Tests
 deterministisch – dieselbe Disziplin wie beim Seed der Zufalls-Baseline.
 
+### Das Modul kennt weder Gold-Set noch Runner
+
+`read_fingerprint` nimmt eine Gold-Set-**Version** und ein Parameter-**Mapping** – keine
+`GoldSet`- und keine `RunParameters`-Instanz. Dadurch bedient dasselbe Modul **zwei** Messungen
+(Retrieval und Multi-Hop) mit **zwei** Artefakten, ohne von deren Datentypen abzuhängen. Das
+Dateiformat der Baseline ist davon unberührt.
+
 ## 4. Zusammenspiel
 
 ```mermaid
 flowchart LR
     CLI["scripts.eval_retrieval --write-baseline / --check"] --> BL["baseline"]
+    CLZ["scripts.eval_retrieval --zitationen --check"] --> BL
     QA["scripts.qa --quantitativ"] --> BL
-    RU["runner: Berichte"] --> BL
-    GO["gold: Version"] --> FP["read_fingerprint"]
+    RU["runner / multihop: Berichte"] --> BL
+    GO["Gold-Set-Version + Parameter"] --> FP["read_fingerprint"]
     DB[("Index: Schema + Bestand")] --> FP
     BL --> FILE["eval/retrieval-baseline.json"]
+    BL --> FILC["eval/citation-baseline.json"]
     BL --> RP["report.render_comparison"]
 ```
 

@@ -189,7 +189,7 @@ def test_precheck_blocks_before_an_expensive_run() -> None:
 
 def test_fingerprint_is_read_from_the_real_index(tmp_path: Path) -> None:
     """Der Fingerprint stammt aus dem Index selbst, nicht aus gepflegten Zahlen."""
-    fingerprint = read_fingerprint(_build(tmp_path), _GOLD, RunParameters())
+    fingerprint = read_fingerprint(_build(tmp_path), _GOLD.version, RunParameters().to_dict())
 
     assert fingerprint.gold_set_version == "test-1.0.0"
     assert fingerprint.n_papers == 2
@@ -204,12 +204,12 @@ def test_fingerprint_without_a_graph_counts_zero_communities(tmp_path: Path) -> 
     db = tmp_path / "index" / "index.sqlite"
     build_index([_paper("aaaa0001", ["transformer attention mechanism"])], db)
 
-    assert read_fingerprint(db, _GOLD, RunParameters()).n_communities == 0
+    assert read_fingerprint(db, _GOLD.version, RunParameters().to_dict()).n_communities == 0
 
 
 def test_missing_index_is_a_domain_error(tmp_path: Path) -> None:
     """Ein fehlender Index wird als Fund gemeldet, nicht als leerer Fingerprint."""
     with pytest.raises(DomainError) as excinfo:
-        read_fingerprint(tmp_path / "fehlt.sqlite", _GOLD, RunParameters())
+        read_fingerprint(tmp_path / "fehlt.sqlite", _GOLD.version, RunParameters().to_dict())
 
     assert excinfo.value.code is ErrorCode.NOT_FOUND

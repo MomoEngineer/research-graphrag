@@ -28,6 +28,13 @@ Regel über dem Chunk-Text.
 | `verify_labels` | Funktion | Eingefrorene Labels gegen die Ableitung prüfen |
 | `GoldQuestion`, `GoldSet` | Dataclasses | Frage mit Regel, Labels und Label-Quelle |
 | `MECHANICAL_LABELS`, `DEFAULT_LABEL_SOURCE` | Konstanten | Welche Quellen nachrechenbar sind |
+| `CITATION_LABEL_SOURCE`, `CITATION_LABELS` | Konstanten | Bezeichner der Label-Quelle aus dem Zitationsgraphen |
+
+> Das **Vokabular** der Label-Quellen liegt vollständig hier, auch wenn die zugehörigen Fragen
+> in einem eigenen Gold-Set leben
+> ([multihop](multihop.md), [ADR 0023](../../../../docs/adr/0023-multihop-citation-evaluation-phase10.md)).
+> `verify_labels` überspringt jede Frage, deren Quelle nicht in `MECHANICAL_LABELS` steht – sie
+> ist per Definition nicht über diese Regel nachrechenbar.
 
 ## 3. Ablauf
 

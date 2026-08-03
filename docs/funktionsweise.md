@@ -420,7 +420,7 @@ Vertiefung: [answer](../src/research_graphrag/generation/doc/answer.md),
 
 ## 9. Messung: was gemessen wird und was das Maß taugt
 
-Die Evaluation misst auf zwei Ebenen und benutzt für jede Ebene ein anderes Instrument.
+Die Evaluation misst auf drei Ebenen und benutzt für jede Ebene ein anderes Instrument.
 
 ```mermaid
 flowchart TD
@@ -452,11 +452,47 @@ Der Router wird **getrennt** gemessen, gegen die Fragetyp-Tabelle der
 Basic" die beste Strategie ([ADR 0016](adr/0016-quantitative-retrieval-evaluation-phase7.md),
 [ADR 0017](adr/0017-router-hardening-phase7.md)).
 
+### Die dritte Ebene: Multi-Hop mit nicht-lexikalischen Labels
+
+Die beiden Ebenen oben teilen eine Schwäche: Ihre Labels hängen am **Wortlaut** – einmal am
+Chunk-Text, einmal an Signalwörtern. Der Fragetyp „Zitations-/Methodennetze" lässt sich so nicht
+messen. Dafür gibt es eine dritte Quelle, die schon im System liegt: die `CITES`-Kanten.
+
+```mermaid
+flowchart TD
+    C["citation_edges"] --> A["Anker = Paper mit genug Zitierenden"]
+    A --> Q1["Anfrage aus dem Titel"]
+    A --> Q2["Anfrage aus den Themen-Termen"]
+    A --> ST["strukturell:<br/>Graph-Nachbarn, ohne Text"]
+    Q1 --> B["Evidenz-Bündel"]
+    Q2 --> B
+    ST --> B
+    B --> X["Ankerpaper entfernen"]
+    X --> D["Rang + Diagnose:<br/>Baustein und Herkunft (:body / :ref)"]
+```
+
+Drei Eigenheiten machen diese Messung erst belastbar:
+
+- **Der Anker verlässt das Bündel.** Er kann nie ein erwartetes Paper sein (Selbstzitate sind
+  ausgeschlossen), würde aber die vorderen Ränge besetzen.
+- **Die Herkunft jedes Belegs wird ausgewiesen.** Eine Anfrage aus dem *Titel* eines Papers
+  findet die zitierenden Paper häufig über deren **Literaturverzeichnis** – ein lexikalischer
+  Kurzschluss. Die Diagnose `:ref` macht ihn sichtbar; die Anfrage aus den *Themen-Termen* ist
+  die Gegenprobe.
+- **Der triviale Oberwert steht daneben.** `get_citations` liest dieselbe Tabelle wie die Labels
+  und träfe per Konstruktion immer – es ist deshalb Bezugsgröße, keine Kennzahl.
+
+Was dabei **nicht** herauskommt, ist der Recall des Zitationsgraphen: Eine fehlende Kante fehlt
+in Labels und Messung gleichermaßen. Ausgewiesen werden stattdessen **strukturelle Schranken** –
+welche Paper als Quelle oder Ziel prinzipiell ausscheiden
+([ADR 0023](adr/0023-multihop-citation-evaluation-phase10.md)).
+
 Vertiefung: [gold](../src/research_graphrag/evaluation/doc/gold.md),
 [metrics](../src/research_graphrag/evaluation/doc/metrics.md),
 [runner](../src/research_graphrag/evaluation/doc/runner.md),
 [baseline](../src/research_graphrag/evaluation/doc/baseline.md),
-[routing](../src/research_graphrag/evaluation/doc/routing.md).
+[routing](../src/research_graphrag/evaluation/doc/routing.md),
+[multihop](../src/research_graphrag/evaluation/doc/multihop.md).
 
 ---
 
@@ -489,7 +525,7 @@ erkennbar.
 | `indexing/` | [tfidf_index](../src/research_graphrag/indexing/doc/tfidf_index.md) · [bm25](../src/research_graphrag/indexing/doc/bm25.md) · [fusion](../src/research_graphrag/indexing/doc/fusion.md) · [graph_index](../src/research_graphrag/indexing/doc/graph_index.md) · [citation_graph](../src/research_graphrag/indexing/doc/citation_graph.md) |
 | `retrieval/` | [basic](../src/research_graphrag/retrieval/doc/basic.md) · [local](../src/research_graphrag/retrieval/doc/local.md) · [global_search](../src/research_graphrag/retrieval/doc/global_search.md) · [drift](../src/research_graphrag/retrieval/doc/drift.md) · [router](../src/research_graphrag/retrieval/doc/router.md) · [provenance](../src/research_graphrag/retrieval/doc/provenance.md) · [paper](../src/research_graphrag/retrieval/doc/paper.md) · [citations](../src/research_graphrag/retrieval/doc/citations.md) |
 | `generation/` | [provider](../src/research_graphrag/generation/doc/provider.md) · [synthesis](../src/research_graphrag/generation/doc/synthesis.md) · [evidence](../src/research_graphrag/generation/doc/evidence.md) · [answer](../src/research_graphrag/generation/doc/answer.md) |
-| `evaluation/` | [gold](../src/research_graphrag/evaluation/doc/gold.md) · [metrics](../src/research_graphrag/evaluation/doc/metrics.md) · [runner](../src/research_graphrag/evaluation/doc/runner.md) · [baseline](../src/research_graphrag/evaluation/doc/baseline.md) · [routing](../src/research_graphrag/evaluation/doc/routing.md) · [report](../src/research_graphrag/evaluation/doc/report.md) |
+| `evaluation/` | [gold](../src/research_graphrag/evaluation/doc/gold.md) · [metrics](../src/research_graphrag/evaluation/doc/metrics.md) · [runner](../src/research_graphrag/evaluation/doc/runner.md) · [baseline](../src/research_graphrag/evaluation/doc/baseline.md) · [routing](../src/research_graphrag/evaluation/doc/routing.md) · [multihop](../src/research_graphrag/evaluation/doc/multihop.md) · [report](../src/research_graphrag/evaluation/doc/report.md) |
 | `overview/` | [drafts](../src/research_graphrag/overview/doc/drafts.md) |
 | `online/` | [transport](../src/research_graphrag/online/doc/transport.md) · [sources](../src/research_graphrag/online/doc/sources.md) · [candidates](../src/research_graphrag/online/doc/candidates.md) · [search](../src/research_graphrag/online/doc/search.md) · [report](../src/research_graphrag/online/doc/report.md) |
 | `mcp_server/` | [server](../src/research_graphrag/mcp_server/doc/server.md) · [sampling](../src/research_graphrag/mcp_server/doc/sampling.md) |

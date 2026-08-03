@@ -3,6 +3,25 @@
 - **Status:** Akzeptiert
 - **Datum:** 2026-08-01
 
+> **Nachtrag (2026-08-03, [ADR 0023](0023-multihop-citation-evaluation-phase10.md)):** Der hier
+> offen gelassene **Recall** bleibt offen – und das ist jetzt begründet statt unbemerkt. Die
+> [Roadmap](../../Roadmap.md) hatte für V3 in Aussicht gestellt, Multi-Hop-Labels machten ihn
+> sichtbar; das ist **logisch nicht möglich**, weil aus `citation_edges` abgeleitete Labels eine
+> **fehlende** Kante weder in der Wahrheit noch in der Messung enthalten. Belastbar wäre nur eine
+> unabhängige Handsichtung von Referenzabschnitten.
+>
+> Messbar sind stattdessen **strukturelle Schranken** – wer als Quelle oder Ziel prinzipiell
+> ausscheidet: **2 von 145** Papern ohne erkannten Referenzabschnitt (können nicht zitieren),
+> **3** mit einem Titel unter den hier festgelegten Mindestmaßen, **15** ohne
+> frontmatter-belegten Identifikator – und damit **genau 1** Paper, das weder über den Titel noch
+> über eine ID als Ziel gefunden werden kann (`66816ebc0cb33ea9`, dasselbe, das die QA zu
+> [ADR 0020](0020-online-candidate-search-phase9.md) unabhängig gefunden hat). Das ist eine
+> **obere Grenze der Vollständigkeit**, kein gemessener Recall.
+>
+> Zweiter Nachtrag: Die hier begründete Präzision hat sich als tragfähig genug erwiesen, um als
+> **Ground Truth** zu dienen – die Kanten sind seit V3 die Labelquelle einer eigenen
+> Evaluationsebene.
+
 ## Kontext
 
 Der in Phase 3 gebaute Graph modelliert ausschließlich **Paper-Ähnlichkeit** (TF-IDF, *mutual top-k*, [ADR 0007](0007-graphrag-index-phase3-option-b.md)). Der in der [README](../../README.md) skizzierte Domain-/Zitationsgraph (`CITES`, `USES_METHOD`, …) fehlt; Fragen vom Typ „welche Paper bauen auf X auf?" sind damit offline faktisch unbeantwortbar – Ähnlichkeit ist **keine** Zitation. Die [Roadmap](../../Roadmap.md) führt das als Phase-7-Punkt **A2** (Gruppe A, offline umsetzbar).

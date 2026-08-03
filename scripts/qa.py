@@ -227,7 +227,7 @@ def run_regression_check(
     gold = load_gold_set(gold_path)
     params = RunParameters()
     baseline = load_baseline(baseline_path)
-    fingerprint = read_fingerprint(index, gold, params)
+    fingerprint = read_fingerprint(index, gold.version, params.to_dict())
     blocked = precheck(baseline, fingerprint)
     if blocked is not None:  # Vergleichbarkeit vor dem teuren Messlauf prüfen
         return render_comparison(blocked, baseline), blocked.exit_code

@@ -22,6 +22,18 @@ from pathlib import Path
 MECHANICAL_LABELS = frozenset({"mechanical"})
 """Label-Quellen, die sich aus dem Index nachrechnen lassen."""
 
+CITATION_LABEL_SOURCE = "citation_graph"
+"""Label-Quelle des Multi-Hop-Gold-Sets: die ``CITES``-Kanten des Zitationsgraphen.
+
+Die zugehörigen Fragen leben bewusst in einem **eigenen** Gold-Set
+(:mod:`research_graphrag.evaluation.multihop`); hier steht nur der Bezeichner, damit das
+Vokabular der Label-Quellen an einer Stelle gepflegt wird
+(docs/adr/0023-multihop-citation-evaluation-phase10.md).
+"""
+
+CITATION_LABELS = frozenset({CITATION_LABEL_SOURCE})
+"""Label-Quellen, die aus dem Zitationsgraphen stammen."""
+
 DEFAULT_LABEL_SOURCE = "mechanical"
 """Quelle, wenn das Gold-Set nichts anderes angibt."""
 

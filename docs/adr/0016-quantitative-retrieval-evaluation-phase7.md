@@ -22,6 +22,22 @@
 > auftreten; für Global bleibt es unverändert). Die Baseline wurde erneut eingefroren, und
 > `RunParameters` trägt zusätzlich die Zahl der Communities.
 
+> **Nachtrag (2026-08-03, [ADR 0023](0023-multihop-citation-evaluation-phase10.md)):** Von den
+> unter Punkt 4 **bewusst zurückgestellten** Erweiterungen sind zwei eingelöst: Es gibt jetzt eine
+> **zweite Label-Quelle** (`citation_graph`) und mit Multi-Hop die fehlende **Fragenklasse** –
+> beides genau auf dem hier vorgezeichneten Weg, nämlich additiv und ohne die nachrechenbare
+> Basis zu verdrängen. Offen bleibt bewusst das breitere Fragenset desselben lexikalischen Typs.
+>
+> Zwei Festlegungen dieses ADR werden dabei **ergänzt, nicht abgelöst**: Die Multi-Hop-Ebene
+> bekommt ein **eigenes** Gold-Set und ein **eigenes** Baseline-Artefakt, damit die hier
+> fortgeschriebene Kennzahlreihe vergleichbar bleibt und der Regressions-Check kurz. Und
+> `read_fingerprint` nimmt seither die Gold-Set-**Version** und ein Parameter-**Mapping** statt
+> `GoldSet`/`RunParameters`; das Dateiformat der Baseline ändert sich dadurch **nicht**.
+>
+> Ein Befund dieses ADR ist zudem als **Artefakt des Gold-Sets** entlarvt: „Der Fan-out trägt kaum
+> bei" (rettet 1 von 34 Fragen) gilt für fakt-orientierte Fragen – auf der Multi-Hop-Ebene steuert
+> er 13 von 28 Treffern der Themen-Anfrage bei.
+
 ## Kontext
 
 Die [Roadmap.md](../../Roadmap.md) führt **Phase 7 / A6** („Quantitative, offline

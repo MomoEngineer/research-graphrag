@@ -88,13 +88,14 @@ research-graphrag/
 │  │  ├─ synthesis.py            #   Evidenz (nummeriert) + synthesize_answer (retrieval-frei)
 │  │  ├─ evidence.py             #   Adapter: Basic/Local/Global/DRIFT → Evidenz
 │  │  └─ answer.py               #   Router → Retrieval → Evidenz → optionale Synthese
-│  ├─ evaluation/                # Quantitative Evaluation von Retrieval und Router (Phase 7 / A4 + A6 + A7)
+│  ├─ evaluation/                # Quantitative Evaluation von Retrieval, Router und Multi-Hop (Phase 7 / A4 + A6 + A7, Phase 10 / V3)
 │  │  ├─ doc/                    #   Modul-Dokus
 │  │  ├─ gold.py                 #   Gold-Set + mechanische Label-Regel
 │  │  ├─ metrics.py              #   Hit@k/MRR/Coverage/Lift (retrieval-frei)
 │  │  ├─ runner.py               #   Primitive + Modi gegen den realen Index
 │  │  ├─ baseline.py             #   Fingerprint, Einfrieren, qid-genauer Vergleich
 │  │  ├─ routing.py              #   Router-Gold-Set + Contract-Treue (Phase 7 / A7)
+│  │  ├─ multihop.py             #   Multi-Hop-Gold-Set aus den CITES-Kanten + fünf Ebenen (Phase 10 / V3)
 │  │  └─ report.py               #   Textausgabe
 │  ├─ online/                    # Online-Kandidatensuche, separat startbar (Phase 9 / S1)
 │  │  ├─ doc/                    #   Modul-Dokus
@@ -114,7 +115,9 @@ research-graphrag/
 │  ├─ pruef-fragen.md            # Prüf-Fragen über alle 5 Fragetypen
 │  ├─ retrieval-gold.json        # versioniertes Gold-Set für Hit@k/MRR (Phase 7 / A4)
 │  ├─ retrieval-baseline.json    # eingefrorene Ränge je Frage/Ebene (Phase 7 / A6)
-│  └─ router-gold.json           # versioniertes Router-Gold-Set (Contract-Labels, Phase 7 / A7)
+│  ├─ router-gold.json           # versioniertes Router-Gold-Set (Contract-Labels, Phase 7 / A7)
+│  ├─ citation-gold.json         # versioniertes Multi-Hop-Gold-Set (Labels aus CITES, Phase 10 / V3)
+│  └─ citation-baseline.json     # eingefrorene Ränge der Multi-Hop-Ebenen (Phase 10 / V3)
 ├─ recherche/                    # (Phase 1) migrierte Rechercheartefakte (noch nicht vorhanden)
 ├─ new_papers/                   # Eingangsordner des Intake (nicht versioniert, außer README.md)
 │  └─ _duplikate/                #   Quarantäne der Identifikator-Duplikate (vom Intake angelegt)
@@ -132,7 +135,7 @@ research-graphrag/
    ├─ retrieval/                 # Basic/Local/Global/DRIFT + Router + Provenienz + get_paper/get_citations + QS-Harness + Eval-Harness (Phase 4/5/6/7)
    ├─ overview/                  # Übersicht-Entwürfe (Phase 2)
    ├─ generation/                # LLM-Bridge: Port, Evidenz, Synthese, CLI-Pfad (Phase 7 / A1)
-   ├─ evaluation/                # Gold-Set, Kennzahlen, Modus-Lauf, Baseline, Ausgabe (Phase 7 / A6) + Router-Messung (A7)
+   ├─ evaluation/                # Gold-Set, Kennzahlen, Modus-Lauf, Baseline, Ausgabe (Phase 7 / A6) + Router-Messung (A7) + Multi-Hop (Phase 10 / V3)
    ├─ online/                   # Transport-Port, Quellen-Adapter, Dedup, Bericht, CLI (Phase 9 / S1)
    ├─ mcp_server/                # Server-Contract via In-Memory-Client (Phase 5) + Sampling (Phase 7)
    └─ integration/               # End-to-End-Durchstich (M1) + Drop-in-Freshness/atomarer Swap + Status (Phase 6/7)
@@ -196,6 +199,15 @@ research-graphrag/
 > ist ein Messparameter und geht in den Baseline-Fingerprint ein; kein Schema-Eingriff,
 > **kein Re-Ingest** ([ADR 0022](adr/0022-drift-community-union-and-fallback-phase10.md)).
 
+> **Phase 10 / V3** ergänzt die Evaluation um `evaluation/multihop.py` und die beiden Artefakte
+> `eval/citation-gold.json` und `eval/citation-baseline.json`. Gemessen wird der Fragetyp
+> „Zitations-/Methodennetze" gegen die `CITES`-Kanten – die einzige **nicht-lexikalische**
+> Label-Quelle. `baseline.read_fingerprint` nimmt dafür die Gold-Set-**Version** und ein
+> Parameter-**Mapping** statt `GoldSet`/`RunParameters`; das Dateiformat der Baseline bleibt
+> unverändert, `RunParameters` ebenfalls. Kein Schema-Eingriff, **kein Re-Ingest**, keine
+> Änderung am Retrieval-Contract
+> ([ADR 0023](adr/0023-multihop-citation-evaluation-phase10.md)).
+
 > **Geplant (Phasen 9–11, [Roadmap.md](../Roadmap.md)):** Aus **Phase 9** sind S0 (Machbarkeit)
 > und S1 (Kandidatensuche) erledigt; **S2** (Volltext-Download) bleibt zurückgestellt, weil die
 > Lizenzangaben der Quellen keine belastbare Whitelist tragen. Aus **Phase 10** sind **V1**
@@ -214,7 +226,7 @@ research-graphrag/
 | `src/research_graphrag/retrieval/` | Query-Router (Local/Global/DRIFT/Basic) | 4 |
 | `src/research_graphrag/mcp_server/` | MCP-Server (stdio) mit Tools + Provenienz | 5 |
 | `src/research_graphrag/generation/` | LLM-Bridge: Evidenz-Aufbereitung + optionale Antwort-Synthese | 7 |
-| `src/research_graphrag/evaluation/` | Quantitative Evaluation: Retrieval (Gold-Set, Kennzahlen, Baseline) und Router-Contract | 7 |
+| `src/research_graphrag/evaluation/` | Quantitative Evaluation: Retrieval (Gold-Set, Kennzahlen, Baseline), Router-Contract und Multi-Hop gegen den Zitationsgraphen | 7 |
 | `src/research_graphrag/online/` | Online-Kandidatensuche (Transport-Port, arXiv/OpenAlex, Dedup, Bericht) | 9 |
 | `src/research_graphrag/keywords.py` | kuratierte Keyword-Politik für extraktive Keyword-Listen | 7 |
 

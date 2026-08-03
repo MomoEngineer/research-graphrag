@@ -347,6 +347,51 @@ S0 ist beantwortet und dokumentiert (auch ein „lohnt sich nicht" ist ein gült
 
 ### V3 – Multi-Hop-Fragen gegen den Zitationsgraphen messbar machen
 
+> **Status: umgesetzt** ([ADR 0023](docs/adr/0023-multihop-citation-evaluation-phase10.md)) – mit
+> **einem korrigierten Anspruch** und **einer entlarvten Vorgabe-Annahme**.
+>
+> Das vorab fixierte Abbruchkriterium (strukturelle Ebene auf Zufallsniveau **und** über 80 %
+> der Titel-Treffer aus Referenz-Chunks) wurde geprüft und **nicht** ausgelöst. Wie in den
+> Punkten A3–A7 und V1/V2 hat die Vorabmessung die Vorgabe aber an drei Stellen korrigiert.
+>
+> **1. Der Ähnlichkeitsgraph trägt Zitationsnähe – erstmals beziffert.** Die neue **strukturelle**
+> Ebene fragt ohne jeden Text: Enthalten die Top-5-Nachbarn eines Ankerpapers die Paper, die es
+> zitieren? Coverage **0,181** bei Selektivität **0,022** ergibt einen **Lift von 8,20** gegen
+> **0,98** einer gleich großen Zufallsauswahl. Das ist die erste Zahl überhaupt zum
+> GraphRAG-Anspruch des Paper-Graphen.
+>
+> **2. Die naheliegende Fragenform nimmt eine lexikalische Abkürzung.** „Welche Paper bauen auf
+> *Titel* auf?" wird zu einem guten Teil über das **Literaturverzeichnis** der zitierenden Paper
+> beantwortet – gemessen **22 von 33** Basic-Treffern und **24 von 42** Local-Treffern. Die
+> Abkürzung wird nicht versteckt, sondern als Diagnose (`:ref` statt `:body`) ausgewiesen, und
+> eine zweite Anfrageform aus den **Themen-Termen** des Ankers dient als Gegenprobe – sie kommt
+> ohne einen einzigen Referenz-Treffer aus. Ebenso fest verdrahtet: Das **Ankerpaper verlässt
+> jedes Bündel**, weil es per Konstruktion nie ein erwartetes Paper sein kann, aber die vorderen
+> Ränge besetzt (MRR 0,428 → **0,701** allein dadurch).
+>
+> **3. Der Zusatznutzen unten ist logisch nicht erreichbar – und das ist der wichtigste Befund.**
+> Aus `citation_edges` abgeleitete Labels können eine **fehlende** Kante nicht sichtbar machen;
+> der offene Recall aus [ADR 0011](docs/adr/0011-intra-corpus-citation-graph-phase7.md) bleibt
+> offen. Ausgewiesen werden stattdessen **mechanische Schranken**: 2 von 145 Papern ohne
+> erkannten Referenzabschnitt, 3 mit zu kurzem Titel, 15 ohne frontmatter-belegten Identifikator
+> – und damit **genau 1** Paper, das als Ziel strukturell unerreichbar ist. Eine obere Grenze
+> der Vollständigkeit, kein gemessener Recall.
+>
+> **Ergebnis:** Auf dieser Ebene **schlägt Local den Basic-Modus deutlich** (0,955 vs. 0,750 bei
+> der Titel-Form, 0,636 vs. 0,250 bei der Themen-Form) – die Struktur zahlt sich genau dort aus,
+> wo der README-Contract sie vorsieht. Nebenbei ist ein Befund aus
+> [ADR 0016](docs/adr/0016-quantitative-retrieval-evaluation-phase7.md) als Artefakt des
+> fakt-orientierten Gold-Sets entlarvt: „Der Fan-out rettet 1 von 34 Fragen" – hier steuert er
+> **13 von 28** Treffern der Themen-Anfrage bei.
+>
+> **Bewusst anders als unten:** `get_citations` wird **nicht** als Kennzahl geführt (es liest
+> dieselbe Tabelle wie die Labels, jede Zahl wäre 1,000 by construction), sondern als
+> Contract-Test und als ausgewiesener trivialer Oberwert. Gold-Set und Baseline sind **eigene**
+> Artefakte statt einer Erweiterung der bestehenden – sonst mischten sich zwei unvergleichbare
+> Fragetypen in dieselben Aggregate, und jeder Regressions-Check dauerte ein Vielfaches
+> (siehe [B3](#b3--messung-ohne-wartezeit)). Kein Schema-Eingriff, **kein Re-Ingest**, und
+> **keine** Retrieval-Änderung: Die Messung bestätigt den Contract, statt ihn zu widerlegen.
+
 *Lücke:* Das Gold-Set enthält ausschließlich **lexikalisch verankerte** Fragen. Der Fragetyp „Zitations-/Methodennetze (Multi-Hop)" aus dem README-Contract ist damit **überhaupt nicht gemessen** – obwohl mit **382 `CITES`-Kanten** und **44 Papern mit ≥ 3 zitierenden Quellen** eine objektive, **nicht-lexikalische** Labelquelle bereitsteht. A6 hat genau diesen Schritt als „naheliegendsten nächsten ohne Subjektivität" benannt und die Architektur dafür vorbereitet: `GoldQuestion` weist die **Label-Quelle** aus, damit weitere Quellen additiv danebentreten können.
 
 *Zusatznutzen – und der eigentliche Grund für die hohe Priorität:* [ADR 0011](docs/adr/0011-intra-corpus-citation-graph-phase7.md) belegt ausdrücklich nur die **Präzision** des Zitationsgraphen (alle Kanten mechanisch im Referenztext belegt, Stichproben durchweg korrekt) und lässt den **Recall offen**. Mit Multi-Hop-Labels wird dieser blinde Fleck erstmals sichtbar. Zugleich löst der Punkt den in A6 zurückgestellten Wunsch nach „inhaltlich statt lexikalisch" abgeleiteten Labels auf – **ohne** die Nachrechenbarkeit aufzugeben, denn die Kanten sind mechanisch verifizierbar.

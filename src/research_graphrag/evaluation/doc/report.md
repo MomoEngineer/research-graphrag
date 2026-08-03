@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/evaluation/report.py` |
 | **Paket** | `evaluation` – quantitative Messung |
-| **Phase** | 7 / A6 (Router-Bericht: A7) |
-| **Grundlagen** | [ADR 0016](../../../../docs/adr/0016-quantitative-retrieval-evaluation-phase7.md), [ADR 0017](../../../../docs/adr/0017-router-hardening-phase7.md) |
+| **Phase** | 7 / A6 (Router-Bericht: A7; Multi-Hop-Bericht: Phase 10 / V3) |
+| **Grundlagen** | [ADR 0016](../../../../docs/adr/0016-quantitative-retrieval-evaluation-phase7.md), [ADR 0017](../../../../docs/adr/0017-router-hardening-phase7.md), [ADR 0023](../../../../docs/adr/0023-multihop-citation-evaluation-phase10.md) |
 
 ---
 
@@ -22,8 +22,10 @@ inhaltliche Verantwortung, die über Formatierung hinausgeht – sie sorgt dafü
 | `render_report` | Funktion | Eine Ebene ausführlich: Zeile je Frage plus Aggregate |
 | `render_modes` | Funktion | Modus-Vergleich mit Diagnosen und Community-Baselines |
 | `render_router_report` | Funktion | Contract-Treue, Konfidenz, Fehlgriffe |
+| `render_multihop_report` | Funktion | Multi-Hop-Ebenen, Diagnosen, Lift und Recall-Schranken |
 | `render_comparison` | Funktion | Regressions-Check, frage-genau |
-| `LIMITATION`, `ROUTER_LIMITATION` | Konstanten | Die deklarierten Aussagegrenzen |
+| `LIMITATION`, `ROUTER_LIMITATION`, `MULTIHOP_LIMITATION` | Konstanten | Die deklarierten Aussagegrenzen |
+| `MULTIHOP_UPPER_BOUND` | Konstante | Der triviale Oberwert `get_citations` als Bezugsgröße |
 
 ## 3. Ablauf
 
@@ -32,10 +34,12 @@ flowchart LR
     ER["EvaluationReport"] --> RR["render_report"]
     ERM["Berichte je Modus"] --> RM["render_modes"]
     RRP["RouterReport"] --> RRR["render_router_report"]
+    MH["Berichte je Multi-Hop-Ebene<br/>+ RecallBounds"] --> RMH["render_multihop_report"]
     CMP["Comparison"] --> RC["render_comparison"]
     RR --> OUT["stdout der Kommandozeile"]
     RM --> OUT
     RRR --> OUT
+    RMH --> OUT
     RC --> OUT
 ```
 

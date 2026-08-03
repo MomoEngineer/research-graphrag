@@ -22,9 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from research_graphrag.errors import DomainError, ErrorCode
-from research_graphrag.evaluation.gold import GoldSet
 from research_graphrag.evaluation.metrics import EvaluationReport
-from research_graphrag.evaluation.runner import DEFAULT_PARAMETERS, RunParameters
 
 BASELINE_VERSION = "1.0.0"
 """Schema-Version des Baseline-Artefakts."""
@@ -82,14 +80,18 @@ class Fingerprint:
 
 
 def read_fingerprint(
-    db_path: str | Path, gold: GoldSet, params: RunParameters = DEFAULT_PARAMETERS
+    db_path: str | Path, gold_set_version: str, parameters: Mapping[str, Any]
 ) -> Fingerprint:
     """Liest den Fingerprint aus dem Index selbst (keine gepflegten Zahlen).
 
+    Die Funktion kennt weder Gold-Set noch Runner, sondern nur eine Version und ein
+    Parameter-Mapping – dadurch ist sie für beide Messungen (Retrieval und Multi-Hop) gleich
+    nutzbar, ohne dass ``baseline.py`` von ihnen abhängt.
+
     Args:
         db_path: Pfad zur SQLite-Index-Datei.
-        gold: Das Gold-Set (liefert die Version).
-        params: Messparameter des Laufs.
+        gold_set_version: Version des gemessenen Gold-Sets.
+        parameters: Messparameter des Laufs (serialisiert, stabile Reihenfolge).
 
     Returns:
         Der :class:`Fingerprint` des aktuellen Zustands.
@@ -116,12 +118,12 @@ def read_fingerprint(
     finally:
         connection.close()
     return Fingerprint(
-        gold_set_version=gold.version,
+        gold_set_version=gold_set_version,
         index_schema_version=str(row[0]) if row else "",
         n_papers=n_papers,
         n_chunks=n_chunks,
         n_communities=n_communities,
-        parameters=params.to_dict(),
+        parameters=dict(parameters),
     )
 
 
