@@ -126,6 +126,63 @@ Akzeptanz dafür:
 
 ## Phase 9 – Online-Research-Modus (separat startbar)
 
+> **Status: S0 beantwortet** (Messung vom 2026-08-03). Bewusst **ohne ADR** – S0 baut nichts und
+> entscheidet keine Architektur. **Vorbehalt:** Eine Umsetzung von S1/S2 wäre ADR-pflichtig, weil
+> sie eine externe Abhängigkeit und eine neue Sicherheitsgrenze einführt.
+>
+> **Ergebnis: die Phase entfällt nicht.** Beide Abbruchkriterien wurden geprüft und **nicht**
+> ausgelöst. Wie in den Punkten A3–A7 und in Phase 8 hat die Messung die Vorgabe aber korrigiert.
+>
+> **1. Erreichbarkeit – die erste Messung hätte fehlgeleitet.** Ohne Proxy scheitert jede Anfrage
+> bereits an der Namensauflösung (externes DNS tot, UDP/53 und ausgehendes TCP blockiert). Erst
+> die Gegenprüfung fand die per **PAC-Datei** konfigurierte Proxy-Lage, die `urllib.getproxies()`
+> nicht liest. Über den Proxy antworten: **arXiv 200** (nur mit `certifi` – die CA „Certainly"
+> fehlt im Windows-Zertifikatsspeicher), **OpenAlex 200** (Kreditmodell: 1000 Einheiten, 10 je
+> Anfrage ≈ 100 Abfragen), **Crossref 200** (1 Anfrage/s), **Semantic Scholar 429** (ohne
+> API-Schlüssel unbrauchbar), **Unpaywall 422** (verlangt zwingend eine Kontakt-E-Mail, hier
+> bewusst nicht gesetzt). Die offene Frage der Vorgabe ist damit beantwortet: Fachliches HTTP ist
+> **nicht** blockiert – aber an eine **Proxy-Authentifizierung** gebunden (Negotiate/NTLM).
+> `requests` beherrscht sie nicht; im Spike war ein selbst gebauter CONNECT-Tunnel nötig
+> (Windows-gebunden, über `pyspnego`/`pywin32`). Die PAC-Datei ist ohne JS-Engine nicht
+> auswertbar (`pypac`/`dukpy`/`js2py` fehlen) – der Proxy-Host müsste fest konfiguriert werden
+> und kann sich ändern.
+>
+> **2. Werkzeuglage bestätigt:** `requests`, `httpx`, `urllib3` und `certifi` sind vorhanden,
+> **`feedparser` fehlt** – `xml.etree` genügt für den Atom-Feed (praktisch belegt). Ein
+> Fremd-Wheel ist nicht nötig.
+>
+> **3. Sinnhaftigkeit – die vermutete Schwachstelle war die falsche.** Drei Anfragen aus dem
+> eigenen Bestand (zwei Communities, ein Seed-Paper) ergaben 51 Kandidaten. **13 lagen bereits im
+> Korpus** und wurden von der **bestehenden** Phase-8-Logik erkannt; die Gegenprüfung fand
+> **0 False Negatives** – das Akzeptanzkriterium aus S1 ist damit vorab erfüllt. Aufnahmequote
+> **31/38 = 81,6 %** nach dem Kriterium „publiziert in den letzten fünf Jahren", nach
+> zusätzlicher thematischer Sichtung **29/38 = 76,3 %**; beides liegt weit über der vorab
+> festgelegten Schwelle von 30 %. Die Vorgabe befürchtete zu viele irrelevante Vorschläge –
+> gemessen ist das Gegenteil, und der **wirksamste Filter ist trivial**: Das Publikationsjahr
+> fängt 6 der 8 korpusfremden Treffer, weil OpenAlex nach Zitationszahl rankt und alte Klassiker
+> hochspült. Der Engpass ist die **Sichtung**, nicht das Finden.
+>
+> **Grenze dieser Zahl, offen ausgewiesen:** Sie beruht auf einer mechanischen Jahresregel, nicht
+> auf inhaltlicher Kuratierung – also eine **Obergrenze**, kein bestätigter Kurationswert.
+> Aufgedeckt wurden außerdem **3 Dubletten innerhalb** der Kandidatenliste (dasselbe Paper aus
+> arXiv und OpenAlex unter verschiedenen Identifikatoren): Eine quellenübergreifende
+> Titel-Deduplikation gehört in S1.
+>
+> **Empfehlung – engerer Zuschnitt als geplant:** **S1 umsetzen, aber nur mit arXiv + OpenAlex.**
+> Crossref rankt schlechter und liefert Abstracts nur lückenhaft (1 von 3), Semantic Scholar
+> braucht einen API-Schlüssel, Unpaywall eine Kontakt-E-Mail. Ein **Aktualitätsfilter** wird
+> Default. **S2 (Volltext-Download) bleibt zurückgestellt:** Die geforderte Lizenz-Whitelist ist
+> auf dieser Datenbasis nicht sauber bedienbar – arXiv weist im Feed **keine** Lizenz aus,
+> OpenAlex nur bei 15 von 51 Treffern; der Volltext-Link im Bericht macht den manuellen Abruf
+> ohnehin zu einem Klick.
+>
+> **Nebenbefund (datiert, unbewertet):** Über denselben authentifizierten Proxy antwortet auch
+> **PyPI mit HTTP 200**. Die Grundannahme „kein PyPI-Zugang" aus
+> [ADR 0002](docs/adr/0002-venv-and-offline-dependency-strategy.md) und
+> [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md) gilt in dieser Form nicht mehr. Ob
+> `pip` diesen Weg nutzen könnte (es beherrscht kein Negotiate) und ob das den
+> Unternehmensrichtlinien entspricht, wurde **nicht** geprüft – es wurde nichts installiert.
+
 **Ziel:** Ein **manuell gestarteter, vom Kern getrennter** Modus, der zu einem Thema oder einem Seed-Paper neue Quellen im Netz sucht und – nur auf ausdrücklichen Wunsch – frei lizenzierte Volltexte nach `new_papers/` legt, wo [Phase 8](#phase-8--korpus-zufluss-new_papers--intake) sie übernimmt.
 
 **Abgrenzung, die nicht verhandelbar ist:** Der Kern bleibt netzfrei. Ohne Internet funktioniert alles Bisherige unverändert. Insbesondere bekommt der MCP-Server **kein** Netz-Tool im ersten Schritt – er wird von Copilot autonom aufgerufen, und niemand soll durch eine beiläufige Frage ungewollten Netzverkehr auslösen.
@@ -275,5 +332,5 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 - **M3 – Drop & Use:** ✅ erreicht – Drop-in-Kreislauf mit atomarem Index-Swap und pragmatischer QS (Phase 6).
 - **M4 – Belegte Qualität:** ✅ erreicht – Retrieval und Router sind **quantitativ** messbar (Gold-Sets, Baseline, Regressions-Check; A4/A6/A7).
 - **M5 – Zufluss ohne Doppelbestand:** ✅ erreicht – neue PDFs gehen über `new_papers/` in den Korpus, Duplikate werden erkannt, die Übersicht wächst mit (Phase 8).
-- **M6 – Online-Recherche entschieden:** S0 ist beantwortet – entweder liefert der Modus belegte Kandidaten, oder der Punkt ist dokumentiert verworfen (Phase 9).
+- **M6 – Online-Recherche entschieden:** ✅ erreicht – S0 ist beantwortet: Die Quellen sind über den authentifizierten Unternehmens-Proxy erreichbar (arXiv/OpenAlex/Crossref mit HTTP 200), und die Handprobe liegt mit 76–82 % deutlich über der vorab festgelegten Schwelle von 30 %. Empfohlen ist ein **engerer Zuschnitt** als geplant: S1 nur mit arXiv + OpenAlex, S2 zurückgestellt (Phase 9).
 - **M7 – Local schlägt Basic:** der für Detailfragen vorgesehene Modus ist nicht länger schwächer als seine Rückfallebene (Phase 10 / V1).

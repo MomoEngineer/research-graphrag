@@ -15,7 +15,14 @@
 > der Identifikator-Vergleich ist doppelt gehärtet ([ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md)).
 > Der aktive Plan umfasst noch die **Phasen 9–11** ([Roadmap](Roadmap.md)) – ein separat
 > startbarer Online-Research-Modus, die Abarbeitung der quantitativ belegten Retrieval-Befunde und
-> Betriebsthemen. Die abgeschlossenen Phasen 0–7 sind mit allen Kennzahlen in der
+> Betriebsthemen. Aus **Phase 9** ist der vorgeschaltete Machbarkeits-Schritt **S0 beantwortet**
+> (2026-08-03): Die Quellen sind erreichbar – allerdings **nur über einen authentifizierenden
+> Unternehmens-Proxy** (Negotiate/NTLM), den kein Standard-Python-Client von sich aus bedient. Die
+> Handprobe liegt mit 76–82 % deutlich über der vorab festgelegten Schwelle, und die bestehende
+> Phase-8-Deduplikation erkannte 13 von 51 Kandidaten als bereits vorhanden, **ohne** ein
+> Korpus-Paper zu übersehen. Empfohlen ist deshalb ein **engerer Zuschnitt**: S1 nur mit arXiv +
+> OpenAlex, S2 (Volltext-Download) zurückgestellt, weil die Lizenzangaben zu lückenhaft für eine
+> belastbare Whitelist sind. Die abgeschlossenen Phasen 0–7 sind mit allen Kennzahlen in der
 > [Roadmap-Historie](docs/roadmap-historie.md) archiviert.
 
 ---
@@ -292,7 +299,7 @@ Da dies ein persönliches Werkzeug ist: keine formale Evaluation, aber gezielte 
 
 **Phase 8 ist umgesetzt:** Der Korpus-Zufluss läuft über den Eingangsordner `new_papers/` und **einen** Befehl (`python -m scripts.intake`). Auch hier stand die Messung vor dem Code – und sie hat die Roadmap-Vorgabe „DOI-/arXiv-Treffer löschen" **widerlegt**: Im eigenen Korpus würden **17 von 155** Identifikatoren fehlleiten – **14** Werte stammen aus dem Volltext-Fallback und zeigen auf ein *zitiertes* fremdes Paper (darunter der aus [ADR 0011](docs/adr/0011-intra-corpus-citation-graph-phase7.md) bekannte Falsch-Hub), **3** tragen denselben unausgefüllten ACM-Vorlagen-Platzhalter `10.1145/nnnnnnn.nnnnnnn`. Umgesetzt ist deshalb eine **abgestufte** Konsequenz: Nur der **bitgenaue** sha256-Treffer löscht (und auch nur, nachdem der Beleg am Dateisystem nachgerechnet wurde), der Identifikator-Treffer wandert in eine Quarantäne, der Titel-Verdacht (Schwelle 0,85 – am Korpus **ohne** Fehlalarm) bleibt folgenlos. Der Identifikator-Vergleich ist doppelt gehärtet (Frontmatter-Beleg wie im Zitationsgraphen + Eindeutigkeit): von 155 Identifikatoren überleben **138** als Löschschlüssel. Neu sind außerdem ein Robustheits-Gate (`no_chunks`-Flag, `%PDF-`-Signaturprüfung), ein append-only Protokoll `data/intake_log.md` mit Hash je gelöschter Datei – und die Ablösung einer Phase-2-Festlegung: Entwurfszeilen gehen jetzt **direkt** in [`Übersicht.md`](Übersicht.md) (append-only, byte-erhaltend, atomar, eigene ID-Reihe `Z1`, `Z2`, …), womit `data/overview_drafts.md` entfällt. Belegt ist das end-to-end an einer vollständigen Korpus-Kopie: alle fünf Wege einmal durchlaufen, `--dry-run` nachweislich wirkungslos, kuratierte Zeilen byte-identisch, zweiter Lauf idempotent ([ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md)).
 
-Der **aktive Plan** ([Roadmap](Roadmap.md)) umfasst noch: **Phase 9** – ein separat startbarer Online-Research-Modus, dem eine Machbarkeits- und Sinnhaftigkeitsrecherche mit Abbruchkriterium vorgeschaltet ist; **Phase 10** – die Abarbeitung der in [ADR 0016](docs/adr/0016-quantitative-retrieval-evaluation-phase7.md) belegten, aber bewusst nicht behobenen Befunde (Local schwächer als Basic, DRIFTs Community-Wahl, ungemessene Multi-Hop-Fragen); **Phase 11** – Betrieb, Robustheit und Datensicherheit.
+Der **aktive Plan** ([Roadmap](Roadmap.md)) umfasst noch: **Phase 9** – ein separat startbarer Online-Research-Modus, dessen vorgeschaltete Machbarkeits- und Sinnhaftigkeitsrecherche (**S0**) am 2026-08-03 **beantwortet** wurde: Auch hier korrigierte die Messung die Vorgabe – fachliches HTTP ist **nicht** gesperrt, hängt aber an einer **Proxy-Authentifizierung** (Negotiate/NTLM), und die befürchtete Schwachstelle „zu viele irrelevante Vorschläge" trat nicht ein (81,6 % nach Aktualitätskriterium, 76,3 % nach thematischer Sichtung; der wirksamste Filter ist das Publikationsjahr). Empfohlen ist ein engerer Zuschnitt: S1 nur mit arXiv + OpenAlex, S2 zurückgestellt; **Phase 10** – die Abarbeitung der in [ADR 0016](docs/adr/0016-quantitative-retrieval-evaluation-phase7.md) belegten, aber bewusst nicht behobenen Befunde (Local schwächer als Basic, DRIFTs Community-Wahl, ungemessene Multi-Hop-Fragen); **Phase 11** – Betrieb, Robustheit und Datensicherheit.
 
 ## Wichtigste Risiken
 
