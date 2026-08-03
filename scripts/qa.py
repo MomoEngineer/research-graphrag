@@ -189,8 +189,7 @@ def run_question(index: str | Path, question: Question, k: int = 5) -> QAResult:
         )
     elif question.mode == "drift":
         drift_result = search_drift(index, question.query, k=k)
-        if drift_result.community is not None:
-            provenance.append(_from_community(drift_result.community))
+        provenance.extend(_from_community(m) for m in drift_result.communities)
         provenance.extend(_from_citation(c) for c in drift_result.citations)
     else:  # pragma: no cover - QUESTIONS.mode ist stets gültig
         raise ValueError(f"Unbekannter Modus: {question.mode}")

@@ -281,17 +281,19 @@ flowchart TD
     Q --> B["Basic:<br/>Top-k über alle Chunks"]
     Q --> L["Local:<br/>beste Chunks als Seeds"]
     Q --> G["Global:<br/>Communities ranken"]
-    Q --> D["DRIFT:<br/>beste Community wählen"]
+    Q --> D["DRIFT:<br/>beste Communities wählen"]
 
     L --> L1["ähnliche Chunks je Seed<br/>rang-fusioniert"]
     L --> L2["Nachbarpaper des Ankerpapers<br/>je bester Chunk"]
     G --> G1["Vertreter-Paper je Community"]
-    D --> D1["Top-k Chunks<br/>nur innerhalb der Mitglieder"]
+    D --> D1["Top-k Chunks<br/>in der Vereinigung der Mitglieder"]
+    D --> D2["ohne Community:<br/>corpusweit, ausgewiesen"]
 
     B --> C["Zitate: Paper · Abschnitt · Seite · Chunk"]
     L1 --> C
     L2 --> C
     D1 --> C
+    D2 --> C
     G1 --> P["Paper-Referenzen ohne Seitenanker"]
 ```
 
@@ -300,14 +302,16 @@ flowchart TD
 | Basic | ganzer Chunk-Bestand | Chunk | kein Kontext über die Passage hinaus |
 | Local | beste Chunks (Seeds) | Chunk | greift über die Passagen hinaus nur über Ähnlichkeit aus |
 | Global | Community-Dokumente | Paper | keine Passagen-Provenienz möglich |
-| DRIFT | beste Community | Chunk | steht und fällt mit der Community-Wahl |
+| DRIFT | beste Communities | Chunk | steht und fällt mit der Community-Wahl |
 
 Die Schwächen sind nicht Vermutung, sondern gemessen: Local hing ursprünglich an **einem** Seed
 und lag damit hinter Basic – seit der Verankerung an mehreren Seeds ist das behoben, der Gewinn
 ist allerdings teilweise definitorisch
-([ADR 0021](adr/0021-local-multi-seed-phase10.md)). Bei DRIFT entstehen **alle**
-Fehlschläge in der Community-Wahl, während die lokale Verfeinerung fehlerfrei arbeitet
-([ADR 0016](adr/0016-quantitative-retrieval-evaluation-phase7.md)).
+([ADR 0021](adr/0021-local-multi-seed-phase10.md)). Bei DRIFT entstanden **alle**
+Fehlschläge in der Community-Wahl; seit der Vereinigung mehrerer Communities und dem
+ausgewiesenen Rückfall auf die corpusweite Suche antwortet der Modus nie mehr leer – die
+Hälfte seiner Treffer stammt allerdings aus genau diesem Fallback und damit aus Basic
+([ADR 0022](adr/0022-drift-community-union-and-fallback-phase10.md)).
 
 **Global liefert bewusst keine Seiten-Provenienz.** Eine corpusweite Aussage ist nicht auf eine
 einzelne Passage zurückführbar; das Ergebnis nennt deshalb repräsentative Paper statt Chunks.

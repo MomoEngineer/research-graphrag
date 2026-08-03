@@ -36,7 +36,7 @@ from research_graphrag.evaluation.metrics import (
 from research_graphrag.indexing.graph_index import load_communities
 from research_graphrag.indexing.tfidf_index import DEFAULT_SCORING, Scoring, TfidfIndex
 from research_graphrag.retrieval.basic import search_basic
-from research_graphrag.retrieval.drift import search_drift
+from research_graphrag.retrieval.drift import DEFAULT_COMMUNITIES, search_drift
 from research_graphrag.retrieval.global_search import search_global
 from research_graphrag.retrieval.local import DEFAULT_SEEDS, search_local
 
@@ -64,6 +64,7 @@ class RunParameters:
     fan_out: int = 5
     seeds: int = DEFAULT_SEEDS
     drift_k: int = 6
+    drift_n: int = DEFAULT_COMMUNITIES
     global_n: int = 5
     scoring: Scoring = DEFAULT_SCORING
 
@@ -74,6 +75,7 @@ class RunParameters:
             "fan_out": self.fan_out,
             "seeds": self.seeds,
             "drift_k": self.drift_k,
+            "drift_n": self.drift_n,
             "global_n": self.global_n,
             "scoring": self.scoring,
         }
@@ -259,34 +261,37 @@ def _stats(label: str, samples: Sequence[tuple[float, float]]) -> CoverageStats:
 
 
 def _drift_report(db_path: str | Path, gold: GoldSet, params: RunParameters) -> EvaluationReport:
-    """Bewertet DRIFT und weist aus, ob schon die Community-Wahl den Treffer ausschließt."""
+    """Bewertet DRIFT und trennt Community-Pfad, verfehlte Auswahl und Basic-Fallback."""
     communities = load_communities(db_path)
     members_by_id = {community.community_id: community.members for community in communities}
 
     scores: list[QuestionScore] = []
     for question in gold.questions:
         expected = set(question.expected_paper_ids)
-        result = search_drift(db_path, question.query, k=params.drift_k, scoring=params.scoring)
-        if result.community is None:
-            scores.append(
-                QuestionScore(
-                    qid=question.qid,
-                    kind=question.kind,
-                    first_rank=None,
-                    diagnosis="no_community",
-                )
-            )
-            continue
-        members = set(members_by_id.get(result.community.community_id, ()))
+        result = search_drift(
+            db_path,
+            question.query,
+            k=params.drift_k,
+            communities=params.drift_n,
+            scoring=params.scoring,
+        )
         rank, _ = first_hit(
             [(citation.paper_id, "citation") for citation in result.citations], expected
         )
+        if result.fallback:
+            # Der Fallback ist die Basic-Suche, nicht DRIFT - er wird deshalb getrennt
+            # ausgewiesen (docs/adr/0022-drift-community-union-and-fallback-phase10.md).
+            diagnosis = "fallback"
+        else:
+            members = {
+                paper_id
+                for match in result.communities
+                for paper_id in members_by_id.get(match.community_id, ())
+            }
+            diagnosis = "in_community" if members & expected else "community_missed"
         scores.append(
             QuestionScore(
-                qid=question.qid,
-                kind=question.kind,
-                first_rank=rank,
-                diagnosis="in_community" if members & expected else "community_missed",
+                qid=question.qid, kind=question.kind, first_rank=rank, diagnosis=diagnosis
             )
         )
     return EvaluationReport(

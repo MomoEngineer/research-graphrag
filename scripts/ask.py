@@ -112,21 +112,23 @@ def _render_global(index: str, query: str, k: int, _scoring: Scoring, _seeds: in
 
 
 def _render_drift(index: str, query: str, k: int, scoring: Scoring, _seeds: int) -> None:
-    """DRIFT Search: gewählte Community (Kontext) + lokale Chunk-Belege."""
+    """DRIFT Search: gewählte Communities (Kontext) + lokale Chunk-Belege."""
     result = search_drift(index, query, k=k, scoring=scoring)
-    if result.community is None:
-        print(f"[ask] Keine passende Community für: {query!r}")
-        return
-    match = result.community
-    keywords = ", ".join(match.keywords) or "(keine)"
-    print(
-        f"[ask] DRIFT-Kontext für {query!r}: Community #{match.community_id} "
-        f"({match.size} Paper) · Keywords: {keywords}"
-    )
+    for match in result.communities:
+        keywords = ", ".join(match.keywords) or "(keine)"
+        print(
+            f"[ask] DRIFT-Kontext für {query!r}: Community #{match.community_id} "
+            f"({match.size} Paper) · Keywords: {keywords}"
+        )
+    if result.fallback:
+        print(
+            "[ask] Keine Community trägt diese Anfrage – Rückfall auf die corpusweite Suche "
+            "(die Belege sind nicht auf Community-Mitglieder beschränkt)."
+        )
     if not result.citations:
-        print("[ask] Keine lokalen Belege innerhalb der Community.")
+        print(f"[ask] Keine belegten Treffer für: {query!r}")
         return
-    print("[ask] Lokale Belege:")
+    print("[ask] Lokale Belege:" if not result.fallback else "[ask] Belege (corpusweit):")
     for rank, citation in enumerate(result.citations, start=1):
         _print_citation(rank, citation)
 

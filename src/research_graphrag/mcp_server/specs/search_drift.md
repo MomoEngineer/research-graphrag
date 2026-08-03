@@ -4,6 +4,11 @@
 > `src/research_graphrag/retrieval/drift.py`; als MCP-Tool registriert in **Phase 5**
 > ([ADR 0009](../../../../docs/adr/0009-mcp-server-stdio-phase5.md)).
 
+> **Änderung `0.1.0` → `0.2.0` (Phase 10 / V2, [ADR 0022](../../../../docs/adr/0022-drift-community-union-and-fallback-phase10.md)):**
+> Das Feld `community` (ein Objekt oder `null`) ist durch die Liste **`communities`** ersetzt, neu
+> hinzu kommt **`fallback`**. Das ist ein **bewusster Bruch** des Output-Schemas; das
+> Input-Schema bleibt unverändert.
+
 ---
 
 ## Metadaten
@@ -11,15 +16,17 @@
 | Feld | Wert |
 | --- | --- |
 | **Tool-Name** | `search_drift` (generisch) |
-| **Version** | `0.1.0` |
+| **Version** | `0.2.0` |
 | **Capability-Schicht** | Retrieval – DRIFT Search (siehe README.md) |
-| **Status** | Implementiert (Phase 4) |
+| **Status** | Implementiert (Phase 4; Community-Vereinigung und Fallback seit Phase 10 / V2) |
 
 ---
 
 ## 1. Zweck
 
-Beantwortet **Widerspruchs-/Vergleichsfragen** über einen **pragmatischen Global→Local-Hybrid** ([ADR 0008](../../../../docs/adr/0008-retrieval-and-query-router-phase4.md)): zuerst die thematisch passendste **Community** bestimmen (Global-Ranking), dann **innerhalb** ihrer Mitglieds-Paper die query-relevantesten Chunks suchen (lokale Verfeinerung). So verbindet DRIFT den corpusweiten Kontext mit belegten Einzelpassagen. Bewusst **kein** echtes iteratives Multi-Step-DRIFT (right-sized).
+Beantwortet **Widerspruchs-/Vergleichsfragen** über einen **pragmatischen Global→Local-Hybrid** ([ADR 0008](../../../../docs/adr/0008-retrieval-and-query-router-phase4.md)): zuerst die thematisch passendsten **Communities** bestimmen (Global-Ranking, Default die Top-5), dann **innerhalb der Vereinigung** ihrer Mitglieds-Paper die query-relevantesten Chunks suchen (lokale Verfeinerung). So verbindet DRIFT den corpusweiten Kontext mit belegten Einzelpassagen. Bewusst **kein** echtes iteratives Multi-Step-DRIFT (right-sized).
+
+Liefert dieser Pfad **keine** Belege, fällt das Werkzeug sichtbar auf die Chunk-Suche **ohne** Paper-Filter zurück (`fallback = true`) – die leere Antwort entfällt damit ([ADR 0022](../../../../docs/adr/0022-drift-community-union-and-fallback-phase10.md)).
 
 ## 2. Input-Schema
 
@@ -29,28 +36,33 @@ Beantwortet **Widerspruchs-/Vergleichsfragen** über einen **pragmatischen Globa
 | `k` | `int` | nein | Maximale Zahl der lokal verfeinerten Chunk-Belege (> 0); Default `6`. |
 
 > Der Index-Pfad ist **Server-Konfiguration**, kein Tool-Parameter (Standard: `data/index/index.sqlite`).
+>
+> Die Zahl der berücksichtigten Communities ist **bewusst kein** Tool-Parameter: Sie beschreibt die interne Auswahl, nicht die gewünschte Ergebnisgröße, und ist – wie die Zahl der Local-Seeds – gemessen statt wählbar ([ADR 0022](../../../../docs/adr/0022-drift-community-union-and-fallback-phase10.md)). Die Python-API bietet sie als `communities`; eine CLI-Option gibt es bewusst **noch nicht** (Begründung im ADR).
 
 ## 3. Output-Schema
 
 ```json
 {
   "query": "…",
-  "community": {
-    "community_id": 0,
-    "score": 0.21,
-    "size": 27,
-    "keywords": ["graph", "graphrag", "retrieval", "…"],
-    "representatives": [ { "paper_id": "…", "source_uri": "file:///…", "snippet": "…" } ]
-  },
+  "communities": [
+    {
+      "community_id": 0,
+      "score": 0.21,
+      "size": 27,
+      "keywords": ["graph", "graphrag", "retrieval", "…"],
+      "representatives": [ { "paper_id": "…", "source_uri": "file:///…", "snippet": "…" } ]
+    }
+  ],
+  "fallback": false,
   "citations": [
     { "paper_id": "…", "section_title": "…", "page_number": 6, "page_end": 6, "chunk_id": "…", "score": 0.0325, "score_tfidf": 0.3, "score_bm25": 14.2, "source_uri": "file:///…", "snippet": "…" }
   ]
 }
 ```
 
-`community` ist `null` und `citations` leer, wenn keine Community zur Anfrage passt.
+`communities` ist absteigend nach Score sortiert und **leer**, wenn keine Community zur Anfrage passt. In diesem Fall ist `fallback` **`true`**, und die `citations` stammen aus der corpusweiten Chunk-Suche – sie sind dann **nicht** auf Community-Mitglieder beschränkt. `fallback` ist ebenfalls `true`, wenn Communities gefunden wurden, ihre Mitglieder aber keinen passenden Chunk enthalten. Sind auch corpusweit keine Belege zu finden, bleibt `citations` leer.
 
-`community.score` ist der TF-IDF-Score des Community-Rankings (unverändert); in den `citations` ist `score` dagegen der **Fusionswert** der Hybrid-Wertung mit den Rohwerten `score_tfidf`/`score_bm25` ([ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)). Die beiden Werte sind **nicht** miteinander vergleichbar.
+`communities[*].score` ist der TF-IDF-Score des Community-Rankings (unverändert); in den `citations` ist `score` dagegen der **Fusionswert** der Hybrid-Wertung mit den Rohwerten `score_tfidf`/`score_bm25` ([ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)). Die beiden Werte sind **nicht** miteinander vergleichbar.
 
 ## 4. Annahmen und Vorbedingungen
 
@@ -59,25 +71,27 @@ Beantwortet **Widerspruchs-/Vergleichsfragen** über einen **pragmatischen Globa
 ## 5. Grenzen (Nicht-Ziele)
 
 - Kein echtes iteratives DRIFT; nur **eine** Community-Auswahl plus lokale Verfeinerung.
+- Die Community-Rangfolge wirkt **nur über die Zugehörigkeit**: In der Vereinigung entscheidet allein die Chunk-Wertung, nicht der Rang der Community.
+- Der Fallback ist die **Basic-Suche**, keine DRIFT-Leistung – er verhindert eine leere Antwort, verbessert aber kein Retrieval.
 - Keine LLM-Formulierung im Tool – nur strukturierte Evidenz + Provenienz.
 
 ## 6. Fehlerverhalten
 
-- `invalid_input`: leere `query` oder `k <= 0`.
+- `invalid_input`: leere `query`, `k <= 0` oder `communities <= 0` (nur über CLI/API erreichbar).
 - `not_found`: Index-Datei fehlt.
-- `constraint_violation`: kein Graph gebaut bzw. keine Communities vorhanden.
+- `constraint_violation`: kein Graph gebaut bzw. keine Communities vorhanden. Ein **defekter** Index wird bewusst **nicht** vom Fallback aufgefangen.
 
 Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 
 ## 7. Provenienz
 
-- **Community-Kontext**: `community_id`, `score`, `size`, `keywords`, repräsentative Paper.
-- **Lokale Belege**: Chunk-Zitate (`paper_id`, `section_title`, `page_number`, `page_end`, `chunk_id`, `score`, `score_tfidf`, `score_bm25`, `source_uri`, `snippet`), beschränkt auf die Mitglieds-Paper der Community.
+- **Community-Kontext**: je Community `community_id`, `score`, `size`, `keywords`, repräsentative Paper.
+- **Lokale Belege**: Chunk-Zitate (`paper_id`, `section_title`, `page_number`, `page_end`, `chunk_id`, `score`, `score_tfidf`, `score_bm25`, `source_uri`, `snippet`), beschränkt auf die Mitglieds-Paper der gewählten Communities – **außer** im Fallback (`fallback = true`), wo sie aus dem gesamten Korpus stammen.
 
 ## 8. Reproduzierbarkeit
 
-- Deterministisch: Community-Auswahl über das Global-Ranking (Phase-3-Communities, fixer Seed); lokale Verfeinerung über die Hybrid-Wertung (BM25 + TF-IDF, Reciprocal Rank Fusion, [ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)) mit Tie-Break über `chunk_id`.
+- Deterministisch: Community-Auswahl über das Global-Ranking (Phase-3-Communities, fixer Seed, Tie-Break über `community_id`); lokale Verfeinerung und Fallback über die Hybrid-Wertung (BM25 + TF-IDF, Reciprocal Rank Fusion, [ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)) mit Tie-Break über `chunk_id`.
 
 ## 9. Testabdeckung
 
-- `tests/retrieval/test_drift.py`: Community-Auswahl + lokale Verfeinerung (auf Mitglieder beschränkt), No-Match, Fehler-/Edge-Cases (`invalid_input`, `not_found`, `constraint_violation`), Output-Schema.
+- `tests/retrieval/test_drift.py`: Community-Vereinigung + lokale Verfeinerung (auf Mitglieder beschränkt), Fallback bei fehlender Übereinstimmung (Belege identisch zur Basic-Suche), `communities`-Grenzen, Determinismus, Fehler-/Edge-Cases (`invalid_input`, `not_found`, `constraint_violation`), Output-Schema.

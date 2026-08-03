@@ -25,7 +25,7 @@ Führt die Messung **gegen einen realen Index** aus – auf zwei Ebenen:
 | `evaluate_primitive` | Funktion | Misst die geteilte Chunk-Suche (ein Ladevorgang) |
 | `evaluate_mode` | Funktion | Misst einen einzelnen Modus |
 | `evaluate_all` | Funktion | Misst mehrere Ebenen in einem Lauf |
-| `RunParameters` | Dataclass | Messparameter (inkl. `seeds` der Local Search); geht in den Fingerprint ein |
+| `RunParameters` | Dataclass | Messparameter (inkl. `seeds` der Local Search und `drift_n` der DRIFT-Community-Auswahl); geht in den Fingerprint ein |
 | `DEFAULT_PARAMETERS` | Konstante | Vorgabewerte als Singleton |
 | `PRIMITIVE`, `MODES`, `LABELS` | Konstanten | Die messbaren Ebenen |
 | `RANDOM_DRAWS`, `RANDOM_SEED` | Konstanten | Parameter der Zufalls-Baseline |

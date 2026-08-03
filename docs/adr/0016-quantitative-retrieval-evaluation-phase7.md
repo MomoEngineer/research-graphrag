@@ -12,6 +12,16 @@
 > insbesondere die Trennung von steuerndem Maß und Veto, der Lift als Vergleichsinstrument und
 > der Fingerprint-Guard, der genau diesen Parameterwechsel sichtbar gemacht hat.
 
+> **Nachtrag (2026-08-03, [ADR 0022](0022-drift-community-union-and-fallback-phase10.md)):** Auch
+> der hier belegte DRIFT-Befund ist adressiert – die unten genannten Werte (0,235 / 0,235) und die
+> Diagnose (`in_community` 8 / `community_missed` 14 / `no_community` 12) sind damit
+> **historisch**. Zwei Aussagen dieses ADR sind ausdrücklich **überholt**: Die Eigenschaft
+> „Treffer == Deckelung" (fehlerfreie Verfeinerung) gilt nicht mehr – sie war eine Eigenschaft der
+> **engen** Kandidatenmenge, nicht des Verfahrens –, und das Diagnose-Vokabular der DRIFT-Ebene
+> lautet jetzt `in_community | community_missed | fallback` (`no_community` kann dort nicht mehr
+> auftreten; für Global bleibt es unverändert). Die Baseline wurde erneut eingefroren, und
+> `RunParameters` trägt zusätzlich die Zahl der Communities.
+
 ## Kontext
 
 Die [Roadmap.md](../../Roadmap.md) führt **Phase 7 / A6** („Quantitative, offline

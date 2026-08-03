@@ -70,8 +70,14 @@ beisteuerte. Daraus entstehen zwei getrennte Aussagen:
 | Modus | Diagnose-Werte | Was sie unterscheiden |
 | --- | --- | --- |
 | local | `seed`, `neighborhood`, `fan_out` | trug der Anker oder die Erweiterung? |
-| global, drift | `in_community`, `community_missed`, `no_community` | scheiterte die Auswahl oder das Ranking? |
+| global | `in_community`, `community_missed`, `no_community` | scheiterte die Auswahl oder das Ranking? |
+| drift | `in_community`, `community_missed`, `fallback` | scheiterte die Auswahl, das Ranking – oder trug der **Basic-Fallback**? |
 | basic | keine | es gibt nur eine Belegsorte |
+
+Dass DRIFT statt `no_community` den Wert `fallback` führt, ist die Konsequenz aus
+[ADR 0022](../../../../docs/adr/0022-drift-community-union-and-fallback-phase10.md): Ohne
+passende Community antwortet der Modus nicht mehr leer, sondern corpusweit. Ohne diese Trennung
+würde die Aggregatzahl Basic-Treffer als DRIFT-Leistung ausweisen.
 
 Dass Basic bewusst **keine** Diagnose führt, ist Teil des Entwurfs: Eine Diagnose mit nur einem
 möglichen Wert wäre eine leere Spalte.

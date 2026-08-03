@@ -266,6 +266,19 @@ async def test_search_local_returns_the_seed_list(index_db: Path) -> None:
 
 
 @pytest.mark.anyio
+async def test_search_drift_returns_community_list_and_fallback_flag(index_db: Path) -> None:
+    """Das Werkzeug liefert ``communities`` als Liste und weist den Fallback aus (Spec 0.2.0)."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool("search_drift", {"query": "attention"})
+
+    payload = _structured(result)
+    assert result.isError is False
+    assert set(payload) == {"query", "communities", "fallback", "citations"}
+    assert isinstance(payload["communities"], list)
+    assert isinstance(payload["fallback"], bool)
+
+
+@pytest.mark.anyio
 async def test_unknown_paper_yields_not_found_envelope(index_db: Path) -> None:
     """Unbekannte paper_id -> strukturierter not_found-Fehler (isError=true)."""
     async with client_session(mcp) as client:

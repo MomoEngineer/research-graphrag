@@ -4,76 +4,93 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/retrieval/drift.py` |
 | **Paket** | `retrieval` – Suchmodi und Provenienz |
-| **Phase** | 4 |
-| **Grundlagen** | [ADR 0008](../../../../docs/adr/0008-retrieval-and-query-router-phase4.md) |
+| **Phase** | 4 (Community-Vereinigung und Fallback: Phase 10 / V2) |
+| **Grundlagen** | [ADR 0008](../../../../docs/adr/0008-retrieval-and-query-router-phase4.md) · [ADR 0022](../../../../docs/adr/0022-drift-community-union-and-fallback-phase10.md) |
 
 ---
 
 ## 1. Zweck
 
-Verbindet die corpusweite Sicht mit belegten Einzelpassagen: erst die thematisch passendste
-**Community** bestimmen, dann **innerhalb ihrer Mitglieder** die anfragerelevantesten Passagen
-suchen.
+Verbindet die corpusweite Sicht mit belegten Einzelpassagen: erst die thematisch passendsten
+**Communities** bestimmen, dann **innerhalb der Vereinigung ihrer Mitglieder** die
+anfragerelevantesten Passagen suchen.
 
 Das ist der Modus für Widerspruchs- und Vergleichsfragen: Der Vergleich braucht einen gemeinsamen
-thematischen Rahmen (die Community) **und** konkrete Belege aus den beteiligten Papern (die
+thematischen Rahmen (die Communities) **und** konkrete Belege aus den beteiligten Papern (die
 Passagen).
 
 ## 2. Öffentliche Schnittstelle
 
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
-| `search_drift` | Funktion | Anfrage → gewählte Community plus lokal verfeinerte Zitate |
-| `DriftSearchResult` | Dataclass | Ergebnis mit `community`, `citations` und `to_dict()` |
-| `DEFAULT_K` | Konstante | Standardzahl der Chunk-Belege |
+| `search_drift` | Funktion | Anfrage → gewählte Communities plus lokal verfeinerte Zitate |
+| `DriftSearchResult` | Dataclass | Ergebnis mit `communities`, `citations`, `fallback` und `to_dict()` |
+| `DEFAULT_K`, `DEFAULT_COMMUNITIES` | Konstanten | Standardzahl der Chunk-Belege bzw. der Communities |
 
 ## 3. Ablauf
 
 ```mermaid
 flowchart TD
-    Q["Anfrage"] --> R["rank_communities(query, n=1)<br/>validiert zugleich die Eingabe"]
-    R --> KV["k ≤ 0 prüfen"]
-    KV --> E{"Community gefunden?"}
-    E -- nein --> EMPTY["leeres Ergebnis, kein Fehler"]
-    E -- ja --> PA["ProvenanceAssembler.load"]
-    PA --> BM["build_community_match:<br/>Keywords + Vertreter"]
-    BM --> IX["TfidfIndex.load"]
-    IX --> S["search(query, k,<br/>paper_ids = Mitglieder)"]
-    S --> C["Citation je Treffer"]
-    C --> RES["DriftSearchResult"]
+    Q["Anfrage"] --> KV["k ≤ 0 und communities ≤ 0 prüfen"]
+    KV --> R["rank_communities(query, n)<br/>validiert Anfrage und Graph"]
+    R --> IX["TfidfIndex.load"]
+    IX --> U{"Mitglieder vorhanden?"}
+    U -- ja --> S["search(query, k,<br/>paper_ids = Vereinigung)"]
+    U -- nein --> FB
+    S --> H{"Belege gefunden?"}
+    H -- ja --> BM["build_community_match je Community"]
+    H -- nein --> FB["search(query, k)<br/>ohne Paper-Filter · fallback = true"]
+    FB --> BM
+    BM --> RES["DriftSearchResult"]
 ```
 
 ### Die Einschränkung auf die Mitglieder
 
 Der entscheidende Schritt ist der Paper-Filter: Gesucht wird nur innerhalb der gewählten
-Community. Dadurch gilt die **Invariante**, dass jedes gelieferte Zitat aus einem Mitgliedspaper
-stammt – das Ergebnis ist in sich thematisch geschlossen.
+Communities. Dadurch gilt die **Invariante**, dass jedes gelieferte Zitat aus einem Mitgliedspaper
+stammt – das Ergebnis ist in sich thematisch geschlossen. Die einzige Ausnahme ist der Fallback,
+und genau deshalb wird er ausgewiesen.
 
-Weil der Filter nach der Sortierung wirkt, ist die Rangfolge innerhalb der Community identisch
-zur Rangfolge, die dieselben Chunks in einer ungefilterten Suche hätten.
+Weil der Filter nach der Sortierung wirkt, ist die Rangfolge innerhalb der Kandidatenmenge
+identisch zur Rangfolge, die dieselben Chunks in einer ungefilterten Suche hätten.
 
-### Die Community-Wahl ist die Sollbruchstelle
+### Warum mehrere Communities – und warum genau fünf
 
-Es wird genau **eine** Community gewählt. Die Messung ist hier ungewöhnlich eindeutig: Die lokale
-Verfeinerung arbeitet fehlerfrei – Treffer und erreichbare Obergrenze sind identisch –, sodass
-**alle** Fehlschläge in der Community-Wahl entstehen, entweder weil keine gewählt wurde oder weil
-die falsche gewählt wurde.
+Bis Phase 10 wurde genau **eine** Community gewählt. Gemessen erreichte DRIFT damit nur 8 von 34
+Gold-Fragen, und alle Fehlschläge entstanden vor der Verfeinerung. Mit der Vereinigung der Top-5
+steigt die erreichbare Deckelung auf **12** und die Trefferzahl auf **11** – ohne dass eine zuvor
+gewonnene Frage verloren geht.
 
-Für die Wartung heißt das: Verbesserungen an diesem Modus gehören in die Community-Bildung oder
-in das Community-Ranking, nicht in die Verfeinerung
-([ADR 0016](../../../../docs/adr/0016-quantitative-retrieval-evaluation-phase7.md)).
+Der Wert 5 ist der Default der Global Search. Beide Modi sehen damit dieselbe Auswahl, und DRIFTs
+Deckelung ist per Konstruktion Globals Trefferzahl. Ein am Gold-Set **besser** messender Wert (8)
+wurde bewusst nicht genommen – eine Frage von 34 rechtfertigt kein Parameter-Tuning
+([ADR 0022](../../../../docs/adr/0022-drift-community-union-and-fallback-phase10.md)).
+
+### Die Community-Rangfolge wirkt nur über die Zugehörigkeit
+
+In der Vereinigung entscheidet allein die Chunk-Wertung. Ein Beleg aus der fünftplatzierten
+Community kann damit vor einem aus der erstplatzierten stehen. Das ist gewollt: Es gibt genau
+**ein** Kriterium für die Reihenfolge der Belege – ihre Relevanz zur Anfrage.
+
+### Der Fallback ist eine Garantie, keine Verbesserung
+
+Liefert der Community-Pfad keine Belege, sucht der Modus im gesamten Korpus weiter – derselbe
+Pfad, den die Basic Search nutzt – und setzt `fallback`. Der Grund ist gemessen: Für **12 von 34**
+Gold-Fragen scort überhaupt keine Community über 0; dort antwortete DRIFT zuvor **leer**.
+
+Zwei Dinge sind dabei wichtig:
+
+- Der Fallback ist **Basic**, nicht DRIFT. In der Evaluation wird sein Beitrag deshalb getrennt
+  ausgewiesen (Diagnose `fallback`), sonst überschätzt die Aggregatzahl den Modus.
+- Ein **defekter** Index (kein Graph, keine Communities) wird **nicht** aufgefangen – dort bleibt
+  es bei `constraint_violation`. Der Fallback ist eine Antwort auf fehlende Übereinstimmung, nicht
+  auf einen kaputten Zustand.
 
 ### Warum kein iteratives DRIFT
 
 Das Vorbild führt mehrere Verfeinerungsrunden mit Folgefragen aus – jede davon bräuchte ein
 Sprachmodell zur Abfragezeit. Die hier umgesetzte Variante ist ein **einstufiger** Global→Local-
 Hybrid: bewusst reduziert, dafür deterministisch und ohne Modell lauffähig.
-
-### Die Reihenfolge der Prüfungen
-
-`rank_communities` läuft **vor** der `k`-Prüfung, weil es zugleich Anfrage und Index validiert.
-Ein `k <= 0` wird also erst nach einer erfolgreichen Community-Auswahl gemeldet – die
-Fehlerkategorie bleibt dieselbe.
 
 ## 4. Zusammenspiel
 
@@ -84,33 +101,43 @@ flowchart LR
     ANS["generation/answer"] --> SD
     SD --> RC["global_search.rank_communities"]
     SD --> BCM["global_search.build_community_match"]
-    SD --> IX["tfidf_index.search mit paper_ids"]
+    SD --> IX["tfidf_index.search mit und ohne paper_ids"]
     SD --> PA["provenance"]
 ```
 
 DRIFT ist der einzige Modus, der **beide** Ebenen lädt: den Community-Vektorraum für die Auswahl
 und den Chunk-Vektorraum für die Verfeinerung. Er ist deshalb der teuerste Modus.
 
+Die Zahl der Communities ist über die Python-API (`communities`) wählbar, **nicht** am
+MCP-Werkzeug – und vorerst auch nicht über die CLI (Begründung im ADR).
+
 ## 5. Fehler und Grenzfälle
 
 | Situation | Fehlercode |
 | --- | --- |
+| `k <= 0`, `communities <= 0` | `invalid_input` (vor dem Index geprüft) |
 | leere Anfrage | `invalid_input` (aus `rank_communities`) |
-| `k <= 0` | `invalid_input` |
 | Index-Datei fehlt | `not_found` |
-| kein Graph bzw. keine Communities | `constraint_violation` |
-| keine Community passt | kein Fehler – `community = None`, keine Zitate |
-| Community passt, aber keine Passage | kein Fehler – Community ohne Zitate |
+| kein Graph bzw. keine Communities | `constraint_violation` – **nicht** vom Fallback aufgefangen |
+| keine Community passt | kein Fehler – `communities = ()`, `fallback = true`, corpusweite Belege |
+| Communities passen, aber keine Passage | kein Fehler – `fallback = true`, corpusweite Belege |
+| auch corpusweit kein Treffer | kein Fehler – `fallback = true`, keine Zitate |
 
 ## 6. Determinismus
 
-Beide Stufen sind deterministisch: die Community-Auswahl über das stabile Ranking, die
-Verfeinerung über die Sortierung der Index-Suche mit Tie-Break.
+Beide Stufen sind deterministisch: die Community-Auswahl über das stabile Ranking (Tie-Break über
+die `community_id`), die Verfeinerung und der Fallback über die Sortierung der Index-Suche mit
+Tie-Break über die `chunk_id`.
 
 ## 7. Grenzen
 
-- **Nur eine Community.** Eine Frage, die zwei Themen verbindet, sieht nur eines davon.
 - **Kein Nachfassen.** Es gibt keine zweite Runde und keine Folgefragen.
-- **Erbt die Grenzen der Community-Bildung.** Ein schlechter Themenschnitt schlägt voll durch.
+- **Erbt die Grenzen der Community-Bildung.** Für 12 von 34 Gold-Fragen scort keine Community über
+  0, für 7 weitere genau eine – die Vereinigung kann also nur bei einer Minderheit wirken. Der
+  Grund ist das dünne Community-Dokument; das ist Gegenstand von V4.
+- **Die Kandidatenmenge kann groß werden.** Im Mittel rund zehn Paper, im Einzelfall 33 – dort
+  scheitert die Verfeinerung erstmals trotz erreichter Deckelung.
 - **Kein Widerspruchs-Nachweis.** Der Modus liefert Belege aus einem gemeinsamen Rahmen; ob sie
   sich tatsächlich widersprechen, beurteilt der lesende Agent.
+- **`answer_question` weist den Fallback nicht aus.** Dort ist nur der Modus vermerkt; die Belege
+  selbst tragen ihre Provenienz korrekt.

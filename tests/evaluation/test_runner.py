@@ -130,12 +130,13 @@ def test_global_reports_coverage_next_to_trivial_baselines(tmp_path: Path) -> No
 
 
 def test_drift_diagnosis_separates_selection_from_ranking(tmp_path: Path) -> None:
-    """DRIFT unterscheidet Community-Wahl (Deckelung) von der lokalen Verfeinerung."""
+    """DRIFT unterscheidet Community-Wahl, verfehlte Auswahl und Basic-Fallback."""
     report = evaluate_mode(_build(tmp_path), _GOLD, "drift", RunParameters())
     diagnoses = {score.qid: score.diagnosis for score in report.scores}
 
     assert diagnoses["G01"] == "in_community"
-    assert diagnoses["G02"] == "no_community"
+    # Ohne passende Community greift der Fallback – ausgewiesen statt still (ADR 0022).
+    assert diagnoses["G02"] == "fallback"
 
 
 def test_global_marks_a_thematically_wrong_community(tmp_path: Path) -> None:

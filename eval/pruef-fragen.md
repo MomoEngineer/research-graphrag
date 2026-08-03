@@ -18,6 +18,8 @@ Pragmatisches, festes Frageset zur Qualitätssicherung über alle **fünf Fraget
 
 > **Status Phase 10 / V1:** Die in A6 notierte Ursache des thematischen Abdriftens der Local-Fragen (D1/D2/N1/N2) ist behoben: Local verankert sein Ergebnis nicht mehr an **einem** Seed, sondern an den **Top-5** der Chunk-Wertung; die Chunk-Nachbarschaft entsteht je Seed und wird rang-fusioniert ([ADR 0021](../docs/adr/0021-local-multi-seed-phase10.md)). Der Modus liegt damit nicht mehr hinter Basic (Hit 0,618 → **0,912**, MRR 0,532 → **0,654**). Für die Sichtprüfung heißt das: Die Local-Antworten zeigen jetzt mehrere Anker-Passagen statt einer; die Fan-out-Nachbarn folgen weiterhin dem **ersten** Seed. `python -m scripts.qa` liefert unverändert **10/10** belegte Antworten.
 
+> **Status Phase 10 / V2:** Auch die in A6 notierte Ursache der DRIFT-Fragen (W1/W2) ist adressiert: DRIFT sucht nicht mehr in **einer** Community, sondern in der **Vereinigung der Top-5**, und fällt bei fehlender Community sichtbar auf die corpusweite Suche zurück ([ADR 0022](../docs/adr/0022-drift-community-union-and-fallback-phase10.md)). Für die Sichtprüfung heißt das: Die DRIFT-Antworten nennen jetzt mehrere Communities als Kontext, und eine **leere** Antwort gibt es nicht mehr – dafür muss man auf den Hinweis „Rückfall auf die corpusweite Suche" achten, denn dort sind die Belege **nicht** auf Community-Mitglieder beschränkt. Hit 0,235 → **0,647**, MRR 0,235 → **0,525** – wovon allerdings die Hälfte der Treffer aus dem Fallback stammt. `python -m scripts.qa` liefert unverändert **10/10** belegte Antworten.
+
 Für jede Frage werden festgehalten:
 
 - **Erwarteter Suchmodus** (gemäß Fragetyp-Mapping der README),

@@ -18,6 +18,14 @@
 > `seeds` und ist eine Liste. Unverändert bleiben die drei Bausteine als solche, der Fan-out über
 > den Paper-Ähnlichkeitsgraphen (weiterhin am Paper des ersten Seeds) und die Provenienz.
 
+> **Nachtrag (2026-08-03, [ADR 0022](0022-drift-community-union-and-fallback-phase10.md)):** Die
+> unten für **DRIFT** festgelegte Beschränkung auf die **beste** Community ist **abgelöst**. Die
+> lokale Verfeinerung läuft über die **Vereinigung der Top-5** Communities, und liefert dieser
+> Pfad keine Belege, fällt DRIFT sichtbar auf die Chunk-Suche ohne Paper-Filter zurück
+> (`DriftSearchResult.fallback`). `DriftSearchResult.community` heißt seither `communities` und
+> ist eine Liste. Unverändert bleiben die Global→Local-Grundidee, die Community-Provenienz und
+> das Fehlerverhalten bei fehlendem Graphen.
+
 ## Kontext
 
 [Roadmap.md](../../Roadmap.md) beschreibt für **Phase 4** einen „Query-Router" mit den

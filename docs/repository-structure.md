@@ -189,10 +189,18 @@ research-graphrag/
 > Baseline-Fingerprint ein; kein Schema-Eingriff, **kein Re-Ingest**
 > ([ADR 0021](adr/0021-local-multi-seed-phase10.md)).
 
+> **Phase 10 / V2** ändert ebenfalls keine Datei-Struktur: `retrieval/drift.py` vereinigt die
+> Mitglieder mehrerer Communities und fällt bei fehlenden Belegen auf die corpusweite Chunk-Suche
+> zurück. Sichtbar wird das im Contract – `DriftSearchResult.community` heißt `communities` und ist
+> eine Liste, neu ist `fallback` (Tool-Spec `search_drift` auf `0.2.0`). Die Zahl der Communities
+> ist ein Messparameter und geht in den Baseline-Fingerprint ein; kein Schema-Eingriff,
+> **kein Re-Ingest** ([ADR 0022](adr/0022-drift-community-union-and-fallback-phase10.md)).
+
 > **Geplant (Phasen 9–11, [Roadmap.md](../Roadmap.md)):** Aus **Phase 9** sind S0 (Machbarkeit)
 > und S1 (Kandidatensuche) erledigt; **S2** (Volltext-Download) bleibt zurückgestellt, weil die
-> Lizenzangaben der Quellen keine belastbare Whitelist tragen. Aus **Phase 10** ist **V1**
-> (Local Multi-Seed) erledigt; **V2–V4** und die Betriebsthemen der Phase 11 arbeiten die
+> Lizenzangaben der Quellen keine belastbare Whitelist tragen. Aus **Phase 10** sind **V1**
+> (Local Multi-Seed) und **V2** (DRIFT-Vereinigung + Fallback) erledigt; **V3–V4** und die
+> Betriebsthemen der Phase 11 arbeiten die
 > übrigen in [ADR 0016](adr/0016-quantitative-retrieval-evaluation-phase7.md) belegten
 > Retrieval-Befunde ab. Die abgeschlossenen Phasen 0–7 sind in der
 > [Roadmap-Historie](roadmap-historie.md) archiviert.

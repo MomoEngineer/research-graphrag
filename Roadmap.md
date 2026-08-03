@@ -20,22 +20,22 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 
 ## Stand: Phasen 0–7 (abgeschlossen)
 
-| Phase | Ergebnis | Entscheidung |
-| --- | --- | --- |
-| **0** – Fundament & Durchstich | `pip install -e .`, Ingestion (`pypdf` → TF-IDF/SQLite), belegte Antwort; **M1** erreicht | [ADR 0002](docs/adr/0002-venv-and-offline-dependency-strategy.md) · [ADR 0003](docs/adr/0003-offline-test-and-coverage-tooling.md) · [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md) |
-| **1** – Migration | 145 Paper nach `papers/`, [`Übersicht.md`](Übersicht.md) portiert (reduzierter Umfang: `recherche/` ausgelassen) | – |
-| **2** – Ingestion & Canonical Model | Canonical-Schema, Section-Heuristik, Chunking, DOI/arXiv, Qualitätsreport, Übersicht-Entwürfe | [ADR 0006](docs/adr/0006-canonical-model-phase2-scope.md) |
-| **3** – GraphRAG-Index | Paper-Ähnlichkeitsgraph (TF-IDF, *mutual top-k*) + Louvain-Communities + extraktive Zusammenfassungen | [ADR 0007](docs/adr/0007-graphrag-index-phase3-option-b.md) |
-| **4** – Retrieval & Router | Basic/Local/Global/DRIFT + Heuristik-Router + Provenienz-Assembler | [ADR 0008](docs/adr/0008-retrieval-and-query-router-phase4.md) |
-| **5** – MCP-Server (stdio) | Tools für Copilot, Fehlerübersetzung an der Grenze; **M2** erreicht | [ADR 0009](docs/adr/0009-mcp-server-stdio-phase5.md) |
-| **6** – Drop-in & QS | atomarer Index-Swap, `scripts.status`, `scripts.qa`; **M3** erreicht | [ADR 0010](docs/adr/0010-drop-in-workflow-and-qa-phase6.md) |
-| **7 / A1** – LLM-Bridge & Synthese | `generation/`, nummerierte Evidenz mit Zitier-Contract, Tool `answer_question` (Sampling opt-in) | [ADR 0012](docs/adr/0012-llm-bridge-and-answer-synthesis-phase7.md) |
-| **7 / A2** – Zitationsgraph | deterministische `CITES`-Kanten aus dem Referenzabschnitt, `get_citations` | [ADR 0011](docs/adr/0011-intra-corpus-citation-graph-phase7.md) |
-| **7 / A3** – Chunking-Verfeinerung | Reject-Regeln + Section-Absorption, Seite als Provenienz-**Range** statt Grenze | [ADR 0013](docs/adr/0013-chunking-refinement-phase7.md) |
-| **7 / A4** – Hybrid-Retrieval | handimplementiertes BM25 + TF-IDF per Rang-Fusion; Gold-Set und Harness entstehen | [ADR 0014](docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md) |
-| **7 / A5** – Rausch-Reduktion | Textnormalisierung, Bibliografie-Reject-Regeln, Keyword-Politik | [ADR 0015](docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md) |
-| **7 / A6** – Quantitative Evaluation | Modi-Ebene, Diagnosen, Lift, eingefrorene Baseline mit qid-genauem Regressions-Check | [ADR 0016](docs/adr/0016-quantitative-retrieval-evaluation-phase7.md) |
-| **7 / A7** – Router-Härtung | Match-Art je Signal, `basic` als Rückfallebene, ausgewiesene Konfidenz und Signale | [ADR 0017](docs/adr/0017-router-hardening-phase7.md) |
+| Phase                                       | Ergebnis                                                                                                               | Entscheidung                                                                                                                                                                                 |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **0** – Fundament & Durchstich       | `pip install -e .`, Ingestion (`pypdf` → TF-IDF/SQLite), belegte Antwort; **M1** erreicht                   | [ADR 0002](docs/adr/0002-venv-and-offline-dependency-strategy.md) · [ADR 0003](docs/adr/0003-offline-test-and-coverage-tooling.md) · [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md) |
+| **1** – Migration                    | 145 Paper nach`papers/`, [`Übersicht.md`](Übersicht.md) portiert (reduzierter Umfang: `recherche/` ausgelassen) | –                                                                                                                                                                                           |
+| **2** – Ingestion & Canonical Model  | Canonical-Schema, Section-Heuristik, Chunking, DOI/arXiv, Qualitätsreport, Übersicht-Entwürfe                       | [ADR 0006](docs/adr/0006-canonical-model-phase2-scope.md)                                                                                                                                     |
+| **3** – GraphRAG-Index               | Paper-Ähnlichkeitsgraph (TF-IDF,*mutual top-k*) + Louvain-Communities + extraktive Zusammenfassungen                | [ADR 0007](docs/adr/0007-graphrag-index-phase3-option-b.md)                                                                                                                                   |
+| **4** – Retrieval & Router           | Basic/Local/Global/DRIFT + Heuristik-Router + Provenienz-Assembler                                                     | [ADR 0008](docs/adr/0008-retrieval-and-query-router-phase4.md)                                                                                                                                |
+| **5** – MCP-Server (stdio)           | Tools für Copilot, Fehlerübersetzung an der Grenze;**M2** erreicht                                             | [ADR 0009](docs/adr/0009-mcp-server-stdio-phase5.md)                                                                                                                                          |
+| **6** – Drop-in & QS                 | atomarer Index-Swap,`scripts.status`, `scripts.qa`; **M3** erreicht                                          | [ADR 0010](docs/adr/0010-drop-in-workflow-and-qa-phase6.md)                                                                                                                                   |
+| **7 / A1** – LLM-Bridge & Synthese   | `generation/`, nummerierte Evidenz mit Zitier-Contract, Tool `answer_question` (Sampling opt-in)                   | [ADR 0012](docs/adr/0012-llm-bridge-and-answer-synthesis-phase7.md)                                                                                                                           |
+| **7 / A2** – Zitationsgraph          | deterministische`CITES`-Kanten aus dem Referenzabschnitt, `get_citations`                                          | [ADR 0011](docs/adr/0011-intra-corpus-citation-graph-phase7.md)                                                                                                                               |
+| **7 / A3** – Chunking-Verfeinerung   | Reject-Regeln + Section-Absorption, Seite als Provenienz-**Range** statt Grenze                                  | [ADR 0013](docs/adr/0013-chunking-refinement-phase7.md)                                                                                                                                       |
+| **7 / A4** – Hybrid-Retrieval        | handimplementiertes BM25 + TF-IDF per Rang-Fusion; Gold-Set und Harness entstehen                                      | [ADR 0014](docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)                                                                                                                               |
+| **7 / A5** – Rausch-Reduktion        | Textnormalisierung, Bibliografie-Reject-Regeln, Keyword-Politik                                                        | [ADR 0015](docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md)                                                                                                                     |
+| **7 / A6** – Quantitative Evaluation | Modi-Ebene, Diagnosen, Lift, eingefrorene Baseline mit qid-genauem Regressions-Check                                   | [ADR 0016](docs/adr/0016-quantitative-retrieval-evaluation-phase7.md)                                                                                                                         |
+| **7 / A7** – Router-Härtung         | Match-Art je Signal,`basic` als Rückfallebene, ausgewiesene Konfidenz und Signale                                   | [ADR 0017](docs/adr/0017-router-hardening-phase7.md)                                                                                                                                          |
 
 **Nicht umgesetzt aus Phase 7:** der Punkt **A8** (inkrementelles Update, Auto-Watcher). Er ist in dieser Fassung aufgelöst – das inkrementelle Update lebt als [B2](#b2--inkrementelles-update-statt-vollem-re-index) weiter, der Auto-Watcher ist [bewusst gestrichen](#b4--auto-watcher-bewusst-gestrichen) und wird durch den manuellen Intake der [Phase 8](#phase-8--korpus-zufluss-new_papers--intake) ersetzt.
 
@@ -81,13 +81,11 @@ Der bestehende Drop-in-Workflow (PDF nach `papers/` legen, `python -m scripts.in
 - **Eingangsordner `new_papers/`** (nicht versioniert, wie `papers/` und `data/`).
 - **Logik in `src/research_graphrag/intake.py`**, dünnes `scripts/intake.py` – konsistent zur Repo-Konvention „Logik im Paket, Skripte dünn" ([docs/repository-structure.md](docs/repository-structure.md)).
 - **Drei Prüfstufen mit fallender Sicherheit** – die Konsequenz hängt an der Sicherheit, nicht am Verdacht:
-
-  | Stufe | Kriterium | Grundlage | Konsequenz |
-  | --- | --- | --- | --- |
-  | 1 | **sha256** identisch | `data/manifest.json` (Beleg am Dateisystem nachgerechnet) | sicheres Duplikat → Datei in `new_papers/` wird **gelöscht** |
-  | 2 | **DOI oder arXiv-ID** identisch | `extract_identifiers` (Phase 2) gegen `papers.identifiers` im Index | **umgesetzt abweichend:** Quarantäne statt Löschung, siehe Statusblock oben |
-  | 3 | **Titel-Ähnlichkeit** | normalisierter Titel/Dateiname-Stamm gegen den Korpus | **unsicher** → keine Löschung, Datei bleibt liegen, Befund im Bericht |
-
+  | Stufe | Kriterium                             | Grundlage                                                               | Konsequenz                                                                          |
+  | ----- | ------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+  | 1     | **sha256** identisch            | `data/manifest.json` (Beleg am Dateisystem nachgerechnet)             | sicheres Duplikat → Datei in`new_papers/` wird **gelöscht**               |
+  | 2     | **DOI oder arXiv-ID** identisch | `extract_identifiers` (Phase 2) gegen `papers.identifiers` im Index | **umgesetzt abweichend:** Quarantäne statt Löschung, siehe Statusblock oben |
+  | 3     | **Titel-Ähnlichkeit**          | normalisierter Titel/Dateiname-Stamm gegen den Korpus                   | **unsicher** → keine Löschung, Datei bleibt liegen, Befund im Bericht       |
 - **Kein Treffer** → Datei wird nach `papers/` verschoben. Bei **Namenskollision mit abweichendem Hash** wird nichts überschrieben: Die Datei bleibt liegen und erscheint als Befund.
 - Danach **ein** Ingest-Lauf (`pipeline.ingest`, voller Re-Index mit atomarem Swap – unverändert), anschließend die Übersicht-Zeilen (siehe unten).
 - **Abschlussbericht:** übernommen / als Duplikat gelöscht (mit Hash und Fundstelle) / offen geblieben (mit Grund).
@@ -308,6 +306,39 @@ S0 ist beantwortet und dokumentiert (auch ein „lohnt sich nicht" ist ein gült
 
 ### V2 – DRIFT: Community-Auswahl statt Top-1, mit Rückfallebene
 
+> **Status: umgesetzt** ([ADR 0022](docs/adr/0022-drift-community-union-and-fallback-phase10.md)) –
+> beide Maßnahmen wie vorgesehen, aber mit einer **korrigierten Lesart der Akzeptanzkriterien**.
+>
+> **1. Beide Kriterien unten sind rechnerisch vorbestimmt.** DRIFTs erreichbare Deckelung bei
+> *m* Communities **ist** Globals `in_community` bei *n* = *m* – die geforderte „Deckelung ≥ 12"
+> tritt allein dadurch ein, dass *m* = 5 gewählt wird; und „`no_community` geht auf 0" ist
+> trivial, sobald ein Fallback existiert. Gemessen wurde deshalb an zwei anderen Fragen.
+>
+> **2. Die wichtigere Frage stand nicht in der Vorgabe – und ging gut aus.** Die heutige
+> Fehlerfreiheit der Verfeinerung beruhte darauf, dass sie über **eine** Community rankt; mit der
+> Vereinigung rankt sie über ein Vielfaches. Ergebnis: **keine** einzige zuvor gewonnene Frage
+> geht verloren, zwei rutschen um einen Rang (G13, V12 – jeweils 1 → 2). Die Treffer des
+> Community-Pfades steigen von **8 auf 11**, die Deckelung von **8 auf 12**. Bemerkenswert: *m* = 2
+> und *m* = 3 gewinnen zwar eine Frage, **verschlechtern** aber den MRR – nur *m* = 5 verbessert
+> beides. Ein am Gold-Set noch besseres *m* = 8 wurde **verworfen** (eine Frage von 34 =
+> Overfitting; 5 ist zudem der Default der Global Search).
+>
+> **3. Der Fallback trägt die Hälfte der Treffer – und zwar als Basic.** Mit Fallback erreicht
+> DRIFT **0,647 / 0,525**; er greift 12× und trifft dabei 11×. Von 22 Treffern stammen damit 11
+> aus der corpusweiten Suche. Die Aggregatzahl wäre ohne diese Aufteilung irreführend, deshalb
+> weist die Evaluation den Fallback als **eigene Diagnose** aus.
+>
+> **Zwei Befunde über die Vorgabe hinaus:** Die Vereinigung kann überhaupt nur bei **15 von 34**
+> Fragen wirken (für 12 scort keine Community über 0, für 7 genau eine) – der Engpass ist das
+> dünne Community-Dokument und damit **V4**. Und die in A6 gefeierte Eigenschaft
+> „Treffer == Deckelung" ist **aufgegeben** (11 von 12): Bei G15 wächst die Kandidatenmenge auf 33
+> Paper, und die Verfeinerung verfehlt das Ziel erstmals trotz erreichter Deckelung.
+>
+> `DriftSearchResult.community` heißt jetzt `communities` und ist eine Liste, neu ist `fallback`
+> (Spec `0.2.0`, bewusster Bruch – sonst behäuptete die Antwort eine falsche Herkunft). Ein
+> **defekter** Index bleibt ein Fehler. Kein Schema-Eingriff, **kein Re-Ingest**; `--check` belegt
+> qid-genau, dass Primitive, Basic, Local und Global **unberührt** bleiben.
+
 *Befund:* DRIFT erreicht **0,235 / 0,235** – und die Diagnose ist ungewöhnlich eindeutig: Treffer (8) und erreichbare Deckelung (8) sind **identisch**. Die lokale Verfeinerung arbeitet also **fehlerfrei**; **100 %** der Fehlschläge entstehen davor, in der Community-Wahl: **12×** wurde gar keine Community gefunden, **14×** die falsche. Global erreicht mit fünf Communities **12** Fragen – die Beschränkung auf die Top-1-Community kostet DRIFT damit rund ein Drittel.
 
 *Vorschlag:* (a) Kandidatenmenge aus den Top-*m* Communities vereinigen statt nur der besten; (b) wird **gar keine** Community gefunden, sichtbar auf Basic zurückfallen statt leer zu liefern – dasselbe Muster, das A7 im Router etabliert hat (Rückfallebene mit ausgewiesener Konfidenz, nicht stilles Scheitern).
@@ -379,16 +410,16 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 
 ## Querschnittsthemen: Risiken & Gegenmaßnahmen
 
-| Risiko | Gegenmaßnahme |
-|---|---|
-| PDF-Extraktionsrauschen (Layout, Formeln, Scans) | Qualitäts-Gates, Provenienz zum Original, Stichproben; Textnormalisierung ([ADR 0015](docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md)); Docling/Marker als späterer Ausbau ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)). |
-| **Datenverlust durch den Intake** (hartes Löschen) | `--dry-run`, Bericht mit Hash je gelöschter Datei, Sicherungsweg aus [B1](#b1--sicherung-des-korpus). |
-| **Unkuratierte PDFs aus dem Netz** (Scans, Fehlerseiten, Schadinhalte) | Lizenz-Whitelist, Content-Type-/Größenprüfung, selbst erzeugte Dateinamen, Robustheits-Flag für chunk-lose Dokumente. |
-| **Verwässerung des kuratierten Korpus** durch automatische Vorschläge | Vorschläge landen im Bericht, nie automatisch im Korpus; Zielgröße ist Präzision, nicht Menge. |
-| Entity Resolution (Synonyme, gleichnamige Autoren) | leichte Alias-/Synonym-Kuratierung; bei kleinem Korpus manuell handhabbar. |
-| Scheinsicherheit durch Summaries | Antworten immer mit Quellenankern/Original-TextUnits; für Fakten Basic/Local bevorzugen. |
-| Inkonsistenz bei inkrementellen Updates | Standard bleibt der volle Re-Index; inkrementell nur mit Identitäts-Nachweis ([B2](#b2--inkrementelles-update-statt-vollem-re-index)). |
-| Kosten/Datenschutz eines Index-LLM | entschärft durch Option B: **kein** Index-LLM (offline, TF-IDF/BM25); ein LLM kommt nur zur Abfragezeit über die Bridge ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)). |
+| Risiko                                                                        | Gegenmaßnahme                                                                                                                                                                                                                                        |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PDF-Extraktionsrauschen (Layout, Formeln, Scans)                              | Qualitäts-Gates, Provenienz zum Original, Stichproben; Textnormalisierung ([ADR 0015](docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md)); Docling/Marker als späterer Ausbau ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)). |
+| **Datenverlust durch den Intake** (hartes Löschen)                     | `--dry-run`, Bericht mit Hash je gelöschter Datei, Sicherungsweg aus [B1](#b1--sicherung-des-korpus).                                                                                                                                               |
+| **Unkuratierte PDFs aus dem Netz** (Scans, Fehlerseiten, Schadinhalte)  | Lizenz-Whitelist, Content-Type-/Größenprüfung, selbst erzeugte Dateinamen, Robustheits-Flag für chunk-lose Dokumente.                                                                                                                             |
+| **Verwässerung des kuratierten Korpus** durch automatische Vorschläge | Vorschläge landen im Bericht, nie automatisch im Korpus; Zielgröße ist Präzision, nicht Menge.                                                                                                                                                    |
+| Entity Resolution (Synonyme, gleichnamige Autoren)                            | leichte Alias-/Synonym-Kuratierung; bei kleinem Korpus manuell handhabbar.                                                                                                                                                                            |
+| Scheinsicherheit durch Summaries                                              | Antworten immer mit Quellenankern/Original-TextUnits; für Fakten Basic/Local bevorzugen.                                                                                                                                                             |
+| Inkonsistenz bei inkrementellen Updates                                       | Standard bleibt der volle Re-Index; inkrementell nur mit Identitäts-Nachweis ([B2](#b2--inkrementelles-update-statt-vollem-re-index)).                                                                                                                |
+| Kosten/Datenschutz eines Index-LLM                                            | entschärft durch Option B:**kein** Index-LLM (offline, TF-IDF/BM25); ein LLM kommt nur zur Abfragezeit über die Bridge ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).                                                             |
 
 ---
 

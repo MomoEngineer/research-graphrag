@@ -149,8 +149,10 @@ def search_global_tool(query: str, k: int = 5) -> dict[str, Any]:
     title="DRIFT Search (Widersprüche & Vergleiche)",
     description=(
         "Beantwortet Widerspruchs-/Vergleichsfragen über einen Global→Local-Hybrid: erst die "
-        "thematisch passendste Community, dann fokussierte Chunk-Belege innerhalb ihrer Paper. "
-        "Liefert nur Evidenz + Provenienz; die Antwort formuliert der Agent."
+        "thematisch passendsten Communities, dann fokussierte Chunk-Belege in der Vereinigung "
+        "ihrer Paper. Ohne passende Community wird sichtbar auf die corpusweite Suche "
+        "zurückgefallen (`fallback`). Liefert nur Evidenz + Provenienz; die Antwort formuliert "
+        "der Agent."
     ),
 )
 def search_drift_tool(query: str, k: int = 6) -> dict[str, Any]:
