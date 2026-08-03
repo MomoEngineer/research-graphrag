@@ -141,8 +141,18 @@ class IntakeReport:
 
 
 @dataclass(frozen=True)
-class _CorpusView:
-    """Read-only Prüfgrundlage: Hashes, gehärtete Identifikator-Schlüssel und Titel."""
+class CorpusView:
+    """Read-only Prüfgrundlage: Hashes, gehärtete Identifikator-Schlüssel und Titel.
+
+    Öffentlich, weil auch die Online-Kandidatensuche gegen **dieselbe** Grundlage prüft
+    (docs/adr/0020-online-candidate-search-phase9.md); zwei Wahrheiten darüber, ob ein Paper
+    bereits im Korpus liegt, wären eine Fehlerquelle.
+
+    Attributes:
+        sha256_to_name: Dateihash → Dateiname aus ``manifest.json``.
+        identifier_to_paper: Gehärteter ``(Art, Wert)``-Schlüssel → ``paper_id``.
+        titles: Normalisierter Titel → Originaltitel.
+    """
 
     sha256_to_name: dict[str, str]
     identifier_to_paper: dict[tuple[str, str], str]
@@ -205,15 +215,22 @@ def _corpus_titles(papers: list[CanonicalPaper]) -> dict[str, str]:
     return titles
 
 
-def _load_corpus(data_path: Path) -> _CorpusView:
-    """Lädt die Prüfgrundlage aus ``manifest.json`` und den Canonical-Papern."""
+def load_corpus(data_path: Path) -> CorpusView:
+    """Lädt die Prüfgrundlage aus ``manifest.json`` und den Canonical-Papern.
+
+    Args:
+        data_path: Datenverzeichnis mit ``manifest.json`` und ``canonical/``.
+
+    Returns:
+        Die Prüfgrundlage; fehlende Artefakte führen zu leeren Teilmengen, nicht zu einem Fehler.
+    """
     canonical_dir = data_path / "canonical"
     papers = (
         [CanonicalPaper.load_json(path) for path in sorted(canonical_dir.glob("*.json"))]
         if canonical_dir.is_dir()
         else []
     )
-    return _CorpusView(
+    return CorpusView(
         sha256_to_name=_manifest_hashes(data_path),
         identifier_to_paper=_identifier_keys(papers),
         titles=_corpus_titles(papers),
@@ -298,7 +315,7 @@ def _same_file(path: Path, sha256: str) -> bool:
 
 
 def _classify(
-    pdf: Path, raw: bytes, sha256: str, corpus: _CorpusView, papers_path: Path
+    pdf: Path, raw: bytes, sha256: str, corpus: CorpusView, papers_path: Path
 ) -> IntakeDecision:
     """Entscheidet über **eine** Eingangsdatei – rein lesend, ohne Seiteneffekt."""
 
@@ -445,7 +462,7 @@ def run_intake(
         raise DomainError(ErrorCode.NOT_FOUND, f"papers-Ordner fehlt: {papers_path}")
     ensure_overview_target(uebersicht_path)
 
-    corpus = _load_corpus(data_path)
+    corpus = load_corpus(data_path)
     decisions: list[IntakeDecision] = []
     for pdf in sorted(inbox_path.glob("*.pdf")):
         raw = pdf.read_bytes()

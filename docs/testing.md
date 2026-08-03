@@ -24,11 +24,12 @@ tests/
 ├─ overview/              # Übersicht-Entwürfe (Phase 2, 8)
 ├─ generation/            # LLM-Bridge: Port, Evidenz, Synthese, CLI-Pfad (Phase 7 / A1)
 ├─ evaluation/            # Gold-Set, Kennzahlen, Modus-Lauf, Baseline, Ausgabe (Phase 7 / A4 + A6) + Router-Contract (A7)
+├─ online/               # Transport-Port, Quellen-Adapter, Dedup, Bericht, CLI (Phase 9 / S1)
 ├─ integration/           # End-to-End-Durchstich (M1) + Drop-in-Freshness/atomarer Swap (Phase 6) + Status (Phase 7)
 └─ mcp_server/            # (Phase 5) Server-Contract via In-Memory-Client (test_server.py)
 ```
 
-> **Aktueller Stand (Phase 8):** Die Kernmodule (`errors`, `extraction/*` inkl. `model`/`structure`/`chunking`/`quality`, `indexing` inkl. `bm25`/`fusion`/`graph_index`/`citation_graph`, `retrieval/*` inkl. `basic`/`local`/`global_search`/`drift`/`router`/`provenance`/`paper`/`citations`, `generation/*` inkl. `provider`/`synthesis`/`evidence`/`answer`, `evaluation/*` inkl. `gold`/`metrics`/`runner`/`baseline`/`routing`/`report`, `intake`, `overview`, `pipeline`, `mcp_server/server`/`sampling`) sind mit Funktions-, Fehler-, Contract- und Property-Tests abgedeckt (Kernmodule ≥ 85 % Zeilenabdeckung, retrieval- und evaluation-Module 100 %; **436 Tests**). Der **Contract-Test** (Abschnitt 2.1) ist umgesetzt: ein **In-Memory-Client-Roundtrip** (`tests/mcp_server/test_server.py`) prüft alle acht Tools über das echte MCP-Protokoll (Erfolg + strukturierte Fehlerausgabe) – inklusive eines **echten Sampling-Roundtrips** für `answer_question` (Sampling-Callback als Client-Modell-Attrappe) und der sichtbaren Degradation ohne Sampling-Fähigkeit. **Phase 6** ergänzt einen **Freshness-/Atomaritäts-Regressionstest** (`tests/integration/test_phase6_freshness.py`: neue PDF → `ingest` → On-Read liefert sie sofort; unveränderte übersprungen; ein fehlgeschlagener Re-Index lässt den Alt-Index intakt) und eine **QS-Harness-Regression** (`tests/retrieval/test_qa.py`: das feste Prüf-Fragen-Set liefert wohlgeformte Provenienz). **Phase 7** ergänzt die Zitationsgraph-Tests (`tests/indexing/test_citation_graph.py`, `tests/retrieval/test_citations.py`), eine Status-Regression (`tests/integration/test_status.py`), die Synthese-Tests (`tests/generation/`), eine **Konsolen-Encoding-Regression** (`tests/integration/test_cli_encoding.py`: die CLI-Skripte laufen auch bei cp1252-Ausgabe durch) sowie die **Chunking-Verfeinerung** (`tests/extraction/test_structure.py`: Reject-Regeln und Section-Absorption inkl. Schutz des Referenzabschnitts; `tests/extraction/test_chunking.py`: Seiten-Range statt Seitengrenze). **Phase 7 / A4** ergänzt die Wertungs-Tests (`tests/indexing/test_bm25.py`: Term-Sättigung, Längennormalisierung, positive IDF; `tests/indexing/test_fusion.py`: RRF-Formel und Fusionsverhalten; `tests/indexing/test_tfidf_index.py`: **Äquivalenz des TF-IDF-Raums zum früheren `TfidfVectorizer`**, Wertungs-Varianten, Determinismus) und den Eval-Harness (`tests/retrieval/test_eval_retrieval.py`: mechanische Label-Ableitung, Hit@k/MRR, Gold-Set-Integrität).
+> **Aktueller Stand (Phase 9 / S1):** Die Kernmodule (`errors`, `extraction/*` inkl. `model`/`structure`/`chunking`/`quality`, `indexing` inkl. `bm25`/`fusion`/`graph_index`/`citation_graph`, `retrieval/*` inkl. `basic`/`local`/`global_search`/`drift`/`router`/`provenance`/`paper`/`citations`, `generation/*` inkl. `provider`/`synthesis`/`evidence`/`answer`, `evaluation/*` inkl. `gold`/`metrics`/`runner`/`baseline`/`routing`/`report`, `online/*` inkl. `transport`/`sources`/`candidates`/`search`/`report`, `intake`, `overview`, `pipeline`, `mcp_server/server`/`sampling`) sind mit Funktions-, Fehler-, Contract- und Property-Tests abgedeckt (Kernmodule ≥ 85 % Zeilenabdeckung, retrieval- und evaluation-Module 100 %; **546 Tests**). Der **Contract-Test** (Abschnitt 2.1) ist umgesetzt: ein **In-Memory-Client-Roundtrip** (`tests/mcp_server/test_server.py`) prüft alle acht Tools über das echte MCP-Protokoll (Erfolg + strukturierte Fehlerausgabe) – inklusive eines **echten Sampling-Roundtrips** für `answer_question` (Sampling-Callback als Client-Modell-Attrappe) und der sichtbaren Degradation ohne Sampling-Fähigkeit. **Phase 6** ergänzt einen **Freshness-/Atomaritäts-Regressionstest** (`tests/integration/test_phase6_freshness.py`: neue PDF → `ingest` → On-Read liefert sie sofort; unveränderte übersprungen; ein fehlgeschlagener Re-Index lässt den Alt-Index intakt) und eine **QS-Harness-Regression** (`tests/retrieval/test_qa.py`: das feste Prüf-Fragen-Set liefert wohlgeformte Provenienz). **Phase 7** ergänzt die Zitationsgraph-Tests (`tests/indexing/test_citation_graph.py`, `tests/retrieval/test_citations.py`), eine Status-Regression (`tests/integration/test_status.py`), die Synthese-Tests (`tests/generation/`), eine **Konsolen-Encoding-Regression** (`tests/integration/test_cli_encoding.py`: die CLI-Skripte laufen auch bei cp1252-Ausgabe durch) sowie die **Chunking-Verfeinerung** (`tests/extraction/test_structure.py`: Reject-Regeln und Section-Absorption inkl. Schutz des Referenzabschnitts; `tests/extraction/test_chunking.py`: Seiten-Range statt Seitengrenze). **Phase 7 / A4** ergänzt die Wertungs-Tests (`tests/indexing/test_bm25.py`: Term-Sättigung, Längennormalisierung, positive IDF; `tests/indexing/test_fusion.py`: RRF-Formel und Fusionsverhalten; `tests/indexing/test_tfidf_index.py`: **Äquivalenz des TF-IDF-Raums zum früheren `TfidfVectorizer`**, Wertungs-Varianten, Determinismus) und den Eval-Harness (`tests/retrieval/test_eval_retrieval.py`: mechanische Label-Ableitung, Hit@k/MRR, Gold-Set-Integrität).
 
 > **Phase 7 / A5** ergänzt die Rausch-Reduktion: `tests/extraction/test_normalization.py`
 > (Ligatur-Reparatur, Entfernen der Glyph-Artefakte, Erhalt der mathematischen Alphanumerics und
@@ -67,6 +68,23 @@ tests/
 > zweiten Laufs, die beiden Härtungen des Identifikator-Vergleichs (nicht belegter und
 > mehrdeutiger Wert) sowie das Robustheits-Gate für Dateien ohne PDF-Signatur und für nicht
 > parsebare PDFs ([ADR 0019](adr/0019-corpus-intake-new-papers-phase8.md)).
+
+> **Phase 9 / S1** ergänzt den Testbaum `tests/online/`. Die Leitidee ist, dass **kein Test das
+> Netz berührt**: Der Transport liegt hinter einem Port, den die Tests durch einen Fake ersetzen,
+> und die Quellen-Antworten sind Fixtures, die die **Struktur** der realen APIs nachbilden
+> (Namensräume, invertierter Abstract-Index) – mit erfundenen Inhalten, denn fremde Abstracts
+> gehören nicht in ein Repository. Besonderes Gewicht liegt auf zwei Punkten: der
+> **quellenübergreifenden Dublettenerkennung** (dasselbe Paper aus arXiv und OpenAlex unter
+> verschiedenen Identifikatoren) und der **Entschärfung fremder Inhalte** – ein als Titel
+> geschmuggelter Markdown-Link, Tabellen-Pipes, Zeilenumbrüche und Steuerzeichen dürfen die
+> Berichtstruktur nicht verändern. Dazu kommen die Grenzen des Transports (fremdes URL-Schema,
+> Größenlimit, defektes Chunking) und der Nachweis, dass ein Fehler **sauber** endet: klare
+> Meldung mit Fehlerkategorie statt Stacktrace.
+>
+> **Bewusste Ausnahme beim Coverage-Richtwert:** `online/transport.py` liegt darunter, weil der
+> Socket-, TLS- und SSPI-Pfad plattform- und netzgebunden ist. Getestet ist alles, was ohne
+> Verbindung prüfbar ist; der Rest wäre nur mit echtem Netz messbar und damit kein Offline-Test
+> ([ADR 0020](adr/0020-online-candidate-search-phase9.md)).
 
 ---
 

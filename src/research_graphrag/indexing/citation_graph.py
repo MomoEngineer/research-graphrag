@@ -101,12 +101,27 @@ def normalize_title(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
 
 
-def title_of(paper: CanonicalPaper) -> str:
-    """Leitet den Paper-Titel aus der ``source_uri`` ab (Dateiname-Stamm, URL-dekodiert)."""
-    name = unquote(paper.source_uri.rsplit("/", 1)[-1])
+def title_from_uri(source_uri: str) -> str:
+    """Leitet den Paper-Titel aus einer ``source_uri`` ab (Dateiname-Stamm, URL-dekodiert).
+
+    Öffentlich, weil auch der Online-Modus einen Titel benötigt, dort aber nur die ``source_uri``
+    aus dem Index vorliegt (docs/adr/0020-online-candidate-search-phase9.md).
+
+    Args:
+        source_uri: Quellverweis eines Papers.
+
+    Returns:
+        Den Dateinamen ohne Pfad und ohne ``.pdf``-Endung.
+    """
+    name = unquote(source_uri.rsplit("/", 1)[-1])
     if name.lower().endswith(".pdf"):
         name = name[:-4]
     return name
+
+
+def title_of(paper: CanonicalPaper) -> str:
+    """Leitet den Paper-Titel aus der ``source_uri`` ab (Dateiname-Stamm, URL-dekodiert)."""
+    return title_from_uri(paper.source_uri)
 
 
 def _reference_section_ids(paper: CanonicalPaper) -> set[str]:

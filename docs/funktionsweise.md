@@ -131,6 +131,35 @@ gemessen wurden – steht in
 [ADR 0019](adr/0019-corpus-intake-new-papers-phase8.md); die innere Funktionsweise beschreibt die
 [Modul-Doku](../src/research_graphrag/doc/intake.md).
 
+### Und davor: woher ein Kandidat überhaupt kommt
+
+Der Online-Modus ist der einzige Teil des Systems, der eine Netzverbindung öffnet – und er ist
+**separat startbar**, damit das eine bewusste Handlung bleibt. Er sucht nicht frei, sondern
+ausgehend vom eigenen Bestand:
+
+```mermaid
+flowchart LR
+    A["Community-Keywords<br/>oder Seed-Paper-Titel"] --> B["SearchQuery<br/>mit Begründung"]
+    B --> C["arXiv"]
+    B --> D["OpenAlex"]
+    C --> E["zusammenführen<br/>über ID oder Titel"]
+    D --> E
+    E --> F{"schon im Korpus?<br/>(Intake-Logik)"}
+    F -- ja --> G["mit Beleg<br/>im Bericht ausweisen"]
+    F -- nein --> H{"aktuell genug?"}
+    H -- nein --> I["verworfen,<br/>in der Bilanz gezählt"]
+    H -- ja --> J["Vorschlag in<br/>data/online_candidates.md"]
+```
+
+Drei Dinge sind daran wesentlich. **Erstens** endet der Weg bei einem Bericht, nicht im Korpus –
+wer einen Vorschlag übernehmen will, lädt die Datei selbst und legt sie in `new_papers/`, wo der
+Intake sie prüft. Es gibt genau **einen** Weg in den Korpus. **Zweitens** ist die Frage „kenne ich
+das schon?" nicht neu implementiert, sondern dieselbe wie beim Intake; zwei Wahrheiten darüber
+wären eine Fehlerquelle. **Drittens** liegt der gesamte Netzzugang hinter einem injizierbaren
+Port, weshalb alles außer dem Transport ohne Netz testbar ist
+([ADR 0020](adr/0020-online-candidate-search-phase9.md),
+[Modul-Doku](../src/research_graphrag/online/doc/search.md)).
+
 ---
 
 ## 3. Extraktion: von Seitentext zu Chunks
@@ -454,4 +483,5 @@ erkennbar.
 | `generation/` | [provider](../src/research_graphrag/generation/doc/provider.md) · [synthesis](../src/research_graphrag/generation/doc/synthesis.md) · [evidence](../src/research_graphrag/generation/doc/evidence.md) · [answer](../src/research_graphrag/generation/doc/answer.md) |
 | `evaluation/` | [gold](../src/research_graphrag/evaluation/doc/gold.md) · [metrics](../src/research_graphrag/evaluation/doc/metrics.md) · [runner](../src/research_graphrag/evaluation/doc/runner.md) · [baseline](../src/research_graphrag/evaluation/doc/baseline.md) · [routing](../src/research_graphrag/evaluation/doc/routing.md) · [report](../src/research_graphrag/evaluation/doc/report.md) |
 | `overview/` | [drafts](../src/research_graphrag/overview/doc/drafts.md) |
+| `online/` | [transport](../src/research_graphrag/online/doc/transport.md) · [sources](../src/research_graphrag/online/doc/sources.md) · [candidates](../src/research_graphrag/online/doc/candidates.md) · [search](../src/research_graphrag/online/doc/search.md) · [report](../src/research_graphrag/online/doc/report.md) |
 | `mcp_server/` | [server](../src/research_graphrag/mcp_server/doc/server.md) · [sampling](../src/research_graphrag/mcp_server/doc/sampling.md) |

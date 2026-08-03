@@ -1,0 +1,105 @@
+# Modul-Doku: `report.py`
+
+| Feld | Wert |
+| --- | --- |
+| **Modul** | `src/research_graphrag/online/report.py` |
+| **Paket** | `online` – Kandidatensuche im Netz |
+| **Phase** | 9 / S1 |
+| **Grundlagen** | [ADR 0020](../../../../docs/adr/0020-online-candidate-search-phase9.md), [ADR 0010](../../../../docs/adr/0010-drop-in-workflow-and-qa-phase6.md) |
+
+---
+
+## 1. Zweck
+
+Hält das Ergebnis eines Laufs und schreibt es anhängend nach `data/online_candidates.md`. Zwei
+Eigenschaften sind dabei nicht verhandelbar: Der Bericht ist **append-only**, und fremder Text
+darf seine Struktur nicht verändern.
+
+## 2. Öffentliche Schnittstelle
+
+| Symbol | Art | Aufgabe |
+| --- | --- | --- |
+| `DiscoveryReport` | Dataclass | Ergebnis eines Laufs (Anfragen, Quellen, Bilanz, Kandidaten) |
+| `render_report` | Funktion | Rendert einen Lauf als Markdown-Abschnitt |
+| `append_report` | Funktion | Hängt den Abschnitt byte-erhaltend und atomar an |
+| `store_raw` | Funktion | Legt die Rohantworten datiert ab |
+| `escape_markdown` | Funktion | Entschärft fremden Text |
+| `safe_url` | Funktion | Prüft einen fremden Verweis |
+| `REPORT_NAME`, `RAW_DIR_NAME` | Konstanten | Dateiname und Ablageverzeichnis |
+| `MAX_TITLE_CHARS`, `MAX_ABSTRACT_CHARS`, `MAX_URL_CHARS` | Konstanten | Längengrenzen |
+
+## 3. Ablauf
+
+```mermaid
+flowchart TD
+    A["DiscoveryReport"] --> B["render_report"]
+    B --> C["Kopf: Anfragen, Quellenstatus, Bilanz"]
+    B --> D["je Kandidat: escape_markdown + safe_url"]
+    B --> E["bereits im Korpus: Titel + Beleg"]
+    C --> F["append_report"]
+    D --> F
+    E --> F
+    F --> G{"Datei vorhanden?"}
+    G -- nein --> H["Kopfzeile anlegen"]
+    G -- ja --> I["Bytes unverändert übernehmen"]
+    H --> J["Temporärdatei schreiben"]
+    I --> J
+    J --> K["os.replace"]
+```
+
+### Fremder Text ist Eingabe, keine Formatierung
+
+Titel und Abstracts stammen aus fremden Diensten. Ohne Behandlung könnte ein Titel die
+Berichtstruktur zerstören oder einen anklickbaren Verweis erzeugen:
+
+| Angriff | Wirkung ohne Behandlung | Behandlung |
+| --- | --- | --- |
+| `[klick](javascript:…)` | anklickbarer Link im Bericht | `[` und `]` werden maskiert |
+| Zeilenumbruch plus `## …` | fremde Überschrift im Bericht | Umbrüche entfallen |
+| `\|` in einem Titel | zerlegt eine Tabellenzeile | maskiert |
+| Steuerzeichen | unlesbare Datei | entfernt |
+| sehr langer Abstract | Bericht wird geflutet | gekürzt mit `…` |
+
+Gekürzt wird **vor** dem Maskieren, damit die Grenze auf den Inhalt wirkt und nicht auf die
+Escape-Zeichen. Verweise werden nur ausgegeben, wenn sie mit `http(s)` beginnen und die Länge
+einhalten – und dann als Klartext in Backticks, nicht als Markdown-Link.
+
+### Warum byte-erhaltend angehängt wird
+
+`write_text` würde unter Windows alle Zeilenenden auf CRLF drehen und damit jede vorhandene Zeile
+verändern. Der Bericht wächst über viele Läufe; ein Verfahren, das bei jedem Lauf die ganze Datei
+umschreibt, macht Änderungen unlesbar. Deshalb dasselbe Muster wie bei `Übersicht.md`:
+vorhandene Bytes übernehmen, Zeilenende erkennen, über eine Temporärdatei mit `os.replace`
+schreiben.
+
+### Was der Bericht ausweist
+
+Neben den Vorschlägen enthält jeder Abschnitt die **Bilanz** (Treffer, bereits im Korpus, zu alt,
+neu), den **Status jeder Quelle** und – für jeden Vorschlag – die **Begründung**, aus welcher
+Anfrage er stammt. Zusätzlich werden die bereits vorhandenen Paper **mit Beleg** aufgeführt: Ohne
+sie ließe sich die Dedup-Entscheidung nicht nachprüfen.
+
+## 4. Zusammenspiel
+
+Aufgerufen von `scripts/discover.py` nach einem Lauf aus [`search`](search.md); verarbeitet
+`Candidate` und `KnownCandidate` aus [`candidates`](candidates.md) sowie `SourceResult` aus
+[`sources`](sources.md). Schreibt ausschließlich unterhalb von `data/`.
+
+## 5. Fehler und Grenzfälle
+
+Das Modul wirft keine fachlichen Fehler; Dateisystemfehler werden nicht abgefangen. Ein Lauf ohne
+Treffer wird ausdrücklich als solcher vermerkt statt einen leeren Abschnitt zu erzeugen. Bricht
+das Schreiben ab, bleibt der bisherige Bericht dank `os.replace` unversehrt, und die
+Temporärdatei wird entfernt.
+
+## 6. Determinismus
+
+Für ein gegebenes `DiscoveryReport` ist die Ausgabe zeichengenau reproduzierbar. Der Zeitstempel
+stammt aus dem Lauf, nicht aus dem Rendern – dasselbe Ergebnis lässt sich also erneut rendern.
+
+## 7. Grenzen
+
+Der Bericht ist **kein** Bestand: Es wird nicht nach `papers/` oder `new_papers/` geschrieben und
+nicht in `Übersicht.md`. Der Weg in den Korpus führt ausschließlich über den Intake
+([ADR 0019](../../../../docs/adr/0019-corpus-intake-new-papers-phase8.md)). Alte Abschnitte werden
+nie verändert oder entfernt – Aufräumen ist Sache des Menschen.

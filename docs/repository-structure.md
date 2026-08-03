@@ -27,7 +27,7 @@ research-graphrag/
 │  ├─ glossary.md
 │  └─ adr/
 │     ├─ README.md
-│     └─ 0001-*.md … 0019-*.md
+│     └─ 0001-*.md … 0020-*.md
 ├─ templates/
 │  ├─ tool-spec.md
 │  ├─ module-doc.md              # Vorlage Modul-Doku (ADR 0018)
@@ -44,6 +44,7 @@ research-graphrag/
 │  ├─ update_overview.py         # Entwurfszeilen → Übersicht.md (append-only, Option B)
 │  ├─ graph_info.py              # Community-Übersicht (read-only, Phase 3)
 │  ├─ citations.py               # Zitationen eines Papers (read-only, Phase 7 / A2)
+│  ├─ discover.py                # Online-Kandidatensuche ohne Download (separat startbar, Phase 9 / S1)
 │  ├─ status.py                  # Read-only Index-/Korpus-Status + Konsistenz (Phase 6)
 │  ├─ qa.py                      # Prüf-Fragen je Modus durchspielen (QS-Harness, Phase 6; `--quantitativ` seit Phase 7 / A6)
 │  └─ eval_retrieval.py          # Evaluation: Primitive/Modi, Baseline, Regressions-Check, Router (Phase 7 / A4 + A6 + A7)
@@ -94,6 +95,13 @@ research-graphrag/
 │  │  ├─ baseline.py             #   Fingerprint, Einfrieren, qid-genauer Vergleich
 │  │  ├─ routing.py              #   Router-Gold-Set + Contract-Treue (Phase 7 / A7)
 │  │  └─ report.py               #   Textausgabe
+│  ├─ online/                    # Online-Kandidatensuche, separat startbar (Phase 9 / S1)
+│  │  ├─ doc/                    #   Modul-Dokus
+│  │  ├─ transport.py            #   HttpClient-Port + Proxy-Transport (einzige Netzstelle)
+│  │  ├─ sources.py              #   Adapter arXiv + OpenAlex
+│  │  ├─ candidates.py           #   Kandidaten-Modell + Dedup (nutzt die Intake-Logik)
+│  │  ├─ search.py               #   Anfragen aus dem Bestand + Laufsteuerung
+│  │  └─ report.py               #   append-only Bericht + Ablage der Rohantworten
 │  └─ mcp_server/                # MCP-Server (stdio), Phase 5
 │     ├─ doc/                    #   Modul-Dokus (server.py, sampling.py)
 │     ├─ server.py               #   FastMCP: 8 Tools + Fehlerübersetzung an der Grenze
@@ -110,7 +118,7 @@ research-graphrag/
 ├─ new_papers/                   # Eingangsordner des Intake (nicht versioniert, außer README.md)
 │  └─ _duplikate/                #   Quarantäne der Identifikator-Duplikate (vom Intake angelegt)
 ├─ papers/                       # PDF-Korpus (nicht versioniert)
-├─ data/                         # Canonical JSON 0.4.0, manifest.json, index/, quality_report.*, intake_log.md (nicht versioniert)
+├─ data/                         # Canonical JSON 0.4.0, manifest.json, index/, quality_report.*, intake_log.md, online_candidates.md, online_raw/ (nicht versioniert)
 └─ tests/                        # gespiegelt zu src/research_graphrag/
    ├─ conftest.py                # anyio-Backend + make_pdf-Fixture
    ├─ test_smoke.py
@@ -124,6 +132,7 @@ research-graphrag/
    ├─ overview/                  # Übersicht-Entwürfe (Phase 2)
    ├─ generation/                # LLM-Bridge: Port, Evidenz, Synthese, CLI-Pfad (Phase 7 / A1)
    ├─ evaluation/                # Gold-Set, Kennzahlen, Modus-Lauf, Baseline, Ausgabe (Phase 7 / A6) + Router-Messung (A7)
+   ├─ online/                   # Transport-Port, Quellen-Adapter, Dedup, Bericht, CLI (Phase 9 / S1)
    ├─ mcp_server/                # Server-Contract via In-Memory-Client (Phase 5) + Sampling (Phase 7)
    └─ integration/               # End-to-End-Durchstich (M1) + Drop-in-Freshness/atomarer Swap + Status (Phase 6/7)
 ```
@@ -162,9 +171,19 @@ research-graphrag/
 > abgelöst und wird nur noch gelesen. Der Flag-Katalog erhält `no_chunks`. Kein Schema-Eingriff,
 > **kein Re-Ingest** ([ADR 0019](adr/0019-corpus-intake-new-papers-phase8.md)).
 
-> **Geplant (Phasen 9–11, [Roadmap.md](../Roadmap.md)):** **Phase 9** ergänzt einen separat
-> startbaren Online-Research-Modus, der ausschließlich nach `new_papers/` schreibt und den Kern
-> netzfrei lässt. Die Phasen 10 und 11
+> **Phase 9 / S1:** Neu ist das Paket `online/` (fünf Module) samt `scripts/discover.py`. Der
+> gesamte Netzzugang liegt in `online/transport.py` hinter einem **injizierbaren Port**; alles
+> übrige ist netzfrei und offline getestet. Die Duplikatprüfung wird aus `intake.py`
+> **wiederverwendet** (`load_corpus`, `CorpusView`, `best_title_match` sind dafür öffentlich
+> geworden, ebenso `citation_graph.title_from_uri`). `certifi` und `pywin32` sind jetzt explizit
+> gepinnt – beide waren transitiv vorhanden und werden nun direkt importiert. Geschrieben wird
+> ausschließlich `data/online_candidates.md` (append-only) und `data/online_raw/`; kein
+> Schema-Eingriff, **kein Re-Ingest**, **kein** MCP-Werkzeug
+> ([ADR 0020](adr/0020-online-candidate-search-phase9.md)).
+
+> **Geplant (Phasen 9–11, [Roadmap.md](../Roadmap.md)):** Aus **Phase 9** sind S0 (Machbarkeit)
+> und S1 (Kandidatensuche) erledigt; **S2** (Volltext-Download) bleibt zurückgestellt, weil die
+> Lizenzangaben der Quellen keine belastbare Whitelist tragen. Die Phasen 10 und 11
 > arbeiten die in [ADR 0016](adr/0016-quantitative-retrieval-evaluation-phase7.md) belegten
 > Retrieval-Befunde sowie Betriebsthemen ab. Die abgeschlossenen Phasen 0–7 sind in der
 > [Roadmap-Historie](roadmap-historie.md) archiviert.
@@ -179,6 +198,7 @@ research-graphrag/
 | `src/research_graphrag/mcp_server/` | MCP-Server (stdio) mit Tools + Provenienz | 5 |
 | `src/research_graphrag/generation/` | LLM-Bridge: Evidenz-Aufbereitung + optionale Antwort-Synthese | 7 |
 | `src/research_graphrag/evaluation/` | Quantitative Evaluation: Retrieval (Gold-Set, Kennzahlen, Baseline) und Router-Contract | 7 |
+| `src/research_graphrag/online/` | Online-Kandidatensuche (Transport-Port, arXiv/OpenAlex, Dedup, Bericht) | 9 |
 | `src/research_graphrag/keywords.py` | kuratierte Keyword-Politik für extraktive Keyword-Listen | 7 |
 
 ---

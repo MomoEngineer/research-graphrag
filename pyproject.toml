@@ -18,8 +18,12 @@ license = { text = "Proprietary" }
 # (TF-IDF), networkx (Graph + Louvain), SQLite (stdlib). numpy wird seit der
 # handimplementierten BM25-Wertung direkt importiert und daher explizit gepinnt
 # (siehe docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md); es war zuvor eine
-# transitive Abhängigkeit von scikit-learn. Alle Pins sind in der
-# WinPython-Basis vorhanden, sodass `pip install -e .` offline durchläuft
+# transitive Abhängigkeit von scikit-learn. Nach derselben Regel sind certifi und
+# pywin32 gepinnt: Beide waren transitiv vorhanden (mcp -> httpx -> certifi bzw.
+# mcp -> pywin32 unter Windows) und werden seit dem Online-Modus direkt importiert
+# (siehe docs/adr/0020-online-candidate-search-phase9.md) – certifi als
+# CA-Bundle, pywin32 für die Proxy-Authentifizierung über SSPI. Alle Pins sind in
+# der WinPython-Basis vorhanden, sodass `pip install -e .` offline durchläuft
 # (siehe docs/adr/0002-venv-and-offline-dependency-strategy.md). Der MS-GraphRAG-
 # Stack (docling/graphrag/lancedb) ist offline nicht beschaffbar und daher NICHT
 # Teil der Abhängigkeiten (ADR 0005).
@@ -30,6 +34,8 @@ dependencies = [
     "scikit-learn==1.8.0",
     "networkx==3.6.1",
     "numpy==2.3.5",
+    "certifi==2025.11.12",
+    "pywin32==311; sys_platform == 'win32'",
 ]
 
 [project.optional-dependencies]

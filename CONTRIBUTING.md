@@ -46,6 +46,7 @@ Dieses Dokument ist das zentrale Regelwerk für die Arbeit am Repository **Resea
 - **Index & Retrieval:** Offline-Hybrid – TF-IDF (`scikit-learn`) + handimplementiertes BM25 mit Rang-Fusion (`numpy`, [ADR 0014](docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)) + `networkx`/Louvain + SQLite ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).
 - **Tests:** `pytest`; asynchrone Tests über das `anyio`-Plugin (offline, siehe [ADR 0003](docs/adr/0003-offline-test-and-coverage-tooling.md)).
 - **Statische Qualität:** `ruff` (Lint + Format) und `mypy` (Typen).
+- **Netzzugang (nur Online-Modus):** ausschließlich in `online/transport.py` hinter einem injizierbaren Port – CONNECT-Tunnel mit Proxy-Authentifizierung über `pywin32`/SSPI, TLS-Verifikation über `certifi`, Endpunkt aus `RESEARCH_GRAPHRAG_PROXY` ([ADR 0020](docs/adr/0020-online-candidate-search-phase9.md)). Der Kern bleibt netzfrei.
 - **Dependencies/Lockfile:** `pip` + `requirements.lock` (Offline-Kompromiss, [ADR 0002](docs/adr/0002-venv-and-offline-dependency-strategy.md)). `uv` ist das bevorzugte Ziel, sobald ein Mirror verfügbar ist.
 - **LLM/Embeddings:** LLM-Bridge über MCP-Sampling (Client-Modell) zur Abfragezeit; Index-Backend als Offline-Hybrid entschieden ([ADR 0004](docs/adr/0004-llm-bridge-via-mcp-sampling.md), [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).
 

@@ -1,6 +1,6 @@
 """Smoke-Test: Das Paket und seine Unterpakete sind importierbar und versioniert.
 
-Dieser Test hält die Test-Suite grün und prüft die zugesagte Struktur (src-Layout mit sieben
+Dieser Test hält die Test-Suite grün und prüft die zugesagte Struktur (src-Layout mit acht
 Unterpaketen).
 """
 
@@ -17,7 +17,7 @@ def test_version_is_exposed() -> None:
 
 
 def test_subpackages_importable() -> None:
-    """Die sieben Pipeline-/Server-Unterpakete sind importierbar."""
+    """Die acht Pipeline-/Server-Unterpakete sind importierbar."""
     for name in (
         "extraction",
         "indexing",
@@ -25,6 +25,7 @@ def test_subpackages_importable() -> None:
         "retrieval",
         "generation",
         "evaluation",
+        "online",
         "mcp_server",
     ):
         module = importlib.import_module(f"research_graphrag.{name}")

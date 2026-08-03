@@ -31,6 +31,8 @@ Alles, was aus einer PDF-Datei ein durchsuchbares, belegfähiges Artefakt macht.
 | --- | --- | --- | --- | --- |
 | **Drop-in-Ingestion** | PDF ablegen, ein Befehl, fertig: Extraktion, Index, Graphen und Qualitätsreport in einem Lauf | `python -m scripts.ingest` | [pipeline](../src/research_graphrag/doc/pipeline.md) | [0005](adr/0005-graphrag-index-backend-open.md) |
 | **Korpus-Intake mit Duplikatprüfung** | Eingangsordner `new_papers/`: prüft in drei Stufen (Hash, DOI/arXiv, Titel), übernimmt Neues, indiziert und ergänzt die Übersicht – mit wirksamem `--dry-run` | `python -m scripts.intake` | [intake](../src/research_graphrag/doc/intake.md) | [0019](adr/0019-corpus-intake-new-papers-phase8.md) |
+| **Online-Kandidatensuche** | Separat startbar: sucht bei arXiv und OpenAlex zu einer Anfrage **aus dem eigenen Bestand**, dedupliziert mit der Intake-Logik gegen den Korpus und schreibt einen append-only Bericht – **kein Download**, kein MCP-Werkzeug | `python -m scripts.discover` | [online/search](../src/research_graphrag/online/doc/search.md), [online/sources](../src/research_graphrag/online/doc/sources.md), [online/candidates](../src/research_graphrag/online/doc/candidates.md), [online/report](../src/research_graphrag/online/doc/report.md) | [0020](adr/0020-online-candidate-search-phase9.md) |
+| **Netzzugang hinter einem Port** | Die einzige Stelle mit Netzverbindung: CONNECT-Tunnel mit Proxy-Authentifizierung, certifi-Verifikation, Größen- und Schema-Grenzen | `RESEARCH_GRAPHRAG_PROXY` | [online/transport](../src/research_graphrag/online/doc/transport.md) | [0020](adr/0020-online-candidate-search-phase9.md) |
 | **Dedup über Datei-Hash** | Nur neue oder geänderte PDFs werden neu extrahiert; ein Schema-Wechsel erzwingt die Neu-Extraktion trotz unveränderter Datei | `data/manifest.json` | [pipeline](../src/research_graphrag/doc/pipeline.md) | [0006](adr/0006-canonical-model-phase2-scope.md) |
 | **PDF → Canonical JSON** | Seitentext, Abschnitte, Chunks, Identifikatoren und Qualitäts-Flags in einem versionierten Zwischenformat | `extract_pdf` | [extraction/pdf](../src/research_graphrag/extraction/doc/pdf.md), [extraction/model](../src/research_graphrag/extraction/doc/model.md) | [0005](adr/0005-graphrag-index-backend-open.md), [0006](adr/0006-canonical-model-phase2-scope.md) |
 | **Textnormalisierung** | Repariert Ligaturen, die Wörter unauffindbar machen, und entfernt nicht dekodierbare Glyph-Artefakte | in `extract_pdf` vor der Strukturanalyse | [extraction/normalization](../src/research_graphrag/extraction/doc/normalization.md) | [0015](adr/0015-noise-reduction-keywords-and-sections-phase7.md) |
@@ -143,3 +145,7 @@ Damit die Landkarte auch die Ränder zeigt – jeweils mit dem ADR, der die Abgr
   [ADR 0013](adr/0013-chunking-refinement-phase7.md)).
 - **Keine inhaltlichen Evaluations-Labels.** Gemessen wird ausschließlich mit mechanisch
   nachrechenbaren Labels ([ADR 0016](adr/0016-quantitative-retrieval-evaluation-phase7.md)).
+- **Kein Netz im Kern und kein Volltext-Download.** Netzverkehr entsteht ausschließlich beim
+  ausdrücklichen Aufruf von `python -m scripts.discover`; der Modus liefert Metadaten und
+  Verweise, lädt aber keine Dateien und ist bewusst **kein** MCP-Werkzeug
+  ([ADR 0020](adr/0020-online-candidate-search-phase9.md)).

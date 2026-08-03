@@ -126,9 +126,11 @@ Akzeptanz dafür:
 
 ## Phase 9 – Online-Research-Modus (separat startbar)
 
-> **Status: S0 beantwortet** (Messung vom 2026-08-03). Bewusst **ohne ADR** – S0 baut nichts und
-> entscheidet keine Architektur. **Vorbehalt:** Eine Umsetzung von S1/S2 wäre ADR-pflichtig, weil
-> sie eine externe Abhängigkeit und eine neue Sicherheitsgrenze einführt.
+> **Status: S0 beantwortet, S1 umgesetzt** ([ADR 0020](docs/adr/0020-online-candidate-search-phase9.md)).
+> Der folgende S0-Befund (Messung vom 2026-08-03) entstand bewusst **ohne ADR** – S0 baut nichts
+> und entscheidet keine Architektur. Mit der Umsetzung von S1 ist der dort formulierte Vorbehalt
+> eingelöst: Die Entscheidung über Transport, Quellen und Sicherheitsgrenze steht jetzt im ADR.
+> **S2 bleibt zurückgestellt.**
 >
 > **Ergebnis: die Phase entfällt nicht.** Beide Abbruchkriterien wurden geprüft und **nicht**
 > ausgelöst. Wie in den Punkten A3–A7 und in Phase 8 hat die Messung die Vorgabe aber korrigiert.
@@ -199,6 +201,38 @@ Dieser Schritt ist der Grund, warum die Phase überhaupt so geschnitten ist: **E
 *Abbruchkriterium:* Ist keine Quelle erreichbar, ist die Rechtslage unklar, oder liefert eine Handprobe überwiegend Irrelevantes, **entfällt die Phase** – dokumentiert, wie in A5 die verworfene Seitenbereichs-Regel und die verworfene Stopword-Variante im Vektorraum.
 
 ### S1 – Kandidaten finden (Metadaten, kein Download)
+
+> **Status: umgesetzt** ([ADR 0020](docs/adr/0020-online-candidate-search-phase9.md)) – mit einem
+> **engeren Zuschnitt** als unten vorgesehen, entlang der S0-Messung.
+>
+> **Umgesetzt ist** das Paket `src/research_graphrag/online/` (fünf Module) plus das dünne
+> `scripts/discover.py`. Der Netzzugang liegt hinter einem **injizierbaren Port**: Nur
+> `transport.py` öffnet eine Verbindung, alles andere – Anfragebildung, Quellen-Adapter,
+> Deduplikation, Bericht – ist netzfrei und offline getestet. Der Proxy-Endpunkt kommt
+> ausschließlich aus `RESEARCH_GRAPHRAG_PROXY`; ein Unternehmens-Hostname gehört nicht ins
+> Repository.
+>
+> **Abweichungen von der Vorgabe unten, jeweils aus S0 begründet:**
+>
+> * **Zwei Quellen statt fünf** – arXiv und OpenAlex. Crossref rankt schlechter und liefert
+>   Abstracts nur lückenhaft, Semantic Scholar braucht einen API-Schlüssel, Unpaywall eine
+>   Kontakt-E-Mail.
+> * **Keine freie Suchanfrage** (Punkt c der Vorgabe). Der Wert des Modus liegt im Bezug zum
+>   eigenen Bestand; eine freie Suche könnte eine gewöhnliche Websuche besser.
+> * **Aktualitätsfilter als Default** (letzte fünf Jahre, per `--seit` übersteuerbar). In S0 war
+>   das Publikationsjahr der **wirksamste** Rauschfilter – es fängt 6 von 8 korpusfremden
+>   Treffern, weil OpenAlex nach Zitationszahl rankt und alte Klassiker hochspült.
+>
+> **Über die Vorgabe hinaus** schließt S1 eine in S0 aufgedeckte Lücke: Dasselbe Paper erscheint
+> bei beiden Quellen unter **verschiedenen** Identifikatoren (3 von 51 Treffern). Kandidaten werden
+> deshalb zusätzlich **quellenübergreifend** über den normalisierten Titel zusammengeführt.
+>
+> **Akzeptanz erfüllt:** Die Deduplikation nutzt die **bestehende** Intake-Logik (kein zweiter
+> Mechanismus) und wies in S0 **null** bereits vorhandene Paper als neu aus; ohne Netz endet der
+> Modus in `dependency_error` mit handlungsleitender Meldung statt in einem Stacktrace, und der
+> Bericht nennt zu jedem Vorschlag die auslösende Anfrage. Weil Titel und Abstracts **nicht
+> vertrauenswürdige** Fremdeingaben sind, werden sie vor dem Schreiben entschärft – ein Punkt, den
+> die Vorgabe nicht nennt.
 
 - **Die Anfrage kommt aus dem eigenen Bestand**, nicht aus freier Eingabe allein: (a) Keywords einer Community aus `list_topics`, (b) Titel/Identifikator eines Seed-Papers im Sinne von „mehr wie dieses", (c) optional eine freie Suchanfrage.
 - **Kandidaten werden gegen den eigenen Korpus dedupliziert** – mit **derselben** DOI-/arXiv-/Titel-Logik wie in Phase 8. Ein zweiter Dedup-Mechanismus wäre eine Fehlerquelle.
