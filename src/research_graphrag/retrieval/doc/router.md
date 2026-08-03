@@ -31,6 +31,7 @@ Entscheidung** – Modus, Konfidenzstufe, die auslösenden Signale und eine Begr
 | `STRUCTURAL_MODES` | Konstante | Die Modi, die als Kandidaten antreten dürfen |
 | `DEFAULT_MODE` | Konstante | Die Rückfallebene |
 | `CONFIDENCE_STRONG` / `_WEAK` / `_NONE` | Konstanten | Die drei Konfidenzstufen |
+| `CONFIDENCES` | Konstante | Dieselben drei Stufen als Tupel (Prüfung gültiger Werte) |
 | `MatchKind` | Typ-Alias | `word` · `prefix` · `stem` |
 
 ## 3. Ablauf

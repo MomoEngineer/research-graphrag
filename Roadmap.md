@@ -362,7 +362,7 @@ S0 ist beantwortet und dokumentiert (auch ein „lohnt sich nicht" ist ein gült
 >
 > **2. Die naheliegende Fragenform nimmt eine lexikalische Abkürzung.** „Welche Paper bauen auf
 > *Titel* auf?" wird zu einem guten Teil über das **Literaturverzeichnis** der zitierenden Paper
-> beantwortet – gemessen **22 von 33** Basic-Treffern und **24 von 42** Local-Treffern. Die
+> beantwortet – gemessen **22 von 33** Basic-Treffern und **26 von 42** Local-Treffern. Die
 > Abkürzung wird nicht versteckt, sondern als Diagnose (`:ref` statt `:body`) ausgewiesen, und
 > eine zweite Anfrageform aus den **Themen-Termen** des Ankers dient als Gegenprobe – sie kommt
 > ohne einen einzigen Referenz-Treffer aus. Ebenso fest verdrahtet: Das **Ankerpaper verlässt

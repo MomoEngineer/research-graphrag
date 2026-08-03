@@ -32,6 +32,7 @@ Forschungsfragen).
 | `parse_internal_links` | Funktion | Liest die verlinkten Dateinamen einer Markdown-Tabelle |
 | `link_column` | Funktion | Spaltenindex von `Interner Link` (Layout-Prüfung) |
 | `OverviewReport` | Dataclass | Zählwerte eines Laufs samt vergebener IDs |
+| `DRAFT_ID_PREFIX`, `INTERNAL_LINK_COLUMN` | Konstanten | Präfix der ID-Reihe (`Z`) und erwarteter Spaltenindex des internen Links |
 
 ## 3. Ablauf
 

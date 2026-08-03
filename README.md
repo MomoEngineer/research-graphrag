@@ -96,23 +96,24 @@ Der Zugriff erfolgt über einen **MCP-Server** (stdio), den GitHub Copilot in VS
 
 ## Architektur-Überblick
 
-- ```mermaid
-  flowchart LR
-      A[papers/*.pdf<br/>Drop-in-Ordner]
-      subgraph Ingestion["Ingestion · scripts/ingest.py"]
-          B[Extraktion<br/>Docling / Marker]
-          C[Canonical Paper JSON<br/>Struktur · Referenzen · Provenienz]
-          D[Microsoft GraphRAG<br/>Entities · Relationships<br/>Communities · Reports]
-      end
-      E[(File-based Store<br/>Parquet + LanceDB)]
-      subgraph Retrieval["Retrieval · MCP"]
-          F[Query-Router<br/>Local · Global · DRIFT · Basic]
-          G[MCP-Server<br/>stdio · Tools + Provenienz]
-      end
-      H[GitHub Copilot<br/>in VS Code]
+```mermaid
+flowchart LR
+    A[papers/*.pdf<br/>Drop-in-Ordner]
+    subgraph Ingestion["Ingestion · scripts/ingest.py"]
+        B[Extraktion<br/>Docling / Marker]
+        C[Canonical Paper JSON<br/>Struktur · Referenzen · Provenienz]
+        D[Microsoft GraphRAG<br/>Entities · Relationships<br/>Communities · Reports]
+    end
+    E[(File-based Store<br/>Parquet + LanceDB)]
+    subgraph Retrieval["Retrieval · MCP"]
+        F[Query-Router<br/>Local · Global · DRIFT · Basic]
+        G[MCP-Server<br/>stdio · Tools + Provenienz]
+    end
+    H[GitHub Copilot<br/>in VS Code]
 
-      A --> B --> C --> D --> E --> F --> G --> H
-  ```
+    A --> B --> C --> D --> E --> F --> G --> H
+```
+
 - **Ingestion** (links): PDF → kanonisches JSON → GraphRAG-Index. Angestoßen durch ein manuelles Skript; nur neue/geänderte PDFs werden neu verarbeitet (Dedup per Datei-Hash).
 - **Retrieval** (rechts): Der Query-Router wählt den passenden Suchmodus; der MCP-Server stellt die Ergebnisse Copilot als Werkzeuge bereit.
 
@@ -220,7 +221,7 @@ research-graphrag/
 │  └─ _duplikate/              # Quarantäne der Identifikator-Duplikate
 ├─ papers/                     # Alle Paper-PDFs (migriert aus Recherche/, nicht versioniert)
 ├─ Übersicht.md                # Kuratierte Literaturübersicht (Quellen-Tabelle)
-├─ recherche/                  # Migrierte Rechercheartefakte
+├─ recherche/                  # (Phase 1) Rechercheartefakte – bewusst ausgelassen, nicht vorhanden
 │  ├─ prompts/                 # Research-Prompts (Suchstrategien)
 │  ├─ zusammenfassungen/       # Zusammenfassungen je Recherche-Runde
 │  └─ forschungsluecken.md     # Themencluster × SRQ (Gap-Analyse)

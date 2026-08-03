@@ -113,6 +113,7 @@ research-graphrag/
 │     └─ specs/                  #   Pro-Tool-Spezifikationen (8 Tools)
 ├─ eval/
 │  ├─ pruef-fragen.md            # Prüf-Fragen über alle 5 Fragetypen
+│  ├─ pilot-korpus.md            # Vorschlag eines Pilot-Korpus (Phase 1)
 │  ├─ retrieval-gold.json        # versioniertes Gold-Set für Hit@k/MRR (Phase 7 / A4)
 │  ├─ retrieval-baseline.json    # eingefrorene Ränge je Frage/Ebene (Phase 7 / A6)
 │  ├─ router-gold.json           # versioniertes Router-Gold-Set (Contract-Labels, Phase 7 / A7)

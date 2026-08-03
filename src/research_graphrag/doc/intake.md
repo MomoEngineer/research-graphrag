@@ -25,6 +25,8 @@ und nur der bitgenaue Nachweis rechtfertigt eine unwiderrufliche Löschung.
 | `read_front_pages` | Funktion | Normalisierter Text der ersten beiden Seiten (ohne Volltext-Fallback) |
 | `title_candidates` | Funktion | Titelkandidaten aus Dateiname und Titelseite |
 | `best_title_match` | Funktion | Beste Titel-Ähnlichkeit gegen den Korpus |
+| `load_corpus` | Funktion | Bestandssicht aus `manifest.json` und Index laden (auch vom Online-Modus genutzt) |
+| `CorpusView` | Dataclass | Diese Bestandssicht: Hashes, gehärtete Identifikator-Schlüssel, Titel |
 | `ACTION_*`, `REASON_*` | Konstanten | Stabiles Vokabular für Bericht und Protokoll |
 | `TITLE_SIMILARITY`, `TITLE_CANDIDATE_LINES`, `QUARANTINE_DIR`, `INTAKE_LOG`, `PDF_MAGIC` | Konstanten | Schwellen und Pfade |
 

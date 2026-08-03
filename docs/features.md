@@ -88,7 +88,7 @@ Sprachmodell.
 | --- | --- | --- | --- | --- |
 | **MCP-Server (stdio)** | Stellt acht Werkzeuge für GitHub Copilot bereit und lädt den Index **pro Anfrage** frisch – neue Paper wirken ohne Neustart | `python -m research_graphrag.mcp_server` | [mcp_server/server](../src/research_graphrag/mcp_server/doc/server.md) | [0009](adr/0009-mcp-server-stdio-phase5.md), [0010](adr/0010-drop-in-workflow-and-qa-phase6.md) |
 | **Fehlerübersetzung an der Grenze** | Übersetzt interne Fehler in eine strukturierte, kategorisierte Ausgabe; unerwartete Fehler werden nie durchgereicht | jedes Werkzeug | [errors](../src/research_graphrag/doc/errors.md), [mcp_server/server](../src/research_graphrag/mcp_server/doc/server.md) | [error-model.md](error-model.md), [0009](adr/0009-mcp-server-stdio-phase5.md) |
-| **Kommandozeile** | Zehn Skripte für Intake, Ingestion, Fragen, Status, QS und Evaluation – der vollständige Funktionsumfang ohne Copilot | `python -m scripts.<name>` | [scripts/README.md](../scripts/README.md) | — |
+| **Kommandozeile** | Elf Skripte für Intake, Ingestion, Fragen, Status, QS, Online-Recherche und Evaluation – der vollständige Funktionsumfang ohne Copilot | `python -m scripts.<name>` | [scripts/README.md](../scripts/README.md) | — |
 
 ### Die acht MCP-Werkzeuge
 
