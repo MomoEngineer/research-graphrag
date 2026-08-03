@@ -11,14 +11,19 @@
 
 ## 1. Zweck
 
-Repariert zwei Artefakte, die aus der PDF-Typografie in den extrahierten Text durchschlagen –
-**bevor** Strukturanalyse, Chunking und Qualitäts-Gates darauf arbeiten. Die beiden Artefakte
-sehen ähnlich aus, verlangen aber gegensätzliche Behandlung:
+Repariert Artefakte, die aus der PDF-Typografie in den extrahierten Text durchschlagen –
+**bevor** Strukturanalyse, Chunking und Qualitäts-Gates darauf arbeiten. Die Artefakte
+sehen ähnlich aus, verlangen aber unterschiedliche Behandlung:
 
 | Artefakt | Beispiel | Behandlung | Warum |
 | --- | --- | --- | --- |
 | typografische Ligatur | `conﬁguration` | **reparieren** zu `configuration` | trägt Inhalt; unrepariert ist das Wort für keine Anfrage auffindbar |
 | Glyph-Verweis | `/uni00000013` | **entfernen** | ohne die Font-Zuordnung nicht rekonstruierbar, also reines Rauschen |
+| einzelnes Surrogat | `U+D835` | **entfernen** | halbes Zeichen außerhalb der BMP; nicht rekonstruierbar und **nicht UTF-8-kodierbar** |
+
+Das dritte Artefakt ist nicht nur Rauschen, sondern ein harter Blocker: Ein einzelnes Surrogat
+lässt `save_json` mit `UnicodeEncodeError: surrogates not allowed` scheitern, das Paper wäre
+nicht in den Korpus aufnehmbar.
 
 ## 2. Öffentliche Schnittstelle
 
@@ -32,7 +37,7 @@ sehen ähnlich aus, verlangen aber gegensätzliche Behandlung:
 ```mermaid
 flowchart TD
     A["roher Seitentext"] --> B["Ligaturen ersetzen<br/>str.translate über die Tabelle"]
-    B --> C{"Glyph-Artefakt<br/>im Text?"}
+    B --> C{"Glyph-Artefakt oder<br/>Surrogat im Text?"}
     C -- nein --> OUT["Ergebnis"]
     C -- ja --> D["zeilenweise:<br/>Artefakt entfernen"]
     D --> E{"Zeile verändert?"}
@@ -52,8 +57,8 @@ Lücke. Blieben diese Lücken stehen, würde die Tabellenerkennung `looks_tabula
 mehrfachen Leerzeichen beruht – die Zeile fälschlich als Tabellenzeile lesen. Unberührte Zeilen
 bleiben dagegen exakt erhalten.
 
-**Der Schnellpfad ist der Normalfall.** Enthält ein Text kein Glyph-Artefakt, kehrt die Funktion
-direkt nach der Ligatur-Ersetzung zurück, ohne zeilenweise zu arbeiten.
+**Der Schnellpfad ist der Normalfall.** Enthält ein Text weder Glyph-Artefakt noch Surrogat,
+kehrt die Funktion direkt nach der Ligatur-Ersetzung zurück, ohne zeilenweise zu arbeiten.
 
 ### Warum kein `NFKC`
 
@@ -79,6 +84,8 @@ normalisierten Text – auch der Zitationsgraph, der später auf den Referenzabs
 
 Keine `DomainError`. Der leere String ergibt den leeren String. Die Funktion ist **idempotent**:
 Ein zweiter Durchlauf verändert nichts mehr, weil weder Ligaturen noch Artefakte zurückbleiben.
+Das Ergebnis ist immer nach UTF-8 kodierbar – Voraussetzung dafür, dass `save_json` das
+Canonical JSON schreiben kann.
 
 ## 6. Determinismus
 
@@ -89,7 +96,8 @@ Abhängigkeit von Locale, Zeit oder Umgebung.
 
 - **Nur `U+FB00`–`U+FB06`.** Andere Präsentationsformen bleiben unangetastet.
 - **Der Glyph-Inhalt ist verloren.** Entfernen ist die einzig ehrliche Option, solange die
-  Font-Zuordnung fehlt – das Zeichen lässt sich nicht erraten.
+  Font-Zuordnung fehlt – das Zeichen lässt sich nicht erraten. Dasselbe gilt für das einzelne
+  Surrogat: Die fehlende zweite Hälfte ist nicht rekonstruierbar.
 - **Keine Silbentrennung.** Ein am Zeilenende getrenntes Wort bleibt getrennt; dafür greift
   später eine Reject-Regel in [structure](structure.md).
 - **Keine Spaltensortierung.** Mehrspaltige Layouts werden nicht entzerrt

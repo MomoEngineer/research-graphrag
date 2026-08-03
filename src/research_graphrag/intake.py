@@ -26,6 +26,7 @@ import io
 import json
 import logging
 import shutil
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
@@ -429,6 +430,8 @@ def run_intake(
     uebersicht_path: str | Path,
     dry_run: bool = False,
     delete_identifier_duplicates: bool = False,
+    on_file: Callable[[str, int, int], None] | None = None,
+    on_ingest_start: Callable[[], None] | None = None,
 ) -> IntakeReport:
     """Übernimmt neue PDFs aus dem Eingangsordner in den Korpus.
 
@@ -464,7 +467,11 @@ def run_intake(
 
     corpus = load_corpus(data_path)
     decisions: list[IntakeDecision] = []
-    for pdf in sorted(inbox_path.glob("*.pdf")):
+    pdfs = sorted(inbox_path.glob("*.pdf"))
+    total = len(pdfs)
+    for i, pdf in enumerate(pdfs):
+        if on_file is not None:
+            on_file(pdf.name, i + 1, total)
         raw = pdf.read_bytes()
         sha256 = hashlib.sha256(raw).hexdigest()
         decision = _classify(pdf, raw, sha256, corpus, papers_path)
@@ -483,6 +490,8 @@ def run_intake(
     if not n_accepted:
         return IntakeReport(decisions=tuple(decisions), dry_run=False, ingest=None, overview=None)
 
+    if on_ingest_start is not None:
+        on_ingest_start()
     ingest_report = ingest(papers_path, data_path)
     overview_report = append_overview_rows(data_dir=data_path, target_path=uebersicht_path)
     _logger.info(

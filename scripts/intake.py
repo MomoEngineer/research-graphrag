@@ -36,6 +36,23 @@ _ACTION_LABELS = {
     ACTION_KEPT: "liegen geblieben",
 }
 
+_BAR_WIDTH = 30
+
+
+def _show_progress(name: str, current: int, total: int) -> None:
+    """Schreibt einen Fortschrittsbalken auf stderr (nur an interaktiven Terminals)."""
+    if not sys.stderr.isatty():
+        return
+    filled = int(_BAR_WIDTH * current / total) if total > 0 else _BAR_WIDTH
+    arrow = ">" if filled < _BAR_WIDTH else ""
+    bar = "=" * filled + arrow + " " * max(0, _BAR_WIDTH - filled - 1)
+    label = name[:40].ljust(40)
+    sys.stderr.write(f"\r[{bar}] {current:>3}/{total} {label}")
+    sys.stderr.flush()
+    if current == total:
+        sys.stderr.write("\n")
+        sys.stderr.flush()
+
 
 def render(report: IntakeReport) -> str:
     """Formatiert den Abschlussbericht eines Intake-Laufs."""
@@ -100,7 +117,15 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    def _on_ingest_start() -> None:
+        if sys.stderr.isatty():
+            sys.stderr.write("[intake] Ingest läuft …\n")
+            sys.stderr.flush()
+
     try:
+        if sys.stderr.isatty():
+            sys.stderr.write("[intake] Lade Korpus …\n")
+            sys.stderr.flush()
         report = run_intake(
             inbox_dir=args.new,
             papers_dir=args.papers,
@@ -108,6 +133,8 @@ def main() -> int:
             uebersicht_path=args.uebersicht,
             dry_run=args.dry_run,
             delete_identifier_duplicates=args.delete_identifier_duplicates,
+            on_file=_show_progress,
+            on_ingest_start=_on_ingest_start,
         )
     except DomainError as exc:
         print(f"[intake] Fehler [{exc.code.value}]: {exc.message}")

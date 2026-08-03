@@ -24,6 +24,17 @@ def test_removes_glyph_artifacts() -> None:
     assert normalize_text("uni00000013") == ""
 
 
+def test_removes_lone_surrogates() -> None:
+    """Einzelne Surrogate einer defekten CMap werden entfernt (real: ``U+D835``)."""
+    assert normalize_text("Endpoints: \ud8359, \ud8354") == "Endpoints: 9, 4"
+    assert normalize_text("\ud835") == ""
+
+
+def test_result_is_utf8_encodable() -> None:
+    """Der normalisierte Text lässt sich nach UTF-8 kodieren (Canonical JSON schreibbar)."""
+    normalize_text("a\ud835b\udfffc").encode("utf-8")
+
+
 def test_collapses_whitespace_only_in_touched_lines() -> None:
     """Nur Zeilen mit entfernten Glyphen werden im Leerraum verdichtet."""
     text = "a/uni00000013b    c\ncolumn1    column2    column3"
