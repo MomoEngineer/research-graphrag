@@ -16,6 +16,6 @@ Ordners werden per `.gitignore` ausgeschlossen (siehe README.md,
   Der direkte Weg (PDF hier ablegen, dann `python -m scripts.ingest`) bleibt daneben bestehen;
   er dedupliziert allerdings nur über Dateiname und Hash.
 
-Aktueller Stand: **145 PDFs** (Phase-1-Migration). Ein unkuratiertes Korpus-PDF
-wurde bewusst nicht übernommen (kein `Übersicht.md`-Eintrag). Die PDFs sind nicht
-versioniert; nur diese README wird getrackt.
+Aktueller Stand: **204 PDFs** nach Korpuszufluss und fachlicher Bereinigung am
+03.08.2026. Alle PDFs besitzen genau einen Eintrag in [`Übersicht.md`](../Übersicht.md).
+Die PDFs sind nicht versioniert; nur diese README wird getrackt.
