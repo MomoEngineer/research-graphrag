@@ -11,6 +11,8 @@ Aufruf vom Repository-Wurzelverzeichnis:
     python -m scripts.discover --community 2
     python -m scripts.discover --seed <paper_id> --seit 2023
 
+Mit ``--dry-run`` werden nur die gebildeten Anfragen gezeigt – ohne Netzzugriff, ohne Bericht.
+
 Der Modus ist **separat startbar** und bewusst kein MCP-Werkzeug: Netzverkehr soll beobachtet
 angestoßen werden, nicht beiläufig durch einen Agenten. Führt der Weg nach außen über einen
 Proxy, wird er über ``RESEARCH_GRAPHRAG_PROXY=host:port`` oder ``--proxy`` angegeben.
@@ -20,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 
 from research_graphrag.errors import DomainError
@@ -42,16 +45,21 @@ def _build_queries(db_path: Path, args: argparse.Namespace) -> list[SearchQuery]
     """Bildet die Anfragen aus Communities und Seed-Papern des eigenen Bestands."""
     queries: list[SearchQuery] = []
     for community_id in args.community or []:
-        queries.append(query_from_community(db_path, int(community_id), terms=args.begriffe))
+        queries.append(query_from_community(db_path, community_id, terms=args.begriffe))
     for paper_id in args.seed or []:
         queries.append(query_from_seed(db_path, str(paper_id), terms=args.begriffe))
     return queries
 
 
+def _print_queries(queries: Sequence[SearchQuery]) -> None:
+    """Zeigt die gebildeten Anfragen mit Suchbegriffen und Herkunft."""
+    for query in queries:
+        print(f"[discover] Anfrage {query.query_id}: {', '.join(query.terms)} — {query.reason}")
+
+
 def _print_report(report: DiscoveryReport, target: Path) -> None:
     """Fasst den Lauf auf stdout zusammen."""
-    for query in report.queries:
-        print(f"[discover] Anfrage {query.query_id}: {', '.join(query.terms)} — {query.reason}")
+    _print_queries(report.queries)
     for source in report.sources:
         note = f" — {source.note}" if source.note else ""
         print(f"[discover] {source.source}: HTTP {source.status}{note}")
@@ -85,6 +93,7 @@ def main() -> int:
     parser.add_argument(
         "--community",
         action="append",
+        type=int,
         metavar="ID",
         help="Community-Kennung aus scripts.graph_info (mehrfach möglich)",
     )
@@ -104,6 +113,11 @@ def main() -> int:
         "--begriffe", type=int, default=DEFAULT_TERM_COUNT, help="Suchbegriffe je Anfrage"
     )
     parser.add_argument("--proxy", help="Proxy als host:port (sonst RESEARCH_GRAPHRAG_PROXY)")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Nur die gebildeten Anfragen zeigen – ohne Abfrage und ohne Bericht",
+    )
     parser.add_argument("--ohne-rohdaten", action="store_true", help="Rohantworten nicht ablegen")
     parser.add_argument("--index", default=str(_DEFAULT_INDEX), help="Pfad zur Index-SQLite")
     parser.add_argument("--data", default=str(_DEFAULT_DATA), help="Pfad zum Datenverzeichnis")
@@ -117,6 +131,10 @@ def main() -> int:
     data_path = Path(args.data)
     try:
         queries = _build_queries(db_path, args)
+        if args.dry_run:
+            _print_queries(queries)
+            print("[discover] Vorschau: keine Abfrage, kein Bericht, kein Kontingentverbrauch.")
+            return 0
         client = create_client(proxy=args.proxy)
         report = discover(
             db_path,

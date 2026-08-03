@@ -86,6 +86,63 @@ def test_cli_requires_a_query_source(monkeypatch: pytest.MonkeyPatch) -> None:
     assert cli.main() == 2
 
 
+def test_cli_rejects_a_non_numeric_community(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Eine unbrauchbare Community-Kennung wird von argparse gemeldet – kein Stacktrace."""
+    monkeypatch.setattr("sys.argv", ["discover", "--community", "abc"])
+
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main()
+
+    assert excinfo.value.code == 2
+    assert "--community" in capsys.readouterr().err
+
+
+def test_dry_run_shows_the_queries_without_touching_the_network(
+    workspace: tuple[Path, Path],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Die Vorschau bildet die Anfrage, fragt aber nichts ab und schreibt nichts."""
+    db, data_path = workspace
+
+    def _forbidden(**_: object) -> _FakeClient:
+        raise AssertionError("In der Vorschau darf kein Client entstehen.")
+
+    monkeypatch.setattr(cli, "create_client", _forbidden)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["discover", "--community", "0", "--index", str(db), "--data", str(data_path), "--dry-run"],
+    )
+
+    code = cli.main()
+
+    assert code == 0
+    output = capsys.readouterr().out
+    assert "[discover] Anfrage C0" in output
+    assert "Vorschau" in output
+    assert not (data_path / "online_candidates.md").exists()
+    assert not (data_path / "online_raw").exists()
+
+
+def test_dry_run_still_reports_domain_errors(
+    workspace: tuple[Path, Path],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Auch die Vorschau prüft die Anfrage – eine unbekannte Community endet mit Code 1."""
+    db, data_path = workspace
+
+    code = _run(
+        monkeypatch,
+        ["--community", "99", "--index", str(db), "--data", str(data_path), "--dry-run"],
+    )
+
+    assert code == 1
+    assert "[discover] Fehler [not_found]" in capsys.readouterr().out
+
+
 def test_cli_writes_report_and_summarises(
     workspace: tuple[Path, Path],
     monkeypatch: pytest.MonkeyPatch,

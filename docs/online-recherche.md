@@ -117,12 +117,17 @@ python -m scripts.discover --community 2 --community 9 --seed 6a1ccc0a1fb6841b
 | `--seit JAHR` | Frühestes Erscheinungsjahr | die letzten fünf Jahre |
 | `--limit N` | Treffer je Quelle **und** Anfrage | 10 |
 | `--begriffe N` | Wie viele Suchbegriffe aus Keywords bzw. Titel übernommen werden | 3 |
+| `--dry-run` | Zeigt nur die gebildeten Anfragen – **ohne** Abfrage und **ohne** Bericht | Lauf wird ausgeführt |
 | `--proxy host:port` | Überschreibt `RESEARCH_GRAPHRAG_PROXY` für diesen Lauf | – |
 | `--ohne-rohdaten` | Legt die Rohantworten nicht ab | Rohantworten werden abgelegt |
 | `--index` / `--data` | Abweichende Pfade | `data/index/index.sqlite`, `data/` |
 
-**Zwei praktische Hinweise:**
+**Drei praktische Hinweise:**
 
+- **Erst schauen, dann suchen.** `--dry-run` zeigt, welche Suchbegriffe aus der Community bzw.
+  dem Seed-Paper entstehen. Das lohnt sich, weil jeder echte Lauf Kontingent verbraucht und den
+  Bericht verlängert – und weil sich die Nummer einer Community nach einem `intake`-Lauf auf ein
+  anderes Thema beziehen kann.
 - **Weniger Begriffe = mehr Treffer.** Die Suchbegriffe werden bei arXiv UND-verknüpft. Kommt
   wenig zurück, hilft `--begriffe 2`.
 - **Ältere Literatur suchen:** `--seit 2015`. Ohne diese Angabe werden ältere Treffer verworfen
