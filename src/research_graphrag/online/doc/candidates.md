@@ -95,3 +95,10 @@ Der Titelabgleich arbeitet auf Zeichenketten, nicht auf Bedeutung: Stark abweich
 Schreibweisen desselben Papers bleiben zwei Kandidaten. Das ist der bewusste Preis für Präzision
 vor Recall, dieselbe Abwägung wie im Zitationsgraphen
 ([ADR 0011](../../../../docs/adr/0011-intra-corpus-citation-graph-phase7.md)).
+
+Daraus folgt eine Grenze, die man kennen muss: Ein Korpus-Paper, dessen Titel die Mindestmaße
+unterschreitet **und** das keinen belegten Identifikator trägt, ist gegen einen erneuten Vorschlag
+nicht abgesichert – es würde als neu ausgewiesen. Das ist hinnehmbar, weil dieser Abgleich eine
+**Bequemlichkeit** ist und nicht die Schutzschicht: Wer einen Vorschlag übernimmt, lädt die Datei
+nach `new_papers/`, und dort prüft der Intake bitgenau über sha256
+([ADR 0019](../../../../docs/adr/0019-corpus-intake-new-papers-phase8.md)).

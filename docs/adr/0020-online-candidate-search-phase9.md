@@ -145,6 +145,15 @@ stehen bereits in `requirements.lock`; die Datei bleibt unverändert.
   Zeichenketten. Stark abweichende Schreibweisen desselben Papers bleiben zwei Kandidaten – das
   ist der bewusste Preis für Präzision vor Recall (dieselbe Abwägung wie in
   [ADR 0011](0011-intra-corpus-citation-graph-phase7.md)).
+- **Zweite bekannte Grenze, nachträglich gemessen:** Der Korpus-Abgleich kann ein Paper nur
+  erkennen, wenn es einen **gehärteten Identifikator** oder einen Titel oberhalb der Mindestmaße
+  (`MIN_TITLE_CHARS`/`MIN_TITLE_WORDS` aus ADR 0011) besitzt. Ein Selbsttest über alle 145 Paper
+  zeigt: **drei** Titel unterschreiten die Mindestmaße, und bei **einem** davon fehlt zusätzlich
+  jeder Identifikator – dieses eine Paper würde erneut vorgeschlagen. Das wird **nicht** behoben:
+  Ein Titel-Match ohne Mindestmaße erzeugt Fehlalarme, und die Folge ist gering, weil der
+  Online-Abgleich nur eine **Bequemlichkeit** ist. Die eigentliche Absicherung liegt beim Intake,
+  der beim tatsächlichen Übernehmen bitgenau über sha256 prüft
+  ([ADR 0019](0019-corpus-intake-new-papers-phase8.md)).
 - **Folgeentscheidungen:** S2 (Volltext-Download) bleibt zurückgestellt und bräuchte einen eigenen
   ADR – insbesondere für die Lizenzermittlung, die Prüfung von Content-Type und Größe sowie die
   selbst erzeugten Dateinamen.

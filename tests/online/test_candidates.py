@@ -148,6 +148,20 @@ def test_classify_ignores_titles_below_the_minimum() -> None:
     assert classify(_candidate(title="Kurz", arxiv_id="", doi=""), corpus) is None
 
 
+def test_known_limit_short_title_without_identifier_is_reported_as_new() -> None:
+    """Bekannte Grenze: ohne Identifikator **und** mit zu kurzem Titel greift kein Schlüssel.
+
+    Am realen Korpus trifft das genau ein Paper. Die Folge ist hinnehmbar, weil dieser Abgleich
+    eine Bequemlichkeit ist – die Absicherung gegen Doppelbestand liegt beim Intake, der beim
+    Übernehmen bitgenau über sha256 prüft (ADR 0020, Abschnitt „Konsequenzen").
+    """
+    corpus = _corpus(titles={"agentic code reasoning": "Agentic Code Reasoning"})
+
+    verdict = classify(_candidate(title="Agentic Code Reasoning", arxiv_id="", doi=""), corpus)
+
+    assert verdict is None
+
+
 def test_partition_splits_new_from_known() -> None:
     """Die Trennung erhält die Eingabereihenfolge beider Gruppen."""
     corpus = _corpus(identifiers={("arxiv", "2501.00001"): "paper-1"})

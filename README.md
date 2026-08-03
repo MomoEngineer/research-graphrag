@@ -103,7 +103,10 @@ Der Zugriff erfolgt über einen **MCP-Server** (stdio), den GitHub Copilot in VS
 Diese README beschreibt Ziel und Stand. Wer wissen will, **welche Features** es gibt und wo sie
 verbaut sind, liest [docs/features.md](docs/features.md); **wie** sie zusammenarbeiten, erklärt
 [docs/funktionsweise.md](docs/funktionsweise.md) mit Diagrammen; die Funktionsweise **eines
-Moduls** steht jeweils in dessen Modul-Doku unter `src/research_graphrag/<paket>/doc/`. Die
+Moduls** steht jeweils in dessen Modul-Doku unter `src/research_graphrag/<paket>/doc/`. Eine
+**Schritt-für-Schritt-Anleitung zum Online-Modus** (Einrichtung, Anfrage wählen, Bericht lesen,
+Vorschlag übernehmen, Fehlerdiagnose) steht in
+[docs/online-recherche.md](docs/online-recherche.md). Die
 Aufgabenteilung dieser Dokumente regelt [ADR 0018](docs/adr/0018-code-documentation-architecture.md).
 Der **weitere Plan** steht in der [Roadmap](Roadmap.md), die **Entstehungsgeschichte** der
 abgeschlossenen Phasen 0–7 mit allen Kennzahlen in der

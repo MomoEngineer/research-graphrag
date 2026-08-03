@@ -158,7 +158,9 @@ das schon?" nicht neu implementiert, sondern dieselbe wie beim Intake; zwei Wahr
 wären eine Fehlerquelle. **Drittens** liegt der gesamte Netzzugang hinter einem injizierbaren
 Port, weshalb alles außer dem Transport ohne Netz testbar ist
 ([ADR 0020](adr/0020-online-candidate-search-phase9.md),
-[Modul-Doku](../src/research_graphrag/online/doc/search.md)).
+[Modul-Doku](../src/research_graphrag/online/doc/search.md)). Wie der Modus **bedient** wird –
+Proxy einrichten, Anfrage wählen, Bericht lesen, Vorschlag übernehmen – steht in
+[online-recherche.md](online-recherche.md).
 
 ---
 
