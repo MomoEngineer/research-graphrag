@@ -55,7 +55,7 @@ Dieses Projekt baut ein **GraphRAG-System** über einer lokalen Sammlung wissens
 
 - **Kein Teil einer wissenschaftlichen Arbeit**, sondern ein Werkzeug, das die tägliche Arbeit mit Papern erleichtert (u. a. begleitend zu einer Masterarbeit genutzt).
 - **Konsolidierte Forschungsbasis:** ersetzt den bisherigen separaten `Recherche`-Ordner und vereint PDFs, die kuratierte [Literaturübersicht](Übersicht.md) und den GraphRAG-Index an einem Ort.
-- **Klein & lokal:** aktuell ~241 Paper, ausgelegt auf max. ~500.
+- **Klein & lokal:** aktuell ~145 Paper, ausgelegt auf max. ~500.
 - **Container-frei:** reine Python-Umgebung, kein Docker- oder Datenbank-Server nötig.
 - **Drop-in-Workflow:** neue PDFs in einen Ordner legen, kurz ein Skript ausführen – fertig.
 
@@ -92,7 +92,7 @@ Statt Roh-PDFs „blind" in ein RAG zu werfen, trennen wir sauber in zwei Schich
 
 Der Zugriff erfolgt über einen **MCP-Server** (stdio), den GitHub Copilot in VS Code als Werkzeugquelle einbindet. Jede Antwort liefert **Provenienz** (Paper, Abschnitt, Seite/Chunk) zurück, damit Aussagen überprüfbar bleiben.
 
-> **Warum GraphRAG und nicht nur klassisches Vektor-RAG?** Für reine „finde die Passage"-Fragen genügt hybride Vektor-Suche. Sobald **Zusammenhänge über mehrere Paper** (Methoden, Zitationen, Themen, Widersprüche) gefragt sind, spielt GraphRAG seine Stärken aus. Bei ~241 Papern ist der Nutzen der globalen/Community-Suche bereits gut spürbar und wächst mit dem Bestand weiter mit.
+> **Warum GraphRAG und nicht nur klassisches Vektor-RAG?** Für reine „finde die Passage"-Fragen genügt hybride Vektor-Suche. Sobald **Zusammenhänge über mehrere Paper** (Methoden, Zitationen, Themen, Widersprüche) gefragt sind, spielt GraphRAG seine Stärken aus. Bei ~145 Papern ist der Nutzen der globalen/Community-Suche noch moderat und wächst mit dem Bestand mit.
 
 ## Architektur-Überblick
 

@@ -418,7 +418,7 @@ S0 ist beantwortet und dokumentiert (auch ein „lohnt sich nicht" ist ein gült
 
 ### B2 – Inkrementelles Update statt vollem Re-Index
 
-*Lücke (bisher A8a):* Der volle Re-Index ist bei ~241 Papern noch günstig und konsistent, wächst aber linear mit dem Bestand – und Phase 9 lässt den Bestand systematisch wachsen (Auslegung bis ~500 Paper).
+*Lücke (bisher A8a):* Der volle Re-Index ist bei ~145 Papern günstig und konsistent, wächst aber linear mit dem Bestand – und Phase 9 lässt den Bestand systematisch wachsen (Auslegung bis ~500 Paper).
 
 *Akzeptanz:* Nur neue/geänderte Paper extrahieren und indizieren, danach den Graphen neu bauen; das Ergebnis ist **nachweislich identisch** zum vollen Re-Index (Byte-Vergleich der Kanten, Communities und Zitationskanten – die Methodik ist in A3 und A5 etabliert). Der volle Re-Index bleibt Standard.
 
