@@ -492,6 +492,12 @@ Drei methodische Festlegungen:
 - **Der Fingerprint schützt vor Scheinvergleichen.** Passt der Korpus nicht mehr zur
   eingefrorenen Baseline, verweigert der Vergleich die Aussage, statt eine falsche zu liefern.
 
+Damit ein solcher Guard nicht zur Sackgasse wird, gibt es den Gegenweg: `--write-gold` leitet die
+Labels aus dem aktuellen Index **neu** ab, ohne die Fragen anzufassen – und meldet eine Frage,
+die im neuen Bestand kein Ziel mehr hat, als Befund. Nötig ist das, weil die Labels Paper-IDs
+sind und eine Paper-ID der Hash der Datei ist: Ein durch eine neuere Fassung **ersetztes** PDF
+bekommt eine neue ID, das eingefrorene Label zeigt danach ins Leere.
+
 Der Router wird **getrennt** gemessen, gegen die Fragetyp-Tabelle der
 [README](../README.md) – ohne Index und in Sekunden. Das End-to-End-Maß dient dabei nur als
 **Veto**, nie als Optimierungsziel: Auf mechanisch abgeleitete Labels hin optimiert, wäre „immer

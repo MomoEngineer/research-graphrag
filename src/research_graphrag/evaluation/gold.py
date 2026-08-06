@@ -37,6 +37,29 @@ CITATION_LABELS = frozenset({CITATION_LABEL_SOURCE})
 DEFAULT_LABEL_SOURCE = "mechanical"
 """Quelle, wenn das Gold-Set nichts anderes angibt."""
 
+INDEX_SCHEMA_VERSION = "0.4.0"
+"""Index-Schema, gegen das die Labels abgeleitet werden."""
+
+LABEL_RULE = (
+    "Ein Paper gilt als relevant, wenn mindestens einer seiner Chunks alle Strings aus "
+    "match_all (case-insensitive) enthaelt. Die Labels sind damit unabhaengig von jeder "
+    "Ranking-Funktion und ueber 'python -m scripts.eval_retrieval --verify-labels' "
+    "reproduzierbar."
+)
+"""Die Label-Regel im Klartext (steht so in der Gold-Set-Datei)."""
+
+GOLD_SET_ORIGIN = (
+    "Roadmap A4 (Hybrid-Retrieval BM25 + TF-IDF), "
+    "docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md; Teil-Vorgriff auf A6"
+)
+"""Anlass, aus dem das Fragenset ursprünglich entstanden ist (bleibt konstant)."""
+
+GOLD_SET_SPLITS = {
+    "G*": "Entwicklungsfragen (vor der Implementierung eingefroren)",
+    "V*": "unabhaengiges Validierungsset (nach der Implementierung mechanisch abgeleitet)",
+}
+"""Bedeutung der Fragekennungen (Entwicklungs- gegen Validierungsset)."""
+
 
 @dataclass(frozen=True)
 class GoldQuestion:
@@ -132,3 +155,108 @@ def verify_labels(db_path: str | Path, gold: GoldSet) -> tuple[str, ...]:
                 f"abgeleitet {len(derived)}"
             )
     return tuple(findings)
+
+
+def relabel_gold_set(db_path: str | Path, gold: GoldSet, *, version: str) -> GoldSet:
+    """Leitet die mechanischen Labels neu aus dem Index ab (nach einem Korpuswechsel).
+
+    Die **Fragen** bleiben unverändert – Wortlaut, Reihenfolge, Art und Label-Regel. Neu bestimmt
+    werden ausschließlich die Ziel-Paper, und das auch nur für nachrechenbare Quellen: Ein
+    kuratiertes oder anderweitig geurteiltes Label würde sonst still überschrieben.
+
+    Nötig wird das, weil die ``paper_id`` der sha256-Hash der Datei ist. Wird ein PDF durch eine
+    andere Fassung ersetzt, zeigt ein eingefrorenes Label ins Leere – unabhängig davon, ob der
+    Inhalt noch im Korpus steht
+    (docs/adr/0016-quantitative-retrieval-evaluation-phase7.md).
+
+    Args:
+        db_path: Pfad zur SQLite-Index-Datei.
+        gold: Das bisherige Gold-Set.
+        version: Version des neuen Standes (die Fragen ändern sich nicht, die Labels schon).
+
+    Returns:
+        Ein neues :class:`GoldSet` mit aktualisierten Zielen.
+    """
+    questions = tuple(
+        question
+        if question.label_source not in MECHANICAL_LABELS
+        else GoldQuestion(
+            qid=question.qid,
+            query=question.query,
+            kind=question.kind,
+            match_all=question.match_all,
+            expected_paper_ids=derive_expected_papers(db_path, question.match_all),
+            label_source=question.label_source,
+        )
+        for question in gold.questions
+    )
+    return GoldSet(version=version, questions=questions)
+
+
+def unlabelled_questions(gold: GoldSet) -> tuple[str, ...]:
+    """Nennt die Fragen ohne jedes Ziel-Paper.
+
+    Eine solche Frage misst nichts mehr: Sie kann nie einen Treffer erzeugen und zieht damit die
+    Kennzahlen nach unten, ohne eine Aussage zu tragen. Nach einem Korpuswechsel ist das ein
+    **Befund**, der eine Entscheidung verlangt (Frage anpassen oder entfernen).
+
+    Args:
+        gold: Das geladene Gold-Set.
+
+    Returns:
+        Die betroffenen Fragekennungen in Dateireihenfolge.
+    """
+    return tuple(question.qid for question in gold.questions if not question.expected_paper_ids)
+
+
+def _corpus_size(db_path: str | Path) -> dict[str, int]:
+    """Liest Paper- und Chunk-Zahl des Index (Herkunftsnachweis im Gold-Set)."""
+    connection = sqlite3.connect(str(db_path))
+    try:
+        papers = int(connection.execute("SELECT COUNT(*) FROM papers").fetchone()[0])
+        chunks = int(connection.execute("SELECT COUNT(*) FROM chunks").fetchone()[0])
+    finally:
+        connection.close()
+    return {"papers": papers, "chunks": chunks}
+
+
+def save_gold_set(db_path: str | Path, gold: GoldSet, path: str | Path, *, note: str) -> None:
+    """Schreibt das Gold-Set als JSON – mit dem Korpus, gegen den es abgeleitet wurde.
+
+    Die Korpus-Angabe ist kein Beiwerk: Ohne sie lässt sich später nicht entscheiden, ob eine
+    abweichende Messung am Verfahren oder am Bestand liegt.
+
+    Args:
+        db_path: Index, aus dem die Labels stammen (nur für die Korpus-Angabe gelesen).
+        gold: Das zu schreibende Gold-Set.
+        path: Zieldatei.
+        note: Kurze Begründung des Standes (landet in ``updated_for``).
+    """
+    payload = {
+        "gold_set_version": gold.version,
+        "created_for": GOLD_SET_ORIGIN,
+        "updated_for": note,
+        "index_schema_version": INDEX_SCHEMA_VERSION,
+        "corpus": _corpus_size(db_path),
+        "label_rule": LABEL_RULE,
+        "questions": [
+            {
+                "qid": question.qid,
+                "kind": question.kind,
+                "query": question.query,
+                "match_all": list(question.match_all),
+                "expected_paper_ids": list(question.expected_paper_ids),
+                **(
+                    {}
+                    if question.label_source == DEFAULT_LABEL_SOURCE
+                    else {"label_source": question.label_source}
+                ),
+            }
+            for question in gold.questions
+        ],
+        "splits": GOLD_SET_SPLITS,
+    }
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    text = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
+    target.write_bytes(text.encode("utf-8"))

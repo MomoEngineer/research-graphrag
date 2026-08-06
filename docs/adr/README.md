@@ -65,6 +65,8 @@ Ein ADR wird angelegt bei u. a.:
 | [0023](0023-multihop-citation-evaluation-phase10.md) | Multi-Hop-Evaluation (Phase 10 / V3): zweite Label-Quelle aus dem Zitationsgraphen, strukturelle Ebene, eigenes Baseline-Artefakt | Akzeptiert |
 | [0025](0025-citable-paper-metadata.md) | Zitierfähige Paper-Metadaten (Phase 12 / K1): eigene versionierte Quelle, feldweise Autoritätskette, Durchreichung bis in jeden Beleg | Akzeptiert |
 | [0026](0026-online-metadata-resolution.md) | Online-Auflösung der Zitationsdaten (Phase 12 / K2): automatische Übernahme mit ausgewiesener Belegstärke, separater Lauf statt Ingest | Akzeptiert |
+| [0027](0027-corpus-backup-phase11.md) | Sicherung des Korpus (Phase 11 / B1): nur die Quelle sichern, Abgeleitetes bewusst weglassen, idempotenter Lauf mit Prüfnachweis | Akzeptiert |
+| [0028](0028-similarity-graph-degree-phase11.md) | Grad des Ähnlichkeitsgraphen (Phase 11 / B6): `DEFAULT_K = 8` bleibt – geprüft und **verworfen**, weil ein dichterer Graph die Community-Ebene messbar verwässert | Akzeptiert |
 
 > **Lücke bei 0024:** Die Nummer war für einen Stand zur visuellen Korpus-Exploration vergeben,
 > von dem im Arbeitsverzeichnis nur noch Bytecode unter `src/research_graphrag/viz/__pycache__/`

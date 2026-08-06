@@ -47,6 +47,13 @@
 > Phasen 0–7 sind mit allen Kennzahlen in der [Roadmap-Historie](docs/roadmap-historie.md)
 > archiviert.
 >
+> **Hinweis zu allen Kennzahlen dieses Abschnitts:** Sie wurden gegen einen Korpus von **145**
+> Papern gemessen und bleiben als datierte Belege der jeweiligen Phase stehen. Der Bestand ist
+> inzwischen auf **341** Paper gewachsen; beide Gold-Sets sind dagegen neu abgeleitet und beide
+> Baselines neu eingefroren (Phase 11 / B5). Der aktuelle Stand steht in der
+> [Roadmap](Roadmap.md#b5--messgrundlage-nachführbar-halten) – er ist mit den obigen Zahlen
+> **nicht** vergleichbar, weil sich Korpus *und* Labels geändert haben.
+>
 > **Phase 12 ist umgesetzt – Zitierfähigkeit.** Aus einem Suchtreffer entsteht jetzt ohne
 > Handarbeit eine korrekte Literaturangabe in **Harvard** und **APA**. Auch hier stand die
 > Messung vor dem Code, und sie korrigierte zwei Annahmen: Bis dahin lieferte **eines von acht**
@@ -305,6 +312,11 @@ python -m scripts.update_overview
 # 2c. (optional) Status/Konsistenz prüfen und Prüf-Fragen als QS durchspielen
 python -m scripts.status
 python -m scripts.qa
+
+# 2e. (empfohlen) Den nicht reproduzierbaren Bestand sichern (außerhalb der Arbeitskopie)
+python -m scripts.backup --ziel D:\Sicherung\research-graphrag --dry-run
+python -m scripts.backup --ziel D:\Sicherung\research-graphrag
+python -m scripts.backup --ziel D:\Sicherung\research-graphrag --pruefen
 
 # 2d. (optional) Retrieval quantitativ messen (Hit@k/MRR gegen das Gold-Set)
 python -m scripts.eval_retrieval

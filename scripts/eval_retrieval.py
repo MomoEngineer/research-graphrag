@@ -66,14 +66,17 @@ from research_graphrag.evaluation import (
     precheck,
     read_fingerprint,
     recall_bounds,
+    relabel_gold_set,
     render_comparison,
     render_modes,
     render_multihop_report,
     render_report,
     render_router_report,
     save_baseline,
+    save_gold_set,
     save_multihop_gold,
     signal_coverage,
+    unlabelled_questions,
     verify_labels,
     verify_questions,
     verify_router_labels,
@@ -87,6 +90,9 @@ _DEFAULT_ROUTER_GOLD = _REPO_ROOT / "eval" / "router-gold.json"
 _DEFAULT_BASELINE = _REPO_ROOT / "eval" / "retrieval-baseline.json"
 _DEFAULT_CITATION_GOLD = _REPO_ROOT / "eval" / "citation-gold.json"
 _DEFAULT_CITATION_BASELINE = _REPO_ROOT / "eval" / "citation-baseline.json"
+
+_NEXT_GOLD_VERSION = "1.3.0"
+"""Vorgabe für ``--write-gold``: Die Fragen bleiben, die Labels sind neu (Minor-Schritt)."""
 
 
 def _parse_labels(raw: str) -> tuple[str, ...]:
@@ -231,7 +237,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--write-gold",
         action="store_true",
-        help="Nur mit --zitationen: das Multi-Hop-Gold-Set aus dem Index neu erzeugen.",
+        help=(
+            "Die Labels des Gold-Sets aus dem Index neu ableiten (nach einem Korpuswechsel); "
+            "mit --zitationen wird stattdessen das Multi-Hop-Gold-Set neu erzeugt."
+        ),
+    )
+    parser.add_argument(
+        "--gold-version",
+        default=_NEXT_GOLD_VERSION,
+        help="Version, unter der ein mit --write-gold neu abgeleitetes Gold-Set abgelegt wird.",
+    )
+    parser.add_argument(
+        "--notiz",
+        default="Labels nach einem Korpuswechsel mechanisch neu abgeleitet.",
+        help="Begründung des neuen Gold-Set-Standes (landet in 'updated_for').",
     )
     parser.add_argument(
         "--write-baseline",
@@ -257,6 +276,24 @@ def main(argv: list[str] | None = None) -> int:
 
     gold = load_gold_set(args.gold)
     params = RunParameters(k=args.k, scoring=args.scoring)
+
+    if args.write_gold:
+        updated = relabel_gold_set(args.index, gold, version=args.gold_version)
+        save_gold_set(args.index, updated, args.gold, note=args.notiz)
+        orphans = unlabelled_questions(updated)
+        changed = sum(
+            1
+            for before, after in zip(gold.questions, updated.questions, strict=True)
+            if before.expected_paper_ids != after.expected_paper_ids
+        )
+        print(
+            f"Gold-Set neu abgeleitet: {args.gold} (Version {updated.version}, "
+            f"{len(updated.questions)} Fragen, {changed} mit geänderten Zielen)"
+        )
+        if orphans:
+            print(f"  ! Ohne jedes Ziel im aktuellen Korpus: {', '.join(orphans)}")
+            return 1
+        return 0
 
     if args.verify_labels:
         findings = verify_labels(args.index, gold)

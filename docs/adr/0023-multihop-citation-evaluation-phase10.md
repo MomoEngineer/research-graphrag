@@ -3,6 +3,37 @@
 - **Status:** Akzeptiert
 - **Datum:** 2026-08-03
 
+> **Nachtrag (2026-08-06, Korpuswechsel 145 → 341 Paper):** Alle unten genannten Kennzahlen sind
+> **historisch**. Das Gold-Set wurde gegen den gewachsenen Bestand neu erzeugt
+> (`--zitationen --write-gold`) und umfasst jetzt **113** statt 44 Ankerpaper, alle 113 gegen den
+> Zitationsgraphen verifiziert; die Baseline ist neu eingefroren. Der Messapparat ist unverändert.
+>
+> | Ebene | Hit@5 alt (44) | Hit@5 neu (113) | MRR@5 alt | MRR@5 neu |
+> | --- | --- | --- | --- | --- |
+> | graph | 0,591 | 0,593 | 0,475 | 0,452 |
+> | basic_title | 0,750 | 0,673 | 0,701 | 0,634 |
+> | local_title | 0,955 | 0,858 | 0,821 | 0,768 |
+> | basic_topic | 0,250 | 0,142 | 0,239 | 0,133 |
+> | local_topic | 0,636 | 0,628 | 0,538 | 0,464 |
+>
+> Zwei Dinge sind daran bemerkenswert. Erstens bleibt die **strukturelle** Ebene stabil (0,591 →
+> 0,593), während die textbasierten Ebenen nachgeben – erwartbar, weil ein 2,35-mal größerer
+> Korpus mehr lexikalische Konkurrenz erzeugt. Zweitens **steigt der Lift der strukturellen
+> Auswahl von 8,20 auf 15,09** (Coverage 0,126 / Selektivität 0,008 gegen 1,03 einer
+> Zufallsauswahl): Der Ähnlichkeitsgraph trägt Zitationsnähe im größeren Korpus **besser**, nicht
+> schlechter.
+>
+> Damit hat sich der hier erstmals beschriebene Befund ein zweites Mal bestätigt und dabei einen
+> Fehlschluss verhindert: Auf dem **fakt-orientierten** Retrieval-Gold-Set steuern Nachbarschaft
+> und Fan-out im neuen Korpus **null** Treffer bei (Local ist dort exakt so gut wie Basic) – auf
+> der Themen-Anfrage dieser Ebene dagegen **44 von 71**. Der Beitrag des Fan-outs ist also eine
+> Frage der **Fragestellung**, nicht des Verfahrens; wer ihn nur am lexikalischen Set misst,
+> unterschätzt ihn systematisch.
+>
+> Die **strukturellen Schranken** wachsen mit dem Bestand: 2 von 341 Papern ohne erkannten
+> Referenzabschnitt (unverändert), 8 ohne Titel-Schlüssel (vorher 3), 57 ohne
+> Identifikator-Schlüssel (vorher 15), **3** als Ziel unerreichbar (vorher 1).
+
 ## Kontext
 
 [ADR 0016](0016-quantitative-retrieval-evaluation-phase7.md) hat die quantitative Evaluation

@@ -16,6 +16,7 @@ tests/
 ├─ test_smoke.py          # Paket-Smoke-Test
 ├─ test_errors.py         # Fehlertaxonomie
 ├─ test_intake.py         # Korpus-Intake: Prüfstufen, --dry-run, Idempotenz (Phase 8)
+├─ test_backup.py         # Korpus-Sicherung: Umfang, Idempotenz, --dry-run, Prüfnachweis, CLI (Phase 11 / B1)
 ├─ test_keywords.py       # kuratierte Keyword-Politik (Phase 7 / A5)
 ├─ test_pipeline.py       # Drop-in-Ingestion
 ├─ extraction/            # Extraktion: pdf/normalization/structure/chunking/quality (Phase 2, 7 / A5)
@@ -48,6 +49,14 @@ tests/
 > **korpusabhängig** und daher bewusst **kein** Gate der Testsuite: Der Regressions-Check
 > (`python -m scripts.eval_retrieval --check`) läuft manuell gegen den realen Index, die Logik
 > dahinter ist mit synthetischen Fixtures abgedeckt.
+>
+> **Phase 11 / B5** erweitert `tests/evaluation/test_gold.py` um die **Neuableitung** der Labels.
+> Zwei Zusicherungen tragen dabei mehr als die Abdeckung: Die Fragen bleiben **unangetastet**
+> (Reihenfolge, Wortlaut und Art werden ausdrücklich geprüft – neu bestimmt werden nur die
+> Ziele), und eine **nicht nachrechenbare** Label-Quelle wird nicht überschrieben. Dazu kommen
+> der Round-Trip über `save_gold_set`/`load_gold_set`, die mitgeschriebene Korpus-Angabe samt
+> Byte-Prüfung gegen CRLF sowie die beiden CLI-Ausgänge: Erfolg mit Exit `0` und der Befund
+> „Frage ohne jedes Ziel" mit Exit `1`.
 
 > **Phase 7 / A7** ergänzt `tests/evaluation/test_routing.py` und erweitert
 > `tests/retrieval/test_router.py` um die Grenzfälle der Härtung (Wortgrenzen gegen die
@@ -99,6 +108,18 @@ tests/
 > zweiten Laufs, die beiden Härtungen des Identifikator-Vergleichs (nicht belegter und
 > mehrdeutiger Wert) sowie das Robustheits-Gate für Dateien ohne PDF-Signatur und für nicht
 > parsebare PDFs ([ADR 0019](adr/0019-corpus-intake-new-papers-phase8.md)).
+
+> **Phase 11 / B1** ergänzt `tests/test_backup.py`. Drei Zusicherungen tragen hier mehr als die
+> Abdeckung: **Abgeleitetes wird nicht gesichert** – die Fixture legt bewusst `data/index/` und
+> `data/canonical/` an, und der Test prüft, dass beide im Zielverzeichnis **fehlen**; die
+> **Vorschau verändert nichts**, belegt über ein Hash-Abbild von Quelle *und* Ziel; und der
+> **zweite Lauf kopiert nichts**, weil der Vergleich über sha256 statt über Zeitstempel läuft
+> (ein Test ändert deshalb den Inhalt bei **gleicher Länge**). Dazu kommen der Nachweis, dass
+> ein noch nie geschriebenes Protokoll den Lauf nicht abbricht, die beiden Fehlerkategorien
+> (`not_found` ohne `papers/`, `invalid_input` bei einem Ziel **innerhalb** der Arbeitskopie),
+> die Erkennung einer veränderten *und* einer gelöschten Datei durch die Nachrechnung sowie die
+> CLI samt Exit-Codes und cp1252-Ausgabe
+> ([ADR 0027](adr/0027-corpus-backup-phase11.md)).
 
 > **Phase 9 / S1** ergänzt den Testbaum `tests/online/`. Die Leitidee ist, dass **kein Test das
 > Netz berührt**: Der Transport liegt hinter einem Port, den die Tests durch einen Fake ersetzen,

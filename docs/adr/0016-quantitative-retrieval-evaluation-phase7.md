@@ -38,6 +38,89 @@
 > bei" (rettet 1 von 34 Fragen) gilt für fakt-orientierte Fragen – auf der Multi-Hop-Ebene steuert
 > er 13 von 28 Treffern der Themen-Anfrage bei.
 
+> **Nachtrag (2026-08-06, Korpuswechsel 145 → 341 Paper):** Sämtliche unten und in den
+> vorstehenden Nachträgen genannten Kennzahlen sind **historisch**. Sie wurden gegen einen Korpus
+> von 145 Papern und das Gold-Set 1.2.0 gemessen; der Bestand ist inzwischen auf 341 Paper
+> gewachsen. Der Messapparat ist **unverändert** – geändert haben sich die Daten.
+>
+> **Warum das Gold-Set einen Korpuswechsel nicht überlebt.** Die Labels sind Paper-IDs, und eine
+> `paper_id` ist der sha256-Hash der Datei. Wird ein PDF durch eine andere Fassung ersetzt,
+> entsteht eine neue ID und das eingefrorene Label zeigt ins Leere – unabhängig davon, ob der
+> Inhalt noch im Korpus steht. Genau das war eingetreten: `--verify-labels` reproduzierte nur noch
+> **1 von 34** Fragen, und beide `--check`-Läufe verweigerten den Vergleich (Exit `2`). Der
+> Fingerprint-Guard hat also getan, wofür er gebaut wurde; der Regressionsschutz war deshalb aber
+> faktisch außer Betrieb.
+>
+> **Gemessene Drift vor der Neuableitung.** 32 der 34 Fragen gewinnen Ziele hinzu, 2 bleiben
+> gleich, **keine** verliert unterm Strich. Die Zielmenge wächst von 141 auf 355 (Faktor **2,52**)
+> bei einem Korpus-Faktor von **2,35** – die Label-Regel skaliert also **proportional** und wird
+> nicht überproportional unscharf. Die breiteste Frage deckt **7,9 %** des Korpus ab, und eine
+> zufällige Fünferauswahl erreicht Hit@5 = **0,146**; die Trennschärfe bleibt damit erhalten.
+> **6 Alt-Ziele** fallen weg, und zwar restlos erklärbar: Sie gehören zu **4 Papern, die nicht
+> mehr im Korpus liegen** (siehe oben). Keine Frage steht ohne Ziel da.
+>
+> **Konsequenz im Code.** Bisher gab es keinen reproduzierbaren Weg, das Retrieval-Gold-Set neu
+> abzuleiten – nur das Multi-Hop-Gold hatte einen (`--zitationen --write-gold`). Das war die
+> eigentliche Ursache dafür, dass der Stand veralten konnte. Neu sind deshalb
+> `relabel_gold_set` (leitet **nur** nachrechenbare Labels neu ab, lässt Fragen und geurteilte
+> Quellen unangetastet), `unlabelled_questions` (eine Frage ohne Ziel misst nichts und ist ein
+> **Befund**, kein stiller Nullwert) und `save_gold_set` (schreibt den Korpus mit, gegen den
+> abgeleitet wurde) – erreichbar über `python -m scripts.eval_retrieval --write-gold`.
+>
+> **Neuer Stand (Gold-Set 1.3.0, 341 Paper / 23 741 Chunks, Fragen wortgleich, 34/34 Labels
+> reproduzierbar; Multi-Hop-Gold 44 → 113 Anker):**
+>
+> | Ebene | Hit@5 | MRR@5 | Diagnose |
+> | --- | --- | --- | --- |
+> | primitive | 0,824 | 0,736 | — |
+> | basic | 0,824 | 0,736 | — |
+> | local | 0,824 | 0,736 | seed 28 |
+> | global | 0,559 | 0,412 | in_community 19 · community_missed 13 · no_community 2 |
+> | drift | 0,588 | 0,472 | in_community 19 · community_missed 13 · fallback 2 |
+>
+> Community-Auswahl: Lift **5,80** (Coverage 0,254 / Selektivität 0,044) gegen größte-5 **1,04**
+> und zufällig-5 **0,94**.
+>
+> **Diese Zahlen sind mit den alten nicht vergleichbar** – Korpus *und* Labels haben sich
+> geändert. Belastbar ist allein das Verhältnis der Ebenen **innerhalb** eines Laufs. Zwei
+> Beobachtungen daraus sind es aber wert, festgehalten zu werden:
+>
+> 1. **Global hat deutlich zugelegt** (Lift 3,55 → 5,80): Ein größerer Korpus liefert dem
+>    Community-Ranking mehr Substanz.
+> 2. **Local ist auf Basic zurückgefallen** – die Werte sind nicht nur ähnlich, sondern
+>    **identisch**, und die Diagnose weist alle 28 Treffer den Seeds zu: Nachbarschaft und
+>    Fan-out steuern hier **null** bei (zum Vergleich: seed 30 / neighborhood 1 bei 145 Papern).
+>
+> **Zur zweiten Beobachtung gehört eine Einschränkung, die beim ersten Hinsehen fehlte.** Der
+> naheliegende Schluss „der Fan-out ist wirkungslos, der Ähnlichkeitsgraph ist zu dünn" ist durch
+> die Multi-Hop-Messung desselben Korpus **widerlegt**:
+>
+> | Ebene (113 Anker) | Hit@5 | MRR@5 | Diagnose |
+> | --- | --- | --- | --- |
+> | graph | 0,593 | 0,452 | neighbor 67 |
+> | basic_title | 0,673 | 0,634 | chunk:ref 56 · chunk:body 20 |
+> | local_title | 0,858 | 0,768 | seed 76 · neighborhood 8 · **fan_out 13** |
+> | basic_topic | 0,142 | 0,133 | chunk:body 16 |
+> | local_topic | 0,628 | 0,464 | seed 16 · neighborhood 11 · **fan_out 44** |
+>
+> Auf der Themen-Anfrage steuert der Fan-out **44 von 71** Treffern bei, und die strukturelle
+> Auswahl über den Graphen erreicht **Lift 15,09** (Coverage 0,126 / Selektivität 0,008) gegen
+> 1,03 einer Zufallsauswahl – gegenüber Lift 8,20 bei 145 Papern hat sich der Graph also
+> **verbessert**, nicht verschlechtert.
+>
+> Damit gilt exakt das, was der Nachtrag zu [ADR 0023](0023-multihop-citation-evaluation-phase10.md)
+> bereits festgehalten hat: „Der Fan-out trägt kaum bei" ist eine Eigenschaft des
+> **fakt-orientierten Gold-Sets**, nicht des Verfahrens. Dessen Labels stammen mechanisch aus dem
+> Chunk-Text und bevorzugen darum strukturell die direkte Chunk-Suche. Die Aussage über Local
+> lautet korrekt: *Auf lexikalisch verankerten Faktfragen ist Local nicht besser als Basic.* Ob
+> die Parametrierung des Ähnlichkeitsgraphen zur gewachsenen Korpusdichte passt, ist eine
+> **eigene Frage** – sie ist in [ADR 0028](0028-similarity-graph-degree-phase11.md) gemessen und
+> dort **verneint** worden.
+>
+> **Strukturelle Schranken des Zitationsgraphen** (obere Schranke, kein Recall) im neuen Stand:
+> 2 von 341 Papern ohne erkannten Referenzabschnitt, 8 ohne Titel-Schlüssel, 57 ohne
+> Identifikator-Schlüssel, **3** als Ziel unerreichbar.
+
 ## Kontext
 
 Die [Roadmap.md](../../Roadmap.md) führt **Phase 7 / A6** („Quantitative, offline

@@ -7,6 +7,80 @@
   "questions": [
     {
       "qid": "C01",
+      "anchor_paper_id": "01319e2e6e6ecfd5",
+      "anchor_title": "RAPTOR - Recursive Abstractive Processing for Tree-Organized Retrieval",
+      "topic_terms": [
+        "raptor",
+        "cinderella",
+        "dpr",
+        "tree",
+        "qasper",
+        "nodes"
+      ],
+      "expected_paper_ids": [
+        "06e5ddd7d50063ec",
+        "14671c78fc7de99d",
+        "18249b6f921995d8",
+        "1df0bd67b590f331",
+        "1f21265563f64f39",
+        "1f51235565c46762",
+        "28296441e7a995a6",
+        "2d468b9505eed20a",
+        "3532533c11579cb5",
+        "4055a3ef2041a3c7",
+        "51ca6774c83a46de",
+        "616fdaafce36cbca",
+        "61db034d4bff7540",
+        "652b74465f863c4e",
+        "6952b275d29483b8",
+        "6ab8e76c45f157a1",
+        "6b5013efcb9962c8",
+        "6f8eb002a1b6f628",
+        "730f1a9f38d16689",
+        "78288f0e69b98cb1",
+        "79bd83c53d031726",
+        "7b21153c7f1d9bd1",
+        "84300a7f375d95a1",
+        "8cae263923635a95",
+        "9061363b164aaba1",
+        "90fa6af3ee8298a6",
+        "9498453cd1cc2c52",
+        "988a2e8529280ff3",
+        "9cea5f87de527158",
+        "9dcc33a10c78f08e",
+        "a1cb61b3004050a7",
+        "b18ac8a05ba486b8",
+        "c4151fd1b8785e18",
+        "d09f40467cd78772",
+        "d610f8de8eaba97d",
+        "f23593e4ff0a9ba6",
+        "f34e3c4a8bf1ac71",
+        "f3875a5ede83c981",
+        "feaba137d9d2fde3"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C02",
+      "anchor_paper_id": "048fce29d897a681",
+      "anchor_title": "PIKE-RAG - sPecIalized KnowledgE and Rationale Augmented Generation",
+      "topic_terms": [
+        "knowledge",
+        "atomic",
+        "rag",
+        "questions",
+        "retrieval",
+        "decomposition"
+      ],
+      "expected_paper_ids": [
+        "616fdaafce36cbca",
+        "84300a7f375d95a1",
+        "f3875a5ede83c981"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C03",
       "anchor_paper_id": "05df36f027cfe850",
       "anchor_title": "GraphCoder - Enhancing Repository-Level Code Completion",
       "topic_terms": [
@@ -19,25 +93,29 @@
       ],
       "expected_paper_ids": [
         "02a46636ee60bc9e",
+        "3fdcb376d961d11e",
         "46d2f97b867c4e87",
         "4804a553a0eef927",
         "4c77c0e271d51ca6",
         "54f5162f6c9ee18c",
+        "5870f53e5df9a001",
         "5a39daf1f9ac5fc9",
+        "bab422ba166f8c1c",
         "cf462bee64728fc4",
+        "e6ff2ba6c476128b",
         "f3875a5ede83c981"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C02",
+      "qid": "C04",
       "anchor_paper_id": "05f40545ecb407ca",
       "anchor_title": "Talk like a Graph - Encoding Graphs for Large Language Models",
       "topic_terms": [
         "graph",
         "friendship",
-        "friends",
         "encoding",
+        "friends",
         "authorship",
         "politician"
       ],
@@ -51,7 +129,87 @@
       "label_source": "citation_graph"
     },
     {
-      "qid": "C03",
+      "qid": "C05",
+      "anchor_paper_id": "08f9596ffb7067ac",
+      "anchor_title": "Blended RAG - Improving RAG (Retriever-Augmented Generation) Accuracy with Semantic Search and Hybrid Query-Based Retrievers",
+      "topic_terms": [
+        "blended",
+        "rag",
+        "squad",
+        "covid",
+        "ndcg",
+        "hybrid"
+      ],
+      "expected_paper_ids": [
+        "2c5bf5b0221c8cbc",
+        "6ab8e76c45f157a1",
+        "a539d5ab29e85669"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C06",
+      "anchor_paper_id": "0b466c3ba3023704",
+      "anchor_title": "ClassEval - A Manually-Crafted Benchmark for Evaluating LLMs on Class-level Code Generation",
+      "topic_terms": [
+        "class",
+        "classeval",
+        "code",
+        "level",
+        "generation",
+        "method"
+      ],
+      "expected_paper_ids": [
+        "212f49b6fb7ddbdb",
+        "3a5dd46128e7f1e6",
+        "40f8d44665637af5",
+        "5df64b85588a7a24",
+        "793e32c036ecd5e1",
+        "97f852a962f9e935",
+        "d171e0693060b910",
+        "d95ecab1fcd7278a",
+        "ea08807113b164c4"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C07",
+      "anchor_paper_id": "1116891832a6e868",
+      "anchor_title": "Knowledge Graph Prompting for Multi-Document Question Answering",
+      "topic_terms": [
+        "passages",
+        "mdr",
+        "kgp",
+        "traversal",
+        "passage",
+        "graph"
+      ],
+      "expected_paper_ids": [
+        "048fce29d897a681",
+        "14dc54365a59476f",
+        "1df0bd67b590f331",
+        "1f51235565c46762",
+        "345fa9030560d7f9",
+        "3532533c11579cb5",
+        "5a8f51dc47139169",
+        "616fdaafce36cbca",
+        "6952b275d29483b8",
+        "730f1a9f38d16689",
+        "7af0f03b63f5b7d0",
+        "84300a7f375d95a1",
+        "9061363b164aaba1",
+        "9498453cd1cc2c52",
+        "9dcc33a10c78f08e",
+        "cae3af3a47c268d0",
+        "e53985b5ef2be377",
+        "f23593e4ff0a9ba6",
+        "f3875a5ede83c981",
+        "feaba137d9d2fde3"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C08",
       "anchor_paper_id": "14671c78fc7de99d",
       "anchor_title": "HippoRAG - Neurobiologically Inspired Long-Term Memory for Large Language Models",
       "topic_terms": [
@@ -60,70 +218,362 @@
         "retrieval",
         "passages",
         "openie",
-        "ppr"
+        "franca"
       ],
       "expected_paper_ids": [
+        "2d6ca6e8bb4e65d3",
         "345fa9030560d7f9",
+        "3532533c11579cb5",
+        "5870f53e5df9a001",
+        "59c1cce8414ffc53",
         "61db034d4bff7540",
+        "656e5eba9d188c31",
         "6ab8e76c45f157a1",
         "6f8eb002a1b6f628",
+        "78288f0e69b98cb1",
+        "7af0f03b63f5b7d0",
+        "7b21153c7f1d9bd1",
         "84300a7f375d95a1",
+        "8cae263923635a95",
+        "90fa6af3ee8298a6",
+        "988a2e8529280ff3",
+        "9cea5f87de527158",
+        "9efdb40d41444787",
+        "a1cb61b3004050a7",
         "b0f6f9495e1ef0e7",
+        "b18ac8a05ba486b8",
+        "e53985b5ef2be377",
         "f3875a5ede83c981",
+        "f47c01bd21c0e4e3",
         "f6eb7085314fbf1d"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C04",
+      "qid": "C09",
+      "anchor_paper_id": "154d58b782d95974",
+      "anchor_title": "KnowGPT - Knowledge Graph based PrompTing for",
+      "topic_terms": [
+        "knowgpt",
+        "knowledge",
+        "llms",
+        "kgs",
+        "mab",
+        "question"
+      ],
+      "expected_paper_ids": [
+        "1df0bd67b590f331",
+        "345fa9030560d7f9",
+        "3532533c11579cb5",
+        "5870f53e5df9a001",
+        "616fdaafce36cbca",
+        "9061363b164aaba1",
+        "f3875a5ede83c981",
+        "feaba137d9d2fde3"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C10",
       "anchor_paper_id": "1675c2dcd5ecaef4",
       "anchor_title": "Agentless - Demystifying LLM-based Software Engineering Agents",
       "topic_terms": [
         "agentless",
         "swe",
         "patch",
-        "reproduction",
         "lite",
+        "reproduction",
         "localization"
       ],
       "expected_paper_ids": [
+        "3be6522001ac7820",
         "4804a553a0eef927",
         "49a1dd856125d8b8",
         "54f5162f6c9ee18c",
         "58c7465f0a75b9ac",
+        "5df64b85588a7a24",
+        "77329e4b69832207",
+        "89f7e58b468c8b72",
         "c4151fd1b8785e18",
+        "eccefa31cbfba927",
         "f33713ab600ccf70"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C05",
+      "qid": "C11",
+      "anchor_paper_id": "1c66e59351ba27e2",
+      "anchor_title": "CodePlan - Repository-Level Coding using LLMs and Planning",
+      "topic_terms": [
+        "codeplan",
+        "edits",
+        "code",
+        "repository",
+        "changes",
+        "edit"
+      ],
+      "expected_paper_ids": [
+        "024719fb26819826",
+        "1cc4ff90286108f5",
+        "4804a553a0eef927",
+        "4c77c0e271d51ca6",
+        "58c7465f0a75b9ac",
+        "5df64b85588a7a24",
+        "71be8b8b4420056f",
+        "7c714f11c748f591",
+        "8c22cbd987ff3221",
+        "bf81adab2445f5bc",
+        "d95ecab1fcd7278a",
+        "eccefa31cbfba927",
+        "f33713ab600ccf70"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C12",
+      "anchor_paper_id": "1df0bd67b590f331",
+      "anchor_title": "LinearRAG - Linear Graph Retrieval Augmented Generation on Large-scale Corpora",
+      "topic_terms": [
+        "linearrag",
+        "graph",
+        "retrieval",
+        "graphrag",
+        "entity",
+        "passages"
+      ],
+      "expected_paper_ids": [
+        "3532533c11579cb5",
+        "6f8eb002a1b6f628",
+        "9efdb40d41444787",
+        "f23593e4ff0a9ba6"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C13",
+      "anchor_paper_id": "1f51235565c46762",
+      "anchor_title": "Empowering Large Language Models to Set up a Knowledge Retrieval Indexer via Self-Learning",
+      "topic_terms": [
+        "nodes",
+        "rag",
+        "seed",
+        "blocks",
+        "knowledge",
+        "retrieval"
+      ],
+      "expected_paper_ids": [
+        "5870f53e5df9a001",
+        "6ab8e76c45f157a1",
+        "cae3af3a47c268d0",
+        "f3875a5ede83c981"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C14",
+      "anchor_paper_id": "245b5c608ef8efca",
+      "anchor_title": "Execution-Based Evaluation for Open-Domain Code Generation",
+      "topic_terms": [
+        "odex",
+        "code",
+        "execution",
+        "domain",
+        "test",
+        "libraries"
+      ],
+      "expected_paper_ids": [
+        "4932bb75e0b14289",
+        "4f339bcd7d3d5a53",
+        "549e079ffd610441",
+        "56d4653ac9c392d8",
+        "5f719c339072023f",
+        "738408d4cbac5062",
+        "83b02b303bae748d",
+        "a9bd3f7b96ac846a",
+        "d171e0693060b910",
+        "f1a14252369d660a"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C15",
+      "anchor_paper_id": "24abbd4b846a4cd6",
+      "anchor_title": "Using an LLM to Help With Code Understanding",
+      "topic_terms": [
+        "participants",
+        "gilt",
+        "code",
+        "developers",
+        "llm",
+        "participant"
+      ],
+      "expected_paper_ids": [
+        "abaaf1595a64689d",
+        "b5428fa9302dd61c",
+        "d2eb9f2da07574a5"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C16",
+      "anchor_paper_id": "28296441e7a995a6",
+      "anchor_title": "Dense X Retrieval - What Retrieval Granularity Should We Use",
+      "topic_terms": [
+        "propositions",
+        "proposition",
+        "retrieval",
+        "passage",
+        "dense",
+        "sentence"
+      ],
+      "expected_paper_ids": [
+        "048fce29d897a681",
+        "14671c78fc7de99d",
+        "14dc54365a59476f",
+        "1f51235565c46762",
+        "51ca6774c83a46de",
+        "7b21153c7f1d9bd1",
+        "8cae263923635a95",
+        "b18ac8a05ba486b8"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C17",
+      "anchor_paper_id": "29925e4e3b66f6c3",
+      "anchor_title": "Knowledge Guided Text Retrieval and Reading for Open Domain Question Answering",
+      "topic_terms": [
+        "passages",
+        "graph",
+        "parreader",
+        "reader",
+        "passage",
+        "toyota"
+      ],
+      "expected_paper_ids": [
+        "1116891832a6e868",
+        "737b0b8fe0aa8459",
+        "9498453cd1cc2c52",
+        "e53985b5ef2be377",
+        "f3875a5ede83c981"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C18",
+      "anchor_paper_id": "29d8a065ed91c5d0",
+      "anchor_title": "Reasoning on Graphs - Faithful and Interpretable Large Language Model Reasoning",
+      "topic_terms": [
+        "reasoning",
+        "rog",
+        "paths",
+        "kgs",
+        "relation",
+        "sports"
+      ],
+      "expected_paper_ids": [
+        "14671c78fc7de99d",
+        "154d58b782d95974",
+        "2d6ca6e8bb4e65d3",
+        "345fa9030560d7f9",
+        "3530a80cd370ebf8",
+        "4a3b5991bf11e674",
+        "51ca6774c83a46de",
+        "520914709c84b8df",
+        "652b74465f863c4e",
+        "656e5eba9d188c31",
+        "6c78ef676eb57d46",
+        "737b0b8fe0aa8459",
+        "7b21153c7f1d9bd1",
+        "84300a7f375d95a1",
+        "8d42bef1737d7ea5",
+        "9061363b164aaba1",
+        "9dcc33a10c78f08e",
+        "9ef70a34bf41a323",
+        "a6a5cfcd3725d74f",
+        "cae3af3a47c268d0",
+        "d4052d57840502a2",
+        "e89b1303fc8bae94",
+        "f23593e4ff0a9ba6",
+        "f3875a5ede83c981",
+        "f47c01bd21c0e4e3",
+        "feaba137d9d2fde3"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C19",
       "anchor_paper_id": "2b1cfd21600063f9",
       "anchor_title": "CoCoMIC - Code Completion by Jointly Modeling In-file and Cross-file Context",
       "topic_terms": [
         "file",
-        "code",
         "cross",
+        "code",
         "context",
         "ccfinder",
         "cocomic"
       ],
       "expected_paper_ids": [
         "05df36f027cfe850",
+        "0e5a3bbeaed8dfbe",
+        "1c66e59351ba27e2",
+        "35e6b19498b0086b",
         "44b346c1531586db",
         "46d2f97b867c4e87",
         "4932bb75e0b14289",
         "4c77c0e271d51ca6",
+        "4c93b0a22a2a3486",
         "5e44fd9015373066",
         "71be8b8b4420056f",
+        "7c714f11c748f591",
         "83b02b303bae748d",
         "a9bd3f7b96ac846a",
-        "ea08807113b164c4"
+        "bab422ba166f8c1c",
+        "ea08807113b164c4",
+        "eccefa31cbfba927"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C06",
+      "qid": "C20",
+      "anchor_paper_id": "2d468b9505eed20a",
+      "anchor_title": "OG-RAG - Ontology-Grounded Retrieval-Augmented Generation For Large Language Models",
+      "topic_terms": [
+        "soybean",
+        "ontology",
+        "rag",
+        "crop",
+        "herbicide",
+        "germination"
+      ],
+      "expected_paper_ids": [
+        "1df0bd67b590f331",
+        "f23593e4ff0a9ba6",
+        "f3875a5ede83c981"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C21",
+      "anchor_paper_id": "32015300a65ade88",
+      "anchor_title": "Plan-and-Solve Prompting - Improving Zero-Shot Chain-of-Thought Reasoning by Large Language Models",
+      "topic_terms": [
+        "coin",
+        "plan",
+        "step",
+        "shot",
+        "cot",
+        "let"
+      ],
+      "expected_paper_ids": [
+        "29d8a065ed91c5d0",
+        "793e32c036ecd5e1",
+        "f3875a5ede83c981"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C22",
       "anchor_paper_id": "345fa9030560d7f9",
       "anchor_title": "Graph Retrieval-Augmented Generation - A Survey",
       "topic_terms": [
@@ -137,41 +587,96 @@
       "expected_paper_ids": [
         "0b0325edf825337d",
         "1d4985b4b9701674",
+        "2d6ca6e8bb4e65d3",
         "335234d4d7846879",
         "34a144419fb2069a",
+        "3530a80cd370ebf8",
+        "3532533c11579cb5",
+        "4055a3ef2041a3c7",
         "4d59fa09443cd621",
+        "51ca6774c83a46de",
+        "5870f53e5df9a001",
+        "5a8f51dc47139169",
         "616fdaafce36cbca",
         "61db034d4bff7540",
+        "656e5eba9d188c31",
+        "6952b275d29483b8",
         "6a00aee29d059527",
         "737b0b8fe0aa8459",
+        "78288f0e69b98cb1",
+        "7af0f03b63f5b7d0",
+        "7b21153c7f1d9bd1",
         "84300a7f375d95a1",
+        "9061363b164aaba1",
+        "9cea5f87de527158",
         "d09f40467cd78772",
+        "d4a4a7abd0c283e0",
+        "e53985b5ef2be377",
+        "ec39758e236e0790",
+        "f331e01f1855d994",
         "f3875a5ede83c981"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C07",
-      "anchor_paper_id": "3489c0c8a177b25c",
-      "anchor_title": "Long Code Arena - a Set of Benchmarks for Long-Context Code Models",
+      "qid": "C23",
+      "anchor_paper_id": "34a144419fb2069a",
+      "anchor_title": "HybGRAG - Hybrid Retrieval-Augmented Generation on Textual and Relational Knowledge Bases",
       "topic_terms": [
-        "dataset",
-        "datapoints",
-        "data",
-        "code",
-        "commit",
-        "files"
+        "hybgrag",
+        "stark",
+        "question",
+        "hqa",
+        "entity",
+        "skb"
       ],
       "expected_paper_ids": [
-        "35e7e66bb3323d8d",
-        "97f852a962f9e935",
-        "e86dbd42685a3fe8",
-        "ea08807113b164c4"
+        "4055a3ef2041a3c7",
+        "6f8eb002a1b6f628",
+        "f3875a5ede83c981"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C08",
+      "qid": "C24",
+      "anchor_paper_id": "3532533c11579cb5",
+      "anchor_title": "You Dont Need Pre-built Graphs for RAG - Retrieval Augmented Generation with Adaptive Reasoning Structures",
+      "topic_terms": [
+        "logicrag",
+        "subproblems",
+        "graph",
+        "retrieval",
+        "reasoning",
+        "dag"
+      ],
+      "expected_paper_ids": [
+        "1df0bd67b590f331",
+        "616fdaafce36cbca",
+        "f23593e4ff0a9ba6"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C25",
+      "anchor_paper_id": "35e6b19498b0086b",
+      "anchor_title": "RAMBO - Enhancing RAG-based Repository-Level Method Body Completion",
+      "topic_terms": [
+        "rambo",
+        "mbc",
+        "code",
+        "ambo",
+        "body",
+        "repo"
+      ],
+      "expected_paper_ids": [
+        "4c77c0e271d51ca6",
+        "5afd419f84dcedd2",
+        "97f852a962f9e935"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C26",
       "anchor_paper_id": "3820a1e6e7ad5eca",
       "anchor_title": "Config2Spec - Mining Network Specifications from Network Configurations",
       "topic_terms": [
@@ -184,13 +689,16 @@
       ],
       "expected_paper_ids": [
         "66e1375c443759ac",
+        "81e36376998f65c2",
+        "8ff7edb9f0655e22",
         "c844fc20b886a5b5",
+        "e18e3011e538441e",
         "fdb1b5cd7eba5359"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C09",
+      "qid": "C27",
       "anchor_paper_id": "4436219a91566cbc",
       "anchor_title": "Think-on-Graph 2.0 - Deep and Faithful Large Language Model Reasoning with Knowledge-guided",
       "topic_terms": [
@@ -202,15 +710,21 @@
         "retrieval"
       ],
       "expected_paper_ids": [
+        "2d6ca6e8bb4e65d3",
         "345fa9030560d7f9",
+        "4055a3ef2041a3c7",
+        "5870f53e5df9a001",
+        "6952b275d29483b8",
         "737b0b8fe0aa8459",
         "84300a7f375d95a1",
+        "8cae263923635a95",
+        "b18ac8a05ba486b8",
         "f6eb7085314fbf1d"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C10",
+      "qid": "C28",
       "anchor_paper_id": "44b346c1531586db",
       "anchor_title": "RepoBench - Benchmarking Repository-Level Code",
       "topic_terms": [
@@ -223,104 +737,323 @@
       ],
       "expected_paper_ids": [
         "05df36f027cfe850",
+        "14815ceab60af94c",
+        "1c66e59351ba27e2",
+        "1e4143d4be8a5a5b",
         "212f49b6fb7ddbdb",
         "3489c0c8a177b25c",
-        "35e7e66bb3323d8d",
+        "3a5dd46128e7f1e6",
+        "40f8d44665637af5",
         "46d2f97b867c4e87",
         "4804a553a0eef927",
         "4932bb75e0b14289",
         "4c77c0e271d51ca6",
+        "4f339bcd7d3d5a53",
+        "5df64b85588a7a24",
         "738408d4cbac5062",
+        "7c714f11c748f591",
         "83b02b303bae748d",
+        "89f7e58b468c8b72",
         "8c22cbd987ff3221",
         "8e136f96c83b382b",
         "97f852a962f9e935",
         "a06584e8f14dd65c",
         "a9bd3f7b96ac846a",
+        "adc40e7877b2d478",
+        "bab422ba166f8c1c",
         "d171e0693060b910",
-        "e86dbd42685a3fe8",
+        "d95ecab1fcd7278a",
         "ea08807113b164c4",
-        "fdff7258295ecb8a"
+        "eccefa31cbfba927",
+        "f0fa4c579f033454",
+        "f6bca018af241352",
+        "fcf153dbd49b7fae"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C11",
+      "qid": "C29",
       "anchor_paper_id": "4804a553a0eef927",
       "anchor_title": "CodexGraph - Bridging Large Language Models and Code Repositories",
       "topic_terms": [
         "code",
         "graph",
         "odex",
-        "agent",
         "lite",
-        "codex"
+        "agent",
+        "repository"
       ],
       "expected_paper_ids": [
         "02a46636ee60bc9e",
         "46d2f97b867c4e87",
         "54f5162f6c9ee18c",
+        "5870f53e5df9a001",
         "58c7465f0a75b9ac",
         "5a39daf1f9ac5fc9",
         "737b0b8fe0aa8459",
         "ad2dcb44ad09262b",
+        "be9b683565f78840",
+        "c5757f7481d62dc2",
         "cf462bee64728fc4",
+        "df742fea7776a7c0",
+        "e02fee51f05b134d",
         "f3875a5ede83c981"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C12",
+      "qid": "C30",
+      "anchor_paper_id": "4817776e3866356b",
+      "anchor_title": "StructGPT - A General Framework for Large Language Model to Reason over Structured Data",
+      "topic_terms": [
+        "sql",
+        "dogs",
+        "district",
+        "tableqa",
+        "breeds",
+        "incumbent"
+      ],
+      "expected_paper_ids": [
+        "14671c78fc7de99d",
+        "1fc76b9c277d865a",
+        "2d6ca6e8bb4e65d3",
+        "345fa9030560d7f9",
+        "3530a80cd370ebf8",
+        "6a1ccc0a1fb6841b",
+        "6c78ef676eb57d46",
+        "737b0b8fe0aa8459",
+        "84300a7f375d95a1",
+        "8d42bef1737d7ea5",
+        "912a6661524afc72",
+        "a6a5cfcd3725d74f",
+        "b18ac8a05ba486b8",
+        "d4052d57840502a2",
+        "e89b1303fc8bae94"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C31",
+      "anchor_paper_id": "4a3b5991bf11e674",
+      "anchor_title": "Empowering GraphRAG with Knowledge Filtering and Integration",
+      "topic_terms": [
+        "graphrag",
+        "llm",
+        "rog",
+        "filtering",
+        "paths",
+        "knowledge"
+      ],
+      "expected_paper_ids": [
+        "3532533c11579cb5",
+        "616fdaafce36cbca",
+        "f34e3c4a8bf1ac71"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C32",
+      "anchor_paper_id": "51f106cbe81617c6",
+      "anchor_title": "Graph-constrained Reasoning - Faithful Reasoning on Knowledge Graphs with Large Language Models",
+      "topic_terms": [
+        "reasoning",
+        "trie",
+        "gcr",
+        "kgs",
+        "paths",
+        "graph"
+      ],
+      "expected_paper_ids": [
+        "2d6ca6e8bb4e65d3",
+        "3530a80cd370ebf8",
+        "656e5eba9d188c31",
+        "737b0b8fe0aa8459",
+        "9061363b164aaba1",
+        "f3875a5ede83c981"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C33",
       "anchor_paper_id": "520914709c84b8df",
       "anchor_title": "Retrieval-Augmented Generation with Knowledge Graphs for Customer Service Question Answering",
       "topic_terms": [
         "ticket",
         "linkedin",
         "tickets",
-        "customer",
         "issue",
-        "retrieval"
+        "customer",
+        "graph"
       ],
       "expected_paper_ids": [
+        "14dc54365a59476f",
         "345fa9030560d7f9",
+        "59c1cce8414ffc53",
         "ae44b1df2a415e3f",
+        "e53985b5ef2be377",
         "f3875a5ede83c981"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C13",
+      "qid": "C34",
+      "anchor_paper_id": "52d35d25a10c38da",
+      "anchor_title": "Is Your Code Generated by ChatGPT Really Correct - Rigorous Evaluation of Large Language Models for Code Generation",
+      "topic_terms": [
+        "eval",
+        "evalplus",
+        "code",
+        "test",
+        "mutation",
+        "inputs"
+      ],
+      "expected_paper_ids": [
+        "00ccfabad90793af",
+        "0b466c3ba3023704",
+        "212f49b6fb7ddbdb",
+        "24abbd4b846a4cd6",
+        "56d4653ac9c392d8",
+        "704e94c0df21a463",
+        "83b02b303bae748d",
+        "88003da1f9cee446",
+        "a9bd3f7b96ac846a",
+        "d171e0693060b910",
+        "df742fea7776a7c0",
+        "ea08807113b164c4",
+        "eccefa31cbfba927",
+        "f0fa4c579f033454",
+        "f6bca018af241352",
+        "f7e8e1df64129742"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C35",
+      "anchor_paper_id": "549e079ffd610441",
+      "anchor_title": "StarCoder - may the source be with you!",
+      "topic_terms": [
+        "starcoderbase",
+        "cited",
+        "starcoder",
+        "code",
+        "pii",
+        "model"
+      ],
+      "expected_paper_ids": [
+        "05df36f027cfe850",
+        "080f62a9dbe447a0",
+        "0b466c3ba3023704",
+        "1675c2dcd5ecaef4",
+        "212f49b6fb7ddbdb",
+        "245b5c608ef8efca",
+        "3489c0c8a177b25c",
+        "44b346c1531586db",
+        "4932bb75e0b14289",
+        "4f339bcd7d3d5a53",
+        "56d4653ac9c392d8",
+        "58c7465f0a75b9ac",
+        "5977dda1cb8d90a3",
+        "5bb0a5f79819b175",
+        "5df64b85588a7a24",
+        "5e44fd9015373066",
+        "6766e913dad8c29c",
+        "71be8b8b4420056f",
+        "738408d4cbac5062",
+        "793e32c036ecd5e1",
+        "7c714f11c748f591",
+        "83b02b303bae748d",
+        "8c22cbd987ff3221",
+        "8e136f96c83b382b",
+        "8ff7edb9f0655e22",
+        "9ae0ffdec60d5020",
+        "a9bd3f7b96ac846a",
+        "bab422ba166f8c1c",
+        "bf81adab2445f5bc",
+        "c039c9baca5fd6e6",
+        "c4151fd1b8785e18",
+        "cab2bb7f8f90f10a",
+        "d610f8de8eaba97d",
+        "d95ecab1fcd7278a",
+        "e6ff2ba6c476128b",
+        "f0fa4c579f033454",
+        "f6bca018af241352"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C36",
       "anchor_paper_id": "58c7465f0a75b9ac",
       "anchor_title": "RepoGraph - Enhancing AI Software Engineering with Repository-level Code Graph",
       "topic_terms": [
         "epo",
         "graph",
         "repo",
-        "code",
         "procedural",
+        "code",
         "agent"
       ],
       "expected_paper_ids": [
         "1675c2dcd5ecaef4",
+        "449109fa0549ac63",
         "46d2f97b867c4e87",
         "4c77c0e271d51ca6",
         "a06584e8f14dd65c",
         "ad2dcb44ad09262b",
-        "cf462bee64728fc4"
+        "c5757f7481d62dc2",
+        "cf462bee64728fc4",
+        "e02fee51f05b134d"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C14",
+      "qid": "C37",
+      "anchor_paper_id": "5977dda1cb8d90a3",
+      "anchor_title": "CodeScore - Evaluating Code Generation by Learning Code Execution",
+      "topic_terms": [
+        "codescore",
+        "code",
+        "unice",
+        "cems",
+        "ems",
+        "eval"
+      ],
+      "expected_paper_ids": [
+        "024719fb26819826",
+        "3a5dd46128e7f1e6",
+        "f1a14252369d660a"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C38",
+      "anchor_paper_id": "59cf74fa1e187aa5",
+      "anchor_title": "AST-T5 - Structure-Aware Pretraining for Code Generation and Understanding",
+      "topic_terms": [
+        "ast",
+        "code",
+        "pretraining",
+        "transpilation",
+        "corruption",
+        "subtree"
+      ],
+      "expected_paper_ids": [
+        "738408d4cbac5062",
+        "c4151fd1b8785e18",
+        "f6bca018af241352"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C39",
       "anchor_paper_id": "5e35e8f1c0cdb5ae",
       "anchor_title": "FactKG - Fact Verification via Reasoning on Knowledge Graphs",
       "topic_terms": [
         "claim",
-        "claims",
         "aidastella",
+        "claims",
         "fact",
-        "obama",
-        "evidence"
+        "papenburg",
+        "presupposition"
       ],
       "expected_paper_ids": [
         "1d4985b4b9701674",
@@ -332,7 +1065,7 @@
       "label_source": "citation_graph"
     },
     {
-      "qid": "C15",
+      "qid": "C40",
       "anchor_paper_id": "5e44fd9015373066",
       "anchor_title": "CrossCodeEval - A Diverse and Multilingual Benchmark for Cross-File Code Completion",
       "topic_terms": [
@@ -340,27 +1073,56 @@
         "code",
         "cross",
         "retrieval",
-        "ref",
-        "context"
+        "context",
+        "ref"
       ],
       "expected_paper_ids": [
         "05df36f027cfe850",
+        "3a5dd46128e7f1e6",
+        "3fdcb376d961d11e",
+        "40f8d44665637af5",
         "46d2f97b867c4e87",
         "4804a553a0eef927",
         "4c77c0e271d51ca6",
         "71be8b8b4420056f",
+        "7c714f11c748f591",
         "8c22cbd987ff3221",
         "8e136f96c83b382b",
         "97f852a962f9e935",
+        "bab422ba166f8c1c",
         "c4151fd1b8785e18",
         "d171e0693060b910",
+        "d95ecab1fcd7278a",
+        "e6ff2ba6c476128b",
         "ea08807113b164c4",
-        "fdff7258295ecb8a"
+        "eccefa31cbfba927",
+        "f0fa4c579f033454",
+        "fcf153dbd49b7fae"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C16",
+      "qid": "C41",
+      "anchor_paper_id": "5f719c339072023f",
+      "anchor_title": "CodeBERTScore - Evaluating Code Generation with Pretrained Models of Code",
+      "topic_terms": [
+        "codebertscore",
+        "code",
+        "crystalbleu",
+        "bertscore",
+        "distinguishability",
+        "nums"
+      ],
+      "expected_paper_ids": [
+        "4c77c0e271d51ca6",
+        "5977dda1cb8d90a3",
+        "7de0271ffc2c86c6",
+        "f1a14252369d660a"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C42",
       "anchor_paper_id": "616fdaafce36cbca",
       "anchor_title": "When to use Graphs in RAG - A Comprehensive Analysis for Graph Retrieval-Augmented Generation",
       "topic_terms": [
@@ -373,13 +1135,23 @@
       ],
       "expected_paper_ids": [
         "18249b6f921995d8",
+        "1df0bd67b590f331",
+        "3532533c11579cb5",
+        "51ca6774c83a46de",
+        "5870f53e5df9a001",
+        "6952b275d29483b8",
+        "6f854d5bb3a1651a",
+        "78288f0e69b98cb1",
+        "8cae263923635a95",
+        "988a2e8529280ff3",
         "f23593e4ff0a9ba6",
+        "f331e01f1855d994",
         "f3875a5ede83c981"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C17",
+      "qid": "C43",
       "anchor_paper_id": "61db034d4bff7540",
       "anchor_title": "RAG vs. GraphRAG - A Systematic Evaluation and Key Insights",
       "topic_terms": [
@@ -392,13 +1164,128 @@
       ],
       "expected_paper_ids": [
         "11d0e759827c074d",
+        "1df0bd67b590f331",
+        "2d6ca6e8bb4e65d3",
+        "51ca6774c83a46de",
+        "5870f53e5df9a001",
+        "5a8f51dc47139169",
         "616fdaafce36cbca",
-        "f23593e4ff0a9ba6"
+        "8cae263923635a95",
+        "f23593e4ff0a9ba6",
+        "f331e01f1855d994",
+        "f34e3c4a8bf1ac71"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C18",
+      "qid": "C44",
+      "anchor_paper_id": "62d6558f515ef6a6",
+      "anchor_title": "ColBERTv2 - Effective and Efficient Retrieval via Lightweight Late Interaction",
+      "topic_terms": [
+        "lotte",
+        "colbert",
+        "stackexchange",
+        "beir",
+        "queries",
+        "passage"
+      ],
+      "expected_paper_ids": [
+        "14671c78fc7de99d",
+        "61db034d4bff7540",
+        "7b21153c7f1d9bd1",
+        "a30d11953e9bd38d",
+        "b18ac8a05ba486b8",
+        "d95ecab1fcd7278a",
+        "ed5cbff53c8ff550"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C45",
+      "anchor_paper_id": "64286fbb1876d99f",
+      "anchor_title": "Answering Complex Open-Domain Questions with Multi-Hop Dense Retrieval",
+      "topic_terms": [
+        "hop",
+        "retrieval",
+        "passage",
+        "passages",
+        "hotpotqa",
+        "mdr"
+      ],
+      "expected_paper_ids": [
+        "1116891832a6e868",
+        "14671c78fc7de99d",
+        "737b0b8fe0aa8459",
+        "9efdb40d41444787",
+        "f3875a5ede83c981",
+        "feaba137d9d2fde3"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C46",
+      "anchor_paper_id": "6457b4ca64caa079",
+      "anchor_title": "Practical Intent-driven Routing Configuration Synthesis",
+      "topic_terms": [
+        "aura",
+        "switches",
+        "switch",
+        "rpl",
+        "policies",
+        "rsw"
+      ],
+      "expected_paper_ids": [
+        "66e1375c443759ac",
+        "8ff7edb9f0655e22",
+        "e18e3011e538441e",
+        "fdb1b5cd7eba5359"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C47",
+      "anchor_paper_id": "656e5eba9d188c31",
+      "anchor_title": "GNN-RAG - Graph Neural Retrieval for Efficient Large Language Model Reasoning on Knowledge Graphs",
+      "topic_terms": [
+        "gnn",
+        "kgqa",
+        "rag",
+        "cwq",
+        "question",
+        "rog"
+      ],
+      "expected_paper_ids": [
+        "6952b275d29483b8",
+        "8cae263923635a95",
+        "f6eb7085314fbf1d"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C48",
+      "anchor_paper_id": "66860befb21badec",
+      "anchor_title": "Control and Data Flow in Security Smell Detection for Infrastructure as Code - Is It Worth the Effort",
+      "topic_terms": [
+        "smells",
+        "smell",
+        "ansible",
+        "gasel",
+        "indirection",
+        "security"
+      ],
+      "expected_paper_ids": [
+        "128cb4d5bdfcb7c5",
+        "1535011540d0cd51",
+        "9125eb1afa8b6d0d",
+        "abaaf1595a64689d",
+        "b30f0ed6f85a016d",
+        "e545127b265144cb",
+        "f72d7d3c03bb0733"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C49",
       "anchor_paper_id": "6a00aee29d059527",
       "anchor_title": "StructRAG - Boosting Knowledge Intensive Reasoning of LLMs via Inference-time Hybrid Information Structurization",
       "topic_terms": [
@@ -406,34 +1293,45 @@
         "knowledge",
         "router",
         "utilizer",
-        "documents",
-        "structurizer"
+        "structurizer",
+        "documents"
       ],
       "expected_paper_ids": [
+        "51ca6774c83a46de",
+        "5870f53e5df9a001",
         "616fdaafce36cbca",
+        "6952b275d29483b8",
         "737b0b8fe0aa8459",
+        "a1cb61b3004050a7",
         "d09f40467cd78772"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C19",
+      "qid": "C50",
       "anchor_paper_id": "6a1ccc0a1fb6841b",
       "anchor_title": "GRAG - Graph Retrieval-Augmented Generation",
       "topic_terms": [
         "graph",
         "grag",
         "textual",
-        "ego",
         "explagraphs",
+        "ego",
         "webqsp"
       ],
       "expected_paper_ids": [
+        "14dc54365a59476f",
+        "2d6ca6e8bb4e65d3",
         "345fa9030560d7f9",
         "34a144419fb2069a",
+        "3530a80cd370ebf8",
         "39dbc38bb6bfca7c",
+        "51ca6774c83a46de",
         "58c7465f0a75b9ac",
         "616fdaafce36cbca",
+        "96c7e570f1ea6f45",
+        "9efdb40d41444787",
+        "b18ac8a05ba486b8",
         "c1f7caa804e849a9",
         "d09f40467cd78772",
         "f3875a5ede83c981"
@@ -441,32 +1339,107 @@
       "label_source": "citation_graph"
     },
     {
-      "qid": "C20",
+      "qid": "C51",
       "anchor_paper_id": "6c78ef676eb57d46",
       "anchor_title": "Unifying Large Language Models and Knowledge Graphs - A Roadmap",
       "topic_terms": [
         "kgs",
-        "knowledge",
         "llms",
+        "knowledge",
         "text",
-        "language",
+        "graph",
         "entity"
       ],
       "expected_paper_ids": [
         "05f40545ecb407ca",
         "14671c78fc7de99d",
+        "14dc54365a59476f",
+        "154d58b782d95974",
         "1a0cb23795bea7f1",
         "1d4985b4b9701674",
         "1fc76b9c277d865a",
+        "29d8a065ed91c5d0",
+        "2c5bf5b0221c8cbc",
+        "2d6ca6e8bb4e65d3",
         "345fa9030560d7f9",
+        "3530a80cd370ebf8",
+        "4209ec6c2e0f6840",
+        "4d713948845f60b1",
+        "656e5eba9d188c31",
+        "9061363b164aaba1",
+        "912a6661524afc72",
         "a6a5cfcd3725d74f",
+        "deeb9dd16d583f61",
         "f292efdb08398d46",
         "f3875a5ede83c981"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C21",
+      "qid": "C52",
+      "anchor_paper_id": "6e926c91f6fe0d27",
+      "anchor_title": "InCoder - A Generative Model for Code Infilling and Synthesis",
+      "topic_terms": [
+        "infilling",
+        "infill",
+        "left",
+        "right",
+        "code",
+        "mask"
+      ],
+      "expected_paper_ids": [
+        "080f62a9dbe447a0",
+        "0b466c3ba3023704",
+        "1c66e59351ba27e2",
+        "35e6b19498b0086b",
+        "3a5dd46128e7f1e6",
+        "44b346c1531586db",
+        "4f339bcd7d3d5a53",
+        "52d35d25a10c38da",
+        "549e079ffd610441",
+        "5977dda1cb8d90a3",
+        "59cf74fa1e187aa5",
+        "5afd419f84dcedd2",
+        "5e44fd9015373066",
+        "5f719c339072023f",
+        "738408d4cbac5062",
+        "83b02b303bae748d",
+        "a9bd3f7b96ac846a",
+        "bf81adab2445f5bc",
+        "cd6ab0f06dd44404",
+        "d95ecab1fcd7278a",
+        "f6bca018af241352",
+        "f7e8e1df64129742"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C53",
+      "anchor_paper_id": "71be8b8b4420056f",
+      "anchor_title": "RLCoder - Reinforcement Learning for Repository-Level Code Completion",
+      "topic_terms": [
+        "code",
+        "rlcoder",
+        "completion",
+        "candidates",
+        "rlretriever",
+        "repository"
+      ],
+      "expected_paper_ids": [
+        "35e6b19498b0086b",
+        "3fdcb376d961d11e",
+        "449109fa0549ac63",
+        "46d2f97b867c4e87",
+        "4c77c0e271d51ca6",
+        "4c93b0a22a2a3486",
+        "5df64b85588a7a24",
+        "d95ecab1fcd7278a",
+        "e6ff2ba6c476128b"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C54",
       "anchor_paper_id": "730f1a9f38d16689",
       "anchor_title": "From Local to Global - A Graph RAG Approach to Query-Focused Summarization",
       "topic_terms": [
@@ -474,47 +1447,87 @@
         "plaza",
         "summaries",
         "sensemaking",
-        "answer",
+        "verdant",
         "delimiter"
       ],
       "expected_paper_ids": [
+        "048fce29d897a681",
         "0b0325edf825337d",
         "0b1c802256339193",
         "11d0e759827c074d",
         "14671c78fc7de99d",
+        "14dc54365a59476f",
         "18249b6f921995d8",
+        "1df0bd67b590f331",
         "1f21265563f64f39",
+        "2c5bf5b0221c8cbc",
+        "2d468b9505eed20a",
+        "2d6ca6e8bb4e65d3",
         "335234d4d7846879",
         "345fa9030560d7f9",
         "34a144419fb2069a",
+        "3532533c11579cb5",
         "39dbc38bb6bfca7c",
+        "4055a3ef2041a3c7",
         "4436219a91566cbc",
         "4804a553a0eef927",
+        "51ca6774c83a46de",
+        "5870f53e5df9a001",
+        "59c1cce8414ffc53",
         "5a39daf1f9ac5fc9",
+        "5a8f51dc47139169",
         "616fdaafce36cbca",
         "61db034d4bff7540",
+        "652b74465f863c4e",
+        "656e5eba9d188c31",
+        "6952b275d29483b8",
         "6a00aee29d059527",
         "6a1ccc0a1fb6841b",
         "6ab8e76c45f157a1",
+        "6b5013efcb9962c8",
         "6f8eb002a1b6f628",
         "737b0b8fe0aa8459",
+        "78288f0e69b98cb1",
+        "7af0f03b63f5b7d0",
+        "7b21153c7f1d9bd1",
+        "81e36376998f65c2",
         "84300a7f375d95a1",
+        "8cae263923635a95",
+        "9061363b164aaba1",
+        "90fa6af3ee8298a6",
+        "96c7e570f1ea6f45",
+        "988a2e8529280ff3",
+        "9cea5f87de527158",
         "9dcc33a10c78f08e",
+        "9efdb40d41444787",
         "a06584e8f14dd65c",
+        "a1cb61b3004050a7",
         "ac529ab762fd1672",
+        "b075aaa96fb850c6",
         "b0f6f9495e1ef0e7",
+        "b18ac8a05ba486b8",
+        "b3b298b88160d0e8",
         "bd72eebf611df136",
+        "be9b683565f78840",
         "c1f7caa804e849a9",
+        "cae3af3a47c268d0",
         "ce9ff61fcda05f80",
         "d09f40467cd78772",
+        "d4a4a7abd0c283e0",
+        "e02fee51f05b134d",
+        "e53985b5ef2be377",
+        "ec39758e236e0790",
         "f23593e4ff0a9ba6",
+        "f34e3c4a8bf1ac71",
         "f3875a5ede83c981",
-        "f6eb7085314fbf1d"
+        "f47c01bd21c0e4e3",
+        "f6eb7085314fbf1d",
+        "feaba137d9d2fde3"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C22",
+      "qid": "C55",
       "anchor_paper_id": "737b0b8fe0aa8459",
       "anchor_title": "Retrieval-Augmented Generation with Graphs (GraphRAG)",
       "topic_terms": [
@@ -526,22 +1539,106 @@
         "retrieval"
       ],
       "expected_paper_ids": [
+        "012b358285ea841d",
         "0b0325edf825337d",
         "1d4985b4b9701674",
+        "1df0bd67b590f331",
+        "2d6ca6e8bb4e65d3",
+        "4a3b5991bf11e674",
+        "51ca6774c83a46de",
         "5a39daf1f9ac5fc9",
         "616fdaafce36cbca",
         "61db034d4bff7540",
+        "6952b275d29483b8",
         "6f8eb002a1b6f628",
+        "7b21153c7f1d9bd1",
+        "9061363b164aaba1",
+        "a1cb61b3004050a7",
         "b0f6f9495e1ef0e7",
         "cf462bee64728fc4",
         "d27f946d349d277a",
         "f23593e4ff0a9ba6",
-        "f3875a5ede83c981"
+        "f331e01f1855d994",
+        "f34e3c4a8bf1ac71",
+        "f3875a5ede83c981",
+        "feaba137d9d2fde3"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C23",
+      "qid": "C56",
+      "anchor_paper_id": "793e32c036ecd5e1",
+      "anchor_title": "CodeAgent - Enhancing Code Generation with Tool-Integrated Agent Systems for Real-World Repo-level Coding Challenges",
+      "topic_terms": [
+        "code",
+        "agent",
+        "gamma",
+        "repo",
+        "tool",
+        "llms"
+      ],
+      "expected_paper_ids": [
+        "024719fb26819826",
+        "1cc4ff90286108f5",
+        "3a5dd46128e7f1e6",
+        "449109fa0549ac63",
+        "4804a553a0eef927",
+        "4c77c0e271d51ca6",
+        "54f5162f6c9ee18c",
+        "71be8b8b4420056f",
+        "89f7e58b468c8b72",
+        "d95ecab1fcd7278a",
+        "eccefa31cbfba927"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C57",
+      "anchor_paper_id": "7af0f03b63f5b7d0",
+      "anchor_title": "GraphRAG-Bench - Challenging Domain-Specific Reasoning for Evaluating Graph Retrieval-Augmented Generation",
+      "topic_terms": [
+        "graphrag",
+        "hipporag",
+        "graph",
+        "reasoning",
+        "tog",
+        "retrieval"
+      ],
+      "expected_paper_ids": [
+        "1df0bd67b590f331",
+        "6952b275d29483b8",
+        "9061363b164aaba1",
+        "9251acfaf4a4166a"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C58",
+      "anchor_paper_id": "7b21153c7f1d9bd1",
+      "anchor_title": "GFM-RAG - Graph Foundation Model for Retrieval Augmented Generation",
+      "topic_terms": [
+        "gfm",
+        "rag",
+        "graph",
+        "retrieval",
+        "hop",
+        "training"
+      ],
+      "expected_paper_ids": [
+        "1df0bd67b590f331",
+        "6952b275d29483b8",
+        "7af0f03b63f5b7d0",
+        "9061363b164aaba1",
+        "9efdb40d41444787",
+        "a1cb61b3004050a7",
+        "f23593e4ff0a9ba6",
+        "f34e3c4a8bf1ac71",
+        "f6eb7085314fbf1d"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C59",
       "anchor_paper_id": "7dae089fe44f0d66",
       "anchor_title": "CodeBLEU - a Method for Automatic Evaluation of Code Synthesis",
       "topic_terms": [
@@ -553,67 +1650,128 @@
         "translation"
       ],
       "expected_paper_ids": [
+        "245b5c608ef8efca",
+        "35e6b19498b0086b",
         "5977dda1cb8d90a3",
+        "59cf74fa1e187aa5",
+        "5f719c339072023f",
         "738408d4cbac5062",
         "7de0271ffc2c86c6",
         "85cf74c91382b99f",
         "8c22cbd987ff3221",
         "8e136f96c83b382b",
         "ad2dcb44ad09262b",
+        "c039c9baca5fd6e6",
         "ea08807113b164c4",
+        "f0fa4c579f033454",
         "f1a14252369d660a"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C24",
+      "qid": "C60",
       "anchor_paper_id": "803d7e5295b4a7f2",
       "anchor_title": "Dont Forget to Connect - Improving RAG with Graph-based Reranking",
       "topic_terms": [
         "amr",
         "sinatra",
         "cited",
-        "documents",
         "reranker",
+        "documents",
         "palm"
       ],
       "expected_paper_ids": [
+        "2d6ca6e8bb4e65d3",
         "335234d4d7846879",
         "34a144419fb2069a",
+        "4a3b5991bf11e674",
         "61db034d4bff7540",
-        "737b0b8fe0aa8459"
+        "737b0b8fe0aa8459",
+        "7b21153c7f1d9bd1",
+        "cae3af3a47c268d0"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C25",
+      "qid": "C61",
+      "anchor_paper_id": "81e44592314d8021",
+      "anchor_title": "Self-Refine - Iterative Refinement with Self-Feedback",
+      "topic_terms": [
+        "feedback",
+        "refine",
+        "acronym",
+        "self",
+        "response",
+        "sentiment"
+      ],
+      "expected_paper_ids": [
+        "024719fb26819826",
+        "2d468b9505eed20a",
+        "335234d4d7846879",
+        "4804a553a0eef927",
+        "49a1dd856125d8b8",
+        "730f1a9f38d16689",
+        "83b02b303bae748d",
+        "8d42bef1737d7ea5",
+        "a9bd3f7b96ac846a",
+        "d9eaa1398abac0df",
+        "db8c9f27b5b977d6",
+        "ed5cbff53c8ff550"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C62",
+      "anchor_paper_id": "83b02b303bae748d",
+      "anchor_title": "CRUXEval - A Benchmark for Code Reasoning, Understanding and Execution",
+      "topic_terms": [
+        "assert",
+        "nums",
+        "str",
+        "cot",
+        "code",
+        "gpt"
+      ],
+      "expected_paper_ids": [
+        "a9bd3f7b96ac846a",
+        "f0fa4c579f033454",
+        "f6bca018af241352"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C63",
       "anchor_paper_id": "84300a7f375d95a1",
       "anchor_title": "ArchRAG - Attributed Community-based Hierarchical Retrieval-Augmented Generation",
       "topic_terms": [
-        "hnsw",
         "archrag",
+        "hnsw",
         "layer",
         "rag",
         "clustering",
         "acs"
       ],
       "expected_paper_ids": [
+        "1df0bd67b590f331",
+        "51ca6774c83a46de",
         "616fdaafce36cbca",
+        "6952b275d29483b8",
+        "78288f0e69b98cb1",
         "f23593e4ff0a9ba6",
         "f3875a5ede83c981"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C26",
+      "qid": "C64",
       "anchor_paper_id": "8b61c9a5792f456b",
       "anchor_title": "Graph Chain-of-Thought - Augmenting Large Language Models by Reasoning on Graphs",
       "topic_terms": [
         "graph",
         "gene",
         "nodes",
-        "book",
         "disease",
+        "book",
         "cot"
       ],
       "expected_paper_ids": [
@@ -622,13 +1780,20 @@
         "335234d4d7846879",
         "345fa9030560d7f9",
         "34a144419fb2069a",
+        "5870f53e5df9a001",
         "58c7465f0a75b9ac",
-        "737b0b8fe0aa8459"
+        "656e5eba9d188c31",
+        "737b0b8fe0aa8459",
+        "9498453cd1cc2c52",
+        "d4a4a7abd0c283e0",
+        "e53985b5ef2be377",
+        "f34e3c4a8bf1ac71",
+        "f47c01bd21c0e4e3"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C27",
+      "qid": "C65",
       "anchor_paper_id": "8c22cbd987ff3221",
       "anchor_title": "RepoHyper - Search-Expand-Refine on Semantic Graphs for Repository-Level Code Completion",
       "topic_terms": [
@@ -636,11 +1801,12 @@
         "code",
         "repo",
         "repobench",
-        "knn",
-        "completion"
+        "completion",
+        "knn"
       ],
       "expected_paper_ids": [
         "05df36f027cfe850",
+        "35e6b19498b0086b",
         "4804a553a0eef927",
         "4932bb75e0b14289",
         "58c7465f0a75b9ac",
@@ -649,7 +1815,27 @@
       "label_source": "citation_graph"
     },
     {
-      "qid": "C28",
+      "qid": "C66",
+      "anchor_paper_id": "8d42bef1737d7ea5",
+      "anchor_title": "Plan-on-Graph - Self-Correcting Adaptive Planning of Large Language Model on Knowledge Graphs",
+      "topic_terms": [
+        "pog",
+        "reasoning",
+        "paths",
+        "exploration",
+        "llm",
+        "question"
+      ],
+      "expected_paper_ids": [
+        "51f106cbe81617c6",
+        "867e41de4f60f335",
+        "8cae263923635a95",
+        "f3875a5ede83c981"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C67",
       "anchor_paper_id": "8e136f96c83b382b",
       "anchor_title": "CATCODER - Repository-Level Code Generation with Relevant Code and Type Context",
       "topic_terms": [
@@ -657,7 +1843,7 @@
         "rust",
         "catcoder",
         "repository",
-        "context",
+        "ofcatcoder",
         "type"
       ],
       "expected_paper_ids": [
@@ -668,59 +1854,305 @@
       "label_source": "citation_graph"
     },
     {
-      "qid": "C29",
-      "anchor_paper_id": "9dcc33a10c78f08e",
-      "anchor_title": "GraphReader - Building Graph-based Agent to Enhance Long-Context Abilities of Large Language Models",
+      "qid": "C68",
+      "anchor_paper_id": "8ff7edb9f0655e22",
+      "anchor_title": "Making Network Configuration Human Friendly",
       "topic_terms": [
-        "graphreader",
-        "facts",
-        "atomic",
-        "rational",
-        "chunks",
-        "notebook"
+        "network",
+        "etbuddy",
+        "netbuddy",
+        "requirements",
+        "configuration",
+        "configurations"
       ],
       "expected_paper_ids": [
-        "335234d4d7846879",
-        "34a144419fb2069a",
-        "f3875a5ede83c981"
+        "4fc06bbcbe759ede",
+        "81e36376998f65c2",
+        "fdb1b5cd7eba5359"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C30",
-      "anchor_paper_id": "a6a5cfcd3725d74f",
-      "anchor_title": "Think-on-Graph - Deep and Responsible Reasoning of Large Language Model on Knowledge Graph",
+      "qid": "C69",
+      "anchor_paper_id": "9061363b164aaba1",
+      "anchor_title": "Youtu-GraphRAG - Vertically Unified Agents for Graph Retrieval-Augmented Complex Reasoning",
       "topic_terms": [
-        "tog",
-        "reasoning",
-        "llm",
-        "canberra",
-        "cwq",
-        "cand"
+        "youtu",
+        "graphrag",
+        "schema",
+        "graph",
+        "retrieval",
+        "community"
       ],
       "expected_paper_ids": [
-        "14671c78fc7de99d",
-        "1fc76b9c277d865a",
-        "335234d4d7846879",
-        "345fa9030560d7f9",
-        "34a144419fb2069a",
-        "4436219a91566cbc",
-        "520914709c84b8df",
-        "616fdaafce36cbca",
-        "6c78ef676eb57d46",
-        "737b0b8fe0aa8459",
-        "84300a7f375d95a1",
-        "8d42bef1737d7ea5",
-        "9dcc33a10c78f08e",
-        "e89b1303fc8bae94",
+        "6952b275d29483b8",
+        "6f8eb002a1b6f628",
         "f23593e4ff0a9ba6",
+        "f6eb7085314fbf1d"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C70",
+      "anchor_paper_id": "90fa6af3ee8298a6",
+      "anchor_title": "From RAG to Memory - Non-Parametric Continual Learning for Large Language Models",
+      "topic_terms": [
+        "hipporag",
+        "continual",
+        "nodes",
+        "rag",
+        "passages",
+        "ppr"
+      ],
+      "expected_paper_ids": [
+        "18249b6f921995d8",
+        "1df0bd67b590f331",
+        "3532533c11579cb5",
+        "4055a3ef2041a3c7",
+        "51ca6774c83a46de",
+        "5870f53e5df9a001",
+        "616fdaafce36cbca",
+        "61db034d4bff7540",
+        "6952b275d29483b8",
+        "6f8eb002a1b6f628",
+        "8cae263923635a95",
+        "9061363b164aaba1",
+        "988a2e8529280ff3",
+        "9efdb40d41444787",
+        "b075aaa96fb850c6",
+        "d09f40467cd78772",
+        "f23593e4ff0a9ba6",
+        "f34e3c4a8bf1ac71",
         "f3875a5ede83c981",
         "f6eb7085314fbf1d"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C31",
+      "qid": "C71",
+      "anchor_paper_id": "912a6661524afc72",
+      "anchor_title": "Dual Reasoning - A GNN-LLM Collaborative Framework for Knowledge Graph Question Answering",
+      "topic_terms": [
+        "dualr",
+        "milwaukee",
+        "birdy",
+        "reasoning",
+        "brewers",
+        "gnn"
+      ],
+      "expected_paper_ids": [
+        "345fa9030560d7f9",
+        "737b0b8fe0aa8459",
+        "cae3af3a47c268d0",
+        "f3875a5ede83c981"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C72",
+      "anchor_paper_id": "9498453cd1cc2c52",
+      "anchor_title": "Graph Neural Network Enhanced Retrieval for Question Answering of LLMs",
+      "topic_terms": [
+        "rgnn",
+        "ret",
+        "passages",
+        "gnn",
+        "distances",
+        "subquestions"
+      ],
+      "expected_paper_ids": [
+        "14dc54365a59476f",
+        "345fa9030560d7f9",
+        "6a1ccc0a1fb6841b",
+        "6ab8e76c45f157a1",
+        "cae3af3a47c268d0",
+        "e53985b5ef2be377",
+        "f3875a5ede83c981"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C73",
+      "anchor_paper_id": "975aa1fd3c1b6031",
+      "anchor_title": "Corrective Retrieval Augmented Generation (CRAG)",
+      "topic_terms": [
+        "crag",
+        "rag",
+        "retrieval",
+        "evaluator",
+        "popqa",
+        "self"
+      ],
+      "expected_paper_ids": [
+        "1f51235565c46762",
+        "335234d4d7846879",
+        "34a144419fb2069a",
+        "61db034d4bff7540",
+        "a2ee3c3207acdb22",
+        "dd89cb4ae314295e",
+        "eb5b325fe4af7857"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C74",
+      "anchor_paper_id": "9cea5f87de527158",
+      "anchor_title": "E^2GraphRAG - Streamlining Graph-based RAG for High Efficiency and Effectiveness",
+      "topic_terms": [
+        "chunks",
+        "retrieval",
+        "entities",
+        "entity",
+        "novelqa",
+        "indexing"
+      ],
+      "expected_paper_ids": [
+        "1df0bd67b590f331",
+        "9061363b164aaba1",
+        "f23593e4ff0a9ba6",
+        "f3875a5ede83c981"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C75",
+      "anchor_paper_id": "9dcc33a10c78f08e",
+      "anchor_title": "GraphReader - Building Graph-based Agent to Enhance Long-Context Abilities of Large Language Models",
+      "topic_terms": [
+        "graphreader",
+        "atomic",
+        "facts",
+        "rational",
+        "chunks",
+        "readagent"
+      ],
+      "expected_paper_ids": [
+        "335234d4d7846879",
+        "34a144419fb2069a",
+        "988a2e8529280ff3",
+        "a1cb61b3004050a7",
+        "f3875a5ede83c981"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C76",
+      "anchor_paper_id": "a2a178247f15f321",
+      "anchor_title": "NetComplete - Practical Network-Wide Configuration Synthesis with Autocompletion",
+      "topic_terms": [
+        "netcomplete",
+        "bgp",
+        "ospf",
+        "announcements",
+        "requirements",
+        "network"
+      ],
+      "expected_paper_ids": [
+        "1a1d055e0ccc0448",
+        "3820a1e6e7ad5eca",
+        "6457b4ca64caa079",
+        "66e1375c443759ac",
+        "8ff7edb9f0655e22",
+        "e18e3011e538441e",
+        "fdb1b5cd7eba5359"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C77",
+      "anchor_paper_id": "a6a5cfcd3725d74f",
+      "anchor_title": "Think-on-Graph - Deep and Responsible Reasoning of Large Language Model on Knowledge Graph",
+      "topic_terms": [
+        "tog",
+        "reasoning",
+        "canberra",
+        "llm",
+        "cwq",
+        "cand"
+      ],
+      "expected_paper_ids": [
+        "048fce29d897a681",
+        "14671c78fc7de99d",
+        "1df0bd67b590f331",
+        "1fc76b9c277d865a",
+        "29d8a065ed91c5d0",
+        "2d6ca6e8bb4e65d3",
+        "335234d4d7846879",
+        "345fa9030560d7f9",
+        "34a144419fb2069a",
+        "3530a80cd370ebf8",
+        "3532533c11579cb5",
+        "4055a3ef2041a3c7",
+        "4436219a91566cbc",
+        "4a3b5991bf11e674",
+        "4d713948845f60b1",
+        "520914709c84b8df",
+        "5870f53e5df9a001",
+        "616fdaafce36cbca",
+        "6952b275d29483b8",
+        "6c78ef676eb57d46",
+        "737b0b8fe0aa8459",
+        "7af0f03b63f5b7d0",
+        "7b21153c7f1d9bd1",
+        "84300a7f375d95a1",
+        "8cae263923635a95",
+        "8d42bef1737d7ea5",
+        "912a6661524afc72",
+        "9498453cd1cc2c52",
+        "9cea5f87de527158",
+        "9dcc33a10c78f08e",
+        "be252d4b731f1b87",
+        "cae3af3a47c268d0",
+        "d4052d57840502a2",
+        "e89b1303fc8bae94",
+        "f23593e4ff0a9ba6",
+        "f34e3c4a8bf1ac71",
+        "f3875a5ede83c981",
+        "f47c01bd21c0e4e3",
+        "f6eb7085314fbf1d"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C78",
+      "anchor_paper_id": "a74b7f266c6ec0af",
+      "anchor_title": "A Survey on RAG Meeting LLMs - Towards Retrieval-Augmented Large Language Models",
+      "topic_terms": [
+        "retrieval",
+        "llms",
+        "models",
+        "language",
+        "rag",
+        "knowledge"
+      ],
+      "expected_paper_ids": [
+        "2d6ca6e8bb4e65d3",
+        "345fa9030560d7f9",
+        "3530a80cd370ebf8",
+        "49f4596f697d3c15",
+        "51ca6774c83a46de",
+        "5a39daf1f9ac5fc9",
+        "61db034d4bff7540",
+        "652b74465f863c4e",
+        "6cd9c8e711da7895",
+        "737b0b8fe0aa8459",
+        "78288f0e69b98cb1",
+        "84300a7f375d95a1",
+        "9cea5f87de527158",
+        "ae44b1df2a415e3f",
+        "b18ac8a05ba486b8",
+        "bd72eebf611df136",
+        "ce9ff61fcda05f80",
+        "d09f40467cd78772",
+        "d4a4a7abd0c283e0",
+        "e53985b5ef2be377",
+        "f34e3c4a8bf1ac71",
+        "feaba137d9d2fde3"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C79",
       "anchor_paper_id": "a9bd3f7b96ac846a",
       "anchor_title": "LiveCodeBench - Holistic and Contamination Free Evaluation of Large Language Models for Code",
       "topic_terms": [
@@ -733,15 +2165,19 @@
       ],
       "expected_paper_ids": [
         "1adef27654cc2985",
+        "40f8d44665637af5",
+        "5df64b85588a7a24",
         "80d96e97cd3221a4",
+        "89f7e58b468c8b72",
         "d171e0693060b910",
+        "df742fea7776a7c0",
         "ea08807113b164c4",
         "f1a14252369d660a"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C32",
+      "qid": "C80",
       "anchor_paper_id": "ab3a9bbe54430777",
       "anchor_title": "Knowledge-Augmented Language Model Prompting for Zero-Shot Knowledge Graph Question Answering",
       "topic_terms": [
@@ -755,18 +2191,24 @@
       "expected_paper_ids": [
         "1d4985b4b9701674",
         "1fc76b9c277d865a",
+        "2d6ca6e8bb4e65d3",
         "345fa9030560d7f9",
+        "4d713948845f60b1",
+        "59c1cce8414ffc53",
+        "656e5eba9d188c31",
         "6a1ccc0a1fb6841b",
         "730f1a9f38d16689",
         "737b0b8fe0aa8459",
         "8d42bef1737d7ea5",
+        "9498453cd1cc2c52",
         "a6a5cfcd3725d74f",
-        "e89b1303fc8bae94"
+        "e89b1303fc8bae94",
+        "eb934a800763ed85"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C33",
+      "qid": "C81",
       "anchor_paper_id": "ac529ab762fd1672",
       "anchor_title": "HybridRAG - Integrating Knowledge Graphs and Vector Retrieval Augmented Generation for Efficient Information Extraction",
       "topic_terms": [
@@ -780,12 +2222,62 @@
       "expected_paper_ids": [
         "345fa9030560d7f9",
         "4436219a91566cbc",
+        "81e36376998f65c2",
+        "b18ac8a05ba486b8",
+        "e53985b5ef2be377",
         "f3875a5ede83c981"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C34",
+      "qid": "C82",
+      "anchor_paper_id": "ae44b1df2a415e3f",
+      "anchor_title": "Knowledge Graph-Guided Retrieval Augmented Generation",
+      "topic_terms": [
+        "chunks",
+        "retrieval",
+        "rag",
+        "hotpotqa",
+        "triplets",
+        "chunk"
+      ],
+      "expected_paper_ids": [
+        "012b358285ea841d",
+        "14dc54365a59476f",
+        "59c1cce8414ffc53",
+        "f3875a5ede83c981"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C83",
+      "anchor_paper_id": "b18ac8a05ba486b8",
+      "anchor_title": "KAG - Boosting LLMs in Professional Domains via Knowledge Augmented Generation",
+      "topic_terms": [
+        "kag",
+        "knowledge",
+        "retrieval",
+        "logical",
+        "reasoning",
+        "lfshre"
+      ],
+      "expected_paper_ids": [
+        "06e5ddd7d50063ec",
+        "1df0bd67b590f331",
+        "2d6ca6e8bb4e65d3",
+        "51ca6774c83a46de",
+        "616fdaafce36cbca",
+        "6952b275d29483b8",
+        "7b21153c7f1d9bd1",
+        "d09f40467cd78772",
+        "f23593e4ff0a9ba6",
+        "f3875a5ede83c981",
+        "f6eb7085314fbf1d"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C84",
       "anchor_paper_id": "b1f6a5942947276b",
       "anchor_title": "AutoCodeRover - Autonomous Program Improvement",
       "topic_terms": [
@@ -797,71 +2289,158 @@
         "software"
       ],
       "expected_paper_ids": [
+        "14815ceab60af94c",
         "1675c2dcd5ecaef4",
         "4804a553a0eef927",
+        "c5757f7481d62dc2",
         "cf462bee64728fc4",
-        "fdff7258295ecb8a"
+        "eccefa31cbfba927"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C35",
+      "qid": "C85",
+      "anchor_paper_id": "b30f0ed6f85a016d",
+      "anchor_title": "Polyglot Code Smell Detection for Infrastructure as Code with GLITCH",
+      "topic_terms": [
+        "glitch",
+        "smells",
+        "smell",
+        "puppet",
+        "iac",
+        "scripts"
+      ],
+      "expected_paper_ids": [
+        "9125eb1afa8b6d0d",
+        "e545127b265144cb",
+        "f72d7d3c03bb0733"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C86",
       "anchor_paper_id": "bd72eebf611df136",
       "anchor_title": "LightRAG - Simple and Fast Retrieval-Augmented Generation",
       "topic_terms": [
         "lightrag",
         "retrieval",
         "graph",
-        "rag",
-        "naiverag",
-        "indigenous"
+        "indigenous",
+        "beekeeper",
+        "naiverag"
       ],
       "expected_paper_ids": [
         "18249b6f921995d8",
+        "1df0bd67b590f331",
+        "2d6ca6e8bb4e65d3",
+        "3532533c11579cb5",
+        "4055a3ef2041a3c7",
+        "51ca6774c83a46de",
+        "5870f53e5df9a001",
+        "59c1cce8414ffc53",
         "616fdaafce36cbca",
+        "6952b275d29483b8",
         "6ab8e76c45f157a1",
+        "6b5013efcb9962c8",
         "6f8eb002a1b6f628",
         "737b0b8fe0aa8459",
+        "78288f0e69b98cb1",
+        "7af0f03b63f5b7d0",
+        "7b21153c7f1d9bd1",
         "84300a7f375d95a1",
+        "8cae263923635a95",
+        "9061363b164aaba1",
+        "90fa6af3ee8298a6",
+        "988a2e8529280ff3",
+        "9cea5f87de527158",
+        "9efdb40d41444787",
         "a06584e8f14dd65c",
         "ae44b1df2a415e3f",
+        "b075aaa96fb850c6",
         "b0f6f9495e1ef0e7",
+        "be9b683565f78840",
+        "cae3af3a47c268d0",
         "ce9ff61fcda05f80",
         "d09f40467cd78772",
         "d26f7eb599540e8b",
+        "e53985b5ef2be377",
         "f23593e4ff0a9ba6",
         "f3875a5ede83c981",
-        "f6eb7085314fbf1d"
+        "f47c01bd21c0e4e3",
+        "f6eb7085314fbf1d",
+        "feaba137d9d2fde3"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C36",
+      "qid": "C87",
       "anchor_paper_id": "c1f7caa804e849a9",
       "anchor_title": "Medical Graph RAG - Towards Safe Medical Large Language Model via Graph Retrieval-Augmented Generation",
       "topic_terms": [
-        "medical",
         "medgraphrag",
+        "medical",
         "tag",
-        "med",
         "graphrag",
-        "rag"
+        "med",
+        "graph"
       ],
       "expected_paper_ids": [
         "345fa9030560d7f9",
+        "3530a80cd370ebf8",
+        "5870f53e5df9a001",
+        "652b74465f863c4e",
         "737b0b8fe0aa8459",
+        "78288f0e69b98cb1",
         "84300a7f375d95a1",
         "f3875a5ede83c981"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C37",
+      "qid": "C88",
+      "anchor_paper_id": "c4151fd1b8785e18",
+      "anchor_title": "cAST - Enhancing Code Retrieval-Augmented Generation",
+      "topic_terms": [
+        "code",
+        "chunking",
+        "ast",
+        "chunks",
+        "codesage",
+        "chunk"
+      ],
+      "expected_paper_ids": [
+        "024719fb26819826",
+        "4c93b0a22a2a3486",
+        "a06584e8f14dd65c"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C89",
+      "anchor_paper_id": "c89b67d846b1db97",
+      "anchor_title": "Combinatorial sketching for finite programs",
+      "topic_terms": [
+        "sketch",
+        "bit",
+        "holes",
+        "ketch",
+        "sketching",
+        "synthesizer"
+      ],
+      "expected_paper_ids": [
+        "3820a1e6e7ad5eca",
+        "4b46ba543ba2cb34",
+        "e545127b265144cb"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C90",
       "anchor_paper_id": "cab2bb7f8f90f10a",
       "anchor_title": "RepoCoder - Repository-Level Code Completion",
       "topic_terms": [
-        "code",
         "repocoder",
+        "code",
         "completion",
         "retrieval",
         "repository",
@@ -870,17 +2449,32 @@
       "expected_paper_ids": [
         "02a46636ee60bc9e",
         "05df36f027cfe850",
+        "1c66e59351ba27e2",
+        "1cc4ff90286108f5",
+        "1e4143d4be8a5a5b",
         "212f49b6fb7ddbdb",
+        "35e6b19498b0086b",
+        "3a5dd46128e7f1e6",
+        "3fdcb376d961d11e",
+        "449109fa0549ac63",
         "44b346c1531586db",
         "4804a553a0eef927",
         "4932bb75e0b14289",
         "4c77c0e271d51ca6",
+        "4c93b0a22a2a3486",
+        "4f339bcd7d3d5a53",
         "521f48d34daf4747",
         "54f5162f6c9ee18c",
+        "5536c9136a510c94",
+        "56d4653ac9c392d8",
         "58c7465f0a75b9ac",
+        "5afd419f84dcedd2",
+        "5bb0a5f79819b175",
+        "5df64b85588a7a24",
         "5e44fd9015373066",
         "71be8b8b4420056f",
         "738408d4cbac5062",
+        "7c714f11c748f591",
         "83b02b303bae748d",
         "8c22cbd987ff3221",
         "8e136f96c83b382b",
@@ -888,36 +2482,48 @@
         "9ae0ffdec60d5020",
         "a06584e8f14dd65c",
         "a9bd3f7b96ac846a",
+        "adc40e7877b2d478",
+        "bab422ba166f8c1c",
+        "bf81adab2445f5bc",
+        "c3eff357909533b8",
         "c4151fd1b8785e18",
+        "c5757f7481d62dc2",
         "cf462bee64728fc4",
         "d171e0693060b910",
         "d610f8de8eaba97d",
+        "d95ecab1fcd7278a",
+        "e6ff2ba6c476128b",
+        "eccefa31cbfba927",
         "f1a14252369d660a",
-        "fdff7258295ecb8a"
+        "fcf153dbd49b7fae"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C38",
-      "anchor_paper_id": "cb7748d407645188",
-      "anchor_title": "Variational Reasoning for Question Answering with Knowledge Graph",
+      "qid": "C91",
+      "anchor_paper_id": "cd6ab0f06dd44404",
+      "anchor_title": "Efficient Training of Language Models to Fill in the Middle",
       "topic_terms": [
-        "movie",
-        "hop",
-        "entity",
-        "audio",
-        "question",
-        "vanilla"
+        "fim",
+        "infilling",
+        "spm",
+        "suffix",
+        "psm",
+        "middle"
       ],
       "expected_paper_ids": [
-        "1d4985b4b9701674",
-        "345fa9030560d7f9",
-        "f3875a5ede83c981"
+        "4f339bcd7d3d5a53",
+        "549e079ffd610441",
+        "5e44fd9015373066",
+        "6e926c91f6fe0d27",
+        "738408d4cbac5062",
+        "f0fa4c579f033454",
+        "f6bca018af241352"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C39",
+      "qid": "C92",
       "anchor_paper_id": "ce9ff61fcda05f80",
       "anchor_title": "PathRAG - Pruning Graph-based Retrieval Augmented Generation with Relational Paths",
       "topic_terms": [
@@ -926,42 +2532,165 @@
         "graph",
         "lightrag",
         "nodes",
-        "rag"
+        "retrieval"
       ],
       "expected_paper_ids": [
+        "4055a3ef2041a3c7",
         "616fdaafce36cbca",
         "6f8eb002a1b6f628",
-        "f6eb7085314fbf1d"
+        "8cae263923635a95",
+        "b075aaa96fb850c6",
+        "f6eb7085314fbf1d",
+        "feaba137d9d2fde3"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C40",
+      "qid": "C93",
+      "anchor_paper_id": "cfc80c2ae284e1a3",
+      "anchor_title": "Precise Zero-Shot Dense Retrieval without Relevance Labels",
+      "topic_terms": [
+        "hyde",
+        "contriever",
+        "trec",
+        "retrieval",
+        "dense",
+        "ndcg"
+      ],
+      "expected_paper_ids": [
+        "048fce29d897a681",
+        "1f51235565c46762",
+        "2d6ca6e8bb4e65d3",
+        "59c1cce8414ffc53",
+        "bd72eebf611df136",
+        "d09f40467cd78772",
+        "e53985b5ef2be377"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C94",
       "anchor_paper_id": "d171e0693060b910",
       "anchor_title": "SWE-agent - Agent-Computer Interfaces Enable Automated Software Engineering",
       "topic_terms": [
         "file",
         "swe",
         "agent",
-        "pylint",
         "edit",
+        "pylint",
         "sympy"
       ],
       "expected_paper_ids": [
+        "14815ceab60af94c",
         "1675c2dcd5ecaef4",
+        "3be6522001ac7820",
+        "449109fa0549ac63",
         "4804a553a0eef927",
         "49a1dd856125d8b8",
+        "4f339bcd7d3d5a53",
         "521f48d34daf4747",
+        "56d4653ac9c392d8",
         "58c7465f0a75b9ac",
+        "5df64b85588a7a24",
+        "793e32c036ecd5e1",
+        "7d687407ed2f8e52",
+        "89f7e58b468c8b72",
         "b1f6a5942947276b",
+        "c5757f7481d62dc2",
         "cf462bee64728fc4",
+        "eccefa31cbfba927",
         "f33713ab600ccf70",
-        "fdff7258295ecb8a"
+        "fcf153dbd49b7fae"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C41",
+      "qid": "C95",
+      "anchor_paper_id": "d7ee220ddbd8ff06",
+      "anchor_title": "Test Coverage for Network Configurations",
+      "topic_terms": [
+        "plane",
+        "bgp",
+        "rib",
+        "netcov",
+        "configuration",
+        "ifg"
+      ],
+      "expected_paper_ids": [
+        "123382c089026e9a",
+        "66e1375c443759ac",
+        "e49fdadb85bad91e"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C96",
+      "anchor_paper_id": "d9de3205838ab0e4",
+      "anchor_title": "Automating string processing in spreadsheets using input-output examples",
+      "topic_terms": [
+        "string",
+        "substr",
+        "tokenseq",
+        "conststr",
+        "pos",
+        "numtok"
+      ],
+      "expected_paper_ids": [
+        "41d5c744af84cf05",
+        "52d35d25a10c38da",
+        "6e926c91f6fe0d27",
+        "700b905336515a17",
+        "88003da1f9cee446"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C97",
+      "anchor_paper_id": "d9eaa1398abac0df",
+      "anchor_title": "Self-RAG - Learning to Retrieve, Generate, and Critique through Self-Reflection",
+      "topic_terms": [
+        "issup",
+        "isrel",
+        "isuse",
+        "reflection",
+        "rag",
+        "retrieval"
+      ],
+      "expected_paper_ids": [
+        "048fce29d897a681",
+        "0b1c802256339193",
+        "14dc54365a59476f",
+        "1df0bd67b590f331",
+        "1f21265563f64f39",
+        "1f51235565c46762",
+        "1fc76b9c277d865a",
+        "335234d4d7846879",
+        "34a144419fb2069a",
+        "4055a3ef2041a3c7",
+        "4436219a91566cbc",
+        "45b70827fbbe5542",
+        "4bdccc6b99316e3f",
+        "4c77c0e271d51ca6",
+        "59c1cce8414ffc53",
+        "616fdaafce36cbca",
+        "652b74465f863c4e",
+        "656e5eba9d188c31",
+        "6ab8e76c45f157a1",
+        "78288f0e69b98cb1",
+        "84300a7f375d95a1",
+        "87589c4f09e60a3a",
+        "975aa1fd3c1b6031",
+        "a2ee3c3207acdb22",
+        "a30d11953e9bd38d",
+        "a74b7f266c6ec0af",
+        "cae3af3a47c268d0",
+        "eb5b325fe4af7857",
+        "f23593e4ff0a9ba6"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C98",
       "anchor_paper_id": "da72f17f36c75529",
       "anchor_title": "What do LLMs need to Synthesize Correct Router Configurations",
       "topic_terms": [
@@ -970,17 +2699,139 @@
         "route",
         "router",
         "policy",
-        "juniper"
+        "batfish"
       ],
       "expected_paper_ids": [
         "66e1375c443759ac",
+        "77329e4b69832207",
+        "81e36376998f65c2",
         "f95fe3d53655f899",
         "fdb1b5cd7eba5359"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C42",
+      "qid": "C99",
+      "anchor_paper_id": "db8c9f27b5b977d6",
+      "anchor_title": "DepsRAG - Towards Agentic Reasoning and Planning for Software Dependency Management",
+      "topic_terms": [
+        "eps",
+        "critic",
+        "deps",
+        "agent",
+        "assistantagent",
+        "criticagent"
+      ],
+      "expected_paper_ids": [
+        "345fa9030560d7f9",
+        "e53985b5ef2be377",
+        "f3875a5ede83c981"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C100",
+      "anchor_paper_id": "deeb9dd16d583f61",
+      "anchor_title": "Knowledge Graph-Enhanced Large Language Models via Path Selection",
+      "topic_terms": [
+        "kelp",
+        "knowledge",
+        "paths",
+        "path",
+        "impactful",
+        "encoder"
+      ],
+      "expected_paper_ids": [
+        "1d4985b4b9701674",
+        "2d6ca6e8bb4e65d3",
+        "345fa9030560d7f9",
+        "5870f53e5df9a001",
+        "737b0b8fe0aa8459",
+        "912a6661524afc72",
+        "f3875a5ede83c981"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C101",
+      "anchor_paper_id": "df742fea7776a7c0",
+      "anchor_title": "LLM-Based Multi-Agent Systems for Software Engineering - Literature Review, Vision and the Road Ahead",
+      "topic_terms": [
+        "lma",
+        "agents",
+        "agent",
+        "software",
+        "systems",
+        "roles"
+      ],
+      "expected_paper_ids": [
+        "024719fb26819826",
+        "3530a80cd370ebf8",
+        "521f48d34daf4747",
+        "89f7e58b468c8b72"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C102",
+      "anchor_paper_id": "e49fdadb85bad91e",
+      "anchor_title": "Lessons from the evolution of the Batfish configuration analysis tool",
+      "topic_terms": [
+        "batfish",
+        "plane",
+        "network",
+        "packets",
+        "packet",
+        "datalog"
+      ],
+      "expected_paper_ids": [
+        "77329e4b69832207",
+        "81e36376998f65c2",
+        "f95fe3d53655f899"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C103",
+      "anchor_paper_id": "e53985b5ef2be377",
+      "anchor_title": "KET-RAG - A Cost-Efficient Multi-Granular Indexing Framework for Graph-RAG",
+      "topic_terms": [
+        "ket",
+        "rag",
+        "graph",
+        "text",
+        "chunks",
+        "retrieval"
+      ],
+      "expected_paper_ids": [
+        "616fdaafce36cbca",
+        "78288f0e69b98cb1",
+        "84300a7f375d95a1",
+        "f3875a5ede83c981"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C104",
+      "anchor_paper_id": "e545127b265144cb",
+      "anchor_title": "SoK - Static Configuration Analysis in Infrastructure as Code Scripts",
+      "topic_terms": [
+        "iac",
+        "infrafix",
+        "repair",
+        "apr",
+        "ansible",
+        "tortoise"
+      ],
+      "expected_paper_ids": [
+        "128cb4d5bdfcb7c5",
+        "1535011540d0cd51",
+        "9125eb1afa8b6d0d"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C105",
       "anchor_paper_id": "e89b1303fc8bae94",
       "anchor_title": "G-Retriever - Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering",
       "topic_terms": [
@@ -988,20 +2839,176 @@
         "franklin",
         "bieber",
         "surgery",
-        "cosmetic",
-        "graphqa"
+        "graphqa",
+        "cosmetic"
       ],
       "expected_paper_ids": [
+        "14dc54365a59476f",
         "345fa9030560d7f9",
+        "3532533c11579cb5",
+        "51ca6774c83a46de",
+        "5a8f51dc47139169",
+        "6952b275d29483b8",
         "737b0b8fe0aa8459",
+        "7af0f03b63f5b7d0",
+        "7b21153c7f1d9bd1",
         "84300a7f375d95a1",
+        "9061363b164aaba1",
+        "96c7e570f1ea6f45",
+        "9cea5f87de527158",
+        "d4a4a7abd0c283e0",
+        "e53985b5ef2be377",
+        "f34e3c4a8bf1ac71",
         "f3875a5ede83c981",
-        "f6eb7085314fbf1d"
+        "f6eb7085314fbf1d",
+        "feaba137d9d2fde3"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C43",
+      "qid": "C106",
+      "anchor_paper_id": "eccefa31cbfba927",
+      "anchor_title": "Alibaba LingmaAgent - Improving Automated Issue Resolution via Comprehensive Repository Exploration",
+      "topic_terms": [
+        "lingmaagent",
+        "repository",
+        "swe",
+        "agent",
+        "code",
+        "mcts"
+      ],
+      "expected_paper_ids": [
+        "1675c2dcd5ecaef4",
+        "3be6522001ac7820",
+        "449109fa0549ac63",
+        "4804a553a0eef927",
+        "54f5162f6c9ee18c",
+        "58c7465f0a75b9ac",
+        "c5757f7481d62dc2",
+        "cf462bee64728fc4",
+        "df742fea7776a7c0"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C107",
+      "anchor_paper_id": "ed5cbff53c8ff550",
+      "anchor_title": "CRITIC - Large Language Models Can Self-Correct with Tool-Interactive Critiquing",
+      "topic_terms": [
+        "critic",
+        "answer",
+        "toxicity",
+        "question",
+        "evidence",
+        "published"
+      ],
+      "expected_paper_ids": [
+        "14815ceab60af94c",
+        "335234d4d7846879",
+        "34a144419fb2069a",
+        "9251acfaf4a4166a",
+        "db8c9f27b5b977d6",
+        "eb934a800763ed85"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C108",
+      "anchor_paper_id": "f0fa4c579f033454",
+      "anchor_title": "StarCoder 2 and The Stack v2 - The Next Generation",
+      "topic_terms": [
+        "cited",
+        "starcoderbase",
+        "urlhttps",
+        "tmlr",
+        "code",
+        "bsd"
+      ],
+      "expected_paper_ids": [
+        "00ccfabad90793af",
+        "05df36f027cfe850",
+        "212f49b6fb7ddbdb",
+        "3489c0c8a177b25c",
+        "3a5dd46128e7f1e6",
+        "3fdcb376d961d11e",
+        "428c404364d5813a",
+        "46d2f97b867c4e87",
+        "4932bb75e0b14289",
+        "4c93b0a22a2a3486",
+        "4f339bcd7d3d5a53",
+        "54f5162f6c9ee18c",
+        "7c714f11c748f591",
+        "8e136f96c83b382b",
+        "9ae0ffdec60d5020",
+        "a9bd3f7b96ac846a",
+        "be9b683565f78840",
+        "c4151fd1b8785e18",
+        "cf462bee64728fc4",
+        "ddebc574f446691a",
+        "eccefa31cbfba927",
+        "f1a14252369d660a",
+        "f6bca018af241352"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C109",
+      "anchor_paper_id": "f285b0971ae4a790",
+      "anchor_title": "ReAct - Synergizing Reasoning and Acting in Language Models",
+      "topic_terms": [
+        "countertop",
+        "cabinet",
+        "knife",
+        "react",
+        "lettuce",
+        "action"
+      ],
+      "expected_paper_ids": [
+        "062a32d484810ea0",
+        "1adef27654cc2985",
+        "1cc4ff90286108f5",
+        "1f21265563f64f39",
+        "29d8a065ed91c5d0",
+        "32015300a65ade88",
+        "335234d4d7846879",
+        "34a144419fb2069a",
+        "39dbc38bb6bfca7c",
+        "4055a3ef2041a3c7",
+        "4804a553a0eef927",
+        "49a1dd856125d8b8",
+        "4d59fa09443cd621",
+        "54f5162f6c9ee18c",
+        "5536c9136a510c94",
+        "6b5013efcb9962c8",
+        "6f8eb002a1b6f628",
+        "793e32c036ecd5e1",
+        "7d687407ed2f8e52",
+        "84300a7f375d95a1",
+        "8b61c9a5792f456b",
+        "9498453cd1cc2c52",
+        "9dcc33a10c78f08e",
+        "a6a5cfcd3725d74f",
+        "ae44b1df2a415e3f",
+        "ae9868f07f0f7ffa",
+        "b18ac8a05ba486b8",
+        "be252d4b731f1b87",
+        "c5757f7481d62dc2",
+        "c844fc20b886a5b5",
+        "d171e0693060b910",
+        "d4a4a7abd0c283e0",
+        "ec39758e236e0790",
+        "eccefa31cbfba927",
+        "ed5cbff53c8ff550",
+        "f33713ab600ccf70",
+        "f7afd15cb0cd2d65",
+        "f95fe3d53655f899",
+        "fcf153dbd49b7fae",
+        "feaba137d9d2fde3"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C110",
       "anchor_paper_id": "f3875a5ede83c981",
       "anchor_title": "A Survey of Graph Retrieval-Augmented Generation for Customized Large Language Models",
       "topic_terms": [
@@ -1015,16 +3022,44 @@
       "expected_paper_ids": [
         "11d0e759827c074d",
         "18249b6f921995d8",
+        "1df0bd67b590f331",
+        "2d6ca6e8bb4e65d3",
+        "4a3b5991bf11e674",
+        "5870f53e5df9a001",
         "616fdaafce36cbca",
+        "78288f0e69b98cb1",
+        "7af0f03b63f5b7d0",
+        "8cae263923635a95",
+        "9061363b164aaba1",
         "a06584e8f14dd65c",
         "d09f40467cd78772",
+        "d4a4a7abd0c283e0",
         "f23593e4ff0a9ba6",
         "f6eb7085314fbf1d"
       ],
       "label_source": "citation_graph"
     },
     {
-      "qid": "C44",
+      "qid": "C111",
+      "anchor_paper_id": "f72d7d3c03bb0733",
+      "anchor_title": "When Your Infrastructure Is a Buggy Program - Understanding Faults in Infrastructure as Code Ecosystems",
+      "topic_terms": [
+        "iac",
+        "bugs",
+        "puppet",
+        "configuration",
+        "bug",
+        "ansible"
+      ],
+      "expected_paper_ids": [
+        "2af36ee28c4db2da",
+        "3172b80856de5a06",
+        "f7afd15cb0cd2d65"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C112",
       "anchor_paper_id": "f7e8e1df64129742",
       "anchor_title": "SWE-bench - Can Language Models Resolve Real-World GitHub Issues",
       "topic_terms": [
@@ -1032,33 +3067,68 @@
         "patch",
         "tests",
         "pass",
-        "oracle",
-        "task"
+        "codebase",
+        "sklearn"
       ],
       "expected_paper_ids": [
+        "00ccfabad90793af",
         "024719fb26819826",
         "1675c2dcd5ecaef4",
         "1adef27654cc2985",
         "212f49b6fb7ddbdb",
         "3489c0c8a177b25c",
+        "3a5dd46128e7f1e6",
+        "3be6522001ac7820",
         "4804a553a0eef927",
         "4adfd35def371f15",
+        "52d35d25a10c38da",
         "54f5162f6c9ee18c",
+        "56d4653ac9c392d8",
         "58c7465f0a75b9ac",
         "5a39daf1f9ac5fc9",
-        "70fa886dea2c5f3b",
+        "5afd419f84dcedd2",
         "738408d4cbac5062",
+        "7d687407ed2f8e52",
         "80d96e97cd3221a4",
         "83b02b303bae748d",
+        "8566964f244122ec",
+        "89f7e58b468c8b72",
         "a06584e8f14dd65c",
         "a9bd3f7b96ac846a",
+        "adc40e7877b2d478",
         "b1f6a5942947276b",
+        "b5428fa9302dd61c",
+        "c5757f7481d62dc2",
         "c844fc20b886a5b5",
         "cf462bee64728fc4",
         "d171e0693060b910",
+        "d95ecab1fcd7278a",
+        "e02fee51f05b134d",
+        "e6a8953db1b1d37d",
         "ea08807113b164c4",
+        "eccefa31cbfba927",
         "f33713ab600ccf70",
-        "fdff7258295ecb8a"
+        "f6bca018af241352",
+        "fcf153dbd49b7fae"
+      ],
+      "label_source": "citation_graph"
+    },
+    {
+      "qid": "C113",
+      "anchor_paper_id": "fdb1b5cd7eba5359",
+      "anchor_title": "NetConfEval - Can LLMs Facilitate Network Configuration",
+      "topic_terms": [
+        "network",
+        "turbo",
+        "gpt",
+        "configuration",
+        "netconfeval",
+        "llms"
+      ],
+      "expected_paper_ids": [
+        "59b0238042128787",
+        "77329e4b69832207",
+        "c844fc20b886a5b5"
       ],
       "label_source": "citation_graph"
     }

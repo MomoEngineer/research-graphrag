@@ -1,11 +1,11 @@
 {
-  "gold_set_version": "1.2.0",
+  "gold_set_version": "1.3.0",
   "created_for": "Roadmap A4 (Hybrid-Retrieval BM25 + TF-IDF), docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md; Teil-Vorgriff auf A6",
-  "updated_for": "Roadmap A5 (Rausch-Reduktion), docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md – Labels nach dem Re-Ingest mechanisch neu abgeleitet (G12/G16: je ein Paper kommt hinzu, weil eine faelschlich als Ueberschrift gelesene URL-Zeile wieder im Chunk-Text steht)",
+  "updated_for": "Korpuswechsel 145 -> 341 Paper (Phase 11): Labels mechanisch neu abgeleitet. Die Fragen sind unveraendert; vier Paper der Fassung 1.2.0 liegen nicht mehr im Korpus (die paper_id ist der Datei-Hash), ihre Inhalte sind ueber andere Paper weiterhin abgedeckt.",
   "index_schema_version": "0.4.0",
   "corpus": {
-    "papers": 145,
-    "chunks": 11181
+    "papers": 341,
+    "chunks": 23741
   },
   "label_rule": "Ein Paper gilt als relevant, wenn mindestens einer seiner Chunks alle Strings aus match_all (case-insensitive) enthaelt. Die Labels sind damit unabhaengig von jeder Ranking-Funktion und ueber 'python -m scripts.eval_retrieval --verify-labels' reproduzierbar.",
   "questions": [
@@ -17,6 +17,7 @@
         "qdrant"
       ],
       "expected_paper_ids": [
+        "062a32d484810ea0",
         "520914709c84b8df"
       ]
     },
@@ -28,6 +29,9 @@
         "webquestionssp"
       ],
       "expected_paper_ids": [
+        "3530a80cd370ebf8",
+        "4817776e3866356b",
+        "656e5eba9d188c31",
         "ab3a9bbe54430777"
       ]
     },
@@ -39,7 +43,7 @@
         "grobid"
       ],
       "expected_paper_ids": [
-        "c79a2138422e9726"
+        "0d14009d8b28062d"
       ]
     },
     {
@@ -50,7 +54,8 @@
         "text2cypher"
       ],
       "expected_paper_ids": [
-        "0b0325edf825337d"
+        "0b0325edf825337d",
+        "6cd9c8e711da7895"
       ]
     },
     {
@@ -61,7 +66,9 @@
         "model context protocol"
       ],
       "expected_paper_ids": [
+        "7d687407ed2f8e52",
         "8b8ed15cfb943a55",
+        "db5b7b7e3d9ce9fc",
         "f95fe3d53655f899"
       ]
     },
@@ -73,9 +80,13 @@
         "narrativeqa"
       ],
       "expected_paper_ids": [
-        "35e7e66bb3323d8d",
+        "01319e2e6e6ecfd5",
+        "6f854d5bb3a1651a",
         "84300a7f375d95a1",
-        "9dcc33a10c78f08e"
+        "90fa6af3ee8298a6",
+        "988a2e8529280ff3",
+        "9dcc33a10c78f08e",
+        "eb5b325fe4af7857"
       ]
     },
     {
@@ -88,6 +99,7 @@
       "expected_paper_ids": [
         "1d4985b4b9701674",
         "b0f6f9495e1ef0e7",
+        "b18ac8a05ba486b8",
         "f3875a5ede83c981"
       ]
     },
@@ -100,6 +112,7 @@
       ],
       "expected_paper_ids": [
         "11d0e759827c074d",
+        "7945ffcf02520f4c",
         "ab11bf2204e34d35",
         "f7e8e1df64129742"
       ]
@@ -112,6 +125,10 @@
         "netconf"
       ],
       "expected_paper_ids": [
+        "3172b80856de5a06",
+        "4fc06bbcbe759ede",
+        "59b0238042128787",
+        "77329e4b69832207",
         "9112db526ccf2e8d",
         "c844fc20b886a5b5",
         "f95fe3d53655f899",
@@ -126,9 +143,22 @@
         "faiss"
       ],
       "expected_paper_ids": [
+        "01319e2e6e6ecfd5",
+        "0d14009d8b28062d",
+        "0e5a3bbeaed8dfbe",
+        "28296441e7a995a6",
+        "5a8f51dc47139169",
+        "62d6558f515ef6a6",
+        "64286fbb1876d99f",
+        "652b74465f863c4e",
+        "6cd9c8e711da7895",
+        "7e1ad3a070426193",
         "84300a7f375d95a1",
+        "867e41de4f60f335",
         "8b61c9a5792f456b",
+        "9cea5f87de527158",
         "cf462bee64728fc4",
+        "d4a4a7abd0c283e0",
         "d60e93a406b54650",
         "d610f8de8eaba97d",
         "f3875a5ede83c981"
@@ -143,9 +173,12 @@
       ],
       "expected_paper_ids": [
         "1fc76b9c277d865a",
+        "51f106cbe81617c6",
         "8b8ed15cfb943a55",
         "8d42bef1737d7ea5",
-        "cf462bee64728fc4"
+        "912a6661524afc72",
+        "cf462bee64728fc4",
+        "d4a4a7abd0c283e0"
       ]
     },
     {
@@ -156,12 +189,22 @@
         "terraform"
       ],
       "expected_paper_ids": [
+        "128cb4d5bdfcb7c5",
+        "1535011540d0cd51",
+        "3172b80856de5a06",
         "49a1dd856125d8b8",
         "704e94c0df21a463",
         "81d183cbee9f22a7",
+        "9125eb1afa8b6d0d",
+        "abaaf1595a64689d",
+        "b30f0ed6f85a016d",
+        "d7ee220ddbd8ff06",
         "dd89cb4ae314295e",
         "de2c2e96399d6d6b",
+        "e02fee51f05b134d",
         "e545127b265144cb",
+        "efa31841f8ada102",
+        "f72d7d3c03bb0733",
         "f7afd15cb0cd2d65"
       ]
     },
@@ -173,6 +216,10 @@
         "netconf"
       ],
       "expected_paper_ids": [
+        "3172b80856de5a06",
+        "4fc06bbcbe759ede",
+        "59b0238042128787",
+        "77329e4b69832207",
         "9112db526ccf2e8d",
         "c844fc20b886a5b5",
         "f95fe3d53655f899",
@@ -187,9 +234,22 @@
         "faiss"
       ],
       "expected_paper_ids": [
+        "01319e2e6e6ecfd5",
+        "0d14009d8b28062d",
+        "0e5a3bbeaed8dfbe",
+        "28296441e7a995a6",
+        "5a8f51dc47139169",
+        "62d6558f515ef6a6",
+        "64286fbb1876d99f",
+        "652b74465f863c4e",
+        "6cd9c8e711da7895",
+        "7e1ad3a070426193",
         "84300a7f375d95a1",
+        "867e41de4f60f335",
         "8b61c9a5792f456b",
+        "9cea5f87de527158",
         "cf462bee64728fc4",
+        "d4a4a7abd0c283e0",
         "d60e93a406b54650",
         "d610f8de8eaba97d",
         "f3875a5ede83c981"
@@ -203,9 +263,13 @@
         "narrativeqa"
       ],
       "expected_paper_ids": [
-        "35e7e66bb3323d8d",
+        "01319e2e6e6ecfd5",
+        "6f854d5bb3a1651a",
         "84300a7f375d95a1",
-        "9dcc33a10c78f08e"
+        "90fa6af3ee8298a6",
+        "988a2e8529280ff3",
+        "9dcc33a10c78f08e",
+        "eb5b325fe4af7857"
       ]
     },
     {
@@ -216,12 +280,22 @@
         "terraform"
       ],
       "expected_paper_ids": [
+        "128cb4d5bdfcb7c5",
+        "1535011540d0cd51",
+        "3172b80856de5a06",
         "49a1dd856125d8b8",
         "704e94c0df21a463",
         "81d183cbee9f22a7",
+        "9125eb1afa8b6d0d",
+        "abaaf1595a64689d",
+        "b30f0ed6f85a016d",
+        "d7ee220ddbd8ff06",
         "dd89cb4ae314295e",
         "de2c2e96399d6d6b",
+        "e02fee51f05b134d",
         "e545127b265144cb",
+        "efa31841f8ada102",
+        "f72d7d3c03bb0733",
         "f7afd15cb0cd2d65"
       ]
     },
@@ -235,13 +309,20 @@
       ],
       "expected_paper_ids": [
         "18249b6f921995d8",
+        "1df0bd67b590f331",
+        "49f4596f697d3c15",
         "4d59fa09443cd621",
         "730f1a9f38d16689",
+        "78288f0e69b98cb1",
         "84300a7f375d95a1",
+        "8cae263923635a95",
+        "9061363b164aaba1",
+        "b3b298b88160d0e8",
         "d09f40467cd78772",
         "d26f7eb599540e8b",
         "f23593e4ff0a9ba6",
-        "f3875a5ede83c981"
+        "f3875a5ede83c981",
+        "feaba137d9d2fde3"
       ]
     },
     {
@@ -253,14 +334,33 @@
         "2wikimultihopqa"
       ],
       "expected_paper_ids": [
+        "048fce29d897a681",
         "06e5ddd7d50063ec",
         "14671c78fc7de99d",
+        "1df0bd67b590f331",
+        "3532533c11579cb5",
+        "4055a3ef2041a3c7",
+        "49f4596f697d3c15",
+        "5870f53e5df9a001",
+        "59c1cce8414ffc53",
         "616fdaafce36cbca",
+        "6952b275d29483b8",
         "6ab8e76c45f157a1",
+        "6b5013efcb9962c8",
         "6f8eb002a1b6f628",
+        "78288f0e69b98cb1",
+        "79bd83c53d031726",
+        "7af0f03b63f5b7d0",
+        "7b21153c7f1d9bd1",
+        "9061363b164aaba1",
+        "90fa6af3ee8298a6",
         "9dcc33a10c78f08e",
+        "b18ac8a05ba486b8",
+        "eb5b325fe4af7857",
         "f23593e4ff0a9ba6",
-        "f6eb7085314fbf1d"
+        "f34e3c4a8bf1ac71",
+        "f6eb7085314fbf1d",
+        "feaba137d9d2fde3"
       ]
     },
     {
@@ -272,11 +372,24 @@
         "dense retrieval"
       ],
       "expected_paper_ids": [
+        "01319e2e6e6ecfd5",
+        "062a32d484810ea0",
+        "0d14009d8b28062d",
+        "3fdcb376d961d11e",
         "4adfd35def371f15",
+        "64286fbb1876d99f",
         "6721c087c0ecc783",
         "71be8b8b4420056f",
+        "79bd83c53d031726",
         "8e136f96c83b382b",
+        "90fa6af3ee8298a6",
+        "96c7e570f1ea6f45",
+        "9efdb40d41444787",
+        "a74b7f266c6ec0af",
+        "c5757f7481d62dc2",
+        "cae3af3a47c268d0",
         "d610f8de8eaba97d",
+        "e6ff2ba6c476128b",
         "f7e8e1df64129742"
       ]
     },
@@ -299,7 +412,11 @@
         "openstack"
       ],
       "expected_paper_ids": [
-        "81d183cbee9f22a7"
+        "128cb4d5bdfcb7c5",
+        "3172b80856de5a06",
+        "81d183cbee9f22a7",
+        "81e36376998f65c2",
+        "8ff7edb9f0655e22"
       ]
     },
     {
@@ -310,6 +427,7 @@
         "grpc"
       ],
       "expected_paper_ids": [
+        "e02fee51f05b134d",
         "f95fe3d53655f899",
         "fdb1b5cd7eba5359"
       ]
@@ -322,7 +440,16 @@
         "rlhf"
       ],
       "expected_paper_ids": [
+        "0d14009d8b28062d",
+        "5870f53e5df9a001",
         "6721c087c0ecc783",
+        "81e44592314d8021",
+        "8ff7edb9f0655e22",
+        "9810a9d1b8d578ff",
+        "b18ac8a05ba486b8",
+        "d9eaa1398abac0df",
+        "eccefa31cbfba927",
+        "ed5cbff53c8ff550",
         "f292efdb08398d46"
       ]
     },
@@ -335,6 +462,9 @@
       ],
       "expected_paper_ids": [
         "0b0325edf825337d",
+        "746f868462622d8c",
+        "913af23022ea1dc7",
+        "b3b298b88160d0e8",
         "f95fe3d53655f899"
       ]
     },
@@ -346,8 +476,12 @@
         "jinja"
       ],
       "expected_paper_ids": [
+        "00ccfabad90793af",
         "2af36ee28c4db2da",
+        "30fa6d709d044f07",
+        "9125eb1afa8b6d0d",
         "ae32449cc39a77f9",
+        "f72d7d3c03bb0733",
         "f7e8e1df64129742"
       ]
     },
@@ -359,11 +493,20 @@
         "triviaqa"
       ],
       "expected_paper_ids": [
+        "28296441e7a995a6",
+        "29925e4e3b66f6c3",
         "345fa9030560d7f9",
+        "5536c9136a510c94",
+        "62d6558f515ef6a6",
         "6f8eb002a1b6f628",
         "803d7e5295b4a7f2",
+        "888d164055c8892e",
         "ae44b1df2a415e3f",
-        "ce9ff61fcda05f80"
+        "ce9ff61fcda05f80",
+        "d9eaa1398abac0df",
+        "ed5cbff53c8ff550",
+        "f7c36bf9e4b0af0a",
+        "feaba137d9d2fde3"
       ]
     },
     {
@@ -374,13 +517,29 @@
         "colbert"
       ],
       "expected_paper_ids": [
+        "01319e2e6e6ecfd5",
+        "062a32d484810ea0",
         "06e5ddd7d50063ec",
         "14671c78fc7de99d",
+        "1f51235565c46762",
+        "28296441e7a995a6",
+        "2d6ca6e8bb4e65d3",
+        "51f106cbe81617c6",
         "61db034d4bff7540",
+        "62d6558f515ef6a6",
         "6721c087c0ecc783",
+        "6952b275d29483b8",
+        "79bd83c53d031726",
+        "7b21153c7f1d9bd1",
+        "96c7e570f1ea6f45",
         "9dcc33a10c78f08e",
+        "a30d11953e9bd38d",
+        "a74b7f266c6ec0af",
+        "b18ac8a05ba486b8",
         "b29563048227483c",
-        "d60e93a406b54650"
+        "d60e93a406b54650",
+        "d95ecab1fcd7278a",
+        "ed5cbff53c8ff550"
       ]
     },
     {
@@ -391,12 +550,15 @@
         "ndcg"
       ],
       "expected_paper_ids": [
+        "08f9596ffb7067ac",
         "345fa9030560d7f9",
         "46d2f97b867c4e87",
         "520914709c84b8df",
+        "62d6558f515ef6a6",
+        "7945ffcf02520f4c",
         "b29563048227483c",
         "c4151fd1b8785e18",
-        "d17e1f03c0d828c7",
+        "cfc80c2ae284e1a3",
         "d8999c00e664e8c6"
       ]
     },
@@ -408,11 +570,16 @@
         "louvain"
       ],
       "expected_paper_ids": [
-        "08619859e06c45eb",
         "18249b6f921995d8",
+        "1df0bd67b590f331",
         "4d59fa09443cd621",
         "730f1a9f38d16689",
+        "78288f0e69b98cb1",
         "84300a7f375d95a1",
+        "8cae263923635a95",
+        "9061363b164aaba1",
+        "a1cb61b3004050a7",
+        "b3b298b88160d0e8",
         "d09f40467cd78772",
         "d26f7eb599540e8b",
         "f23593e4ff0a9ba6"
@@ -426,7 +593,16 @@
         "rlhf"
       ],
       "expected_paper_ids": [
+        "0d14009d8b28062d",
+        "5870f53e5df9a001",
         "6721c087c0ecc783",
+        "81e44592314d8021",
+        "8ff7edb9f0655e22",
+        "9810a9d1b8d578ff",
+        "b18ac8a05ba486b8",
+        "d9eaa1398abac0df",
+        "eccefa31cbfba927",
+        "ed5cbff53c8ff550",
         "f292efdb08398d46"
       ]
     },
@@ -438,8 +614,12 @@
         "jinja"
       ],
       "expected_paper_ids": [
+        "00ccfabad90793af",
         "2af36ee28c4db2da",
+        "30fa6d709d044f07",
+        "9125eb1afa8b6d0d",
         "ae32449cc39a77f9",
+        "f72d7d3c03bb0733",
         "f7e8e1df64129742"
       ]
     },
@@ -451,12 +631,15 @@
         "ndcg"
       ],
       "expected_paper_ids": [
+        "08f9596ffb7067ac",
         "345fa9030560d7f9",
         "46d2f97b867c4e87",
         "520914709c84b8df",
+        "62d6558f515ef6a6",
+        "7945ffcf02520f4c",
         "b29563048227483c",
         "c4151fd1b8785e18",
-        "d17e1f03c0d828c7",
+        "cfc80c2ae284e1a3",
         "d8999c00e664e8c6"
       ]
     },
@@ -468,12 +651,27 @@
         "self-consistency"
       ],
       "expected_paper_ids": [
+        "04be5b0cc1ed1d52",
         "14671c78fc7de99d",
+        "1c66e59351ba27e2",
         "1f21265563f64f39",
+        "29d8a065ed91c5d0",
+        "32015300a65ade88",
         "4436219a91566cbc",
+        "4bdccc6b99316e3f",
+        "51f106cbe81617c6",
+        "56d4653ac9c392d8",
+        "5b7492804ad99bb9",
         "730f1a9f38d16689",
         "8d42bef1737d7ea5",
-        "a6a5cfcd3725d74f"
+        "912a6661524afc72",
+        "a6a5cfcd3725d74f",
+        "cae3af3a47c268d0",
+        "cf572bc551416940",
+        "d4052d57840502a2",
+        "d4a4a7abd0c283e0",
+        "ed5cbff53c8ff550",
+        "f285b0971ae4a790"
       ]
     },
     {
@@ -484,13 +682,29 @@
         "colbert"
       ],
       "expected_paper_ids": [
+        "01319e2e6e6ecfd5",
+        "062a32d484810ea0",
         "06e5ddd7d50063ec",
         "14671c78fc7de99d",
+        "1f51235565c46762",
+        "28296441e7a995a6",
+        "2d6ca6e8bb4e65d3",
+        "51f106cbe81617c6",
         "61db034d4bff7540",
+        "62d6558f515ef6a6",
         "6721c087c0ecc783",
+        "6952b275d29483b8",
+        "79bd83c53d031726",
+        "7b21153c7f1d9bd1",
+        "96c7e570f1ea6f45",
         "9dcc33a10c78f08e",
+        "a30d11953e9bd38d",
+        "a74b7f266c6ec0af",
+        "b18ac8a05ba486b8",
         "b29563048227483c",
-        "d60e93a406b54650"
+        "d60e93a406b54650",
+        "d95ecab1fcd7278a",
+        "ed5cbff53c8ff550"
       ]
     }
   ],

@@ -15,5 +15,28 @@ ausgeschlossen), da vollständig regenerierbar.
 
 Ein read-only Überblick über diese Artefakte (Kennzahlen + Konsistenz-Check `papers/ ↔ manifest ↔ canonical`) liefert `python -m scripts.status`.
 
+## Sicherung und Wiederherstellung
+
+Aus diesem Ordner ist **nicht alles** regenerierbar: `manifest.json`, `intake_log.md`,
+`metadata_log.md` und `online_candidates.md` sind append-only Spuren vergangener Läufe. Zusammen
+mit `papers/`, der kuratierten `Übersicht.md` und `metadata/paper_metadata.json` bilden sie den
+Sicherungsumfang ([ADR 0027](../docs/adr/0027-corpus-backup-phase11.md)):
+
+```pwsh
+python -m scripts.backup --ziel D:\Sicherung\research-graphrag --dry-run
+python -m scripts.backup --ziel D:\Sicherung\research-graphrag
+python -m scripts.backup --ziel D:\Sicherung\research-graphrag --pruefen
+```
+
+`canonical/`, `index/` und die Qualitätsberichte werden **bewusst nicht** mitgesichert. Der Weg
+zurück ist deshalb genau einer – und er ist absichtlich manuell, damit kein Automatismus in
+`papers/` hineinschreibt:
+
+1. Den Inhalt des Sicherungsverzeichnisses (ohne `backup_manifest.json`) über die Arbeitskopie
+   kopieren.
+2. `python -m scripts.ingest` ausführen – Canonical, Index, Graph, Zitationskanten und die
+   zitierfähigen Metadaten entstehen daraus deterministisch neu.
+3. `python -m scripts.status` bestätigt die Konsistenz `papers/ ↔ manifest ↔ canonical`.
+
 Diese Struktur entsteht schrittweise ab Phase 2; in Phase 0 ist der Ordner
 (bis auf diese README) leer.

@@ -28,7 +28,7 @@ research-graphrag/
 │  ├─ glossary.md
 │  └─ adr/
 │     ├─ README.md
-│     └─ 0001-*.md … 0026-*.md
+│     └─ 0001-*.md … 0028-*.md
 ├─ templates/
 │  ├─ tool-spec.md
 │  ├─ module-doc.md              # Vorlage Modul-Doku (ADR 0018)
@@ -49,12 +49,14 @@ research-graphrag/
 │  ├─ discover.py                # Online-Kandidatensuche ohne Download (separat startbar, Phase 9 / S1)
 │  ├─ resolve_metadata.py        # Zitationsdaten online auflösen (separat startbar, Phase 12 / K2)
 │  ├─ status.py                  # Read-only Index-/Korpus-Status + Konsistenz (Phase 6)
+│  ├─ backup.py                  # Sicherung des nicht reproduzierbaren Bestandes (Phase 11 / B1)
 │  ├─ qa.py                      # Prüf-Fragen je Modus durchspielen (QS-Harness, Phase 6; `--quantitativ` seit Phase 7 / A6)
 │  └─ eval_retrieval.py          # Evaluation: Primitive/Modi, Baseline, Regressions-Check, Router (Phase 7 / A4 + A6 + A7)
 ├─ src/research_graphrag/
 │  ├─ __init__.py                # Paket-Version
 │  ├─ doc/                       # Modul-Dokus der Top-Level-Module (ADR 0018)
 │  ├─ errors.py                  # gemeinsame Fehlertaxonomie (docs/error-model.md)
+│  ├─ backup.py                  # Sicherung: Quelle sichern, Ableitung verwerfen (Phase 11 / B1)
 │  ├─ intake.py                  # Korpus-Zufluss mit Duplikatprüfung (Phase 8)
 │  ├─ keywords.py                # kuratierte Keyword-Politik (Stopwords/Token-Filter, Phase 7 / A5)
 │  ├─ pipeline.py                # Drop-in-Ingestion (papers/ → Canonical → Index)

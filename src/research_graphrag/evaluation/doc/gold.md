@@ -24,11 +24,15 @@ Regel über dem Chunk-Text.
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
 | `load_gold_set` | Funktion | Gold-Set aus JSON laden |
+| `save_gold_set` | Funktion | Gold-Set schreiben – samt Korpus, gegen den es abgeleitet wurde |
 | `derive_expected_papers` | Funktion | Labels aus dem Index ableiten (die Regel selbst) |
+| `relabel_gold_set` | Funktion | Mechanische Labels nach einem Korpuswechsel neu bestimmen |
+| `unlabelled_questions` | Funktion | Fragen benennen, die im aktuellen Korpus kein Ziel mehr haben |
 | `verify_labels` | Funktion | Eingefrorene Labels gegen die Ableitung prüfen |
 | `GoldQuestion`, `GoldSet` | Dataclasses | Frage mit Regel, Labels und Label-Quelle |
 | `MECHANICAL_LABELS`, `DEFAULT_LABEL_SOURCE` | Konstanten | Welche Quellen nachrechenbar sind |
 | `CITATION_LABEL_SOURCE`, `CITATION_LABELS` | Konstanten | Bezeichner der Label-Quelle aus dem Zitationsgraphen |
+| `LABEL_RULE`, `GOLD_SET_ORIGIN`, `GOLD_SET_SPLITS`, `INDEX_SCHEMA_VERSION` | Konstanten | Selbsterklärende Kopfangaben der Gold-Set-Datei |
 
 > Das **Vokabular** der Label-Quellen liegt vollständig hier, auch wenn die zugehörigen Fragen
 > in einem eigenen Gold-Set leben
@@ -77,6 +81,35 @@ Jede Frage weist aus, woher ihre Labels stammen. Heute ist das ausschließlich d
 Regel; `verify_labels` überspringt alles andere, weil es per Definition nicht nachrechenbar ist.
 Eine spätere Quelle – etwa der Zitationsgraph – kann additiv danebentreten, ohne die
 verifizierbare Basis zu verdrängen.
+
+### Warum ein Gold-Set einen Korpuswechsel nicht überlebt
+
+Die Labels sind **Paper-IDs**, und eine `paper_id` ist der sha256-Hash der Datei. Wird ein PDF
+durch eine andere Fassung ersetzt – etwa eine neuere arXiv-Version über den Intake –, entsteht
+eine neue ID, und das eingefrorene Label zeigt ins Leere. Das passiert **unabhängig davon**, ob
+der Inhalt noch im Korpus steht.
+
+Deshalb gibt es `relabel_gold_set`: Es lässt die Fragen unangetastet (Wortlaut, Reihenfolge, Art,
+Regel) und bestimmt allein die Ziele neu – und das nur für nachrechenbare Quellen, damit ein
+geurteiltes Label nicht still überschrieben wird.
+
+```mermaid
+flowchart TD
+    A["vorhandenes Gold-Set"] --> B{"label_source<br/>nachrechenbar?"}
+    B -- nein --> K["Frage unverändert übernehmen"]
+    B -- ja --> C["derive_expected_papers<br/>gegen den aktuellen Index"]
+    C --> D["Frage mit neuen Zielen"]
+    K --> E["neues GoldSet (neue Version)"]
+    D --> E
+    E --> F["unlabelled_questions"]
+    F --> G{"Frage ohne Ziel?"}
+    G -- ja --> H["Befund: misst nichts mehr"]
+    G -- nein --> I["save_gold_set"]
+```
+
+Eine Frage **ohne** Ziel ist dabei kein Randfall, sondern ein Befund: Sie kann nie einen Treffer
+erzeugen, zieht die Kennzahlen nach unten und täuscht dabei eine Aussage vor. Die CLI meldet das
+mit Exit-Code `1`, statt es stillschweigend zu schreiben.
 
 ### Die Datei ist die Wahrheit
 
