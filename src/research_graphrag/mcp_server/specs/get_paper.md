@@ -39,11 +39,31 @@ Liefert die **Metadaten eines einzelnen Papers** anhand seiner stabilen `paper_i
   "n_pages": 12,
   "n_chunks": 118,
   "sections": ["Abstract", "Introduction", "…"],
-  "snippet": "…"
+  "snippet": "…",
+  "reference": {
+    "paper_id": "…",
+    "title": "…",
+    "authors": ["Anna Beispiel", "Bert Muster"],
+    "year": 2023,
+    "venue": "…",
+    "doi": "10.…",
+    "arxiv_id": "2503.06689",
+    "url": "",
+    "identifiers": { "doi": "10.…", "arxiv": "2503.06689" },
+    "citation_key": "Beispiel2023",
+    "origins": { "title": "curated", "authors": "resolved" },
+    "confidence": "strong",
+    "citable": true,
+    "harvard": "Beispiel, A. and Muster, B. (2023) …",
+    "apa": "Beispiel, A., & Muster, B. (2023). …",
+    "in_text": { "harvard": "(Beispiel and Muster, 2023)", "apa": "(Beispiel & Muster, 2023)" }
+  }
 }
 ```
 
 `identifiers` enthält nur tatsächlich erkannte Schlüssel (`doi`/`arxiv`) und kann leer sein. `sections` sind die **eindeutigen** (heuristischen) Abschnittstitel in Dokument-Reihenfolge; `snippet` ist der Ausschnitt des ersten nicht-leeren Chunks.
+
+`reference` ist der **aufgelöste** bibliografische Datensatz samt fertiger Angabe in Harvard und APA. Er ist die **gleiche** Nutzlast wie das Feld `reference` von `get_reference`; dort kommen mit `missing` und `note` zusätzlich die Diagnose der fehlenden Pflichtfelder hinzu. `origins` weist je Feld die Herkunft aus (`manual` > `curated` > `resolved` > `extracted`), `confidence` die schwächste beitragende Quelle, `citable` die Vollständigkeit ([ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md)).
 
 ## 4. Annahmen und Vorbedingungen
 
@@ -65,6 +85,7 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 ## 7. Provenienz
 
 - `source_uri` (Quelle zum Original), `identifiers` (DOI/arXiv), `sections`, `snippet`.
+- `reference` weist die Herkunft **je Feld** aus (`origins`) und die Belegstärke des Datensatzes (`confidence`); unvollständige Angaben werden nicht geraten, sondern über `citable = false` kenntlich gemacht.
 
 ## 8. Reproduzierbarkeit
 

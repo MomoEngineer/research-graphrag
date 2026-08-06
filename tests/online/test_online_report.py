@@ -10,14 +10,19 @@ from pathlib import Path
 
 import pytest
 
+from research_graphrag.bibliography.model import ORIGIN_RESOLVED, MetadataRecord
 from research_graphrag.online.candidates import SOURCE_ARXIV, Candidate, KnownCandidate
+from research_graphrag.online.metadata import MATCH_DOI, Resolution, ResolutionTarget
 from research_graphrag.online.report import (
     MAX_ABSTRACT_CHARS,
+    METADATA_REPORT_NAME,
     REPORT_NAME,
     DiscoveryReport,
     append_report,
+    append_resolutions,
     escape_markdown,
     render_report,
+    render_resolutions,
     safe_url,
     store_raw,
 )
@@ -219,3 +224,64 @@ def test_store_raw_writes_one_file_per_source(tmp_path: Path) -> None:
     names = sorted(item.name for item in folder.iterdir())
     assert names == ["01-arxiv.xml", "02-openalex.json"]
     assert (folder / "01-arxiv.xml").read_bytes() == b"<feed/>"
+
+
+def _resolution(*, confidence: str = "strong", resolved: bool = True) -> Resolution:
+    """Baut ein Auflösungsergebnis für den Berichtstest."""
+    target = ResolutionTarget(paper_id="aaaa0001", title="Ein Titel", doi="10.1145/abc")
+    if not resolved:
+        return Resolution(target=target, record=None, note="kein belastbarer Treffer")
+    return Resolution(
+        target=target,
+        record=MetadataRecord(
+            paper_id="aaaa0001",
+            origin=ORIGIN_RESOLVED,
+            title="Ein *fremder* Titel",
+            authors=("Anna Beispiel",),
+            year=2024,
+            venue="Proceedings",
+            confidence=confidence,
+            evidence="OpenAlex über doi:10.1145/abc",
+        ),
+        match=MATCH_DOI,
+        note="OpenAlex über doi:10.1145/abc",
+    )
+
+
+def test_resolution_report_separates_strong_from_weak(tmp_path: Path) -> None:
+    """Der Bericht trennt starke von schwachen Belegen und nennt die offenen Fälle."""
+    lines = render_resolutions(
+        "20260805T120000Z",
+        [_resolution(), _resolution(confidence="weak"), _resolution(resolved=False)],
+    )
+    text = "\n".join(lines)
+
+    assert "übernommen: 2 (stark belegt 1, schwach belegt 1)" in text
+    assert "offen: 1" in text
+    assert "**(schwach belegt)**" in text
+    assert "### Nicht aufgelöst" in text
+
+
+def test_resolution_report_escapes_foreign_titles() -> None:
+    """Fremde Titel können die Struktur des Berichts nicht verändern."""
+    text = "\n".join(render_resolutions("20260805T120000Z", [_resolution()]))
+
+    assert r"\*fremder\*" in text
+
+
+def test_empty_resolution_report_states_that_nothing_was_pending() -> None:
+    """Ein Lauf ohne Ziele meldet das ausdrücklich."""
+    text = "\n".join(render_resolutions("20260805T120000Z", []))
+
+    assert "Nichts aufzulösen" in text
+
+
+def test_resolutions_are_appended_to_their_own_log(tmp_path: Path) -> None:
+    """Das Protokoll wird angelegt und bei einem zweiten Lauf ergänzt."""
+    append_resolutions(tmp_path, "20260805T120000Z", [_resolution()])
+    target = append_resolutions(tmp_path, "20260805T130000Z", [_resolution()])
+
+    content = target.read_text(encoding="utf-8")
+    assert target.name == METADATA_REPORT_NAME
+    assert content.count("## Lauf ") == 2
+    assert content.count("# Metadaten-Auflösung") == 1

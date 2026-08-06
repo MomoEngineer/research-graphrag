@@ -4,14 +4,14 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/mcp_server/server.py` |
 | **Paket** | `mcp_server` – MCP-Server über `stdio` |
-| **Phase** | 5 (eingeführt), 7 / A1 + A2 (zwei Werkzeuge ergänzt) |
-| **Grundlagen** | [ADR 0009](../../../../docs/adr/0009-mcp-server-stdio-phase5.md), [ADR 0012](../../../../docs/adr/0012-llm-bridge-and-answer-synthesis-phase7.md) |
+| **Phase** | 5 (eingeführt), 7 / A1 + A2 (zwei Werkzeuge ergänzt), 12 / K1 (`get_reference` ergänzt) |
+| **Grundlagen** | [ADR 0009](../../../../docs/adr/0009-mcp-server-stdio-phase5.md), [ADR 0012](../../../../docs/adr/0012-llm-bridge-and-answer-synthesis-phase7.md), [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md) |
 
 ---
 
 ## 1. Zweck
 
-Die **Außengrenze** des Systems: Hier werden acht Werkzeuge für GitHub Copilot registriert, hier
+Die **Außengrenze** des Systems: Hier werden neun Werkzeuge für GitHub Copilot registriert, hier
 werden Fehler in eine strukturierte Ausgabe übersetzt, und hier wird der `stdio`-Transport
 gestartet.
 
@@ -25,8 +25,8 @@ Der Server enthält **keine** Fachlogik. Jedes Werkzeug ist ein dünner Wrapper 
 | `mcp` | Objekt | Die FastMCP-Instanz mit den registrierten Werkzeugen |
 | `main` | Funktion | Startet den `stdio`-Transport |
 
-Die acht Werkzeuge: `search_basic`, `search_local`, `search_global`, `search_drift`, `get_paper`,
-`get_citations`, `answer_question`, `list_topics`. Ihre Verträge stehen in
+Die neun Werkzeuge: `search_basic`, `search_local`, `search_global`, `search_drift`, `get_paper`,
+`get_citations`, `get_reference`, `answer_question`, `list_topics`. Ihre Verträge stehen in
 [`specs/`](../specs); die Werkzeugnamen werden explizit gesetzt und weichen daher von den
 Python-Funktionsnamen ab.
 
@@ -78,7 +78,7 @@ wird.
 
 ### Nur ein asynchrones Werkzeug
 
-Sieben Werkzeuge sind synchron. Nur `answer_question` ist asynchron – und auch das nur, weil
+Acht Werkzeuge sind synchron. Nur `answer_question` ist asynchron – und auch das nur, weil
 optionales Sampling einen laufenden Event-Loop braucht:
 
 ```mermaid

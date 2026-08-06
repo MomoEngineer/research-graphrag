@@ -46,13 +46,17 @@ Beantwortet exakte/faktische Fragen über **Top-k-Vektorsuche (TF-IDF)** auf Pap
       "score_tfidf": 0.42,
       "score_bm25": 18.7,
       "source_uri": "file:///…",
-      "snippet": "…"
+      "snippet": "…",
+      "identifiers": { "doi": "10.…", "arxiv": "2503.06689", "url": "https://…" },
+      "citation_key": "Beispiel2023"
     }
   ]
 }
 ```
 
 `citations` ist absteigend nach `score` sortiert (Tie-Break über `chunk_id`) und **leer**, wenn keine Übereinstimmung besteht.
+
+`identifiers` und `citation_key` machen jeden Beleg **extern auflösbar** und stammen aus dem aufgelösten Metadatensatz des Papers; `identifiers` enthält nur belegte Schlüssel und kann leer sein, `citation_key` ist eine Anzeigehilfe ohne Eindeutigkeitsgarantie. Die **fertige** Literaturangabe liefert `get_reference` ([ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md)).
 
 `score` ist der **Fusionswert** der Hybrid-Wertung (Reciprocal Rank Fusion über BM25 und TF-IDF, [ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)) – ein **Rangmaß, keine Ähnlichkeit**; Werte sind nur *innerhalb* einer Antwort vergleichbar. `score_tfidf` und `score_bm25` sind die Rohwerte der beiden Verfahren und jeweils `0.0`, wenn dieses Verfahren den Chunk nicht positiv bewertet hat.
 

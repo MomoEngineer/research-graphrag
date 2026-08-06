@@ -121,4 +121,10 @@ def test_global_to_dict_shape(tmp_path: Path) -> None:
     assert set(payload) == {"query", "communities"}
     community = payload["communities"][0]
     assert set(community) == {"community_id", "score", "size", "keywords", "representatives"}
-    assert set(community["representatives"][0]) == {"paper_id", "source_uri", "snippet"}
+    assert set(community["representatives"][0]) == {
+        "paper_id",
+        "source_uri",
+        "identifiers",
+        "citation_key",
+        "snippet",
+    }

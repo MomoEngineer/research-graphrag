@@ -55,17 +55,21 @@ Die Verankerung an mehreren Seeds ersetzt die frühere Verankerung an einem einz
       "score_tfidf": 0.42,
       "score_bm25": 18.7,
       "source_uri": "file:///…",
-      "snippet": "…"
+      "snippet": "…",
+      "identifiers": { "doi": "10.…", "arxiv": "2503.06689", "url": "https://…" },
+      "citation_key": "Beispiel2023"
     }
   ],
-  "neighborhood": [ { "paper_id": "…", "section_title": "…", "page_number": 5, "page_end": 5, "chunk_id": "…", "score": 0.0164, "score_tfidf": 0.33, "score_bm25": 0.0, "source_uri": "file:///…", "snippet": "…" } ],
-  "fan_out": [ { "paper_id": "…", "weight": 0.46, "citation": { "paper_id": "…", "section_title": "…", "page_number": 6, "page_end": 7, "chunk_id": "…", "score": 0.0164, "score_tfidf": 0.2, "score_bm25": 9.1, "source_uri": "file:///…", "snippet": "…" } } ]
+  "neighborhood": [ { "paper_id": "…", "section_title": "…", "page_number": 5, "page_end": 5, "chunk_id": "…", "score": 0.0164, "score_tfidf": 0.33, "score_bm25": 0.0, "source_uri": "file:///…", "snippet": "…", "identifiers": { "arxiv": "…" }, "citation_key": "…" } ],
+  "fan_out": [ { "paper_id": "…", "weight": 0.46, "citation": { "paper_id": "…", "section_title": "…", "page_number": 6, "page_end": 7, "chunk_id": "…", "score": 0.0164, "score_tfidf": 0.2, "score_bm25": 9.1, "source_uri": "file:///…", "snippet": "…", "identifiers": { "arxiv": "…" }, "citation_key": "…" } } ]
 }
 ```
 
 `seeds` ist **leer**, wenn keine Übereinstimmung besteht (dann sind `neighborhood`/`fan_out` ebenfalls leer). Die Liste ist absteigend nach Relevanz sortiert; `seeds[0]` ist der bisherige Top-1-Treffer und das **Ankerpaper** des Fan-outs. Ein Fan-out-`citation` kann `null` sein, wenn der Nachbar zur Anfrage keinen Treffer hat.
 
 In der `neighborhood` erscheint **kein** Chunk, der bereits Seed ist; ihre Reihenfolge ist der Fusionswert über die Teilranglisten aller Seeds.
+
+Jeder Beleg trägt zusätzlich `identifiers` und `citation_key` und ist damit **extern auflösbar**; beide stammen aus dem aufgelösten Metadatensatz des jeweiligen Papers und können leer sein ([ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md)).
 
 Bei den `seeds` und den Fan-out-Belegen ist `score` der **Fusionswert** der Hybrid-Wertung (BM25 + TF-IDF per Reciprocal Rank Fusion, [ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)), `score_tfidf`/`score_bm25` sind die Rohwerte. In der **`neighborhood`** ist `score` ebenfalls ein Fusionswert – dort über die Teilranglisten der Seeds –, damit die ausgewiesene Zahl der Sortierung entspricht; `score_tfidf` trägt den TF-IDF-Kosinus zum best platzierten Seed, der den Chunk beigesteuert hat, und `score_bm25` ist `0.0`: BM25 ist ein Anfrage-Dokument-Modell und wird zwischen zwei Chunks bewusst nicht angewendet.
 

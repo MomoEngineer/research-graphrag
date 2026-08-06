@@ -16,6 +16,7 @@ aufrufende Agent selbst (kein serverseitiges LLM-Sampling, siehe
 | `search_drift` | Retrieval – Widersprüche & Vergleiche | [specs/search_drift.md](specs/search_drift.md) |
 | `get_paper` | Katalog / Provenienz | [specs/get_paper.md](specs/get_paper.md) |
 | `get_citations` | Graph / Zitationsnetz | [specs/get_citations.md](specs/get_citations.md) |
+| `get_reference` | Zitation / Literaturangabe | [specs/get_reference.md](specs/get_reference.md) |
 | `list_topics` | Übersicht / Katalog | [specs/list_topics.md](specs/list_topics.md) |
 | `answer_question` | Antwort / Synthese | [specs/answer_question.md](specs/answer_question.md) |
 

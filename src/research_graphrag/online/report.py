@@ -16,14 +16,19 @@ als Klartext mit ``http(s)``-Schema – nie als Markdown-Link mit fremdbestimmte
 from __future__ import annotations
 
 import os
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from .candidates import Candidate, KnownCandidate
+from .metadata import Resolution
 from .sources import SearchQuery, SourceResult
 
 REPORT_NAME = "online_candidates.md"
 """Dateiname des Berichts unterhalb des Datenverzeichnisses."""
+
+METADATA_REPORT_NAME = "metadata_log.md"
+"""Dateiname des Protokolls der Metadaten-Auflösung (append-only)."""
 
 RAW_DIR_NAME = "online_raw"
 """Verzeichnis der datierten Rohantworten (Reproduzierbarkeit)."""
@@ -46,6 +51,15 @@ _HEADER = (
     "Append-only Bericht der Kandidatensuche (`python -m scripts.discover`, Phase 9 / S1).",
     "Die Einträge sind **Vorschläge, kein Bestand**: Der Weg in den Korpus führt ausschließlich",
     "über `new_papers/` und `python -m scripts.intake`.",
+    "",
+)
+
+_METADATA_HEADER = (
+    "# Metadaten-Auflösung",
+    "",
+    "Append-only Protokoll von `python -m scripts.resolve_metadata` (Phase 12 / K2).",
+    "Jede Übernahme nennt Quelle, Belegart und Konfidenz; schwach belegte Einträge sind",
+    "als solche markiert (docs/adr/0026-online-metadata-resolution.md).",
     "",
 )
 
@@ -188,11 +202,6 @@ def _render_candidate(number: int, candidate: Candidate) -> list[str]:
 def append_report(data_path: Path, report: DiscoveryReport) -> Path:
     """Hängt einen Lauf an den Bericht an (byte-erhaltend und atomar).
 
-    Existiert die Datei noch nicht, wird sie mit einer Kopfzeile angelegt. Bestehender Inhalt
-    wird binär übernommen, damit vorhandene Zeilenenden unverändert bleiben; geschrieben wird über
-    eine Temporärdatei mit :func:`os.replace`, damit ein Abbruch nichts Halbfertiges hinterlässt
-    (Muster aus docs/adr/0010-drop-in-workflow-and-qa-phase6.md).
-
     Args:
         data_path: Datenverzeichnis (üblicherweise ``data/``).
         report: Das anzuhängende Laufergebnis.
@@ -200,15 +209,33 @@ def append_report(data_path: Path, report: DiscoveryReport) -> Path:
     Returns:
         Den Pfad des geschriebenen Berichts.
     """
-    target = data_path / REPORT_NAME
+    return append_section(data_path / REPORT_NAME, render_report(report), _HEADER)
+
+
+def append_section(target: Path, lines: Sequence[str], header: Sequence[str]) -> Path:
+    """Hängt einen Abschnitt an eine append-only Berichtsdatei an.
+
+    Existiert die Datei noch nicht, wird sie mit der Kopfzeile angelegt. Bestehender Inhalt wird
+    **binär** übernommen, damit vorhandene Zeilenenden unverändert bleiben; geschrieben wird
+    über eine Temporärdatei mit :func:`os.replace`, damit ein Abbruch nichts Halbfertiges
+    hinterlässt (Muster aus docs/adr/0010-drop-in-workflow-and-qa-phase6.md).
+
+    Args:
+        target: Zieldatei des Berichts.
+        lines: Die anzuhängenden Zeilen (ohne Zeilenumbrüche).
+        header: Kopfzeilen, falls die Datei neu angelegt wird.
+
+    Returns:
+        Den Pfad der geschriebenen Datei.
+    """
     target.parent.mkdir(parents=True, exist_ok=True)
     existing = target.read_bytes() if target.is_file() else b""
     newline = b"\r\n" if b"\r\n" in existing else os.linesep.encode()
     if not existing:
-        existing = newline.join(line.encode("utf-8") for line in _HEADER) + newline
+        existing = newline.join(line.encode("utf-8") for line in header) + newline
     elif not existing.endswith((b"\n", b"\r")):
         existing += newline
-    payload = newline.join(line.encode("utf-8") for line in render_report(report)) + newline
+    payload = newline.join(line.encode("utf-8") for line in lines) + newline
     tmp_path = target.with_name(target.name + ".tmp")
     try:
         tmp_path.write_bytes(existing + payload)
@@ -236,3 +263,73 @@ def store_raw(data_path: Path, timestamp: str, sources: tuple[SourceResult, ...]
         name = f"{index:02d}-{source.source.lower()}.{suffix}"
         (folder / name).write_bytes(source.raw)
     return folder
+
+
+def render_resolutions(timestamp: str, resolutions: Sequence[Resolution]) -> list[str]:
+    """Rendert einen Auflösungslauf als Markdown-Abschnitt.
+
+    Der Abschnitt trennt **starke** von **schwachen** Belegen und nennt die nicht aufgelösten
+    Paper mit Begründung – ohne diese Trennung wäre die automatische Übernahme nicht prüfbar
+    (docs/adr/0026-online-metadata-resolution.md).
+
+    Args:
+        timestamp: Zeitpunkt des Laufs (UTC, sortierbar).
+        resolutions: Die Ergebnisse des Laufs.
+
+    Returns:
+        Die Zeilen des Abschnitts (ohne abschließenden Zeilenumbruch).
+    """
+    resolved = [item for item in resolutions if item.resolved]
+    strong = [
+        item for item in resolved if item.record is not None and item.record.confidence == "strong"
+    ]
+    weak = [item for item in resolved if item not in strong]
+    failed = [item for item in resolutions if not item.resolved]
+
+    lines = [
+        f"## Lauf {timestamp}",
+        "",
+        f"- Angefragt: {len(resolutions)} · übernommen: {len(resolved)} "
+        f"(stark belegt {len(strong)}, schwach belegt {len(weak)}) · offen: {len(failed)}",
+        "",
+    ]
+    if resolved:
+        lines += ["### Übernommen", ""]
+        for item in resolved:
+            lines.append(_render_resolution(item))
+        lines.append("")
+    if failed:
+        lines += ["### Nicht aufgelöst", ""]
+        for item in failed:
+            title = escape_markdown(item.target.title, limit=MAX_TITLE_CHARS) or "(ohne Titel)"
+            note = escape_markdown(item.note, limit=300)
+            lines.append(f"- `{item.target.paper_id}` {title} — {note}")
+        lines.append("")
+    if not resolutions:
+        lines += ["*Nichts aufzulösen – alle Datensätze sind vollständig.*", ""]
+    return lines
+
+
+def _render_resolution(item: Resolution) -> str:
+    """Rendert eine einzelne Übernahme mit Belegart, Konfidenz und Herkunftsangabe."""
+    record = item.record
+    assert record is not None  # noqa: S101 - durch den Aufrufer garantiert
+    title = escape_markdown(record.title, limit=MAX_TITLE_CHARS) or "(ohne Titel)"
+    authors = escape_markdown(", ".join(record.authors), limit=MAX_TITLE_CHARS) or "(keine)"
+    venue = escape_markdown(record.venue, limit=200) or "(keine)"
+    year = str(record.year) if record.year else "unbekannt"
+    marker = " **(schwach belegt)**" if record.confidence != "strong" else ""
+    return (
+        f"- `{item.target.paper_id}` {title}{marker}\n"
+        f"    - Autoren: {authors} · Jahr: {year} · Venue: {venue}\n"
+        f"    - Beleg: {escape_markdown(record.evidence, limit=300)} (`{item.match}`)"
+    )
+
+
+def append_resolutions(data_path: Path, timestamp: str, resolutions: Sequence[Resolution]) -> Path:
+    """Hängt einen Auflösungslauf an ``data/metadata_log.md`` an (byte-erhaltend, atomar)."""
+    return append_section(
+        data_path / METADATA_REPORT_NAME,
+        render_resolutions(timestamp, resolutions),
+        _METADATA_HEADER,
+    )

@@ -29,8 +29,9 @@ from __future__ import annotations
 
 import argparse
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
+from typing import Any
 
 from research_graphrag.errors import DomainError
 from research_graphrag.generation.answer import answer_question
@@ -55,6 +56,16 @@ def _print_citation(rank: int, citation: Citation) -> None:
     print(f"     TF-IDF {citation.score_tfidf:.3f} · BM25 {citation.score_bm25:.2f}")
     print(f"     {citation.snippet}")
     print(f"     Quelle: {citation.source_uri}")
+    _print_identifiers(citation.identifiers, citation.citation_key)
+
+
+def _print_identifiers(identifiers: Mapping[str, str], citation_key: str) -> None:
+    """Gibt die extern auflösbaren Identifikatoren eines Belegs aus (falls bekannt)."""
+    if not identifiers:
+        return
+    parts = [f"{key}:{value}" for key, value in identifiers.items()]
+    suffix = f" · Schlüssel {citation_key}" if citation_key else ""
+    print(f"     Identifikator: {' · '.join(parts)}{suffix}")
 
 
 def _render_basic(index: str, query: str, k: int, scoring: Scoring, _seeds: int) -> None:
@@ -173,6 +184,20 @@ def _render_synthesis(
         print(f"  [{item.index}] {item.label}")
         print(f"      {item.snippet}")
         print(f"      Quelle: {item.source_uri}")
+    _print_references(result.references)
+
+
+def _print_references(references: Sequence[Mapping[str, Any]]) -> None:
+    """Gibt die fertigen Literaturangaben der belegten Paper aus (Harvard und APA)."""
+    if not references:
+        return
+    print("[ask] Literaturangaben:")
+    for reference in references:
+        print(f"  · {reference['citation_key']} ({reference['confidence']})")
+        print(f"      Harvard: {reference['harvard']}")
+        print(f"      APA:     {reference['apa']}")
+        if not reference["citable"]:
+            print("      Hinweis: unvollständig – siehe `python -m scripts.cite <paper_id>`.")
 
 
 def main() -> int:

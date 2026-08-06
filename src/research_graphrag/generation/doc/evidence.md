@@ -25,6 +25,7 @@ Belege aus Passagen, aus einer Nachbarschaft oder aus Community-Vertretern stamm
 | `evidence_from_local` | Funktion | Seeds, Nachbarschaft und Fan-out-Belege → Evidenz |
 | `evidence_from_global` | Funktion | Vertreter je Top-Community → Evidenz |
 | `evidence_from_drift` | Funktion | lokal verfeinerte Zitate → Evidenz |
+| `references_for` | Funktion | belegte Paper → vollständige Literaturangaben (je Paper einmal) |
 
 ## 3. Ablauf
 

@@ -42,6 +42,10 @@ def main() -> int:
         f"[ingest] Zitationen: Kanten={report.n_citation_edges} "
         f"Paper mit Referenzabschnitt={report.n_papers_with_refs}"
     )
+    print(
+        f"[ingest] Zitierdaten: mit Identifikator={report.n_with_identifier} "
+        f"vollständig zitierfähig={report.n_citable} schwach belegt={report.n_weak_metadata}"
+    )
     print(f"[ingest] Qualitätsreport: {Path(args.data) / 'quality_report.json'}")
     return 0
 

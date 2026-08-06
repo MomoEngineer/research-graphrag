@@ -10,11 +10,14 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from research_graphrag.bibliography.model import PaperMetadata, empty_metadata
+from research_graphrag.bibliography.styles import reference_payload
 from research_graphrag.errors import DomainError, ErrorCode
+from research_graphrag.indexing.metadata_index import load_paper_metadata
 
 _SNIPPET_LIMIT = 200
 
@@ -33,6 +36,9 @@ class PaperDetail:
 
     ``sections`` sind die eindeutigen (heuristischen) Abschnittstitel in Dokument-Reihenfolge;
     ``snippet`` ist der Ausschnitt des ersten nicht-leeren Chunks (extraktiver Anker).
+    ``identifiers`` bleibt die **extrahierte** Rohsicht aus der Tabelle ``papers``; der
+    aufgelöste, zitierfähige Datensatz steht in ``reference``
+    (docs/adr/0025-citable-paper-metadata.md).
     """
 
     paper_id: str
@@ -42,6 +48,7 @@ class PaperDetail:
     n_chunks: int
     sections: tuple[str, ...]
     snippet: str
+    reference: PaperMetadata = field(default_factory=lambda: empty_metadata(""))
 
     def to_dict(self) -> dict[str, Any]:
         """Serialisiert die Paper-Metadaten (Output-Schema des Tools ``get_paper``)."""
@@ -53,6 +60,7 @@ class PaperDetail:
             "n_chunks": self.n_chunks,
             "sections": list(self.sections),
             "snippet": self.snippet,
+            "reference": reference_payload(self.reference),
         }
 
 
@@ -114,4 +122,5 @@ def get_paper(db_path: str | Path, paper_id: str) -> PaperDetail:
         n_chunks=len(chunk_rows),
         sections=tuple(sections),
         snippet=leading,
+        reference=load_paper_metadata(path).get(paper_id, empty_metadata(paper_id)),
     )

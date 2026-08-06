@@ -138,8 +138,21 @@ def test_result_to_dict_shape(tmp_path: Path) -> None:
     payload = get_citations(db, "aaaa0001").to_dict()
 
     assert set(payload) == {"paper", "cites", "cited_by"}
-    assert set(payload["paper"]) == {"paper_id", "source_uri", "snippet"}
-    assert set(payload["cited_by"][0]) == {"paper_id", "source_uri", "snippet", "method"}
+    assert set(payload["paper"]) == {
+        "paper_id",
+        "source_uri",
+        "identifiers",
+        "citation_key",
+        "snippet",
+    }
+    assert set(payload["cited_by"][0]) == {
+        "paper_id",
+        "source_uri",
+        "identifiers",
+        "citation_key",
+        "snippet",
+        "method",
+    }
 
 
 def test_paper_without_citations_returns_empty_lists(tmp_path: Path) -> None:

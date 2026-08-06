@@ -264,6 +264,8 @@ def test_local_to_dict_shape(tmp_path: Path) -> None:
         "score_tfidf",
         "score_bm25",
         "source_uri",
+        "identifiers",
+        "citation_key",
         "snippet",
     }
     assert set(payload["fan_out"][0]) == {"paper_id", "weight", "citation"}

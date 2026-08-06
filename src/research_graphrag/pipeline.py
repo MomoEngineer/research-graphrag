@@ -17,12 +17,17 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from research_graphrag.bibliography.store import metadata_path
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.model import SCHEMA_VERSION, read_schema_version
 from research_graphrag.extraction.pdf import CanonicalPaper, extract_pdf
 from research_graphrag.indexing.citation_graph import CitationBuildReport, build_citation_graph
 from research_graphrag.indexing.graph_index import GraphBuildReport, build_graph
+from research_graphrag.indexing.metadata_index import MetadataBuildReport, build_metadata_index
 from research_graphrag.indexing.tfidf_index import build_index
+
+OVERVIEW_FILENAME = "\u00dcbersicht.md"
+"""Kuratierte Literaturübersicht (Quelle der Herkunft ``curated``)."""
 
 
 @dataclass(frozen=True)
@@ -40,6 +45,9 @@ class IngestReport:
     n_communities: int
     n_citation_edges: int
     n_papers_with_refs: int
+    n_with_identifier: int = 0
+    n_citable: int = 0
+    n_weak_metadata: int = 0
 
 
 def _load_manifest(path: Path) -> dict[str, dict[str, str]]:
@@ -142,42 +150,65 @@ def _write_quality_report(papers: list[CanonicalPaper], data_dir: Path) -> Path:
 
 
 def _build_index_atomically(
-    papers: list[CanonicalPaper], index_path: Path
-) -> tuple[int, GraphBuildReport, CitationBuildReport]:
-    """Baut Index, Graph **und** Zitationskanten in eine Temporärdatei und ersetzt atomar.
+    papers: list[CanonicalPaper],
+    index_path: Path,
+    *,
+    overview_path: Path | None = None,
+    metadata_file: Path | None = None,
+) -> tuple[int, GraphBuildReport, CitationBuildReport, MetadataBuildReport]:
+    """Baut Index, Graph, Zitationskanten **und** Metadaten in eine Temporärdatei; ersetzt atomar.
 
     Der MCP-Server liest den Index pro Anfrage frisch (On-Read, siehe
     docs/adr/0010-drop-in-workflow-and-qa-phase6.md); ein *In-place*-Neuaufbau könnte daher
     kurzzeitig einen halbfertigen Zustand liefern. Deshalb wird zunächst vollständig nach
-    ``index.sqlite.tmp`` gebaut (TF-IDF/SQLite, Paper-Graph **und** Zitationsgraph) und erst
-    nach Erfolg per :func:`os.replace` **atomar** an die Zielstelle verschoben. Schlägt der Bau
-    fehl, bleibt der bestehende Index unangetastet (Crash-Sicherheit); die Temporärdatei wird
-    stets entfernt.
+    ``index.sqlite.tmp`` gebaut (TF-IDF/SQLite, Paper-Graph, Zitationsgraph und die
+    bibliografischen Datensätze aus docs/adr/0025-citable-paper-metadata.md) und erst nach
+    Erfolg per :func:`os.replace` **atomar** an die Zielstelle verschoben. Schlägt der Bau fehl,
+    bleibt der bestehende Index unangetastet (Crash-Sicherheit); die Temporärdatei wird stets
+    entfernt.
 
     Args:
         papers: Extrahierte Canonical-Papers (Quelle für Index, Graph und Zitationen).
         index_path: Zielpfad der SQLite-Index-Datei.
+        overview_path: Kuratierte Übersicht (Herkunft ``curated``); ``None`` überspringt sie.
+        metadata_file: Versionierte Metadatendatei (``resolved``/``manual``); ``None``
+            überspringt sie.
 
     Returns:
-        Tupel aus indexierten Chunks, :class:`GraphBuildReport` und :class:`CitationBuildReport`.
+        Tupel aus indexierten Chunks, :class:`GraphBuildReport`, :class:`CitationBuildReport`
+        und :class:`MetadataBuildReport`.
     """
     tmp_path = index_path.with_name(index_path.name + ".tmp")
     try:
         indexed_chunks = build_index(papers, tmp_path)
         graph_report = build_graph(papers, tmp_path)
         citation_report = build_citation_graph(papers, tmp_path)
+        metadata_report = build_metadata_index(
+            papers, tmp_path, overview_path=overview_path, metadata_file=metadata_file
+        )
         os.replace(tmp_path, index_path)
     finally:
         tmp_path.unlink(missing_ok=True)
-    return indexed_chunks, graph_report, citation_report
+    return indexed_chunks, graph_report, citation_report, metadata_report
 
 
-def ingest(papers_dir: str | Path, data_dir: str | Path) -> IngestReport:
+def ingest(
+    papers_dir: str | Path,
+    data_dir: str | Path,
+    *,
+    overview_path: str | Path | None = None,
+    metadata_file: str | Path | None = None,
+) -> IngestReport:
     """Führt deduplizierte Extraktion und Index-Bau für einen ``papers/``-Ordner aus.
 
     Args:
         papers_dir: Ordner mit ``*.pdf``.
         data_dir: Zielordner für ``canonical/``, ``manifest.json`` und ``index/index.sqlite``.
+        overview_path: Kuratierte Übersicht als Metadatenquelle; ohne Angabe wird
+            ``<data_dir>/../Übersicht.md`` verwendet.
+        metadata_file: Versionierte Metadatendatei; ohne Angabe wird
+            ``<data_dir>/../metadata/paper_metadata.json`` verwendet. Fehlende Dateien sind
+            unkritisch (die jeweilige Herkunft entfällt dann).
 
     Returns:
         Ein :class:`IngestReport` mit Zählwerten.
@@ -190,6 +221,10 @@ def ingest(papers_dir: str | Path, data_dir: str | Path) -> IngestReport:
     data_path = Path(data_dir)
     if not papers_path.is_dir():
         raise DomainError(ErrorCode.NOT_FOUND, f"papers-Ordner fehlt: {papers_path}")
+
+    root = data_path.parent
+    overview = Path(overview_path) if overview_path is not None else root / OVERVIEW_FILENAME
+    metadata = Path(metadata_file) if metadata_file is not None else metadata_path(root)
 
     canonical_dir = data_path / "canonical"
     index_path = data_path / "index" / "index.sqlite"
@@ -218,7 +253,9 @@ def ingest(papers_dir: str | Path, data_dir: str | Path) -> IngestReport:
             ErrorCode.INVALID_INPUT, "Keine Canonical-Paper vorhanden (papers/ leer?)."
         )
 
-    indexed_chunks, graph_report, citation_report = _build_index_atomically(papers, index_path)
+    indexed_chunks, graph_report, citation_report, metadata_report = _build_index_atomically(
+        papers, index_path, overview_path=overview, metadata_file=metadata
+    )
     _write_quality_report(papers, data_path)
     return IngestReport(
         extracted=extracted,
@@ -232,4 +269,7 @@ def ingest(papers_dir: str | Path, data_dir: str | Path) -> IngestReport:
         n_communities=graph_report.n_communities,
         n_citation_edges=citation_report.n_edges,
         n_papers_with_refs=citation_report.n_papers_with_refs,
+        n_with_identifier=metadata_report.n_with_identifier,
+        n_citable=metadata_report.n_citable,
+        n_weak_metadata=metadata_report.n_weak,
     )

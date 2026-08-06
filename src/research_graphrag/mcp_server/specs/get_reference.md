@@ -1,0 +1,115 @@
+# Tool-Spezifikation: `get_reference`
+
+> Pro-Tool-Spezifikation (Single Source of Truth für Contract-/Funktionstests). Umsetzung:
+> `src/research_graphrag/retrieval/reference.py`; als MCP-Tool registriert in **Phase 12 / K1**
+> ([ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md)).
+
+---
+
+## Metadaten
+
+| Feld | Wert |
+| --- | --- |
+| **Tool-Name** | `get_reference` |
+| **Version** | `0.1.0` |
+| **Capability-Schicht** | Katalog / Zitation (siehe README.md) |
+| **Status** | Implementiert (Phase 12 / K1) |
+
+---
+
+## 1. Zweck
+
+Liefert die **fertige Literaturangabe** eines Papers anhand seiner stabilen `paper_id`: die
+aufgelösten bibliografischen Felder **und** die formatierten Angaben in **Harvard**
+(*Cite Them Right*) und **APA 7** samt Kurzbeleg für den Fließtext. Damit lässt sich ein
+Suchtreffer ohne Zwischenschritt in einer wissenschaftlichen Arbeit zitieren.
+
+Ergänzt `get_paper`: Dieses beschreibt das Dokument (Umfang, Abschnitte, Leit-Snippet),
+`get_reference` beantwortet ausschließlich „wie zitiere ich das?".
+
+## 2. Input-Schema
+
+| Parameter | Typ | Pflicht | Beschreibung / Wertebereich |
+| --- | --- | --- | --- |
+| `paper_id` | `str` | ja | Stabile Paper-ID (kein Datei-Pfad); nicht leer. |
+
+> Der Index-Pfad ist **Server-Konfiguration**, kein Tool-Parameter (Standard: `data/index/index.sqlite`).
+> Der Stil ist ebenfalls kein Parameter: Es werden **immer beide** Formen geliefert, damit ein
+> Agent nicht raten muss, welcher Stil verlangt ist.
+
+## 3. Output-Schema
+
+```json
+{
+  "paper_id": "…",
+  "source_uri": "file:///…",
+  "styles": ["harvard", "apa"],
+  "reference": {
+    "paper_id": "…",
+    "title": "…",
+    "authors": ["Anna Beispiel", "Bert Muster"],
+    "year": 2023,
+    "venue": "…",
+    "doi": "10.…",
+    "arxiv_id": "2503.06689",
+    "url": "",
+    "identifiers": { "doi": "10.…", "arxiv": "2503.06689" },
+    "citation_key": "Beispiel2023",
+    "origins": { "title": "curated", "doi": "curated", "authors": "resolved" },
+    "confidence": "strong",
+    "citable": true,
+    "harvard": "Beispiel, A. and Muster, B. (2023) 'Titel', Venue. Available at: https://doi.org/10.…",
+    "apa": "Beispiel, A., & Muster, B. (2023). Titel. Venue. https://doi.org/10.…",
+    "in_text": { "harvard": "(Beispiel and Muster, 2023)", "apa": "(Beispiel & Muster, 2023)" }
+  },
+  "missing": [],
+  "note": ""
+}
+```
+
+- `origins` weist **je Feld** die Herkunft aus (`manual` > `curated` > `resolved` > `extracted`).
+- `confidence` ist die **niedrigste** Konfidenz der beteiligten Quellen (`strong`/`weak`/`none`).
+- `missing` nennt fehlende Pflichtfelder (`title`, `authors`, `year`); `note` erklärt sie im
+  Klartext und nennt den Weg zur Ergänzung. Bei vollständigem Datensatz sind beide leer.
+
+## 4. Annahmen und Vorbedingungen
+
+- Ein Index wurde gebaut (`python -m scripts.ingest`) und enthält das Teilschema
+  `paper_metadata` (`metadata_schema_version` ≥ `0.1.0`).
+- Fehlt das Teilschema (Index vor Phase 12), liefert das Tool einen leeren Datensatz mit
+  `citable = false` statt zu scheitern.
+
+## 5. Grenzen (Nicht-Ziele)
+
+- **Keine** Auflösung zur Abfragezeit: Das Tool liest ausschließlich den Index; die
+  Online-Anreicherung ist ein separater, manuell gestarteter Lauf
+  ([ADR 0026](../../../../docs/adr/0026-online-metadata-resolution.md)).
+- **Kein** Raten fehlender Angaben – Unvollständigkeit wird ausgewiesen.
+- **Keine** weiteren Stile (nur Harvard und APA) und **kein** Zugriffsdatum (es wäre vom
+  Ausführungstag abhängig und damit nicht deterministisch).
+
+## 6. Fehlerverhalten
+
+- `invalid_input`: leere `paper_id`.
+- `not_found`: Index-Datei fehlt **oder** `paper_id` ist unbekannt.
+
+Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
+
+## 7. Provenienz
+
+- `source_uri` (Quelle zum Original), `identifiers`, `origins` (Herkunft je Feld) und
+  `confidence` (schwächste beteiligte Quelle).
+
+## 8. Reproduzierbarkeit
+
+- Deterministisch: direkte Index-Reads (SQLite) plus rein funktionale Formatierung; keine
+  stochastischen Anteile, kein Netz, kein Datum.
+
+## 9. Testabdeckung
+
+- `tests/retrieval/test_reference.py`: Funktions-/Provenienz-Test, unvollständiger Datensatz,
+  fehlendes Teilschema, `not_found` (fehlender Index, unbekannte ID), `invalid_input`.
+- `tests/bibliography/test_styles.py`: Stil-Formatierung inkl. Grenzfälle (kein Autor, kein
+  Jahr, viele Autoren).
+- `tests/mcp_server/test_server.py`: Tool-Contract über einen In-Memory-Client (Erfolg +
+  Fehler-Envelope).

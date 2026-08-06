@@ -22,10 +22,12 @@ darf seine Struktur nicht verändern.
 | `DiscoveryReport` | Dataclass | Ergebnis eines Laufs (Anfragen, Quellen, Bilanz, Kandidaten) |
 | `render_report` | Funktion | Rendert einen Lauf als Markdown-Abschnitt |
 | `append_report` | Funktion | Hängt den Abschnitt byte-erhaltend und atomar an |
+| `append_section` | Funktion | gemeinsamer Anhänge-Mechanismus beider Berichte |
+| `render_resolutions` / `append_resolutions` | Funktionen | Bericht der Metadaten-Auflösung (`data/metadata_log.md`) |
 | `store_raw` | Funktion | Legt die Rohantworten datiert ab |
 | `escape_markdown` | Funktion | Entschärft fremden Text |
 | `safe_url` | Funktion | Prüft einen fremden Verweis |
-| `REPORT_NAME`, `RAW_DIR_NAME` | Konstanten | Dateiname und Ablageverzeichnis |
+| `REPORT_NAME`, `METADATA_REPORT_NAME`, `RAW_DIR_NAME` | Konstanten | Dateinamen beider Berichte und Ablageverzeichnis der Rohantworten |
 | `MAX_TITLE_CHARS`, `MAX_ABSTRACT_CHARS`, `MAX_URL_CHARS` | Konstanten | Längengrenzen |
 
 ## 3. Ablauf

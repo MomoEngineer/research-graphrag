@@ -74,6 +74,8 @@ def test_citation_to_dict_shape(tmp_path: Path) -> None:
         "score_tfidf",
         "score_bm25",
         "source_uri",
+        "identifiers",
+        "citation_key",
         "snippet",
     }
 
@@ -108,6 +110,8 @@ def test_assembler_builds_paper_ref(tmp_path: Path) -> None:
     assert ref.to_dict() == {
         "paper_id": "aaaa1111",
         "source_uri": "file:///aaaa1111.pdf",
+        "identifiers": {},
+        "citation_key": "aaaa1111",
         "snippet": ref.snippet,
     }
 

@@ -468,6 +468,76 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 
 ---
 
+## Phase 12 – Zitierfähigkeit: vom Identifikator zur Literaturangabe
+
+> **Status: umgesetzt.** Beide Punkte sind erledigt – **K1** (netzfrei) und **K2** (Auflösung).
+> Belegt am realen Korpus (341 Paper): **vollständig zitierfähig 0 → 336**, Paper mit
+> Identifikator 329 → **339**, und die kuratierte Übersicht steuert erstmals maschinell
+> **265 Feldwerte** bei (131 Titel, 91 arXiv-IDs, 35 DOIs, 8 Links), die zuvor ungenutzt in einer
+> Markdown-Tabelle lagen ([ADR 0025](docs/adr/0025-citable-paper-metadata.md) ·
+> [ADR 0026](docs/adr/0026-online-metadata-resolution.md)).
+
+### Warum das nötig war (und was gemessen wurde)
+
+Das Werkzeug begleitet eine wissenschaftliche Arbeit – aber bis Phase 11 lieferte **eines von
+acht** Werkzeugen (`get_paper`) überhaupt einen extern auflösbaren Identifikator. Alle
+Suchtreffer, alle Belege in `answer_question` und alle Community-Referenzen trugen ausschließlich
+eine interne `paper_id` und einen lokalen Dateipfad. Der Zitier-Contract aus
+[ADR 0012](docs/adr/0012-llm-bridge-and-answer-synthesis-phase7.md) verlangte Marken `[1]`,
+`[2]` …, die auf nichts Zitierbares zeigten.
+
+Die Vorabmessung korrigierte zugleich die naheliegende Annahme, die Extraktion sei „gut genug":
+
+| Befund (341 Paper) | Wert |
+| --- | --- |
+| Paper mit mindestens einem extrahierten Identifikator | 329 (96,5 %) |
+| davon **nicht** auf der eigenen Titelseite belegt | ≈ 45 |
+| Identifikatoren mit mehr als einem Träger | 9 (u. a. der MBPP-Falsch-Hub, der ACM-Platzhalter) |
+| kuratierte Übersichtszeilen mit externer Angabe | 129 von 131 |
+| davon **abweichend** von der Extraktion | **29** |
+
+Die 29 Abweichungen haben zwei Ursachen, und beide sind lehrreich: teils nennt die Übersicht
+legitim den **Publisher-DOI**, wo die Extraktion die arXiv-ID liest; teils ist die Extraktion
+schlicht **falsch**. Für Retrieval ist das gleichgültig, für eine Literaturangabe nicht – ein
+falscher DOI ist schlimmer als kein DOI.
+
+### K1 – Zitierfähige Metadaten, netzfrei
+
+*Umgesetzt:* eigene **versionierte** Quelle `metadata/paper_metadata.json` (außerhalb des
+regenerierbaren `data/`), **feldweise** Auflösung nach `manual > curated > resolved > extracted`
+mit ausgewiesener Herkunft je Feld, additive Index-Tabelle `paper_metadata`, Durchreichung von
+`identifiers` und `citation_key` bis in jeden Beleg, vollständige Literaturangaben (Harvard und
+APA) in `answer_question`, `get_paper`, dem neunten Werkzeug `get_reference` und
+`python -m scripts.cite`.
+
+*Bewusst nicht:* die vollständige Angabe in **jedem** Chunk-Zitat (fünf Belege desselben Papers
+trügen sie fünfmal) und ein Zugriffsdatum in der Literaturangabe (es wäre vom Ausführungstag
+abhängig und bräche jeden Byte-Vergleich).
+
+### K2 – Online-Auflösung der fehlenden Felder
+
+*Umgesetzt:* `python -m scripts.resolve_metadata` löst Autoren, Venue und Publikationsjahrgang
+über OpenAlex auf (Rückfall: arXiv-Feed), **automatisch** übernommen, aber mit ausgewiesener
+Belegstärke: Identifikator-Treffer `strong`, nicht belegter Identifikator oder Titel-Ähnlichkeit
+`weak`, unterhalb der Schwelle verworfen. Protokoll append-only in `data/metadata_log.md`.
+
+*Bewusst nicht:* eine Auflösung **im Ingest** – der Kern bleibt netzfrei und deterministisch – und
+**kein** MCP-Werkzeug, weil der Lauf schreibt und Netz benötigt.
+
+### Ergebnis am realen Korpus
+
+| Kennzahl | vorher | nachher |
+| --- | --- | --- |
+| vollständig zitierfähige Paper | 0 | **336** von 341 |
+| Paper mit Identifikator | 329 | **339** |
+| schwach belegte Datensätze | – | 66 (ausgewiesen) |
+| Werkzeuge mit Identifikator in der Antwort | 1 von 8 | **9 von 9** |
+
+Offen bleiben **5** Paper, für die keine Quelle einen Treffer liefert; sie sind über einen
+`manual`-Eintrag zu pflegen.
+
+---
+
 ## Meilensteine
 
 - **M0 – Migration:** ✅ erreicht – PDFs und `Übersicht.md` ins Repo übernommen (Phase 1).
@@ -478,3 +548,4 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 - **M5 – Zufluss ohne Doppelbestand:** ✅ erreicht – neue PDFs gehen über `new_papers/` in den Korpus, Duplikate werden erkannt, die Übersicht wächst mit (Phase 8).
 - **M6 – Online-Recherche entschieden:** ✅ erreicht – S0 ist beantwortet: Die Quellen sind über den authentifizierten Unternehmens-Proxy erreichbar (arXiv/OpenAlex/Crossref mit HTTP 200), und die Handprobe liegt mit 76–82 % deutlich über der vorab festgelegten Schwelle von 30 %. Empfohlen ist ein **engerer Zuschnitt** als geplant: S1 nur mit arXiv + OpenAlex, S2 zurückgestellt (Phase 9).
 - **M7 – Local schlägt Basic:** ✅ erreicht – der für Detailfragen vorgesehene Modus ist nicht länger schwächer als seine Rückfallebene (Hit 0,618 → **0,912**, MRR 0,532 → **0,654** gegen Basic 0,882 / 0,650). **Ehrlich dazu:** Der Zugewinn ist teilweise definitorisch, weil Locals Bündel mit fünf Seeds die Top-5 der Chunk-Suche enthält; belastbar sind die **13 qid-genauen Verbesserungen ohne Regression** (Phase 10 / V1).
+- **M8 – Aus dem Fund wird eine Quelle:** ✅ erreicht – jeder Beleg trägt einen extern auflösbaren Identifikator, und aus einem Suchtreffer entsteht ohne Handarbeit eine korrekte Literaturangabe in Harvard und APA. **336 von 341** Papern sind vollständig zitierfähig (vorher **0**). **Ehrlich dazu:** 66 Datensätze beruhen auf einem nicht eindeutigen Beleg und sind als `weak` markiert; 5 Paper bleiben ohne Auflösung (Phase 12).

@@ -22,8 +22,8 @@ Quellenanker**.
 
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
-| `Citation` | Dataclass | Beleg auf **Chunk-Ebene**: Paper, Abschnitt, Seiten-Range, Chunk, Scores, Ausschnitt |
-| `PaperRef` | Dataclass | Beleg auf **Paper-Ebene**: Paper, Quelle, Leit-Ausschnitt |
+| `Citation` | Dataclass | Beleg auf **Chunk-Ebene**: Paper, Abschnitt, Seiten-Range, Chunk, Scores, Ausschnitt, `identifiers`, `citation_key` |
+| `PaperRef` | Dataclass | Beleg auf **Paper-Ebene**: Paper, Quelle, Leit-Ausschnitt, `identifiers`, `citation_key` |
 | `ProvenanceAssembler` | Klasse | Lädt Paper-Provenienz direkt aus dem Index und beantwortet `paper_ref()` |
 | `page_label` | Funktion | Anzeigeform der Seiten-Provenienz: „Seite 7" bzw. „Seiten 7–8" |
 

@@ -139,7 +139,7 @@ def _reference_text(paper: CanonicalPaper) -> str:
     return "\n".join(chunk.text for chunk in paper.chunks if chunk.section_id in ref_ids)
 
 
-def _front_matter_text(paper: CanonicalPaper) -> str:
+def front_matter_text(paper: CanonicalPaper) -> str:
     """Liefert den Text der Titelseite(n) **ohne** Referenzabschnitt (klein geschrieben).
 
     Beleg-Fenster für die eigenen Identifikatoren: Die Extraktion liest DOI/arXiv bevorzugt von
@@ -151,6 +151,9 @@ def _front_matter_text(paper: CanonicalPaper) -> str:
     Seit der Seiten-Range (docs/adr/0013-chunking-refinement-phase7.md) zählt bewusst
     ``page_end``: Ein Chunk, der von der Titelseite auf eine Folgeseite überläuft, gilt **nicht**
     mehr als Frontmatter – das Fenster bleibt damit mindestens so streng wie zuvor.
+
+    Öffentlich, weil die Herkunftsbewertung der bibliografischen Daten denselben Guard nutzt
+    (docs/adr/0025-citable-paper-metadata.md).
     """
     ref_ids = _reference_section_ids(paper)
     return " ".join(
@@ -190,7 +193,7 @@ def _build_target_maps(
     arxiv_to_pid: dict[str, str] = {}
     title_to_pid: dict[str, str] = {}
     for paper in papers:
-        front = _front_matter_text(paper)
+        front = front_matter_text(paper)
         doi = paper.identifiers.get("doi")
         if doi and doi.lower() in front:
             doi_to_pid.setdefault(doi.lower(), paper.paper_id)

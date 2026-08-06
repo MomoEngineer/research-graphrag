@@ -28,7 +28,7 @@ research-graphrag/
 │  ├─ glossary.md
 │  └─ adr/
 │     ├─ README.md
-│     └─ 0001-*.md … 0020-*.md
+│     └─ 0001-*.md … 0026-*.md
 ├─ templates/
 │  ├─ tool-spec.md
 │  ├─ module-doc.md              # Vorlage Modul-Doku (ADR 0018)
@@ -45,7 +45,9 @@ research-graphrag/
 │  ├─ update_overview.py         # Entwurfszeilen → Übersicht.md (append-only, Option B)
 │  ├─ graph_info.py              # Community-Übersicht (read-only, Phase 3)
 │  ├─ citations.py               # Zitationen eines Papers (read-only, Phase 7 / A2)
+│  ├─ cite.py                    # Literaturangabe in Harvard/APA (read-only, Phase 12 / K1)
 │  ├─ discover.py                # Online-Kandidatensuche ohne Download (separat startbar, Phase 9 / S1)
+│  ├─ resolve_metadata.py        # Zitationsdaten online auflösen (separat startbar, Phase 12 / K2)
 │  ├─ status.py                  # Read-only Index-/Korpus-Status + Konsistenz (Phase 6)
 │  ├─ qa.py                      # Prüf-Fragen je Modus durchspielen (QS-Harness, Phase 6; `--quantitativ` seit Phase 7 / A6)
 │  └─ eval_retrieval.py          # Evaluation: Primitive/Modi, Baseline, Regressions-Check, Router (Phase 7 / A4 + A6 + A7)
@@ -70,7 +72,8 @@ research-graphrag/
 │  │  ├─ bm25.py                 #   BM25-Gewichte, handimplementiert (Phase 7 / A4)
 │  │  ├─ fusion.py               #   Reciprocal Rank Fusion (Phase 7 / A4)
 │  │  ├─ graph_index.py          #   Paper-Ähnlichkeitsgraph + Louvain-Communities (Phase 3)
-│  │  └─ citation_graph.py       #   Intra-Korpus-Zitationsgraph (CITES, Phase 7 / A2)
+│  │  ├─ citation_graph.py       #   Intra-Korpus-Zitationsgraph (CITES, Phase 7 / A2)
+│  │  └─ metadata_index.py       #   zitierfähige Metadaten je Paper (Phase 12 / K1)
 │  ├─ retrieval/                 # Query-Router: Basic/Local/Global/DRIFT (Phase 4)
 │  │  ├─ doc/                    #   Modul-Dokus
 │  │  ├─ basic.py                #   search_basic (Top-k über die Hybrid-Wertung)
@@ -80,7 +83,8 @@ research-graphrag/
 │  │  ├─ router.py               #   Heuristik-Router (Fragetyp → Modus)
 │  │  ├─ provenance.py           #   Citation/PaperRef + Provenienz-Assembler
 │  │  ├─ paper.py                #   get_paper (Paper-Metadaten aus dem Index, Phase 5)
-│  │  └─ citations.py            #   get_citations (Zitationen + Provenienz, Phase 7 / A2)
+│  │  ├─ citations.py            #   get_citations (Zitationen + Provenienz, Phase 7 / A2)
+│  │  └─ reference.py            #   get_reference (Literaturangabe Harvard/APA, Phase 12 / K1)
 │  ├─ overview/drafts.py         # Übersicht-Entwürfe (Staging, Phase 2) + overview/doc/
 │  ├─ generation/                # LLM-Bridge & Antwort-Synthese (Phase 7 / A1)
 │  │  ├─ doc/                    #   Modul-Dokus
@@ -103,14 +107,22 @@ research-graphrag/
 │  │  ├─ sources.py              #   Adapter arXiv + OpenAlex
 │  │  ├─ candidates.py           #   Kandidaten-Modell + Dedup (nutzt die Intake-Logik)
 │  │  ├─ search.py               #   Anfragen aus dem Bestand + Laufsteuerung
-│  │  └─ report.py               #   append-only Bericht + Ablage der Rohantworten
+│  │  ├─ metadata.py             #   Auflösung der Zitationsdaten (Phase 12 / K2)
+│  │  └─ report.py               #   append-only Berichte + Ablage der Rohantworten
+│  ├─ bibliography/              # Zitierfähige Metadaten (Phase 12 / K1)
+│  │  ├─ doc/                    #   Modul-Dokus
+│  │  ├─ model.py                #   MetadataRecord / PaperMetadata, Herkünfte, Konfidenz
+│  │  ├─ resolve.py              #   feldweise Autoritätskette
+│  │  ├─ curated.py              #   Identifikatoren aus der kuratierten Übersicht
+│  │  ├─ store.py                #   metadata/paper_metadata.json (versioniert, atomar)
+│  │  └─ styles.py               #   Harvard und APA (deterministisch, ohne LLM)
 │  └─ mcp_server/                # MCP-Server (stdio), Phase 5
 │     ├─ doc/                    #   Modul-Dokus (server.py, sampling.py)
-│     ├─ server.py               #   FastMCP: 8 Tools + Fehlerübersetzung an der Grenze
+│     ├─ server.py               #   FastMCP: 9 Tools + Fehlerübersetzung an der Grenze
 │     ├─ sampling.py             #   Async-Brücke zum Client-Modell (opt-in, Phase 7 / A1)
 │     ├─ __main__.py             #   Einstiegspunkt (python -m research_graphrag.mcp_server)
 │     ├─ README.md               #   Server-README
-│     └─ specs/                  #   Pro-Tool-Spezifikationen (8 Tools)
+│     └─ specs/                  #   Pro-Tool-Spezifikationen (9 Tools)
 ├─ eval/
 │  ├─ pruef-fragen.md            # Prüf-Fragen über alle 5 Fragetypen
 │  ├─ pilot-korpus.md            # Vorschlag eines Pilot-Korpus (Phase 1)
@@ -120,10 +132,13 @@ research-graphrag/
 │  ├─ citation-gold.json         # versioniertes Multi-Hop-Gold-Set (Labels aus CITES, Phase 10 / V3)
 │  └─ citation-baseline.json     # eingefrorene Ränge der Multi-Hop-Ebenen (Phase 10 / V3)
 ├─ recherche/                    # (Phase 1) migrierte Rechercheartefakte (noch nicht vorhanden)
+├─ metadata/                     # versionierte Zitationsdaten (Phase 12)
+│  ├─ README.md
+│  └─ paper_metadata.json        #   Herkünfte `resolved` (online) und `manual` (Handpflege)
 ├─ new_papers/                   # Eingangsordner des Intake (nicht versioniert, außer README.md)
 │  └─ _duplikate/                #   Quarantäne der Identifikator-Duplikate (vom Intake angelegt)
 ├─ papers/                       # PDF-Korpus (nicht versioniert)
-├─ data/                         # Canonical JSON 0.4.0, manifest.json, index/, quality_report.*, intake_log.md, online_candidates.md, online_raw/ (nicht versioniert)
+├─ data/                         # Canonical JSON 0.4.0, manifest.json, index/, quality_report.*, intake_log.md, online_candidates.md, metadata_log.md, online_raw/ (nicht versioniert)
 └─ tests/                        # gespiegelt zu src/research_graphrag/
    ├─ conftest.py                # anyio-Backend + make_pdf-Fixture
    ├─ test_smoke.py
@@ -137,7 +152,8 @@ research-graphrag/
    ├─ overview/                  # Übersicht-Entwürfe (Phase 2)
    ├─ generation/                # LLM-Bridge: Port, Evidenz, Synthese, CLI-Pfad (Phase 7 / A1)
    ├─ evaluation/                # Gold-Set, Kennzahlen, Modus-Lauf, Baseline, Ausgabe (Phase 7 / A6) + Router-Messung (A7) + Multi-Hop (Phase 10 / V3)
-   ├─ online/                   # Transport-Port, Quellen-Adapter, Dedup, Bericht, CLI (Phase 9 / S1)
+   ├─ online/                   # Transport-Port, Quellen-Adapter, Dedup, Bericht, CLI (Phase 9 / S1) + Metadaten-Auflösung (Phase 12 / K2)
+   ├─ bibliography/            # Modell, Auflösung, Speicher, kuratierte Quelle, Stile (Phase 12 / K1)
    ├─ mcp_server/                # Server-Contract via In-Memory-Client (Phase 5) + Sampling (Phase 7)
    └─ integration/               # End-to-End-Durchstich (M1) + Drop-in-Freshness/atomarer Swap + Status (Phase 6/7)
 ```
@@ -228,7 +244,9 @@ research-graphrag/
 | `src/research_graphrag/mcp_server/` | MCP-Server (stdio) mit Tools + Provenienz | 5 |
 | `src/research_graphrag/generation/` | LLM-Bridge: Evidenz-Aufbereitung + optionale Antwort-Synthese | 7 |
 | `src/research_graphrag/evaluation/` | Quantitative Evaluation: Retrieval (Gold-Set, Kennzahlen, Baseline), Router-Contract und Multi-Hop gegen den Zitationsgraphen | 7 |
-| `src/research_graphrag/online/` | Online-Kandidatensuche (Transport-Port, arXiv/OpenAlex, Dedup, Bericht) | 9 |
+| `src/research_graphrag/online/` | Online-Kandidatensuche (Transport-Port, arXiv/OpenAlex, Dedup, Bericht) + Auflösung der Zitationsdaten | 9 / 12 |
+| `src/research_graphrag/bibliography/` | Zitierfähige Metadaten: Herkünfte, feldweise Auflösung, Harvard/APA | 12 |
+| `metadata/` | **versionierte** Zitationsdaten (`resolved`, `manual`) – bewusst nicht unter `data/` | 12 |
 | `src/research_graphrag/keywords.py` | kuratierte Keyword-Politik für extraktive Keyword-Listen | 7 |
 
 ---

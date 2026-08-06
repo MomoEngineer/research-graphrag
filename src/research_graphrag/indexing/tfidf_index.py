@@ -22,8 +22,8 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from collections.abc import Sequence
-from dataclasses import dataclass
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
@@ -83,6 +83,10 @@ class Hit:
     Rangmaß, **keine** Ähnlichkeit), sonst der Rohwert des gewählten Verfahrens.
     ``score_tfidf``/``score_bm25`` weisen die Beiträge beider Verfahren aus
     (docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md).
+
+    ``identifiers`` und ``citation_key`` stammen aus der Tabelle ``paper_metadata`` und machen
+    jeden Treffer **extern auflösbar** (docs/adr/0025-citable-paper-metadata.md); sie sind leer,
+    wenn zu dem Paper nichts bekannt ist oder der Index vor Phase 12 gebaut wurde.
     """
 
     chunk_id: str
@@ -95,6 +99,8 @@ class Hit:
     page_end: int = 0
     score_tfidf: float = 0.0
     score_bm25: float = 0.0
+    identifiers: Mapping[str, str] = field(default_factory=dict)
+    citation_key: str = ""
 
 
 @dataclass(frozen=True)
@@ -108,6 +114,8 @@ class _ChunkRef:
     source_uri: str
     section_title: str = ""
     page_end: int = 0
+    identifiers: Mapping[str, str] = field(default_factory=dict)
+    citation_key: str = ""
 
 
 def _snippet(text: str, limit: int = 200) -> str:
@@ -131,7 +139,38 @@ def _hit(ref: _ChunkRef, score: float, *, score_tfidf: float = 0.0, score_bm25: 
         page_end=ref.page_end,
         score_tfidf=score_tfidf,
         score_bm25=score_bm25,
+        identifiers=ref.identifiers,
+        citation_key=ref.citation_key,
     )
+
+
+_NO_CITATION_DATA: tuple[Mapping[str, str], str] = ({}, "")
+
+
+def _load_citation_data(
+    connection: sqlite3.Connection,
+) -> dict[str, tuple[Mapping[str, str], str]]:
+    """Liest Identifikatoren und Zitierschlüssel je Paper aus ``paper_metadata``.
+
+    Die Tabelle ist ein **additives** Teilschema (docs/adr/0025-citable-paper-metadata.md); ein
+    vor Phase 12 gebauter Index kennt sie nicht. Ihr Fehlen ist deshalb kein Fehler – die
+    Treffer tragen dann schlicht keine Zitationsdaten.
+    """
+    exists = connection.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'paper_metadata'"
+    ).fetchone()
+    if exists is None:
+        return {}
+    data: dict[str, tuple[Mapping[str, str], str]] = {}
+    for paper_id, doi, arxiv_id, url, citation_key in connection.execute(
+        "SELECT paper_id, doi, arxiv_id, url, citation_key FROM paper_metadata"
+    ):
+        values = {"doi": str(doi), "arxiv": str(arxiv_id), "url": str(url)}
+        data[str(paper_id)] = (
+            {key: value for key, value in values.items() if value},
+            str(citation_key),
+        )
+    return data
 
 
 def build_index(papers: Sequence[CanonicalPaper], db_path: str | Path) -> int:
@@ -252,6 +291,7 @@ class TfidfIndex:
                 "FROM chunks c JOIN papers p ON p.paper_id = c.paper_id "
                 "ORDER BY c.row_index"
             ).fetchall()
+            citation_data = _load_citation_data(connection)
         finally:
             connection.close()
 
@@ -267,6 +307,8 @@ class TfidfIndex:
                 source_uri=str(row[4]),
                 section_title=str(row[5]),
                 page_end=int(row[6]),
+                identifiers=citation_data.get(str(row[1]), _NO_CITATION_DATA)[0],
+                citation_key=citation_data.get(str(row[1]), _NO_CITATION_DATA)[1],
             )
             for row in rows
         )

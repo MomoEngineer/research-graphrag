@@ -33,6 +33,7 @@ Alles, was aus einer PDF-Datei ein durchsuchbares, belegfähiges Artefakt macht.
 | **Korpus-Intake mit Duplikatprüfung** | Eingangsordner `new_papers/`: prüft in drei Stufen (Hash, DOI/arXiv, Titel), übernimmt Neues, indiziert und ergänzt die Übersicht – mit wirksamem `--dry-run` | `python -m scripts.intake` | [intake](../src/research_graphrag/doc/intake.md) | [0019](adr/0019-corpus-intake-new-papers-phase8.md) |
 | **Online-Kandidatensuche** | Separat startbar: sucht bei arXiv und OpenAlex zu einer Anfrage **aus dem eigenen Bestand**, dedupliziert mit der Intake-Logik gegen den Korpus und schreibt einen append-only Bericht – **kein Download**, kein MCP-Werkzeug | `python -m scripts.discover` | [online/search](../src/research_graphrag/online/doc/search.md), [online/sources](../src/research_graphrag/online/doc/sources.md), [online/candidates](../src/research_graphrag/online/doc/candidates.md), [online/report](../src/research_graphrag/online/doc/report.md) | [0020](adr/0020-online-candidate-search-phase9.md) |
 | **Netzzugang hinter einem Port** | Die einzige Stelle mit Netzverbindung: CONNECT-Tunnel mit Proxy-Authentifizierung, certifi-Verifikation, Größen- und Schema-Grenzen | `RESEARCH_GRAPHRAG_PROXY` | [online/transport](../src/research_graphrag/online/doc/transport.md) | [0020](adr/0020-online-candidate-search-phase9.md) |
+| **Metadaten-Auflösung** | Separat startbar: beschafft Autoren, Venue und Publikationsjahrgang über OpenAlex (Rückfall arXiv), übernimmt automatisch und weist die Belegstärke aus – der Ingest bleibt netzfrei | `python -m scripts.resolve_metadata` | [online/metadata](../src/research_graphrag/online/doc/metadata.md), [bibliography/store](../src/research_graphrag/bibliography/doc/store.md) | [0026](adr/0026-online-metadata-resolution.md) |
 | **Dedup über Datei-Hash** | Nur neue oder geänderte PDFs werden neu extrahiert; ein Schema-Wechsel erzwingt die Neu-Extraktion trotz unveränderter Datei | `data/manifest.json` | [pipeline](../src/research_graphrag/doc/pipeline.md) | [0006](adr/0006-canonical-model-phase2-scope.md) |
 | **PDF → Canonical JSON** | Seitentext, Abschnitte, Chunks, Identifikatoren und Qualitäts-Flags in einem versionierten Zwischenformat | `extract_pdf` | [extraction/pdf](../src/research_graphrag/extraction/doc/pdf.md), [extraction/model](../src/research_graphrag/extraction/doc/model.md) | [0005](adr/0005-graphrag-index-backend-open.md), [0006](adr/0006-canonical-model-phase2-scope.md) |
 | **Textnormalisierung** | Repariert Ligaturen, die Wörter unauffindbar machen, und entfernt nicht dekodierbare Glyph-Artefakte | in `extract_pdf` vor der Strukturanalyse | [extraction/normalization](../src/research_graphrag/extraction/doc/normalization.md) | [0015](adr/0015-noise-reduction-keywords-and-sections-phase7.md) |
@@ -52,6 +53,7 @@ Wahrheit.
 | **Hybrid-Wertung** | BM25 und TF-IDF-Kosinus über **einer** Tokenisierung, verbunden per Reciprocal Rank Fusion; umschaltbar auf ein Einzelverfahren | `--scoring` bzw. Parameter `scoring` | [indexing/bm25](../src/research_graphrag/indexing/doc/bm25.md), [indexing/fusion](../src/research_graphrag/indexing/doc/fusion.md), [indexing/tfidf_index](../src/research_graphrag/indexing/doc/tfidf_index.md) | [0014](adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md) |
 | **Paper-Ähnlichkeitsgraph** | Verbindet inhaltlich ähnliche Paper über wechselseitige Top-k-Kanten und gruppiert sie per Louvain in Communities mit extraktiver Zusammenfassung | `python -m scripts.graph_info` | [indexing/graph_index](../src/research_graphrag/indexing/doc/graph_index.md) | [0007](adr/0007-graphrag-index-phase3-option-b.md) |
 | **Zitationsgraph (`CITES`)** | Leitet aus dem Referenzabschnitt gerichtete Zitationskanten **innerhalb des Korpus** ab (DOI, arXiv-ID, Titel) – Präzision vor Recall | `python -m scripts.citations`, `get_citations` | [indexing/citation_graph](../src/research_graphrag/indexing/doc/citation_graph.md) | [0011](adr/0011-intra-corpus-citation-graph-phase7.md) |
+| **Zitierfähige Metadaten** | Führt vier Herkünfte (Handpflege, kuratierte Übersicht, Online-Auflösung, Extraktion) **feldweise** zusammen und weist je Feld aus, welche gewonnen hat | in `ingest`, Tabelle `paper_metadata` | [indexing/metadata_index](../src/research_graphrag/indexing/doc/metadata_index.md), [bibliography/resolve](../src/research_graphrag/bibliography/doc/resolve.md) | [0025](adr/0025-citable-paper-metadata.md) |
 | **Keyword-Politik** | Filtert Rausch-Terme aus den extraktiven Keyword-Listen – als Nachfilter, damit der Vektorraum unberührt bleibt | Community-Keywords, Übersicht-Entwürfe | [keywords](../src/research_graphrag/doc/keywords.md) | [0015](adr/0015-noise-reduction-keywords-and-sections-phase7.md) |
 
 ## C. Retrieval
@@ -69,6 +71,8 @@ rückführbar.
 | **Provenienz-Assembler** | Gemeinsame Zitat-Typen für alle Modi: Paper, Abschnitt, Seiten-Range, Chunk, Score und Teil-Scores | in jedem Modus | [retrieval/provenance](../src/research_graphrag/retrieval/doc/provenance.md) | [0008](adr/0008-retrieval-and-query-router-phase4.md), [0013](adr/0013-chunking-refinement-phase7.md), [0014](adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md) |
 | **Paper-Detail** | Metadaten, Identifikatoren, Abschnittsfolge und Leit-Ausschnitt eines Papers – ausschließlich aus dem Index, ohne Dateizugriff | `get_paper` | [retrieval/paper](../src/research_graphrag/retrieval/doc/paper.md) | [0009](adr/0009-mcp-server-stdio-phase5.md) |
 | **Zitationen abfragen** | Beide Richtungen der Zitationskanten eines Papers mit Paper-Provenienz und Match-Kriterium | `get_citations`, `python -m scripts.citations` | [retrieval/citations](../src/research_graphrag/retrieval/doc/citations.md) | [0011](adr/0011-intra-corpus-citation-graph-phase7.md) |
+| **Literaturangabe** | Fertige Angabe in **Harvard** und **APA** samt Kurzbeleg, Herkunft je Feld und Diagnose fehlender Pflichtfelder | `get_reference`, `python -m scripts.cite` | [retrieval/reference](../src/research_graphrag/retrieval/doc/reference.md), [bibliography/styles](../src/research_graphrag/bibliography/doc/styles.md) | [0025](adr/0025-citable-paper-metadata.md) |
+| **Identifikator an jedem Beleg** | Jedes Zitat und jede Paper-Referenz trägt DOI/arXiv/URL und einen Zitierschlüssel – der Beleg ist ohne Zusatzaufruf extern auflösbar | alle `search_*`, `answer_question` | [retrieval/provenance](../src/research_graphrag/retrieval/doc/provenance.md) | [0025](adr/0025-citable-paper-metadata.md) |
 
 ## D. Antwort und LLM-Bridge
 
@@ -86,11 +90,11 @@ Sprachmodell.
 
 | Feature | Was es leistet | Einstiegspunkt | Verbaut in | Grundlage |
 | --- | --- | --- | --- | --- |
-| **MCP-Server (stdio)** | Stellt acht Werkzeuge für GitHub Copilot bereit und lädt den Index **pro Anfrage** frisch – neue Paper wirken ohne Neustart | `python -m research_graphrag.mcp_server` | [mcp_server/server](../src/research_graphrag/mcp_server/doc/server.md) | [0009](adr/0009-mcp-server-stdio-phase5.md), [0010](adr/0010-drop-in-workflow-and-qa-phase6.md) |
+| **MCP-Server (stdio)** | Stellt neun Werkzeuge für GitHub Copilot bereit und lädt den Index **pro Anfrage** frisch – neue Paper wirken ohne Neustart | `python -m research_graphrag.mcp_server` | [mcp_server/server](../src/research_graphrag/mcp_server/doc/server.md) | [0009](adr/0009-mcp-server-stdio-phase5.md), [0010](adr/0010-drop-in-workflow-and-qa-phase6.md) |
 | **Fehlerübersetzung an der Grenze** | Übersetzt interne Fehler in eine strukturierte, kategorisierte Ausgabe; unerwartete Fehler werden nie durchgereicht | jedes Werkzeug | [errors](../src/research_graphrag/doc/errors.md), [mcp_server/server](../src/research_graphrag/mcp_server/doc/server.md) | [error-model.md](error-model.md), [0009](adr/0009-mcp-server-stdio-phase5.md) |
-| **Kommandozeile** | Elf Skripte für Intake, Ingestion, Fragen, Status, QS, Online-Recherche und Evaluation – der vollständige Funktionsumfang ohne Copilot | `python -m scripts.<name>` | [scripts/README.md](../scripts/README.md) | — |
+| **Kommandozeile** | Dreizehn Skripte für Intake, Ingestion, Fragen, Zitation, Status, QS, Online-Recherche und Evaluation – der vollständige Funktionsumfang ohne Copilot | `python -m scripts.<name>` | [scripts/README.md](../scripts/README.md) | — |
 
-### Die acht MCP-Werkzeuge
+### Die neun MCP-Werkzeuge
 
 | Werkzeug | Fähigkeit | Spezifikation |
 | --- | --- | --- |
@@ -100,6 +104,7 @@ Sprachmodell.
 | `search_drift` | Community-Wahl mit lokaler Verfeinerung | [search_drift.md](../src/research_graphrag/mcp_server/specs/search_drift.md) |
 | `get_paper` | Metadaten und Struktur eines Papers | [get_paper.md](../src/research_graphrag/mcp_server/specs/get_paper.md) |
 | `get_citations` | Zitationen innerhalb des Korpus | [get_citations.md](../src/research_graphrag/mcp_server/specs/get_citations.md) |
+| `get_reference` | Literaturangabe in Harvard und APA | [get_reference.md](../src/research_graphrag/mcp_server/specs/get_reference.md) |
 | `list_topics` | Themenübersicht über alle Communities | [list_topics.md](../src/research_graphrag/mcp_server/specs/list_topics.md) |
 | `answer_question` | Modus-Wahl, Evidenz und optionale Formulierung in einem Aufruf | [answer_question.md](../src/research_graphrag/mcp_server/specs/answer_question.md) |
 

@@ -18,6 +18,7 @@ from research_graphrag.generation.evidence import (
     evidence_from_drift,
     evidence_from_global,
     evidence_from_local,
+    references_for,
 )
 from research_graphrag.generation.provider import GenerationProvider, NoopGenerationProvider
 from research_graphrag.generation.synthesis import Evidence, SynthesisResult, synthesize_answer
@@ -132,4 +133,5 @@ def answer_question(
         evidence,
         provider or NoopGenerationProvider(),
         routing=decision.to_dict() if decision is not None else None,
+        references=references_for(db_path, evidence),
     )

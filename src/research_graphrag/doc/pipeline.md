@@ -4,7 +4,7 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/pipeline.py` |
 | **Paket** | Top-Level – Orchestrierung |
-| **Phase** | 0b (eingeführt), 6 (atomarer Swap), 7 / A2 (Zitationsgraph) |
+| **Phase** | 0b (eingeführt), 6 (atomarer Swap), 7 / A2 (Zitationsgraph), 12 / K1 (Zitierdaten) |
 | **Grundlagen** | [ADR 0005](../../../docs/adr/0005-graphrag-index-backend-open.md), [ADR 0010](../../../docs/adr/0010-drop-in-workflow-and-qa-phase6.md), [ADR 0011](../../../docs/adr/0011-intra-corpus-citation-graph-phase7.md) |
 
 ---
@@ -24,7 +24,8 @@ Neubau schließt Inkonsistenzen aus.
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
 | `ingest` | Funktion | Führt den gesamten Lauf aus und liefert die Zählwerte |
-| `IngestReport` | Dataclass | Zählwerte: extrahiert, übersprungen, Chunks, Flags, Graph, Zitationen |
+| `IngestReport` | Dataclass | Zählwerte: extrahiert, übersprungen, Chunks, Flags, Graph, Zitationen, Zitierdaten |
+| `OVERVIEW_FILENAME` | Konstante | Dateiname der kuratierten Übersicht (Quelle der Herkunft `curated`) |
 
 ## 3. Ablauf
 
@@ -77,6 +78,7 @@ sequenceDiagram
     I->>T: build_index
     I->>T: build_graph
     I->>T: build_citation_graph
+    I->>T: build_metadata_index
     Note over L: bis hier unverändert lesbar
     I->>L: os.replace – atomar
     I->>T: unlink im finally
@@ -90,16 +92,20 @@ Eigenschaften folgen daraus:
 
 - **Crash-Sicherheit:** Schlägt ein Bauschritt fehl, bleibt der bisherige Index intakt und
   abfragbar.
-- **Konsistenz:** Chunks, Ähnlichkeitsgraph und Zitationskanten entstehen im **selben** Fenster
-  und passen zwangsläufig zueinander.
+- **Konsistenz:** Chunks, Ähnlichkeitsgraph, Zitationskanten und bibliografische Daten entstehen
+  im **selben** Fenster und passen zwangsläufig zueinander.
 
 Das Aufräumen läuft in jedem Fall: Im Erfolgsfall ist die Nebendatei bereits verschoben, im
 Fehlerfall wird sie entfernt.
 
 ### Die Reihenfolge der Bauschritte
 
-Chunk-Index zuerst, dann Ähnlichkeitsgraph, dann Zitationskanten – die späteren Schritte
-schreiben **additiv** in dieselbe Datei und setzen die Basistabellen voraus.
+Chunk-Index zuerst, dann Ähnlichkeitsgraph, dann Zitationskanten, zuletzt die bibliografischen
+Daten – die späteren Schritte schreiben **additiv** in dieselbe Datei und setzen die
+Basistabellen voraus. Der Metadaten-Schritt liest zusätzlich zwei Dateien **außerhalb** des
+Index: die kuratierte Übersicht und `metadata/paper_metadata.json`
+([ADR 0025](../../../docs/adr/0025-citable-paper-metadata.md)). Fehlen sie, entfällt die
+jeweilige Herkunft – der Bau scheitert nicht.
 
 ### Der Qualitätsreport
 

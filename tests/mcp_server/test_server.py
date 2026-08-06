@@ -37,6 +37,7 @@ from research_graphrag.extraction.model import (
 from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
 from research_graphrag.indexing.citation_graph import build_citation_graph
 from research_graphrag.indexing.graph_index import build_graph
+from research_graphrag.indexing.metadata_index import build_metadata_index
 from research_graphrag.indexing.tfidf_index import build_index
 from research_graphrag.mcp_server.server import mcp
 
@@ -48,6 +49,7 @@ _TOOLS = {
     "get_paper",
     "get_citations",
     "list_topics",
+    "get_reference",
     "answer_question",
 }
 
@@ -165,13 +167,14 @@ def index_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     build_index(papers, db)
     build_graph(papers, db)
     build_citation_graph(papers, db)
+    build_metadata_index(papers, db)
     monkeypatch.setenv("RESEARCH_GRAPHRAG_INDEX", str(db))
     return db
 
 
 @pytest.mark.anyio
 async def test_list_tools_exposes_all_tools(index_db: Path) -> None:
-    """Der Server listet genau die acht zugesagten Tools."""
+    """Der Server listet genau die neun zugesagten Tools."""
     async with client_session(mcp) as client:
         listed = await client.list_tools()
     assert {tool.name for tool in listed.tools} == _TOOLS
@@ -233,6 +236,46 @@ async def test_list_topics_returns_topics(index_db: Path) -> None:
     payload = _structured(result)
     assert isinstance(payload["topics"], list)
     assert payload["topics"]
+
+
+@pytest.mark.anyio
+async def test_get_reference_returns_both_citation_styles(index_db: Path) -> None:
+    """get_reference liefert beide Stile und weist fehlende Pflichtfelder aus."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool("get_reference", {"paper_id": "aaaa0001"})
+    assert result.isError is False
+    payload = _structured(result)
+    assert payload["styles"] == ["harvard", "apa"]
+    assert payload["reference"]["identifiers"]["doi"] == "10.1145/1234"
+    assert payload["reference"]["harvard"]
+    assert payload["reference"]["apa"]
+    # Ohne Online-Auflösung fehlen Autoren: Das wird ausgewiesen, nicht geraten.
+    assert "authors" in payload["missing"]
+    assert payload["note"]
+
+
+@pytest.mark.anyio
+async def test_get_reference_unknown_paper_yields_not_found_envelope(index_db: Path) -> None:
+    """Unbekannte paper_id -> strukturierter not_found-Fehler (isError=true)."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool("get_reference", {"paper_id": "zzzznope0"})
+    assert result.isError is True
+    assert _structured(result)["error"]["code"] == "not_found"
+
+
+@pytest.mark.anyio
+async def test_search_results_carry_external_identifiers(index_db: Path) -> None:
+    """Jeder Chunk-Beleg trägt die extern auflösbaren Identifikatoren seines Papers."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool("search_basic", {"query": "attention"})
+    citations = _structured(result)["citations"]
+    by_paper = {citation["paper_id"]: citation for citation in citations}
+
+    assert by_paper["aaaa0001"]["identifiers"] == {
+        "doi": "10.1145/1234",
+        "arxiv": "2405.20455",
+    }
+    assert by_paper["aaaa0001"]["citation_key"]
 
 
 @pytest.mark.anyio

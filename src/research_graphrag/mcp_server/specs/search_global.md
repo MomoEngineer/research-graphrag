@@ -42,7 +42,13 @@ Beantwortet **Cross-Paper-/Themenfragen** als Offline-Analog zum GraphRAG-„Glo
       "size": 4,
       "keywords": ["graph", "retrieval", "…"],
       "representatives": [
-        { "paper_id": "…", "source_uri": "file:///…", "snippet": "…" }
+        {
+          "paper_id": "…",
+          "source_uri": "file:///…",
+          "snippet": "…",
+          "identifiers": { "doi": "10.…", "arxiv": "2503.06689", "url": "https://…" },
+          "citation_key": "Beispiel2023"
+        }
       ]
     }
   ]
@@ -50,6 +56,8 @@ Beantwortet **Cross-Paper-/Themenfragen** als Offline-Analog zum GraphRAG-„Glo
 ```
 
 `communities` ist absteigend nach `score` sortiert (Tie-Break kleinere `community_id`) und **leer**, wenn keine Community zur Anfrage passt.
+
+Jeder Vertreter trägt zusätzlich `identifiers` und `citation_key` und ist damit **extern auflösbar**; beide stammen aus dem aufgelösten Metadatensatz des Papers und können leer sein ([ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md)).
 
 ## 4. Annahmen und Vorbedingungen
 
@@ -71,7 +79,7 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 
 ## 7. Provenienz
 
-- Je Community: `community_id`, `score`, `size`, `keywords` und **repräsentative Paper** (`paper_id`, `source_uri`, Leit-`snippet`).
+- Je Community: `community_id`, `score`, `size`, `keywords` und **repräsentative Paper** (`paper_id`, `source_uri`, Leit-`snippet`, `identifiers`, `citation_key`).
 
 ## 8. Reproduzierbarkeit
 

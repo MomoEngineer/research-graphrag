@@ -1,9 +1,10 @@
 """MCP-Server-Einstiegspunkt von research-graphrag (Transport ``stdio``).
 
 Registriert die Retrieval-Modi aus Phase 4 (Basic/Local/Global/DRIFT), die Katalog-Tools
-``get_paper`` und ``list_topics``, die Zitations-Abfrage ``get_citations`` sowie die belegte
-Antwort ``answer_question`` als MCP-Tools und startet den ``stdio``-Transport, über den VS Code
-den Server als lokalen Unterprozess betreibt (siehe docs/vscode-integration.md).
+``get_paper`` und ``list_topics``, die Zitations-Abfrage ``get_citations``, die Literaturangabe
+``get_reference`` sowie die belegte Antwort ``answer_question`` als MCP-Tools und startet den
+``stdio``-Transport, über den VS Code den Server als lokalen Unterprozess betreibt (siehe
+docs/vscode-integration.md).
 
 Grundsätze (docs/adr/0009-mcp-server-stdio-phase5.md):
 
@@ -42,6 +43,7 @@ from research_graphrag.retrieval.drift import search_drift
 from research_graphrag.retrieval.global_search import search_global
 from research_graphrag.retrieval.local import search_local
 from research_graphrag.retrieval.paper import get_paper
+from research_graphrag.retrieval.reference import get_reference
 
 logging.basicConfig(
     level=os.environ.get("RESEARCH_GRAPHRAG_LOG_LEVEL", "INFO"),
@@ -244,6 +246,24 @@ def list_topics_tool() -> dict[str, Any]:
     return _guard(  # type: ignore[return-value]
         "list_topics",
         lambda: {"topics": [view.to_dict() for view in load_communities(_index_path())]},
+    )
+
+
+@mcp.tool(
+    name="get_reference",
+    title="Literaturangabe (Harvard & APA)",
+    description=(
+        "Liefert die fertige Literaturangabe eines Papers per stabiler `paper_id`: Autoren, "
+        "Titel, Jahr, Venue, DOI/arXiv sowie die formatierten Angaben in **Harvard** und "
+        "**APA** samt Kurzbeleg für den Fließtext. Nutze dies, wenn aus einem Suchtreffer "
+        "zitiert werden soll. Ist der Datensatz unvollständig, weist `missing`/`note` das aus – "
+        "fehlende Angaben werden nie geraten. Read-only aus dem Index."
+    ),
+)
+def get_reference_tool(paper_id: str) -> dict[str, Any]:
+    """Literaturangabe in beiden Stilen (siehe specs/get_reference.md)."""
+    return _guard(  # type: ignore[return-value]
+        "get_reference", lambda: get_reference(_index_path(), paper_id).to_dict()
     )
 
 

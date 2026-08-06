@@ -238,5 +238,7 @@ def test_drift_to_dict_shape(tmp_path: Path) -> None:
         "score_tfidf",
         "score_bm25",
         "source_uri",
+        "identifiers",
+        "citation_key",
         "snippet",
     }

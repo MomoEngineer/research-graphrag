@@ -31,6 +31,7 @@ Forschungsfragen).
 | `extractive_summary` | Funktion | Kurztext aus Abstract oder erstem Fließtext |
 | `parse_internal_links` | Funktion | Liest die verlinkten Dateinamen einer Markdown-Tabelle |
 | `link_column` | Funktion | Spaltenindex von `Interner Link` (Layout-Prüfung) |
+| `split_row` | Funktion | Zellen einer Markdown-Tabellenzeile (auch vom Bibliografie-Paket genutzt) |
 | `OverviewReport` | Dataclass | Zählwerte eines Laufs samt vergebener IDs |
 | `DRAFT_ID_PREFIX`, `INTERNAL_LINK_COLUMN` | Konstanten | Präfix der ID-Reihe (`Z`) und erwarteter Spaltenindex des internen Links |
 

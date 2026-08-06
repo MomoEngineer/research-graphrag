@@ -203,7 +203,7 @@ Vertiefung: [structure](../src/research_graphrag/extraction/doc/structure.md),
 
 ---
 
-## 4. Der Index: eine Datei, vier Sichten
+## 4. Der Index: eine Datei, fünf Sichten
 
 Alle Artefakte liegen in **einer** SQLite-Datei. Sie werden im selben atomaren Fenster gebaut und
 sind damit immer zueinander konsistent.
@@ -213,10 +213,14 @@ flowchart LR
     CAN["Canonical JSONs"] --> BI["build_index"]
     CAN --> BG["build_graph"]
     CAN --> BC["build_citation_graph"]
+    CAN --> BM["build_metadata_index"]
+    UE[("Übersicht.md")] --> BM
+    MJ[("metadata/paper_metadata.json")] --> BM
     BI --> T1["papers · chunks<br/>Text, Provenienz, Identifikatoren"]
     BG --> T2["graph_nodes · graph_edges<br/>Ähnlichkeit"]
     BG --> T3["communities · community_members<br/>Themen"]
     BC --> T4["citation_edges<br/>CITES"]
+    BM --> T5["paper_metadata<br/>Autoren, Jahr, Venue, Herkunft"]
 ```
 
 | Sicht | Entsteht aus | Beantwortet |
@@ -225,15 +229,22 @@ flowchart LR
 | Ähnlichkeitsgraph | wechselseitige Top-k-Nachbarschaft der Paper-Vektoren | „Was ist thematisch benachbart?" |
 | Communities | Louvain-Gruppierung des Ähnlichkeitsgraphen | „Welche Themen gibt es im Korpus?" |
 | Zitationen | Referenzabschnitt gegen Korpus-Identifikatoren und -Titel | „Wer zitiert wen – tatsächlich?" |
+| Zitierdaten | vier Herkünfte, feldweise aufgelöst | „Wie zitiere ich das korrekt?" |
 
 **Ähnlichkeit ist nicht Zitation.** Der Ähnlichkeitsgraph verbindet Paper, die *ähnlich klingen*;
 `CITES` verbindet Paper, die einander *nachweislich zitieren*. Beide sind bewusst getrennt
 ([ADR 0007](adr/0007-graphrag-index-phase3-option-b.md),
 [ADR 0011](adr/0011-intra-corpus-citation-graph-phase7.md)).
 
+**Die fünfte Sicht ist die einzige mit einer Quelle außerhalb des Korpus.** Sie führt Handpflege,
+kuratierte Übersicht, Online-Auflösung und Extraktion **feldweise** zusammen und merkt sich je
+Feld, welche Herkunft gewonnen hat. Damit bleibt prüfbar, ob eine DOI aus menschlicher Hand oder
+aus einer Regex stammt ([ADR 0025](adr/0025-citable-paper-metadata.md)).
+
 Vertiefung: [tfidf_index](../src/research_graphrag/indexing/doc/tfidf_index.md),
 [graph_index](../src/research_graphrag/indexing/doc/graph_index.md),
-[citation_graph](../src/research_graphrag/indexing/doc/citation_graph.md).
+[citation_graph](../src/research_graphrag/indexing/doc/citation_graph.md),
+[metadata_index](../src/research_graphrag/indexing/doc/metadata_index.md).
 
 ---
 
@@ -416,6 +427,41 @@ Vertiefung: [answer](../src/research_graphrag/generation/doc/answer.md),
 [server](../src/research_graphrag/mcp_server/doc/server.md),
 [sampling](../src/research_graphrag/mcp_server/doc/sampling.md).
 
+### Vom Beleg zur Quellenangabe
+
+Ein Beleg beantwortet „wo steht das?" – zum Zitieren fehlt „woher stammt es?". Diese zweite Frage
+beantwortet eine eigene Kette, die **einseitig gerichtet** verläuft:
+
+```mermaid
+flowchart LR
+    NET["Online-Auflösung<br/>scripts.resolve_metadata"] --> FILE[("metadata/paper_metadata.json<br/>versioniert")]
+    HAND["Handpflege"] --> FILE
+    UE[("Übersicht.md<br/>kuratiert")] --> BUILD["Index-Bau"]
+    FILE --> BUILD
+    EXT["Extraktion"] --> BUILD
+    BUILD --> TAB[("paper_metadata")]
+    TAB --> CIT["identifiers + citation_key<br/>an jedem Beleg"]
+    TAB --> REF["Harvard und APA<br/>get_reference · get_paper · references"]
+```
+
+Drei Eigenschaften halten diese Kette zusammen:
+
+- **Der Identifikator reist mit.** Jedes Zitat und jede Paper-Referenz trägt DOI, arXiv-ID oder
+  URL – ohne einen zweiten Werkzeugaufruf. Die **vollständige** Angabe steht dagegen nur einmal
+  je Paper, nicht in jedem Beleg.
+- **Die Herkunft wird ausgewiesen, nicht verwischt.** Weicht ein kuratierter Publisher-DOI von
+  der extrahierten arXiv-ID ab, gewinnt der kuratierte Wert – und das Feld `origins` sagt, dass
+  er es war.
+- **Der Kern bleibt netzfrei.** Die Auflösung ist ein separater, beobachteter Lauf; sie schreibt
+  eine Datei, und erst der nächste Ingest macht sie wirksam
+  ([ADR 0025](adr/0025-citable-paper-metadata.md),
+  [ADR 0026](adr/0026-online-metadata-resolution.md)).
+
+Vertiefung: [reference](../src/research_graphrag/retrieval/doc/reference.md),
+[styles](../src/research_graphrag/bibliography/doc/styles.md),
+[resolve](../src/research_graphrag/bibliography/doc/resolve.md),
+[online/metadata](../src/research_graphrag/online/doc/metadata.md).
+
 ---
 
 ## 9. Messung: was gemessen wird und was das Maß taugt
@@ -522,10 +568,11 @@ erkennbar.
 | --- | --- |
 | Top-Level | [errors](../src/research_graphrag/doc/errors.md) · [intake](../src/research_graphrag/doc/intake.md) · [keywords](../src/research_graphrag/doc/keywords.md) · [pipeline](../src/research_graphrag/doc/pipeline.md) |
 | `extraction/` | [model](../src/research_graphrag/extraction/doc/model.md) · [normalization](../src/research_graphrag/extraction/doc/normalization.md) · [structure](../src/research_graphrag/extraction/doc/structure.md) · [chunking](../src/research_graphrag/extraction/doc/chunking.md) · [quality](../src/research_graphrag/extraction/doc/quality.md) · [pdf](../src/research_graphrag/extraction/doc/pdf.md) |
-| `indexing/` | [tfidf_index](../src/research_graphrag/indexing/doc/tfidf_index.md) · [bm25](../src/research_graphrag/indexing/doc/bm25.md) · [fusion](../src/research_graphrag/indexing/doc/fusion.md) · [graph_index](../src/research_graphrag/indexing/doc/graph_index.md) · [citation_graph](../src/research_graphrag/indexing/doc/citation_graph.md) |
-| `retrieval/` | [basic](../src/research_graphrag/retrieval/doc/basic.md) · [local](../src/research_graphrag/retrieval/doc/local.md) · [global_search](../src/research_graphrag/retrieval/doc/global_search.md) · [drift](../src/research_graphrag/retrieval/doc/drift.md) · [router](../src/research_graphrag/retrieval/doc/router.md) · [provenance](../src/research_graphrag/retrieval/doc/provenance.md) · [paper](../src/research_graphrag/retrieval/doc/paper.md) · [citations](../src/research_graphrag/retrieval/doc/citations.md) |
+| `indexing/` | [tfidf_index](../src/research_graphrag/indexing/doc/tfidf_index.md) · [bm25](../src/research_graphrag/indexing/doc/bm25.md) · [fusion](../src/research_graphrag/indexing/doc/fusion.md) · [graph_index](../src/research_graphrag/indexing/doc/graph_index.md) · [citation_graph](../src/research_graphrag/indexing/doc/citation_graph.md) · [metadata_index](../src/research_graphrag/indexing/doc/metadata_index.md) |
+| `retrieval/` | [basic](../src/research_graphrag/retrieval/doc/basic.md) · [local](../src/research_graphrag/retrieval/doc/local.md) · [global_search](../src/research_graphrag/retrieval/doc/global_search.md) · [drift](../src/research_graphrag/retrieval/doc/drift.md) · [router](../src/research_graphrag/retrieval/doc/router.md) · [provenance](../src/research_graphrag/retrieval/doc/provenance.md) · [paper](../src/research_graphrag/retrieval/doc/paper.md) · [citations](../src/research_graphrag/retrieval/doc/citations.md) · [reference](../src/research_graphrag/retrieval/doc/reference.md) |
 | `generation/` | [provider](../src/research_graphrag/generation/doc/provider.md) · [synthesis](../src/research_graphrag/generation/doc/synthesis.md) · [evidence](../src/research_graphrag/generation/doc/evidence.md) · [answer](../src/research_graphrag/generation/doc/answer.md) |
 | `evaluation/` | [gold](../src/research_graphrag/evaluation/doc/gold.md) · [metrics](../src/research_graphrag/evaluation/doc/metrics.md) · [runner](../src/research_graphrag/evaluation/doc/runner.md) · [baseline](../src/research_graphrag/evaluation/doc/baseline.md) · [routing](../src/research_graphrag/evaluation/doc/routing.md) · [multihop](../src/research_graphrag/evaluation/doc/multihop.md) · [report](../src/research_graphrag/evaluation/doc/report.md) |
 | `overview/` | [drafts](../src/research_graphrag/overview/doc/drafts.md) |
-| `online/` | [transport](../src/research_graphrag/online/doc/transport.md) · [sources](../src/research_graphrag/online/doc/sources.md) · [candidates](../src/research_graphrag/online/doc/candidates.md) · [search](../src/research_graphrag/online/doc/search.md) · [report](../src/research_graphrag/online/doc/report.md) |
+| `online/` | [transport](../src/research_graphrag/online/doc/transport.md) · [sources](../src/research_graphrag/online/doc/sources.md) · [candidates](../src/research_graphrag/online/doc/candidates.md) · [search](../src/research_graphrag/online/doc/search.md) · [metadata](../src/research_graphrag/online/doc/metadata.md) · [report](../src/research_graphrag/online/doc/report.md) |
+| `bibliography/` | [model](../src/research_graphrag/bibliography/doc/model.md) · [resolve](../src/research_graphrag/bibliography/doc/resolve.md) · [curated](../src/research_graphrag/bibliography/doc/curated.md) · [store](../src/research_graphrag/bibliography/doc/store.md) · [styles](../src/research_graphrag/bibliography/doc/styles.md) |
 | `mcp_server/` | [server](../src/research_graphrag/mcp_server/doc/server.md) · [sampling](../src/research_graphrag/mcp_server/doc/sampling.md) |

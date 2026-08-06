@@ -102,8 +102,11 @@ aus dem gespeicherten JSON gelesen, das bereits mit sortierten Schlüsseln gesch
 ## 7. Grenzen
 
 - **Kein Volltext.** Nur ein Ausschnitt; für Inhalte sind die Suchmodi zuständig.
-- **Kein Titel, keine Autoren, kein Jahr.** Die Extraktion liefert keine verlässlichen
-  bibliografischen Metadaten; die Quell-URI enthält den Dateinamen als Näherung.
+- **Zwei Sichten auf Identifikatoren.** `identifiers` ist die **extrahierte** Rohsicht aus der
+  Tabelle `papers`; der aufgelöste, zitierfähige Datensatz steht seit Phase 12 unter `reference`
+  (siehe [reference](reference.md) und
+  [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md)). Beide können abweichen – das
+  ist gewollt und in `reference.origins` nachvollziehbar.
 - **Abschnittstitel sind heuristisch** und können ungenau sein
   ([ADR 0006](../../../../docs/adr/0006-canonical-model-phase2-scope.md)).
 - **Keine Zitationen.** Dafür gibt es [citations](citations.md).

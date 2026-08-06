@@ -5,14 +5,19 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 
+from research_graphrag.bibliography.model import ORIGIN_MANUAL, MetadataRecord
+from research_graphrag.bibliography.store import save_records
 from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
 from research_graphrag.generation.evidence import (
     evidence_from_basic,
     evidence_from_drift,
     evidence_from_global,
     evidence_from_local,
+    references_for,
 )
+from research_graphrag.generation.synthesis import Evidence, EvidenceSource
 from research_graphrag.indexing.graph_index import build_graph
+from research_graphrag.indexing.metadata_index import build_metadata_index
 from research_graphrag.indexing.tfidf_index import build_index
 from research_graphrag.retrieval.basic import search_basic
 from research_graphrag.retrieval.drift import search_drift
@@ -64,7 +69,57 @@ def _build(tmp_path: Path) -> Path:
     papers += [_paper(pid, texts) for pid, texts in _CLUSTER_CITATION.items()]
     build_index(papers, db)
     build_graph(papers, db)
+    store = tmp_path / "paper_metadata.json"
+    save_records(
+        store,
+        [
+            MetadataRecord(
+                paper_id="aaaa0001",
+                origin=ORIGIN_MANUAL,
+                title="Attention Is All You Need Again",
+                authors=("Anna Beispiel",),
+                year=2024,
+                doi="10.1145/abc",
+                confidence="strong",
+            )
+        ],
+    )
+    build_metadata_index(papers, db, metadata_file=store)
     return db
+
+
+def test_references_are_collected_once_per_paper_in_order_of_appearance(tmp_path: Path) -> None:
+    """Jedes belegte Paper erscheint genau einmal, in der Reihenfolge seines ersten Belegs."""
+    db = _build(tmp_path)
+    evidence = evidence_from_basic(search_basic(db, "transformer attention", k=5))
+
+    references = references_for(db, evidence)
+    paper_ids = [reference["paper_id"] for reference in references]
+
+    assert len(paper_ids) == len(set(paper_ids))
+    assert paper_ids[0] == evidence.items[0].paper_id
+    assert all("harvard" in reference and "apa" in reference for reference in references)
+
+
+def test_references_use_the_resolved_metadata(tmp_path: Path) -> None:
+    """Die Angabe stammt aus dem aufgelösten Datensatz, nicht aus dem Dateinamen."""
+    db = _build(tmp_path)
+    evidence = Evidence.build(
+        "q",
+        "basic",
+        (EvidenceSource(paper_id="aaaa0001", label="l", snippet="s", source_uri="file:///a.pdf"),),
+    )
+
+    reference = references_for(db, evidence)[0]
+
+    assert reference["citation_key"] == "Beispiel2024"
+    assert reference["apa"].startswith("Beispiel, A. (2024). Attention Is All You Need Again.")
+    assert reference["citable"] is True
+
+
+def test_references_are_empty_without_evidence(tmp_path: Path) -> None:
+    """Ohne Belege gibt es nichts zu zitieren – und keinen Index-Zugriff."""
+    assert references_for(tmp_path / "fehlt.sqlite", Evidence.build("q", "basic", ())) == ()
 
 
 def test_basic_evidence_carries_chunk_provenance(tmp_path: Path) -> None:

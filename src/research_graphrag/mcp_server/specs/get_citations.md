@@ -34,18 +34,19 @@ Beantwortet **Zitationsfragen innerhalb des eigenen Korpus**: „welche Paper zi
 
 ```json
 {
-  "paper": { "paper_id": "…", "source_uri": "file:///…", "snippet": "…" },
+  "paper": { "paper_id": "…", "source_uri": "file:///…", "snippet": "…", "identifiers": { "arxiv": "…" }, "citation_key": "…" },
   "cites": [
-    { "paper_id": "…", "source_uri": "file:///…", "snippet": "…", "method": "doi" }
+    { "paper_id": "…", "source_uri": "file:///…", "snippet": "…", "identifiers": { "doi": "10.…" }, "citation_key": "Beispiel2023", "method": "doi" }
   ],
   "cited_by": [
-    { "paper_id": "…", "source_uri": "file:///…", "snippet": "…", "method": "title" }
+    { "paper_id": "…", "source_uri": "file:///…", "snippet": "…", "identifiers": {}, "citation_key": "", "method": "title" }
   ]
 }
 ```
 
 - `cites` = Paper, die das angefragte Paper **zitiert**; `cited_by` = Paper, die es **zitieren**.
 - `method` ∈ `doi` | `arxiv` | `title` und benennt das **präziseste** Kriterium, über das die Kante erkannt wurde (Präzedenz `doi` > `arxiv` > `title`) – damit ist die Belastbarkeit einer Kante für den Aufrufer sichtbar.
+- `identifiers` und `citation_key` machen jedes genannte Paper **extern auflösbar**; beide stammen aus dem aufgelösten Metadatensatz und können leer sein ([ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md)).
 - Beide Listen können leer sein (kein erkannter Bezug innerhalb des Korpus) und sind **stabil sortiert** (nach der `paper_id` des Gegenübers).
 
 ## 4. Annahmen und Vorbedingungen

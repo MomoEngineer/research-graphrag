@@ -9,16 +9,23 @@ from research_graphrag.generation.provider import (
     NoopGenerationProvider,
     SamplingGenerationProvider,
 )
-from research_graphrag.generation.synthesis import Evidence, synthesize_answer
+from research_graphrag.generation.synthesis import Evidence, EvidenceSource, synthesize_answer
 
 _ENTRIES = (
-    (
-        "aaaa0001",
-        "Paper aaaa0001 · Abschnitt Datasets · Seite 7",
-        "Wir nutzen SQuALITY.",
-        "file:///a.pdf",
+    EvidenceSource(
+        paper_id="aaaa0001",
+        label="Paper aaaa0001 · Abschnitt Datasets · Seite 7",
+        snippet="Wir nutzen SQuALITY.",
+        source_uri="file:///a.pdf",
+        identifiers={"doi": "10.1234/abc"},
+        citation_key="Beispiel2023",
     ),
-    ("bbbb0001", "Paper bbbb0001 · Abschnitt Results · Seite 3", "F1 von 0,82.", "file:///b.pdf"),
+    EvidenceSource(
+        paper_id="bbbb0001",
+        label="Paper bbbb0001 · Abschnitt Results · Seite 3",
+        snippet="F1 von 0,82.",
+        source_uri="file:///b.pdf",
+    ),
 )
 
 
@@ -33,6 +40,16 @@ def test_build_numbers_items_deterministically() -> None:
     assert [item.index for item in evidence.items] == [1, 2]
     assert evidence.items[0].paper_id == "aaaa0001"
     assert evidence.build("q", "basic", _ENTRIES) == Evidence.build("q", "basic", _ENTRIES)
+
+
+def test_build_carries_identifiers_of_each_source() -> None:
+    """Identifikator und Zitierschlüssel eines Belegs überleben die Nummerierung."""
+    evidence = _evidence()
+
+    assert evidence.items[0].identifiers == {"doi": "10.1234/abc"}
+    assert evidence.items[0].citation_key == "Beispiel2023"
+    assert evidence.items[1].identifiers == {}
+    assert evidence.items[1].citation_key == ""
 
 
 def test_as_context_renders_numbered_block_with_sources() -> None:
@@ -111,8 +128,10 @@ def test_result_to_dict_shape() -> None:
         "model",
         "citation_contract",
         "evidence",
+        "references",
     }
     assert payload["routing"] is None
+    assert payload["references"] == []
     assert payload["citation_contract"] == DEFAULT_SYSTEM_PROMPT
     assert set(payload["evidence"]) == {"query", "mode", "items"}
     assert set(payload["evidence"]["items"][0]) == {
@@ -121,4 +140,6 @@ def test_result_to_dict_shape() -> None:
         "label",
         "snippet",
         "source_uri",
+        "identifiers",
+        "citation_key",
     }

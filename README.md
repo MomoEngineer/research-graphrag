@@ -46,6 +46,23 @@
 > ([ADR 0023](docs/adr/0023-multihop-citation-evaluation-phase10.md)). Die abgeschlossenen
 > Phasen 0–7 sind mit allen Kennzahlen in der [Roadmap-Historie](docs/roadmap-historie.md)
 > archiviert.
+>
+> **Phase 12 ist umgesetzt – Zitierfähigkeit.** Aus einem Suchtreffer entsteht jetzt ohne
+> Handarbeit eine korrekte Literaturangabe in **Harvard** und **APA**. Auch hier stand die
+> Messung vor dem Code, und sie korrigierte zwei Annahmen: Bis dahin lieferte **eines von acht**
+> Werkzeugen überhaupt einen extern auflösbaren Identifikator (alle übrigen nur eine interne
+> `paper_id` und einen lokalen Dateipfad), und die extrahierten Identifikatoren sind für
+> Zitationszwecke **nicht verlässlich genug** – 29 von 129 kuratierten Übersichtsangaben weichen
+> ab, teils legitim als Publisher-DOI, teils als echter Extraktionsfehler. Umgesetzt ist deshalb
+> keine „bessere Regex", sondern eine **zweite Quelle** mit ausgewiesener Herkunft: Die
+> Zitationsdaten liegen versioniert in `metadata/paper_metadata.json`, werden **feldweise** nach
+> der Kette `manual > curated > resolved > extracted` aufgelöst, und jede Ausgabe nennt, welche
+> Herkunft je Feld gewonnen hat ([ADR 0025](docs/adr/0025-citable-paper-metadata.md)). Die lokal
+> nicht gewinnbaren Felder – Autoren, Venue, Publikationsjahrgang – beschafft der **separat
+> startbare** Lauf `python -m scripts.resolve_metadata` über OpenAlex; übernommen wird
+> **automatisch**, aber ein nicht eindeutiger Beleg trägt sichtbar `confidence = weak`
+> ([ADR 0026](docs/adr/0026-online-metadata-resolution.md)). Ergebnis am realen Korpus:
+> **vollständig zitierfähig 0 → 336** von 341 Papern, Identifikator in **9 von 9** Werkzeugen.
 
 ---
 
@@ -221,6 +238,8 @@ research-graphrag/
 │  └─ _duplikate/              # Quarantäne der Identifikator-Duplikate
 ├─ papers/                     # Alle Paper-PDFs (migriert aus Recherche/, nicht versioniert)
 ├─ Übersicht.md                # Kuratierte Literaturübersicht (Quellen-Tabelle)
+├─ metadata/                   # Zitierfähige Metadaten (versioniert, Phase 12)
+│  └─ paper_metadata.json      # Herkünfte `resolved` (online) und `manual` (Handpflege)
 ├─ recherche/                  # (Phase 1) Rechercheartefakte – bewusst ausgelassen, nicht vorhanden
 │  ├─ prompts/                 # Research-Prompts (Suchstrategien)
 │  ├─ zusammenfassungen/       # Zusammenfassungen je Recherche-Runde
@@ -231,13 +250,14 @@ research-graphrag/
 │  ├─ index/                   # Offline-Hybrid-Index (SQLite + TF-IDF)
 │  ├─ quality_report.json      # Qualitätsreport der Ingestion (+ .md)
 │  ├─ intake_log.md            # Intake-Protokoll (append-only, mit Hash je Löschung)
-│  ├─ online_candidates.md     # Bericht der Online-Kandidatensuche (append-only, Phase 9 / S1)
-│  └─ online_raw/              # datierte Rohantworten der abgefragten Dienste
+│  ├─ online_candidates.md     # Bericht der Online-Kandidatensuche (append-only, Phase 9 / S1)│  ├─ metadata_log.md          # Protokoll der Metadaten-Auflösung (append-only, Phase 12 / K2)│  └─ online_raw/              # datierte Rohantworten der abgefragten Dienste
 ├─ scripts/
 │  ├─ intake.py                # new_papers/ → Duplikatprüfung → papers/ → Ingest → Übersicht
 │  ├─ ingest.py                # Drop-in → Extraktion → Index-Update
 │  ├─ citations.py             # Zitationen eines Papers (read-only, Phase 7 / A2)
+│  ├─ cite.py                  # Literaturangabe eines Papers in Harvard/APA (read-only, Phase 12)
 │  ├─ discover.py              # Online-Kandidatensuche ohne Download (separat startbar, Phase 9 / S1)
+│  ├─ resolve_metadata.py      # Zitationsdaten online auflösen (separat startbar, Phase 12 / K2)
 │  ├─ eval_retrieval.py        # Hit@k/MRR, Modus-Ebene, Regressions-Check (Phase 7 / A4 + A6), Router (A7), Multi-Hop (Phase 10 / V3)
 │  └─ update_overview.py       # Entwurfszeilen → Übersicht.md (append-only)
 ├─ src/research_graphrag/
@@ -248,7 +268,8 @@ research-graphrag/
 │  ├─ overview/                # Übersicht-Entwürfe (Staging, Phase 2)
 │  ├─ generation/              # LLM-Bridge: Evidenz + optionale Antwort-Synthese (Phase 7)
 │  ├─ evaluation/             # Gold-Set, Kennzahlen, Modus-Lauf, Baseline (Phase 7 / A6) + Router-Messung (A7) + Multi-Hop (Phase 10 / V3)
-│  ├─ online/                 # Online-Kandidatensuche: Transport-Port, arXiv/OpenAlex, Dedup, Bericht (Phase 9 / S1)
+│  ├─ online/                 # Online-Kandidatensuche: Transport-Port, arXiv/OpenAlex, Dedup, Bericht (Phase 9 / S1) + Metadaten-Auflösung (Phase 12 / K2)
+│  ├─ bibliography/           # Zitierfähige Metadaten: Herkünfte, Auflösung, Harvard/APA (Phase 12 / K1)
 │  ├─ keywords.py             # kuratierte Keyword-Politik (Phase 7 / A5)
 │  └─ mcp_server/             # MCP-Server (stdio) mit Tools
 ├─ eval/                      # Prüf-Fragen & Stichproben (pragmatische QS) + Gold-Set und Baseline (Hit@k/MRR) + Router-Gold-Set + Multi-Hop-Gold-Set und -Baseline
@@ -301,6 +322,10 @@ python -m scripts.ask "Which papers use FAISS?" --scoring bm25   # Wertung expli
 # 3b. (optional) Zitationen eines Papers innerhalb des Korpus ansehen
 python -m scripts.citations <paper_id>
 
+# 3b2. Fertige Literaturangabe zu einem Paper (Harvard und APA)
+python -m scripts.cite <paper_id>
+python -m scripts.cite <paper_id> --stil apa
+
 # 3c. (optional) Belege nummeriert über die LLM-Bridge aufbereiten
 #     (CLI hat offline kein Modell → sichtbarer Noop-Fallback, Belege bleiben vollständig)
 python -m scripts.ask "Welche Datensätze werden genutzt?" --synthese
@@ -311,11 +336,16 @@ $env:RESEARCH_GRAPHRAG_PROXY = "host:port"   # nur nötig, wenn ein Proxy davor 
 python -m scripts.discover --community 2
 python -m scripts.discover --seed <paper_id> --seit 2023
 
+# 3e. (optional, benötigt Netz) Fehlende Zitationsdaten (Autoren, Venue, Jahr) auflösen
+#     Schreibt nach metadata/paper_metadata.json; wirksam beim nächsten scripts.ingest
+python -m scripts.resolve_metadata --dry-run
+python -m scripts.resolve_metadata --limit 50
+
 # 4. MCP-Server nutzen: .vscode/mcp.json ist eingerichtet – in Copilot Chat
 #    (Agent-Modus) die bereitgestellten Werkzeuge aufrufen
 ```
 
-Der MCP-Server stellt u. a. Werkzeuge bereit wie `search_local`, `search_global`, `search_drift`, `search_basic`, `get_paper`, `get_citations` und `list_topics` – jeweils mit Quellenangaben. Dazu kommt `answer_question`: ein Aufruf, der den Modus selbst wählt und **nummerierte Belege** mit Zitier-Contract liefert (optional per `synthesize = true` vom Client-Modell formuliert). Wählt der Router den Modus (`mode = "auto"`, Default), weist die Antwort unter `routing` aus, **warum** – mit Konfidenzstufe und auslösenden Signalen ([ADR 0017](docs/adr/0017-router-hardening-phase7.md)).
+Der MCP-Server stellt u. a. Werkzeuge bereit wie `search_local`, `search_global`, `search_drift`, `search_basic`, `get_paper`, `get_citations`, `get_reference` und `list_topics` – jeweils mit Quellenangaben. **Jeder** Beleg trägt seit Phase 12 zusätzlich die extern auflösbaren `identifiers` (DOI/arXiv/URL) und einen `citation_key`; die **fertige Literaturangabe** in Harvard und APA liefern `get_reference`, `get_paper` und der `references`-Block von `answer_question` ([ADR 0025](docs/adr/0025-citable-paper-metadata.md)). Dazu kommt `answer_question`: ein Aufruf, der den Modus selbst wählt und **nummerierte Belege** mit Zitier-Contract liefert (optional per `synthesize = true` vom Client-Modell formuliert). Wählt der Router den Modus (`mode = "auto"`, Default), weist die Antwort unter `routing` aus, **warum** – mit Konfidenzstufe und auslösenden Signalen ([ADR 0017](docs/adr/0017-router-hardening-phase7.md)).
 
 ## Qualitätssicherung (pragmatisch)
 

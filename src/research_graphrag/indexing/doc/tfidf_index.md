@@ -26,7 +26,7 @@ Text. Das kostet Ladezeit, macht den Index aber inspizierbar, versionsunabhängi
 | --- | --- | --- |
 | `build_index` | Funktion | Papers → SQLite-Index (voller Re-Index) |
 | `TfidfIndex` | Klasse | Geladener Index mit `load()`, `search()`, `neighbors_of_chunk()`, `size` |
-| `Hit` | Dataclass | Ein Treffer mit Provenienz, Gesamt-Score und beiden Teil-Scores |
+| `Hit` | Dataclass | Ein Treffer mit Provenienz, Gesamt-Score, beiden Teil-Scores sowie `identifiers` und `citation_key` |
 | `Scoring` | Typ-Alias | `hybrid` · `tfidf` · `bm25` |
 | `DEFAULT_SCORING` | Konstante | Die Standard-Wertung |
 | `SCHEMA_VERSION` | Konstante | Version des Index-Schemas |

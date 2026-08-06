@@ -88,6 +88,7 @@ def test_get_paper_to_dict_shape(tmp_path: Path) -> None:
         "n_chunks",
         "sections",
         "snippet",
+        "reference",
     }
 
 

@@ -10,11 +10,14 @@ docs/adr/0008-retrieval-and-query-router-phase4.md.
 from __future__ import annotations
 
 import sqlite3
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from research_graphrag.bibliography.model import PaperMetadata, empty_metadata
 from research_graphrag.errors import DomainError, ErrorCode
+from research_graphrag.indexing.metadata_index import load_paper_metadata
 from research_graphrag.indexing.tfidf_index import Hit
 
 _SNIPPET_LIMIT = 200
@@ -54,6 +57,11 @@ class Citation:
     ein **Fusionswert** und keine Ähnlichkeit; er ist nur *innerhalb* einer Antwort
     vergleichbar. ``score_tfidf`` und ``score_bm25`` weisen die Beiträge der beiden Verfahren
     aus (siehe docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md).
+
+    ``identifiers`` (DOI/arXiv/URL) und ``citation_key`` machen den Beleg **extern auflösbar**;
+    ohne sie zeigt ein Zitat nur auf eine interne ``paper_id`` und einen lokalen Dateipfad
+    (siehe docs/adr/0025-citable-paper-metadata.md). Die vollständige Literaturangabe liefert
+    bewusst nicht jedes Zitat, sondern ``answer_question``, ``get_paper`` und ``get_reference``.
     """
 
     paper_id: str
@@ -66,6 +74,8 @@ class Citation:
     page_end: int = 0
     score_tfidf: float = 0.0
     score_bm25: float = 0.0
+    identifiers: Mapping[str, str] = field(default_factory=dict)
+    citation_key: str = ""
 
     def __post_init__(self) -> None:
         """Normalisiert die Seiten-Range: ``page_end`` fällt auf die Startseite zurück."""
@@ -86,6 +96,8 @@ class Citation:
             page_end=hit.page_end,
             score_tfidf=hit.score_tfidf,
             score_bm25=hit.score_bm25,
+            identifiers=hit.identifiers,
+            citation_key=hit.citation_key,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -100,6 +112,8 @@ class Citation:
             "score_tfidf": self.score_tfidf,
             "score_bm25": self.score_bm25,
             "source_uri": self.source_uri,
+            "identifiers": dict(self.identifiers),
+            "citation_key": self.citation_key,
             "snippet": self.snippet,
         }
 
@@ -110,18 +124,23 @@ class PaperRef:
 
     Trägt ``source_uri`` und ein extraktives Leit-Snippet (Text des ersten Chunks); es gibt
     hier bewusst **keinen** Seiten-/Chunk-Anker, da corpusweite Synthese nicht auf eine
-    einzelne Passage zurückführbar ist.
+    einzelne Passage zurückführbar ist. ``identifiers`` und ``citation_key`` machen die
+    Referenz extern auflösbar (docs/adr/0025-citable-paper-metadata.md).
     """
 
     paper_id: str
     source_uri: str
     snippet: str = ""
+    identifiers: Mapping[str, str] = field(default_factory=dict)
+    citation_key: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         """Serialisiert die Paper-Referenz."""
         return {
             "paper_id": self.paper_id,
             "source_uri": self.source_uri,
+            "identifiers": dict(self.identifiers),
+            "citation_key": self.citation_key,
             "snippet": self.snippet,
         }
 
@@ -129,13 +148,20 @@ class PaperRef:
 class ProvenanceAssembler:
     """Stellt Paper-Provenienz direkt aus der Index-Datei zusammen (ohne ``sklearn``).
 
-    Lädt einmalig je Paper die ``source_uri`` und das **Leit-Snippet** (Text des ersten
-    Chunks, geordnet nach ``row_index``) und beantwortet daraus :class:`PaperRef`-Anfragen.
+    Lädt einmalig je Paper die ``source_uri``, das **Leit-Snippet** (Text des ersten Chunks,
+    geordnet nach ``row_index``) und den bibliografischen Datensatz und beantwortet daraus
+    :class:`PaperRef`-Anfragen.
     """
 
-    def __init__(self, source_uris: dict[str, str], leading_snippets: dict[str, str]) -> None:
+    def __init__(
+        self,
+        source_uris: dict[str, str],
+        leading_snippets: dict[str, str],
+        metadata: dict[str, PaperMetadata] | None = None,
+    ) -> None:
         self._source_uris = source_uris
         self._leading_snippets = leading_snippets
+        self._metadata = metadata or {}
 
     @classmethod
     def load(cls, db_path: str | Path) -> ProvenanceAssembler:
@@ -167,18 +193,25 @@ class ProvenanceAssembler:
 
         source_uris = {str(pid): str(uri) for pid, uri in uri_rows}
         leading = {str(pid): _snippet(str(text)) for pid, text in snippet_rows}
-        return cls(source_uris, leading)
+        return cls(source_uris, leading, load_paper_metadata(path))
+
+    def metadata(self, paper_id: str) -> PaperMetadata:
+        """Liefert den bibliografischen Datensatz eines Papers (unbekannt ⇒ leerer Datensatz)."""
+        return self._metadata.get(paper_id, empty_metadata(paper_id))
 
     def paper_ref(self, paper_id: str) -> PaperRef:
-        """Erzeugt einen :class:`PaperRef` (``source_uri`` + Leit-Snippet).
+        """Erzeugt einen :class:`PaperRef` (``source_uri`` + Leit-Snippet + Identifikatoren).
 
         Raises:
             DomainError: ``not_found`` wenn das Paper nicht im Index liegt.
         """
         if paper_id not in self._source_uris:
             raise DomainError(ErrorCode.NOT_FOUND, f"Paper nicht im Index: {paper_id}")
+        metadata = self.metadata(paper_id)
         return PaperRef(
             paper_id=paper_id,
             source_uri=self._source_uris[paper_id],
             snippet=self._leading_snippets.get(paper_id, ""),
+            identifiers=metadata.identifiers,
+            citation_key=metadata.citation_key(),
         )

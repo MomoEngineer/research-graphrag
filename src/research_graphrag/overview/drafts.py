@@ -70,8 +70,12 @@ class OverviewReport:
     row_ids: tuple[str, ...]
 
 
-def _split_row(line: str) -> list[str]:
-    """Zerlegt eine Markdown-Tabellenzeile in ihre Zellen (Rand-Pipes entfernt)."""
+def split_row(line: str) -> list[str]:
+    """Zerlegt eine Markdown-Tabellenzeile in ihre Zellen (Rand-Pipes entfernt).
+
+    Öffentlich, weil das Bibliografie-Paket dieselbe Zerlegung braucht und eine zweite
+    Implementierung eine Fehlerquelle wäre (docs/adr/0025-citable-paper-metadata.md).
+    """
     return line.strip().strip("|").split("|")
 
 
@@ -81,7 +85,7 @@ def link_column(markdown: str) -> int | None:
         line = raw.strip()
         if not line.startswith("|"):
             continue
-        for index, cell in enumerate(_split_row(line)):
+        for index, cell in enumerate(split_row(line)):
             if cell.strip().lower() == "interner link":
                 return index
     return None
@@ -101,7 +105,7 @@ def parse_internal_links(markdown: str) -> set[str]:
         line = raw.strip()
         if not line.startswith("|"):
             continue
-        cells = _split_row(line)
+        cells = split_row(line)
         if column >= len(cells):
             continue
         match = _LINK_TARGET.search(cells[column])
@@ -215,7 +219,7 @@ def next_draft_number(markdown: str) -> int:
         line = raw.strip()
         if not line.startswith("|"):
             continue
-        match = _DRAFT_ID.match(_split_row(line)[0].strip())
+        match = _DRAFT_ID.match(split_row(line)[0].strip())
         if match:
             highest = max(highest, int(match.group(1)))
     return highest + 1

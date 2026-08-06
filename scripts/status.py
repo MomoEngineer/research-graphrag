@@ -37,11 +37,14 @@ class StatusReport:
     schema_version: str | None
     graph_schema_version: str | None
     citation_schema_version: str | None
+    metadata_schema_version: str | None
     n_papers: int
     n_chunks: int
     n_communities: int
     n_citation_edges: int
     n_identified: int
+    n_citable: int
+    n_weak_metadata: int
     flagged_papers: int | None
     total_flags: int | None
     pdf_count: int
@@ -112,7 +115,9 @@ def collect_status(data_dir: str | Path, papers_dir: str | Path) -> StatusReport
     schema_version: str | None = None
     graph_schema_version: str | None = None
     citation_schema_version: str | None = None
+    metadata_schema_version: str | None = None
     n_papers = n_chunks = n_communities = n_citation_edges = n_identified = 0
+    n_citable = n_weak_metadata = 0
     if index_present:
         connection = sqlite3.connect(str(index_path))
         try:
@@ -129,6 +134,16 @@ def collect_status(data_dir: str | Path, papers_dir: str | Path) -> StatusReport
                 n_communities = _scalar(connection, "SELECT COUNT(*) FROM communities")
             if _table_exists(connection, "citation_edges"):
                 n_citation_edges = _scalar(connection, "SELECT COUNT(*) FROM citation_edges")
+            if _table_exists(connection, "paper_metadata"):
+                metadata_schema_version = _meta_value(connection, "metadata_schema_version")
+                n_citable = _scalar(
+                    connection,
+                    "SELECT COUNT(*) FROM paper_metadata WHERE title != '' AND year > 0 "
+                    "AND authors != '[]'",
+                )
+                n_weak_metadata = _scalar(
+                    connection, "SELECT COUNT(*) FROM paper_metadata WHERE confidence = 'weak'"
+                )
         finally:
             connection.close()
 
@@ -155,11 +170,14 @@ def collect_status(data_dir: str | Path, papers_dir: str | Path) -> StatusReport
         schema_version=schema_version,
         graph_schema_version=graph_schema_version,
         citation_schema_version=citation_schema_version,
+        metadata_schema_version=metadata_schema_version,
         n_papers=n_papers,
         n_chunks=n_chunks,
         n_communities=n_communities,
         n_citation_edges=n_citation_edges,
         n_identified=n_identified,
+        n_citable=n_citable,
+        n_weak_metadata=n_weak_metadata,
         flagged_papers=flagged_papers,
         total_flags=total_flags,
         pdf_count=len(pdf_names),
@@ -197,12 +215,17 @@ def render(status: StatusReport) -> list[str]:
         lines.append(
             f"  Index-Schema: {status.schema_version} · Graph-Schema: {status.graph_schema_version}"
             f" · Zitations-Schema: {status.citation_schema_version}"
+            f" · Metadaten-Schema: {status.metadata_schema_version}"
         )
         lines.append(
             f"  Paper: {status.n_papers} · Chunks: {status.n_chunks} · "
             f"Communities: {status.n_communities} · Zitationskanten: {status.n_citation_edges}"
         )
         lines.append(f"  Mit Identifikatoren (DOI/arXiv): {status.n_identified}/{status.n_papers}")
+        lines.append(
+            f"  Zitierfähig (Titel/Autoren/Jahr): {status.n_citable}/{status.n_papers} · "
+            f"schwach belegt: {status.n_weak_metadata}"
+        )
     else:
         lines.append("  (kein Index gefunden – zunächst `python -m scripts.ingest` ausführen)")
 

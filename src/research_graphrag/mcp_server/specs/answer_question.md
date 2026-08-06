@@ -60,16 +60,39 @@ Für Clients mit eigenem Modell (GitHub Copilot) ist der **Default ohne Synthese
         "paper_id": "…",
         "label": "Paper … · Abschnitt … · Seite 7",
         "snippet": "…",
-        "source_uri": "file:///…"
+        "source_uri": "file:///…",
+        "identifiers": { "doi": "10.…", "arxiv": "2503.06689", "url": "https://…" },
+        "citation_key": "Beispiel2023"
       }
     ]
-  }
+  },
+  "references": [
+    {
+      "paper_id": "…",
+      "title": "…",
+      "authors": ["Anna Beispiel", "Bert Muster"],
+      "year": 2023,
+      "venue": "…",
+      "doi": "10.…",
+      "arxiv_id": "2503.06689",
+      "url": "",
+      "identifiers": { "doi": "10.…", "arxiv": "2503.06689" },
+      "citation_key": "Beispiel2023",
+      "origins": { "title": "curated", "authors": "resolved" },
+      "confidence": "strong",
+      "citable": true,
+      "harvard": "Beispiel, A. and Muster, B. (2023) …",
+      "apa": "Beispiel, A., & Muster, B. (2023). …",
+      "in_text": { "harvard": "(Beispiel and Muster, 2023)", "apa": "(Beispiel & Muster, 2023)" }
+    }
+  ]
 }
 ```
 
 - `mode` ist der **tatsächlich verwendete** Modus (bei `auto` die Router-Entscheidung).
 - `routing` weist aus, **warum** dieser Modus gewählt wurde – `confidence` ist `strong` (eindeutiger Kandidat), `weak` (Gleichstand → Fallback `basic`) oder `none` (kein strukturelles Signal → Default `basic`), `signals` nennt die auslösenden Signale. Bei **explizit** gewähltem `mode` ist das Feld `null`, weil keine Heuristik beteiligt war ([ADR 0017](../../../../docs/adr/0017-router-hardening-phase7.md)).
-- `evidence.items` sind **deterministisch nummeriert** (`index` = Zitatmarke `[n]`); `label` bündelt die Provenienz (Paper · Abschnitt · Seite bzw. Community-Vertreter). Läuft ein Chunk über einen Seitenumbruch, nennt das Label eine Range („Seiten 7–8", [ADR 0013](../../../../docs/adr/0013-chunking-refinement-phase7.md)).
+- `evidence.items` sind **deterministisch nummeriert** (`index` = Zitatmarke `[n]`); `label` bündelt die Provenienz (Paper · Abschnitt · Seite bzw. Community-Vertreter). Läuft ein Chunk über einen Seitenumbruch, nennt das Label eine Range („Seiten 7–8", [ADR 0013](../../../../docs/adr/0013-chunking-refinement-phase7.md)). `identifiers` und `citation_key` machen jeden Beleg **extern auflösbar** und können leer sein.
+- `references` ist die **Literaturliste** zur Evidenz: je beteiligtem Paper **ein** Eintrag mit der fertigen Angabe in Harvard und APA, in der Reihenfolge des ersten Auftretens in `evidence.items`. Die Nutzlast ist dieselbe wie das Feld `reference` von `get_reference`; `citable = false` weist einen unvollständigen Datensatz aus, statt fehlende Felder zu raten ([ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md)).
 - `answer` ist bei `generated = false` leer; `model` benennt bei erfolgreichem Sampling das Client-Modell.
 - `citation_contract` ist die verbindliche Vorgabe für die Formulierung (auch für den Aufrufer, der selbst formuliert).
 

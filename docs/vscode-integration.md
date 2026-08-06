@@ -52,13 +52,15 @@ Damit der Serverprozess die in der `.venv` verfügbaren Abhängigkeiten (mcp, sc
 
 > **Nachvollziehbare Modus-Wahl:** Läuft `answer_question` mit `mode = "auto"` (Default), enthält die Antwort das Feld `routing` mit Konfidenzstufe und auslösenden Signalen. Bei `weak` (Gleichstand → Fallback `basic`) oder `none` (kein Signal) lohnt sich häufig ein **expliziter** Modus ([ADR 0017](adr/0017-router-hardening-phase7.md)).
 
+> **Zitieren aus einem Treffer:** Jeder Beleg trägt `identifiers` (DOI/arXiv/URL) und einen `citation_key`; die fertige Angabe in **Harvard** und **APA** liefert `get_reference` bzw. der `references`-Block von `answer_question`. Ist ein Datensatz unvollständig, weisen `missing` und `note` das aus – fehlende Angaben werden nie geraten ([ADR 0025](adr/0025-citable-paper-metadata.md)).
+
 ---
 
 ## 4. Server aktivieren und prüfen
 
 1. `.vscode/mcp.json` speichern (bereits angelegt).
 2. Copilot-Chat öffnen und in den **Agent-Modus** wechseln.
-3. In der Werkzeug-/Tools-Auswahl prüfen, ob die Tools gelistet werden: `search_local`, `search_global`, `search_drift`, `search_basic`, `get_paper`, `get_citations`, `list_topics`, `answer_question`.
+3. In der Werkzeug-/Tools-Auswahl prüfen, ob die Tools gelistet werden: `search_local`, `search_global`, `search_drift`, `search_basic`, `get_paper`, `get_citations`, `get_reference`, `list_topics`, `answer_question`.
 4. Bei Problemen: `MCP: List Servers` → Server auswählen → `Show Output` (Startfehler des Prozesses prüfen).
 
 Ist der Server korrekt eingebunden, ruft Copilot die Tools im Agent-Modus selbstständig auf und erhält belegte Antworten mit Provenienz.
