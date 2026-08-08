@@ -58,7 +58,7 @@ Alle Werkzeuge werden über `python -m <tool>` gestartet (WinPython ohne Konsole
 
 ## 4. Arbeitsablauf (phasenorientiert)
 
-Die Umsetzung folgt der [Roadmap.md](Roadmap.md) (aktiv: Phasen 9–11; Phase 8 und Phase 12 sind umgesetzt, die abgeschlossenen Phasen 0–7 sind in der [Roadmap-Historie](docs/roadmap-historie.md) archiviert). Für neuen Code gilt:
+Die Umsetzung folgt der [Roadmap.md](Roadmap.md) (aktiv: Phasen 9–11 und Phase 13; Phase 8 und Phase 12 sind umgesetzt, die abgeschlossenen Phasen 0–7 sind in der [Roadmap-Historie](docs/roadmap-historie.md) archiviert). Für neuen Code gilt:
 
 1. **Entscheidung dokumentieren**, falls architektonisch relevant (ADR, siehe [docs/adr/README.md](docs/adr/README.md)).
 2. **Spezifikation vor Code** für jedes MCP-Tool ([templates/tool-spec.md](templates/tool-spec.md)) – das Input-/Output-Schema ist die Single Source of Truth.

@@ -2,7 +2,7 @@
 
 Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistenten. Der Plan ist **iterativ**: erst ein dünner, lauffähiger Durchstich, dann gezielte Ausbaustufen. **Bewusst ohne Zeitschätzungen** – Fortschritt wird über die „Definition of Done" (DoD) je Phase und über Meilensteine gemessen.
 
-> Ergänzt die [README](README.md). **Die Phasen 0–7 sind abgeschlossen** und hier nur noch als Ergebnis-Tabelle zusammengefasst; die vollständigen Status-Blockquotes mit allen Kennzahlen, korrigierten Annahmen und offen dokumentierten Abweichungen stehen wörtlich in der [Roadmap-Historie](docs/roadmap-historie.md). **Phase 8 ist umgesetzt** (Statusblock dort); aktiv geplant sind die **Phasen 9–11**.
+> Ergänzt die [README](README.md). **Die Phasen 0–7 sind abgeschlossen** und hier nur noch als Ergebnis-Tabelle zusammengefasst; die vollständigen Status-Blockquotes mit allen Kennzahlen, korrigierten Annahmen und offen dokumentierten Abweichungen stehen wörtlich in der [Roadmap-Historie](docs/roadmap-historie.md). **Phase 8 und Phase 12 sind umgesetzt** (Statusblöcke dort); aktiv geplant sind die **Phasen 9–11** sowie **Phase 13** (Referenz-Einträge ohne Volltext).
 
 ---
 
@@ -511,6 +511,7 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 | **Datenverlust durch den Intake** (hartes Löschen)                     | `--dry-run`, Bericht mit Hash je gelöschter Datei, Sicherungsweg aus [B1](#b1--sicherung-des-korpus).                                                                                                                                               |
 | **Unkuratierte PDFs aus dem Netz** (Scans, Fehlerseiten, Schadinhalte)  | Lizenz-Whitelist, Content-Type-/Größenprüfung, selbst erzeugte Dateinamen, Robustheits-Flag für chunk-lose Dokumente.                                                                                                                             |
 | **Verwässerung des kuratierten Korpus** durch automatische Vorschläge | Vorschläge landen im Bericht, nie automatisch im Korpus; Zielgröße ist Präzision, nicht Menge.                                                                                                                                                    |
+| **Abstract-Stubs verdrängen Volltext-Evidenz** (BM25-Längennormalisierung)    | `document_kind` als Pflichtfeld in jedem Beleg, Ausschluss aus der Gold-Ableitung, Verdrängung vorab an einer Index-Kopie gemessen, Nachrangigkeit **nur** bei belegter Regression ([Phase 13](#phase-13--referenz-einträge-ohne-volltext)).       |
 | Entity Resolution (Synonyme, gleichnamige Autoren)                            | leichte Alias-/Synonym-Kuratierung; bei kleinem Korpus manuell handhabbar.                                                                                                                                                                            |
 | Scheinsicherheit durch Summaries                                              | Antworten immer mit Quellenankern/Original-TextUnits; für Fakten Basic/Local bevorzugen.                                                                                                                                                             |
 | Inkonsistenz bei inkrementellen Updates                                       | Standard bleibt der volle Re-Index; inkrementell nur mit Identitäts-Nachweis ([B2](#b2--inkrementelles-update-statt-vollem-re-index)).                                                                                                                |
@@ -588,6 +589,85 @@ Offen bleiben **5** Paper, für die keine Quelle einen Treffer liefert; sie sind
 
 ---
 
+## Phase 13 – Referenz-Einträge ohne Volltext
+
+**Ziel:** Ein Paper, von dem nur der Abstract öffentlich zugänglich ist, wird über seine **DOI oder arXiv-ID** zu einem vollwertigen, aber **ausdrücklich unvollständigen** Korpus-Eintrag – auffindbar, zitierfähig und als Ziel von Zitationskanten verfügbar, ohne je den Eindruck zu erwecken, es liege ein Volltext vor.
+
+### Warum das nötig ist (und was heute fehlt)
+
+Zwei Lücken; die zweite wiegt schwerer als die naheliegende erste.
+
+1. **Der Fund verfällt.** Ein hinter einer Bezahlschranke gelesener Abstract ist heute nur über [`Übersicht.md`](Übersicht.md) zu sichern – und die ist eine kuratierte **Tabelle**, kein Index. Der Inhalt ist damit weder über `search_basic` auffindbar noch als Beleg zitierbar noch Teil irgendeines Graphen.
+2. **Referenzen zeigen ins Leere.** Der Intra-Korpus-Zitationsgraph bildet ausschließlich Kanten, deren **Ziel bereits im Korpus liegt** ([ADR 0011](docs/adr/0011-intra-corpus-citation-graph-phase7.md)). Jede Referenz auf ein nicht beschaffbares Paper verpufft folgenlos – auch dann, wenn ein Dutzend Korpus-Paper dieselbe Arbeit zitieren. Referenz-Einträge verwandeln genau diese toten Verweise in echte `CITES`-Ziele. Das ist der strukturelle Gewinn der Phase, und anders als die Auffindbarkeit ist er **vorab bezifferbar** (siehe [R0](#r0--ausbeute-nutzen-und-verdrängung-messen-zwingend-zuerst-mit-abbruchkriterium)).
+
+Mechanisch fehlt heute alles Nötige: Der Intake liest ausschließlich `*.pdf` und verlangt die `%PDF-`-Signatur, `pipeline.ingest` iteriert `papers/*.pdf`, die `paper_id` ist der sha256 der **Datei**, jeder `Citation` trägt eine Seitenangabe als Pflichtfeld, und `quality.assess` kennt nur Dokumente mit Volltext.
+
+### Vier Festlegungen, die vorab getroffen sind
+
+| Festlegung | Begründung |
+| --- | --- |
+| **Keine synthetische PDF** | Strukturierte Daten in ein PDF schreiben, um sie anschließend per Heuristik wieder herauszuparsen, ist ein Verlustkanal ohne Gegenwert – und `reportlab` ist heute reine Test-Abhängigkeit. Erzeugt wird eine **native Stub-Datei** (`.refjson`), die ein zweiter Extraktions-Adapter direkt in ein `CanonicalPaper` überführt. Eigene Endung, damit `papers/*.pdf`-Globs unberührt bleiben und die Datei nie mit `data/canonical/*.json` verwechselt wird. |
+| **„Unvollständig" ist kein Qualitäts-Flag** | Flags sind Befunde über *misslungene* Extraktion. Hier ist es eine **Eigenschaft des Dokuments** – also ein Feld `document_kind` (`full` / `reference`) im Canonical- und im Index-Schema. Nur so können Retrieval, Evaluation und Antwortsynthese darauf reagieren, statt es bloß anzuzeigen. |
+| **Genau ein Weg in den Korpus** | Das Skript schreibt nach `new_papers/`, nie nach `papers/`. Die Übernahme macht der Intake aus [Phase 8](#phase-8--korpus-zufluss-new_papers--intake) – mitsamt Duplikatprüfung. Ein zweiter Einlassweg wäre eine Fehlerquelle, wie schon in [S2](#s2--volltext-holen-opt-in-lizenz-whitelist) festgehalten. |
+| **Kein MCP-Werkzeug** | Der Lauf benötigt Netz **und** schreibt Dateien. Copilot ruft Werkzeuge autonom auf; beides gehört daher nicht in Agent-Reichweite (gleiche Begründung wie beim Intake, [ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md), und bei `scripts.resolve_metadata`, [ADR 0026](docs/adr/0026-online-metadata-resolution.md)). |
+
+### R0 – Ausbeute, Nutzen und Verdrängung messen (zwingend zuerst, mit Abbruchkriterium)
+
+Wie in S0, V1–V3 und B6 beginnt die Phase mit einer Wegwerf-Messung, nicht mit Code. Drei Fragen, jede mit **vorab fixierter** Schwelle:
+
+1. **Liefern die Quellen überhaupt einen Abstract?** Gemessen an **mindestens 20 echten DOIs/arXiv-IDs** aus der eigenen Recherche. Die S0-Erhebung legt Skepsis nahe: Crossref führt Abstracts nur bei rund einem Drittel der Einträge, und gerade Closed-Access-Verlage liefern sie oft nicht. *Konsequenz statt Abbruch:* Liegt die Ausbeute unter **50 %**, wird der manuelle Weg (Abstract selbst einfügen) zum **Hauptweg** und die Online-Auflösung zur Bequemlichkeit – der Zuschnitt von R1 ändert sich damit, die Phase kippt nicht.
+2. **Wie groß ist der Gewinn für den Zitationsgraphen?** Read-only aus dem bestehenden Index: Wie viele Referenz-Einträge des Korpus tragen einen DOI-/arXiv-artigen Wert, der auf **kein** Korpus-Paper zeigt, und wie oft wiederholt sich derselbe Wert über mehrere Paper hinweg? Das beziffert erstmals, wie viele tote Verweise durch Referenz-Einträge zu Kanten werden könnten. *Abbruchkriterium:* Sind es praktisch keine, verliert die Phase ihr stärkstes Argument und wird auf reine Auffindbarkeit zurückgestutzt – mit entsprechend kleinerem Umfang.
+3. **Verdrängen kurze Stubs echte Evidenz?** BM25 normalisiert auf die Dokumentlänge; ein 200-Wort-Abstract bekommt bei Term-Treffern **strukturell Auftrieb** gegenüber einem 20 000-Wort-Paper. Gemessen wird an einer **Index-Kopie** (der Live-Index bleibt unberührt, Methodik wie in B6): simulierte Stubs einspielen, dann `--check` gegen **beide** eingefrorenen Baselines. *Abbruchkriterium:* **0 qid-Regressionen**. Tritt eine auf, wird sie nicht wegdiskutiert, sondern zieht die Guardrail aus [R3](#r3--wirkung-sichern-contract-baselines-guardrail) nach sich.
+
+**Die Grenze dieser Messung wird offen ausgewiesen, nicht kaschiert.** Die Gold-Labels stammen mechanisch aus `chunks.text`; ein Stub ist damit **nie** ein Gold-Ziel und kann in der Messung ausschließlich schaden. Punkt 3 taugt deshalb – wie das End-to-End-Maß in [A7](docs/adr/0017-router-hardening-phase7.md) – nur als **Veto**, niemals als Nutzennachweis. Der eigentliche Nutzen ist mit den bestehenden Gold-Sets prinzipiell nicht messbar. Daneben tritt daher eine **Handprobe**: rund zehn Fragen, deren Antwort ausschließlich im Abstract eines Stubs steht – findet das Retrieval sie, ist der Nutzen belegt; findet es sie nicht, ist die Phase auch bei bestandenem Veto wertlos.
+
+### R1 – Auflösung & Stub-Erzeugung (kein Volltext-Download)
+
+- **Eingabe** ist `new_papers/referenzen.txt`: **eine Kennung je Zeile**, zulässig sind **DOI und arXiv-ID**; `#` leitet einen Kommentar ein, Leerzeilen werden ignoriert. Beide Abfragewege existieren bereits in `online/metadata.py` (DOI direkt, arXiv über den DataCite-DOI) – neu ist im Wesentlichen, dass `abstract_inverted_index` mit angefordert und über das vorhandene `sources._restore_abstract` zurückgebaut wird.
+- **Logik im Paket, Skript dünn** (Repo-Konvention): ein Modul unter `src/research_graphrag/online/`, dazu `scripts/resolve_references.py`. Der Netzzugang läuft **ausschließlich** über den injizierbaren Port aus [ADR 0020](docs/adr/0020-online-candidate-search-phase9.md); alles Übrige bleibt offline testbar. Fremde Titel und Abstracts sind **nicht vertrauenswürdige Eingaben** und werden wie in S1 entschärft, bevor sie in eine Datei gelangen.
+- **Ausgabe** ist je Kennung **eine** Stub-Datei in `new_papers/`. Der Dateiname wird **selbst erzeugt** – deterministisch aus dem Identifikator, nie aus einer Serverantwort (kein Pfad-Traversal, gleiche Auflage wie in S2).
+- **Der manuelle Weg führt über die erzeugte Datei, nicht über eine zweite Eingabeform.** Liefert keine Quelle einen Abstract, entsteht die Stub-Datei trotzdem – mit leerem Abstract-Feld und einem Befund im Bericht. Der Abstract wird dann von Hand hineinkopiert, bevor der Intake läuft. Das ist bewusst **eine** Stelle statt zweier konkurrierender Eingabeformate; die Konsequenz (Bearbeiten ändert den Hash und damit die künftige `paper_id`) ist vor dem Intake folgenlos und danach ein regulärer „Datei geändert"-Fall der Pipeline.
+- **Idempotenz gegen drei Zustände.** Phase 12 / K2 hat gezeigt, wie leicht das schiefgeht: Dort las die Zielauswahl den **Index**, während der Lauf eine **Datei** schrieb – ein zweiter Lauf vor dem nächsten `ingest` fragte dieselben Paper erneut ab. Hier muss vor jeder Abfrage gegen **drei** Zustände geprüft werden: den Korpus-Index, die bereits erzeugten Stub-Dateien im Eingang und die Quarantäne `new_papers/_duplikate/`. Die Liste selbst bleibt dabei **unverändert** – sie ist ein kuratiertes Dokument, kein Arbeitsvorrat, den ein Skript abräumt.
+- **Determinismus.** Die Stub-Datei **ist** die eingefrorene Antwort: Das Netz wird genau einmal befragt, die spätere Extraktion daraus ist deterministisch. Der enthaltene Abrufzeitpunkt dient der Provenienz und hat die ausgewiesene Folge, dass ein erneuter Abruf eine andere Datei mit anderem Hash ergibt – abgefangen von der Idempotenzprüfung und, als Rückfall, von Stufe 2 des Intake.
+- **`--dry-run`** zeigt die geplanten Abfragen und Dateien, ohne Netz zu berühren und ohne Kontingent zu verbrauchen (Muster von `scripts.discover`).
+- *Akzeptanz:* Ein Lauf über eine reale Liste erzeugt für jede auflösbare Kennung genau eine Stub-Datei; ein zweiter Lauf erzeugt **keine** und stellt **keine** Abfrage; ohne Netz endet der Lauf mit `dependency_error` und handlungsleitender Meldung statt in einem Stacktrace; die Liste ist danach byte-identisch.
+
+### R2 – Intake & Index: der zweite Dokumenttyp
+
+- **Der Intake wird dokumententyp-fähig.** Er nimmt neben `*.pdf` auch `*.refjson` an; die `%PDF-`-Signaturprüfung und das Lesen der Titelseite über `pypdf` gelten nur noch für den PDF-Zweig. Titel und Identifikatoren eines Stubs kommen aus der Datei selbst – damit ist die Eingangsseite **genauer** als bei einem PDF, nicht ungenauer.
+- **Alle drei Prüfstufen gelten unverändert weiter.** sha256, gehärteter Identifikator-Vergleich und Titel-Ähnlichkeit sind dateiformatunabhängig; eine zweite Dedup-Logik entsteht nicht.
+- **`document_kind` wird im Canonical- und im Index-Schema geführt** (Schema-Anhebung, damit ein Re-Extract erzwungen wird). Ein Referenz-Eintrag hat genau einen Chunk – den Abstract – und keine Referenz-Sektion.
+- **Qualitäts-Gates werden typabhängig.** `missing_abstract`, `missing_references` und `no_chunks` sind für einen Referenz-Eintrag entweder sinnlos oder falsch; ungeprüft würde jeder Stub zwei bis drei Flags auslösen und den Report verrauschen, der in A3/A5 mühsam von 3074 auf 316 gedrückt wurde. Neu ist stattdessen genau ein sinnvoller Befund: **ein Referenz-Eintrag ohne Abstract**.
+- **Die Seitenangabe entfällt.** Ein Abstract-Stub hat keine Seite 7; „Seite 1" wäre eine **falsche Aussage über die Herkunft**. `page_label` liefert für Referenz-Einträge eine eigene Kennzeichnung, und die Provenienz nennt den Abstract als das, was er ist.
+- **Upgrade-Pfad Stub → Volltext.** Der Fall, dass das echte PDF später doch auftaucht, ist der gefährlichste der ganzen Phase: Ohne Regel greift Stufe 2 des Intake, erkennt die gleiche DOI und schiebt das **echte Paper** in die Quarantäne – genau verkehrt herum. Deshalb gilt ausdrücklich **„Volltext schlägt Referenz-Eintrag"**: Das PDF wird übernommen, der Stub tritt zurück. Das ist auch die einzige Löschung im Repo, die **konstruktionsbedingt** unbedenklich ist – ein Stub lässt sich aus `referenzen.txt` jederzeit neu erzeugen, ein PDF nie. Die Übersichtszeile wird dabei nicht dupliziert, und der Vorgang steht im Protokoll `data/intake_log.md`.
+- **Übersicht.** Referenz-Einträge bekommen wie jedes neue Paper eine Entwurfszeile mit `Z`-ID, sichtbar als Referenz-Eintrag gekennzeichnet; die wertenden Spalten bleiben `(manuell)`.
+- *Akzeptanz:* Eine Stub-Datei durchläuft `scripts.intake` regulär; `--dry-run` verändert nichts; ein Stub zu einem bereits vorhandenen Paper wird als Duplikat erkannt; ein Volltext-PDF zu einem vorhandenen Stub wird **übernommen** statt quarantäniert; die Qualitäts-Flags der Volltext-Paper bleiben gegenüber heute **unverändert**.
+
+### R3 – Wirkung sichern: Contract, Baselines, Guardrail
+
+- **Der Contract wird bewusst gebrochen.** `document_kind` wird als **Pflichtfeld** bis in `Citation`, `PaperRef` und `EvidenceItem` durchgereicht, die betroffenen Tool-Specs steigen in der Version. Die Begründung ist dieselbe wie bei `LocalSearchResult.seeds` und `DriftSearchResult.communities` in [V1](#v1--local-mehrere-seeds-statt-eines)/[V2](#v2--drift-community-auswahl-statt-top-1-mit-rückfallebene): Ein stiller Zustand wäre eine **falsche Provenienz-Behauptung**. Ein optionales Feld würde jede konsumierende Stelle zwingen, die Abwesenheit richtig zu deuten – und irgendwann zitiert `answer_question` einen Abstract, als stamme er aus dem Volltext.
+- **Der Zitier-Contract nennt die Unvollständigkeit.** Ein Beleg aus einem Referenz-Eintrag ist im Antworttext als solcher erkennbar; die Literaturangabe selbst bleibt vollständig (Harvard/APA, [ADR 0025](docs/adr/0025-citable-paper-metadata.md)) – zitiert wird schließlich das Paper, nicht der Abstract.
+- **Referenz-Einträge werden von der Label-Ableitung ausgeschlossen.** `--write-gold` leitet die mechanischen Labels aus dem Chunk-Text ab; ein Stub würde sonst **still zum Gold-Ziel** und die Messung damit selbstbezüglich. Der Ausschluss ist Voraussetzung dafür, dass die Kennzahlen vor und nach dieser Phase überhaupt vergleichbar bleiben.
+- **Beide Baselines werden neu eingefroren** – zweistufig wie in V1/V2: erst der qid-genaue Nachweis mit unverändertem Fingerprint, danach das Einfrieren. Der Werkzeugweg dafür existiert seit [B5](#b5--messgrundlage-nachführbar-halten); genau deshalb ist der Zeitpunkt für diese Phase günstig.
+- **Guardrail nur, falls R0 sie erzwingt.** Zeigt die Verdrängungsmessung Regressionen, werden Referenz-Einträge in der Chunk-Suche **nachrangig** behandelt (sie erscheinen, wenn Volltext-Treffer fehlen oder hinter diesen). Diese Mechanik wird **nicht auf Verdacht** gebaut – das wäre genau der Fehler, den A3 („die Seitengrenze ist schuld"), A5 („das Rauschen sitzt im Vektorraum") und B6 („die Schwelle ist zu hoch") jeweils vorgeführt haben.
+- **Sicherung.** `new_papers/referenzen.txt` wird in den Sicherungsumfang aus [B1](#b1--sicherung-des-korpus) aufgenommen: Die Liste ist kuratiert und aus keiner Quelle rekonstruierbar. Die Stub-Dateien selbst liegen in `papers/` und sind damit bereits erfasst.
+- *Akzeptanz:* Jede Ausgabe, die einen Referenz-Eintrag enthält, weist ihn aus – CLI, MCP-Werkzeuge und `answer_question`; `--check` meldet nach dem Neu-Einfrieren 0 Abweichungen; die Handprobe aus R0 findet die Abstracts.
+
+### Bewusst ausgeschlossen
+
+Kein Volltext-Download (das bleibt [S2](#s2--volltext-holen-opt-in-lizenz-whitelist) und damit zurückgestellt), keine Umgehung von Bezahlschranken, keine automatische Übernahme ohne Sichtung, **keine LLM-gestützte Anreicherung** eines Abstracts zu etwas, das wie ein Volltext aussieht – das wäre Scheinsicherheit in Reinform –, kein MCP-Werkzeug und keine zweite Duplikatlogik neben der aus Phase 8.
+
+### Definition of Done
+
+- DOI/arXiv-Liste in `new_papers/referenzen.txt` → **ein** Befehl → Stub-Dateien liegen im Eingang → `python -m scripts.intake` → die Paper sind auffindbar, zitierfähig, im Graphen verknüpft und **überall als unvollständig ausgewiesen**.
+- R0 ist beantwortet und dokumentiert – auch ein „lohnt sich nicht" ist ein gültiges Ergebnis, wie bei [B6](#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen).
+- Ein zweiter Lauf des Auflösungsskripts stellt keine Abfrage und erzeugt keine Datei; `--dry-run` verändert nachweislich nichts.
+- Ein später eintreffendes Volltext-PDF ersetzt seinen Referenz-Eintrag, statt in der Quarantäne zu landen.
+- **Anleitung in der [README](README.md)** inklusive des manuellen Abstract-Wegs und des Upgrade-Pfads; **ADR** bei der Umsetzung (Dateiformat, `document_kind`, Contract-Bruch, Upgrade-Regel).
+- Tests: Auflösung mit/ohne Abstract, Idempotenz gegen alle drei Zustände, Intake eines Stubs, Stub-Duplikat, Volltext schlägt Stub, typabhängige Qualitäts-Flags, Ausweisung in allen Ausgaben, Gold-Ableitung ohne Stubs.
+
+---
+
 ## Meilensteine
 
 - **M0 – Migration:** ✅ erreicht – PDFs und `Übersicht.md` ins Repo übernommen (Phase 1).
@@ -599,3 +679,4 @@ Offen bleiben **5** Paper, für die keine Quelle einen Treffer liefert; sie sind
 - **M6 – Online-Recherche entschieden:** ✅ erreicht – S0 ist beantwortet: Die Quellen sind über den authentifizierten Unternehmens-Proxy erreichbar (arXiv/OpenAlex/Crossref mit HTTP 200), und die Handprobe liegt mit 76–82 % deutlich über der vorab festgelegten Schwelle von 30 %. Empfohlen ist ein **engerer Zuschnitt** als geplant: S1 nur mit arXiv + OpenAlex, S2 zurückgestellt (Phase 9).
 - **M7 – Local schlägt Basic:** ✅ erreicht – der für Detailfragen vorgesehene Modus ist nicht länger schwächer als seine Rückfallebene (Hit 0,618 → **0,912**, MRR 0,532 → **0,654** gegen Basic 0,882 / 0,650). **Ehrlich dazu:** Der Zugewinn ist teilweise definitorisch, weil Locals Bündel mit fünf Seeds die Top-5 der Chunk-Suche enthält; belastbar sind die **13 qid-genauen Verbesserungen ohne Regression** (Phase 10 / V1).
 - **M8 – Aus dem Fund wird eine Quelle:** ✅ erreicht – jeder Beleg trägt einen extern auflösbaren Identifikator, und aus einem Suchtreffer entsteht ohne Handarbeit eine korrekte Literaturangabe in Harvard und APA. **336 von 341** Papern sind vollständig zitierfähig (vorher **0**). **Ehrlich dazu:** 66 Datensätze beruhen auf einem nicht eindeutigen Beleg und sind als `weak` markiert; 5 Paper bleiben ohne Auflösung (Phase 12).
+- **M9 – Auch das Unerreichbare zählt:** ⬜ offen – ein Paper, von dem nur der Abstract öffentlich ist, ist über seine DOI auffindbar, zitierfähig und als Ziel von `CITES`-Kanten verknüpft – und in **jeder** Ausgabe als unvollständig ausgewiesen (Phase 13).
