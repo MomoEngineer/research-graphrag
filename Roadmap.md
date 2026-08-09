@@ -434,7 +434,7 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 | **Datenverlust durch den Intake** (hartes Löschen)                     | `--dry-run`, Bericht mit Hash je gelöschter Datei, Sicherungsweg aus [B1](#b1--sicherung-des-korpus).                                                                                                                                               |
 | **Unkuratierte PDFs aus dem Netz** (Scans, Fehlerseiten, Schadinhalte)  | Lizenz-Whitelist, Content-Type-/Größenprüfung, selbst erzeugte Dateinamen, Robustheits-Flag für chunk-lose Dokumente.                                                                                                                             |
 | **Verwässerung des kuratierten Korpus** durch automatische Vorschläge | Vorschläge landen im Bericht, nie automatisch im Korpus; Zielgröße ist Präzision, nicht Menge.                                                                                                                                                    |
-| **Abstract-Stubs verdrängen Volltext-Evidenz** (BM25-Längennormalisierung)    | `document_kind` als Pflichtfeld in jedem Beleg, Ausschluss aus der Gold-Ableitung, Verdrängung vorab an einer Index-Kopie gemessen, Nachrangigkeit **nur** bei belegter Regression ([Phase 13](#phase-13--referenz-einträge-ohne-volltext)).       |
+| **Abstract-Stubs verdrängen Volltext-Evidenz** (BM25-Längennormalisierung)    | `document_kind` als Pflichtfeld in jedem Beleg, Ausschluss aus der Gold-Ableitung, Verdrängung vorab an einer Index-Kopie gemessen, Nachrangigkeit **nur** bei belegter Regression – **R0 hat sie belegt** (13 qid-Regressionen, alle in den Multi-Hop-Ebenen), die Guardrail ist damit gesetzt ([Phase 13](#phase-13--referenz-einträge-ohne-volltext)).       |
 | Entity Resolution (Synonyme, gleichnamige Autoren)                            | leichte Alias-/Synonym-Kuratierung; bei kleinem Korpus manuell handhabbar.                                                                                                                                                                            |
 | Scheinsicherheit durch Summaries                                              | Antworten immer mit Quellenankern/Original-TextUnits; für Fakten Basic/Local bevorzugen.                                                                                                                                                             |
 | Inkonsistenz bei inkrementellen Updates                                       | Standard bleibt der volle Re-Index; inkrementell nur mit Identitäts-Nachweis ([B2](#b2--inkrementelles-update-statt-vollem-re-index)).                                                                                                                |
@@ -443,6 +443,111 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 ---
 
 ## Phase 13 – Referenz-Einträge ohne Volltext
+
+> **Status: R0 beantwortet** (Messung vom 2026-08-09, bewusst **ohne ADR** – R0 baut nichts und
+> entscheidet keine Architektur; dieselbe Handhabung wie bei [S0](#s0--recherche--machbarkeit-zwingend-zuerst-mit-abbruchkriterium)
+> und [B6](#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen)). Gemessen wurde gegen den
+> Korpusstand **373 Paper / 26 003 Chunks / 118 Communities / 1481 `CITES`-Kanten**. Kein
+> Produktivcode, kein Schema-Eingriff, kein Re-Ingest; die Wegwerf-Skripte sind gelöscht, die
+> Rohantworten liegen unter `data/online_probe/` (nicht versioniert).
+>
+> **Ergebnis: die Phase entfällt nicht, aber ihr Zuschnitt ändert sich an einer Stelle** – die
+> Guardrail aus [R3](#r3--wirkung-sichern-contract-baselines-guardrail) ist **nicht länger
+> bedingt, sondern gesetzt.**
+>
+> **Validitätsanker zuerst** (Pflicht seit V1): Der Nachbau der Zitationskanten aus
+> `data/canonical/` liefert **1481 von 1481** Kanten identisch zum Index. Erst damit sind die
+> daraus abgeleiteten Zahlen belastbar.
+>
+> **1. Ausbeute – die Vorgabe war zu pessimistisch, weil sie die falsche Quelle unterstellte.**
+> Die Roadmap leitete ihre Skepsis aus **Crossref** ab („Abstracts nur bei rund einem Drittel").
+> Gemessen wurde der Weg, den [R1](#r1--auflösung--stub-erzeugung-kein-volltext-download)
+> tatsächlich nähme – **OpenAlex** (DOI direkt bzw. über den DataCite-DOI) mit dem arXiv-Feed als
+> Rückfall. Von **60** abgefragten Kennungen sind 4 unbrauchbare Extraktionsartefakte (siehe
+> Punkt 2); von den **56 gültigen** löste OpenAlex/arXiv **56** auf und lieferte für **52 = 93 %**
+> einen Abstract. Entscheidend ist die Untergruppe, um die es der Phase geht: Bei den Werken mit
+> echter Bezahlschranke (`oa_status = closed`) sind es **6 von 7**. Die vier Fehlschläge verteilen
+> sich auf `closed`, `green` und **zweimal `gold`** – die Abstract-Verfügbarkeit hängt also
+> **nicht** am Zugang zum Volltext. Die 50-%-Schwelle ist damit deutlich übertroffen: Die
+> Online-Auflösung bleibt der **Hauptweg**, der manuelle Weg die Ausnahme. *Offen ausgewiesen:*
+> **8 der 52** Abstracts sind mit unter 60 Wörtern (Minimum 28) eher Fragment als Abstract –
+> überwiegend Einträge der ACL Anthology.
+>
+> **2. Nutzen für den Zitationsgraphen – das stärkste Argument der Phase hält, aber erst nach drei
+> Korrekturen.** Roh gezählt tragen die Referenzabschnitte 3634 verschiedene DOI-/arXiv-Werte, die
+> auf kein Korpus-Paper zeigen. Diese Zahl ist **zu hoch**, und zwar aus drei mechanisch
+> nachweisbaren Gründen: **95** DOIs sind am Zeilenumbruch **abgeschnitten** (`10.18653/v1/` ist
+> ein Präfix jedes ACL-Eintrags – solche Rümpfe passen auf viele Einträge und werden dadurch in
+> der Häufigkeitsliste nach **oben** gespült, genau dort, wo man sie am wenigsten vermutet),
+> **127** sind DataCite-Dubletten (`10.48550/arXiv.X` **und** `X`), und **42** treffen doch ein
+> Korpus-Paper, dessen Identifikator nur den Frontmatter-Guard aus
+> [ADR 0011](docs/adr/0011-intra-corpus-citation-graph-phase7.md) nicht passiert hat. Bereinigt
+> bleiben **3371** tote Identifikatoren (1106 DOI / 2265 arXiv), davon **702** von mindestens
+> **zwei** und **349** von mindestens **drei** Korpus-Papern zitiert. Beide vorab fixierten
+> Schwellen sind damit klar übertroffen (gefordert: ≥ 50 mehrfach zitierte Werte und ≥ 10 % des
+> Kantenbestands).
+>
+> | Aufgenommene Referenz-Einträge | Neue `CITES`-Kanten | gemessen am Bestand 1481 |
+> | --- | --- | --- |
+> | Top 10 | 307 | +21 % |
+> | Top 25 | 505 | +34 % |
+> | Top 50 | 742 | +50 % |
+> | Top 100 | 1074 | +73 % |
+> | alle 3371 | 5333 | +360 % |
+>
+> Die Kurve ist die eigentliche Aussage: Der Nutzen konzentriert sich stark – schon **zehn**
+> Einträge bringen 307 Kanten, danach fällt der Ertrag je Eintrag von 30,7 auf 1,6. Die Phase
+> lohnt sich also **kuratiert**, nicht als Massenimport. *Präzision der Zählung:* 40 Treffer im
+> Referenzkontext von Hand geprüft – arXiv **10/10**, DOI **27/30** (die drei Fehler sind
+> Abschneide- und Anklebefehler wie `10.3390/electronics14112102vol`). Dieser Defekt ist
+> **selbstkorrigierend**: Ein kaputter Identifikator lässt sich online nicht auflösen und fällt in
+> R1 als Befund auf, statt still eine falsche Kante zu erzeugen.
+>
+> **3. Verdrängung – das Abbruchkriterium ist verfehlt, und das ist das wichtigste Ergebnis der
+> Messung.** Gemessen wurde an Index-Kopien (Methodik wie B6): **A** unverändert als Kontrolle,
+> **B_real** mit den 52 echten Abstracts aus Punkt 1, **B_adv** mit 34 adversarialen Stubs (je
+> Gold-Frage die ersten 200 Wörter des **gewinnenden** Chunks). Verglichen wurde qid-genau über
+> **alle zehn Ebenen** beider Gold-Sets.
+>
+> | | Regressionen | Verbesserungen | wo |
+> | --- | --- | --- | --- |
+> | **B_real** (52 echte Abstracts) | **13** | 3 | ausschließlich Multi-Hop |
+> | **B_adv** (34 adversariale Stubs) | **86** | 6 | Primitive/Basic/Local je 28, DRIFT 2 |
+>
+> Bemerkenswert ist die **Trennschärfe**: Bei den realistischen Stubs bleiben Primitive, Basic,
+> Global und DRIFT **unverändert**, Local verbessert sich sogar leicht (0,824 → 0,853) – der
+> Schaden entsteht ausschließlich bei den **Multi-Hop-Fragen** (`basic_title` 4, `local_title` 5,
+> `basic_topic` 1, `local_topic` 3), zweimal davon als vollständiger Verlust aus den Top 5
+> (C50, C35). Das ist plausibel und nicht zufällig: Eine Multi-Hop-Frage nennt einen **Titel**,
+> und ein Stub besteht praktisch nur aus Titel und Abstract – die BM25-Längennormalisierung tut
+> dann genau das, was die Roadmap befürchtet hat. Die adversariale Variante beziffert die
+> Obergrenze des Effekts: Hit@5 fällt nur 0,824 → 0,794, der **MRR@5 aber halbiert sich**
+> 0,730 → 0,366, weil fast jeder Rang 1 auf Rang 2 rutscht. Damit ist auch belegt, dass ein
+> bestandenes Veto nicht trivial gewesen wäre.
+>
+> **Warum das A/B-Verfahren nötig war (und das wörtliche `--check` untauglich):** Beide Baselines
+> sind auf **341** Paper eingefroren, der Korpus steht bei **373**. Die Kontrollkopie A gegen die
+> eingefrorenen Stände gehalten (Fingerprint-Guard bewusst umgangen) ergibt **12 + 15 = 27**
+> Regressionen allein aus dem Korpuswachstum – **doppelt so viele wie der Stub-Effekt**. Ein
+> `--check` der Stub-Kopie gegen die alte Baseline hätte die 13 aussagekräftigen Abweichungen in
+> 27 nichtssagenden ertränkt. *Folgepunkt für [B5](#b5--messgrundlage-nachführbar-halten)/R3:* Der
+> quantitative Regressionsschutz ist derzeit außer Betrieb; das Neu-Einfrieren gehört an den
+> Anfang von R3, nicht in diese Messung.
+>
+> **4. Handprobe – der Nutzen ist belegt: 10 von 10.** Zehn Fragen, deren Antwort ausschließlich
+> im Abstract eines Stubs steht (Datensätze von `k-isomorphism`, die *heavy-edge*-Heuristik von
+> METIS, 67,6 % von Flan-PaLM auf MedQA, die NP-Vollständigkeit beliebiger Waypoints …) werden
+> **alle auf Rang 1** gefunden; ohne den Stub liefert der Korpus in acht von zehn Fällen etwas
+> thematisch Fremdes, in zwei Fällen ein benachbartes Paper, aber nie die gefragte Tatsache.
+> **Der unbequeme Teil davon:** Nutzen und Schaden haben **dieselbe** Ursache – der Stub gewinnt,
+> weil er kurz ist. Eine Guardrail, die Referenz-Einträge grundsätzlich ausschließt, würde den
+> Nutzen mit vernichten; richtig ist die **Nachrangigkeit gegenüber Volltext-Treffern**, denn in
+> genau diesen zehn Fragen gibt es keinen konkurrierenden Volltext-Treffer.
+>
+> **Konsequenzen für R1–R3:** R1 bleibt wie geplant (Online-Auflösung als Hauptweg, manueller Weg
+> als Ausnahme). R2 bleibt unverändert. In R3 wird die Guardrail **gebaut**, nicht erwogen – die
+> Bedingung „nur, falls R0 sie erzwingt" ist eingetreten. Vor dem qid-genauen Nachweis in R3 sind
+> **beide Baselines neu einzufrieren**.
 
 **Ziel:** Ein Paper, von dem nur der Abstract öffentlich zugänglich ist, wird über seine **DOI oder arXiv-ID** zu einem vollwertigen, aber **ausdrücklich unvollständigen** Korpus-Eintrag – auffindbar, zitierfähig und als Ziel von Zitationskanten verfügbar, ohne je den Eindruck zu erwecken, es liege ein Volltext vor.
 
@@ -465,6 +570,13 @@ Mechanisch fehlt heute alles Nötige: Der Intake liest ausschließlich `*.pdf` u
 | **Kein MCP-Werkzeug** | Der Lauf benötigt Netz **und** schreibt Dateien. Copilot ruft Werkzeuge autonom auf; beides gehört daher nicht in Agent-Reichweite (gleiche Begründung wie beim Intake, [ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md), und bei `scripts.resolve_metadata`, [ADR 0026](docs/adr/0026-online-metadata-resolution.md)). |
 
 ### R0 – Ausbeute, Nutzen und Verdrängung messen (zwingend zuerst, mit Abbruchkriterium)
+
+> **Beantwortet am 2026-08-09** – die Zahlen und die korrigierten Annahmen stehen im Statusblock
+> am [Anfang dieser Phase](#phase-13--referenz-einträge-ohne-volltext). Kurzfassung: Ausbeute
+> **93 %** (Schwelle 50 %), Nutzen **702** mehrfach zitierte tote Verweise und bis zu **5333**
+> mögliche neue Kanten (Schwelle deutlich übertroffen), Verdrängung **13 qid-Regressionen**
+> (Abbruchkriterium 0 → **verfehlt**, die Guardrail aus R3 ist damit gesetzt), Handprobe
+> **10/10**.
 
 Wie in S0, V1–V3 und B6 beginnt die Phase mit einer Wegwerf-Messung, nicht mit Code. Drei Fragen, jede mit **vorab fixierter** Schwelle:
 
@@ -503,6 +615,11 @@ Wie in S0, V1–V3 und B6 beginnt die Phase mit einer Wegwerf-Messung, nicht mit
 - **Referenz-Einträge werden von der Label-Ableitung ausgeschlossen.** `--write-gold` leitet die mechanischen Labels aus dem Chunk-Text ab; ein Stub würde sonst **still zum Gold-Ziel** und die Messung damit selbstbezüglich. Der Ausschluss ist Voraussetzung dafür, dass die Kennzahlen vor und nach dieser Phase überhaupt vergleichbar bleiben.
 - **Beide Baselines werden neu eingefroren** – zweistufig wie in V1/V2: erst der qid-genaue Nachweis mit unverändertem Fingerprint, danach das Einfrieren. Der Werkzeugweg dafür existiert seit [B5](#b5--messgrundlage-nachführbar-halten); genau deshalb ist der Zeitpunkt für diese Phase günstig.
 - **Guardrail nur, falls R0 sie erzwingt.** Zeigt die Verdrängungsmessung Regressionen, werden Referenz-Einträge in der Chunk-Suche **nachrangig** behandelt (sie erscheinen, wenn Volltext-Treffer fehlen oder hinter diesen). Diese Mechanik wird **nicht auf Verdacht** gebaut – das wäre genau der Fehler, den A3 („die Seitengrenze ist schuld"), A5 („das Rauschen sitzt im Vektorraum") und B6 („die Schwelle ist zu hoch") jeweils vorgeführt haben.
+  > **R0-Ergebnis: die Bedingung ist eingetreten** – 13 qid-Regressionen mit **echten** Abstracts,
+  > alle in den Multi-Hop-Ebenen, zwei davon als vollständiger Verlust aus den Top 5. Die
+  > Guardrail wird also gebaut. Sie muss **nachrangig** wirken, nicht ausschließend: Die Handprobe
+  > findet ihre zehn Fragen ausgerechnet deshalb auf Rang 1, weil ein Stub kurz ist – Nutzen und
+  > Schaden teilen sich die Ursache.
 - **Sicherung.** `new_papers/referenzen.txt` wird in den Sicherungsumfang aus [B1](#b1--sicherung-des-korpus) aufgenommen: Die Liste ist kuratiert und aus keiner Quelle rekonstruierbar. Die Stub-Dateien selbst liegen in `papers/` und sind damit bereits erfasst.
 - *Akzeptanz:* Jede Ausgabe, die einen Referenz-Eintrag enthält, weist ihn aus – CLI, MCP-Werkzeuge und `answer_question`; `--check` meldet nach dem Neu-Einfrieren 0 Abweichungen; die Handprobe aus R0 findet die Abstracts.
 
