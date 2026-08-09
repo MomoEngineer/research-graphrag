@@ -18,7 +18,7 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 
 ---
 
-## Stand: Phasen 0–7 (abgeschlossen)
+## Stand: Phasen 0–8 und 12 (abgeschlossen)
 
 | Phase                                       | Ergebnis                                                                                                               | Entscheidung                                                                                                                                                                                 |
 | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -36,89 +36,12 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 | **7 / A5** – Rausch-Reduktion        | Textnormalisierung, Bibliografie-Reject-Regeln, Keyword-Politik                                                        | [ADR 0015](docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md)                                                                                                                     |
 | **7 / A6** – Quantitative Evaluation | Modi-Ebene, Diagnosen, Lift, eingefrorene Baseline mit qid-genauem Regressions-Check                                   | [ADR 0016](docs/adr/0016-quantitative-retrieval-evaluation-phase7.md)                                                                                                                         |
 | **7 / A7** – Router-Härtung         | Match-Art je Signal,`basic` als Rückfallebene, ausgewiesene Konfidenz und Signale                                   | [ADR 0017](docs/adr/0017-router-hardening-phase7.md)                                                                                                                                          |
+| **8** – Korpus-Zufluss & Intake      | dreistufige Dedup (`new_papers/` → `papers/`), Robustheits-Gate, atomarer Swap, append-only Übersicht (`Z`-IDs), `scripts.intake`; **M5** erreicht | [ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md)                                                                                    |
+| **12** – Zitierfähigkeit            | `metadata/paper_metadata.json`, feldweise Auflösung (`manual > curated > resolved > extracted`), `get_reference`, Literaturangaben Harvard/APA; **M8** erreicht | [ADR 0025](docs/adr/0025-citable-paper-metadata.md) · [ADR 0026](docs/adr/0026-online-metadata-resolution.md)                                    |
 
-**Nicht umgesetzt aus Phase 7:** der Punkt **A8** (inkrementelles Update, Auto-Watcher). Er ist in dieser Fassung aufgelöst – das inkrementelle Update lebt als [B2](#b2--inkrementelles-update-statt-vollem-re-index) weiter, der Auto-Watcher ist [bewusst gestrichen](#b4--auto-watcher-bewusst-gestrichen) und wird durch den manuellen Intake der [Phase 8](#phase-8--korpus-zufluss-new_papers--intake) ersetzt.
+**Nicht umgesetzt aus Phase 7:** der Punkt **A8** (inkrementelles Update, Auto-Watcher). Er ist in dieser Fassung aufgelöst – das inkrementelle Update lebt als [B2](#b2--inkrementelles-update-statt-vollem-re-index) weiter, der Auto-Watcher ist [bewusst gestrichen](#b4--auto-watcher-bewusst-gestrichen) und wird durch den manuellen Intake der [Phase 8](docs/roadmap-historie.md#phase-8--korpus-zufluss-new_papers--intake) ersetzt.
 
 > **Warum die Kennzahlen hier fehlen:** Sie stehen in den ADRs und in der [Historie](docs/roadmap-historie.md) und veralten dort nicht. Den **aktuellen** Bestand zeigt `python -m scripts.status`, die aktuelle Retrieval-Güte `python -m scripts.eval_retrieval`.
-
----
-
-## Phase 8 – Korpus-Zufluss: `new_papers/` + Intake
-
-> **Status: umgesetzt** ([ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md)) – mit
-> **einer begründeten Abweichung** von der Vorgabe unten. Die Vorabmessung hat das Kriterium der
-> Stufe 2 widerlegt: Im eigenen Korpus würden **17 von 155** Identifikatoren fehlleiten – der
-> unausgefüllte ACM-Vorlagen-Platzhalter `10.1145/nnnnnnn.nnnnnnn` steht bei **drei** Papern, und
-> **14** Werte stammen aus dem Volltext-Fallback der Extraktion und zeigen auf ein *zitiertes*
-> fremdes Paper (darunter der Falsch-Hub aus [ADR 0011](docs/adr/0011-intra-corpus-citation-graph-phase7.md)).
-> Ein Intake, der darauf hin löscht, vernichtet unter realistischen Bedingungen legitime Dateien.
->
-> Umgesetzt ist daher eine **abgestufte** Konsequenz: Stufe 1 (sha256) löscht wie geplant – dort
-> ist bitgenau bewiesen, dass die Datei bereits im Korpus liegt. Stufe 2 verschiebt nach
-> `new_papers/_duplikate/` (hartes Löschen nur per `--delete-identifier-duplicates`) und
-> vergleicht nur noch **gehärtete** Schlüssel: belegt auf der eigenen Titelseite (Guard aus
-> ADR 0011) **und** im Korpus eindeutig – von 155 Identifikatoren überleben **138**. Stufe 3
-> (Schwelle **0,85**, am Korpus **ohne** Fehlalarm) bleibt folgenlos und erkennt **22 von 25**
-> künstlich umbenannten Realpapern, keines davon falsch zugeordnet.
->
-> Ebenfalls umgesetzt: das **Robustheits-Gate** (`no_chunks`-Flag – schließt die bekannte Grenze
-> aus [ADR 0013](docs/adr/0013-chunking-refinement-phase7.md) – plus `%PDF-`-Signaturprüfung), die
-> **Übersicht als einzige Senke** (append-only, byte-erhaltend, atomar, ID-Reihe `Z1`, `Z2`, …;
-> löst eine Phase-2-Festlegung ab) und ein append-only **Protokoll** `data/intake_log.md` mit Hash
-> je gelöschter Datei. Der Nachweis erfolgte end-to-end an einer **vollständigen Kopie** des
-> 145-Paper-Korpus: alle fünf Wege einmal durchlaufen, `--dry-run` nachweislich wirkungslos
-> (Hash-Abbild identisch), kuratierte Zeilen byte-identisch, zweiter Lauf idempotent. **436 Tests**
-> grün, kein Schema-Eingriff, **kein Re-Ingest**.
-
-**Ziel:** Ein einziger Befehl übernimmt neue PDFs aus einem Eingangsordner in den Korpus, verhindert dabei **Doppelbestand**, stößt die vollständige Pipeline an und pflegt die Literaturübersicht nach.
-
-### Warum das nötig ist (und was heute fehlt)
-
-Der bestehende Drop-in-Workflow (PDF nach `papers/` legen, `python -m scripts.ingest`) dedupliziert über `data/manifest.json` – und zwar **Dateiname → sha256**. Ein **inhaltsgleiches PDF unter einem anderen Dateinamen** wird dadurch als neues Paper indiziert: eigene `paper_id`, eigene Knoten und Kanten im Ähnlichkeitsgraphen, doppelte Belege in jeder Antwort und eine zweite Zeile in der Übersicht. Bei manueller Ablage passiert das selten; sobald PDFs aus dem Netz mit fremd vergebenen Dateinamen kommen ([Phase 9](#phase-9--online-research-modus-separat-startbar)), wird es zum Regelfall. Genau diese Lücke schließt der Intake.
-
-### Umfang
-
-- **Eingangsordner `new_papers/`** (nicht versioniert, wie `papers/` und `data/`).
-- **Logik in `src/research_graphrag/intake.py`**, dünnes `scripts/intake.py` – konsistent zur Repo-Konvention „Logik im Paket, Skripte dünn" ([docs/repository-structure.md](docs/repository-structure.md)).
-- **Drei Prüfstufen mit fallender Sicherheit** – die Konsequenz hängt an der Sicherheit, nicht am Verdacht:
-  | Stufe | Kriterium                             | Grundlage                                                               | Konsequenz                                                                          |
-  | ----- | ------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-  | 1     | **sha256** identisch            | `data/manifest.json` (Beleg am Dateisystem nachgerechnet)             | sicheres Duplikat → Datei in`new_papers/` wird **gelöscht**               |
-  | 2     | **DOI oder arXiv-ID** identisch | `extract_identifiers` (Phase 2) gegen `papers.identifiers` im Index | **umgesetzt abweichend:** Quarantäne statt Löschung, siehe Statusblock oben |
-  | 3     | **Titel-Ähnlichkeit**          | normalisierter Titel/Dateiname-Stamm gegen den Korpus                   | **unsicher** → keine Löschung, Datei bleibt liegen, Befund im Bericht       |
-- **Kein Treffer** → Datei wird nach `papers/` verschoben. Bei **Namenskollision mit abweichendem Hash** wird nichts überschrieben: Die Datei bleibt liegen und erscheint als Befund.
-- Danach **ein** Ingest-Lauf (`pipeline.ingest`, voller Re-Index mit atomarem Swap – unverändert), anschließend die Übersicht-Zeilen (siehe unten).
-- **Abschlussbericht:** übernommen / als Duplikat gelöscht (mit Hash und Fundstelle) / offen geblieben (mit Grund).
-
-### Zwei bewusste Härten
-
-1. **Löschen ist endgültig – deshalb ist `--dry-run` Pflichtbestandteil.** Der Lauf zeigt jede geplante Aktion an, ohne etwas zu verändern. Das ist die einzige Absicherung, die nicht auf einem Papierkorb beruht.
-2. **Eine neuere Version zählt als Duplikat.** `arXiv:1234.5678v2` trägt dieselbe Identifikator-Wurzel wie `v1` und wird in Stufe 2 gelöscht. Das ist die logische Folge der gewünschten Regel und muss in der Anleitung stehen: **Wer ersetzen will, löscht zuerst die alte Datei in `papers/`** und lässt den Intake dann laufen.
-
-### Übersicht-Pflege durch das Skript
-
-Bisher schreibt `scripts/update_overview.py` **append-only** nach `data/overview_drafts.md`, und [`Übersicht.md`](Übersicht.md) bleibt unangetastet (Festlegung aus Phase 2). Neu soll der Intake die Entwurfszeile **direkt an die Tabelle in `Übersicht.md`** anhängen.
-
-Akzeptanz dafür:
-
-- **Append-only**: nur anhängen, nie umsortieren, nie eine bestehende Zelle ändern. Ein Regressionstest belegt, dass die kuratierten Zeilen **byte-identisch** bleiben.
-- **Idempotent**: ein zweiter Lauf erzeugt keine zweite Zeile (die Erkennung über die internen Links existiert bereits in `overview/drafts.py`).
-- **Wertende Spalten bleiben leer**: `Relevanz fuer Expose` und `SRQ-Zuordnung` werden als `(manuell)` eingetragen – die Kuratierung bleibt beim Menschen, sonst verliert die Tabelle ihre Rolle.
-- **ID-Vergabe**: Die kuratierten IDs sind Themencluster (`A1`, `B2`, …), die ein Automat nicht vergeben kann. Neue Zeilen bekommen daher eine eigene Reihe (z. B. `Z1`, `Z2`, …) und werden beim Kuratieren umsortiert.
-- **Diese Änderung löst eine Phase-2-Festlegung ab** und braucht bei der Umsetzung einen ADR (Verhältnis zu `data/overview_drafts.md`: bleibt der Pfad für `scripts/update_overview.py` oder wird er abgelöst?).
-
-### Robustheits-Gate für unkuratierte PDFs
-
-[ADR 0013](docs/adr/0013-chunking-refinement-phase7.md) dokumentiert eine bekannte Grenze: Ein Dokument mit Seitentext, aber ohne Fließtext erzeugt **null Chunks und kein Qualitäts-Flag**. Bei 145 handverlesenen Papern war das folgenlos; mit einem Eingangsordner – und erst recht mit Downloads – kommen reine Scans ohne Textebene, Cover-Seiten und HTML-Fehlerseiten mit `.pdf`-Endung ins System. Aus einer theoretischen Lücke wird damit ein realer Fall.
-
-*Akzeptanz:* ein Flag für „zu wenige/keine Chunks", das im Intake-Bericht sichtbar wird. Die Datei wird trotzdem übernommen (keine stille Ablehnung) – aber der Befund ist sichtbar, statt lautlos einen leeren Korpus-Eintrag zu erzeugen.
-
-### Definition of Done
-
-- PDF nach `new_papers/` legen → **ein** Befehl → Duplikate sind entfernt, neue Paper liegen in `papers/`, Index/Ähnlichkeitsgraph/Zitationskanten sind aktualisiert, die Übersicht hat eine Entwurfszeile, der Bericht listet jede Entscheidung.
-- `--dry-run` verändert nachweislich nichts.
-- **Anleitung in der [README](README.md)**: Schritt-für-Schritt inklusive der Konsequenz des Löschens und des Versions-Sonderfalls.
-- Tests: sha256-Treffer, Identifikator-Treffer, Titel-Verdacht (**darf nicht löschen**), Namenskollision, Idempotenz der Übersicht, Unverändertheit der kuratierten Zeilen, Bericht bei leerem Eingangsordner.
 
 ---
 
@@ -183,7 +106,7 @@ Akzeptanz dafür:
 > `pip` diesen Weg nutzen könnte (es beherrscht kein Negotiate) und ob das den
 > Unternehmensrichtlinien entspricht, wurde **nicht** geprüft – es wurde nichts installiert.
 
-**Ziel:** Ein **manuell gestarteter, vom Kern getrennter** Modus, der zu einem Thema oder einem Seed-Paper neue Quellen im Netz sucht und – nur auf ausdrücklichen Wunsch – frei lizenzierte Volltexte nach `new_papers/` legt, wo [Phase 8](#phase-8--korpus-zufluss-new_papers--intake) sie übernimmt.
+**Ziel:** Ein **manuell gestarteter, vom Kern getrennter** Modus, der zu einem Thema oder einem Seed-Paper neue Quellen im Netz sucht und – nur auf ausdrücklichen Wunsch – frei lizenzierte Volltexte nach `new_papers/` legt, wo [Phase 8](docs/roadmap-historie.md#phase-8--korpus-zufluss-new_papers--intake) sie übernimmt.
 
 **Abgrenzung, die nicht verhandelbar ist:** Der Kern bleibt netzfrei. Ohne Internet funktioniert alles Bisherige unverändert. Insbesondere bekommt der MCP-Server **kein** Netz-Tool im ersten Schritt – er wird von Copilot autonom aufgerufen, und niemand soll durch eine beiläufige Frage ungewollten Netzverkehr auslösen.
 
@@ -519,76 +442,6 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 
 ---
 
-## Phase 12 – Zitierfähigkeit: vom Identifikator zur Literaturangabe
-
-> **Status: umgesetzt.** Beide Punkte sind erledigt – **K1** (netzfrei) und **K2** (Auflösung).
-> Belegt am realen Korpus (341 Paper): **vollständig zitierfähig 0 → 336**, Paper mit
-> Identifikator 329 → **339**, und die kuratierte Übersicht steuert erstmals maschinell
-> **265 Feldwerte** bei (131 Titel, 91 arXiv-IDs, 35 DOIs, 8 Links), die zuvor ungenutzt in einer
-> Markdown-Tabelle lagen ([ADR 0025](docs/adr/0025-citable-paper-metadata.md) ·
-> [ADR 0026](docs/adr/0026-online-metadata-resolution.md)).
-
-### Warum das nötig war (und was gemessen wurde)
-
-Das Werkzeug begleitet eine wissenschaftliche Arbeit – aber bis Phase 11 lieferte **eines von
-acht** Werkzeugen (`get_paper`) überhaupt einen extern auflösbaren Identifikator. Alle
-Suchtreffer, alle Belege in `answer_question` und alle Community-Referenzen trugen ausschließlich
-eine interne `paper_id` und einen lokalen Dateipfad. Der Zitier-Contract aus
-[ADR 0012](docs/adr/0012-llm-bridge-and-answer-synthesis-phase7.md) verlangte Marken `[1]`,
-`[2]` …, die auf nichts Zitierbares zeigten.
-
-Die Vorabmessung korrigierte zugleich die naheliegende Annahme, die Extraktion sei „gut genug":
-
-| Befund (341 Paper) | Wert |
-| --- | --- |
-| Paper mit mindestens einem extrahierten Identifikator | 329 (96,5 %) |
-| davon **nicht** auf der eigenen Titelseite belegt | ≈ 45 |
-| Identifikatoren mit mehr als einem Träger | 9 (u. a. der MBPP-Falsch-Hub, der ACM-Platzhalter) |
-| kuratierte Übersichtszeilen mit externer Angabe | 129 von 131 |
-| davon **abweichend** von der Extraktion | **29** |
-
-Die 29 Abweichungen haben zwei Ursachen, und beide sind lehrreich: teils nennt die Übersicht
-legitim den **Publisher-DOI**, wo die Extraktion die arXiv-ID liest; teils ist die Extraktion
-schlicht **falsch**. Für Retrieval ist das gleichgültig, für eine Literaturangabe nicht – ein
-falscher DOI ist schlimmer als kein DOI.
-
-### K1 – Zitierfähige Metadaten, netzfrei
-
-*Umgesetzt:* eigene **versionierte** Quelle `metadata/paper_metadata.json` (außerhalb des
-regenerierbaren `data/`), **feldweise** Auflösung nach `manual > curated > resolved > extracted`
-mit ausgewiesener Herkunft je Feld, additive Index-Tabelle `paper_metadata`, Durchreichung von
-`identifiers` und `citation_key` bis in jeden Beleg, vollständige Literaturangaben (Harvard und
-APA) in `answer_question`, `get_paper`, dem neunten Werkzeug `get_reference` und
-`python -m scripts.cite`.
-
-*Bewusst nicht:* die vollständige Angabe in **jedem** Chunk-Zitat (fünf Belege desselben Papers
-trügen sie fünfmal) und ein Zugriffsdatum in der Literaturangabe (es wäre vom Ausführungstag
-abhängig und bräche jeden Byte-Vergleich).
-
-### K2 – Online-Auflösung der fehlenden Felder
-
-*Umgesetzt:* `python -m scripts.resolve_metadata` löst Autoren, Venue und Publikationsjahrgang
-über OpenAlex auf (Rückfall: arXiv-Feed), **automatisch** übernommen, aber mit ausgewiesener
-Belegstärke: Identifikator-Treffer `strong`, nicht belegter Identifikator oder Titel-Ähnlichkeit
-`weak`, unterhalb der Schwelle verworfen. Protokoll append-only in `data/metadata_log.md`.
-
-*Bewusst nicht:* eine Auflösung **im Ingest** – der Kern bleibt netzfrei und deterministisch – und
-**kein** MCP-Werkzeug, weil der Lauf schreibt und Netz benötigt.
-
-### Ergebnis am realen Korpus
-
-| Kennzahl | vorher | nachher |
-| --- | --- | --- |
-| vollständig zitierfähige Paper | 0 | **336** von 341 |
-| Paper mit Identifikator | 329 | **339** |
-| schwach belegte Datensätze | – | 66 (ausgewiesen) |
-| Werkzeuge mit Identifikator in der Antwort | 1 von 8 | **9 von 9** |
-
-Offen bleiben **5** Paper, für die keine Quelle einen Treffer liefert; sie sind über einen
-`manual`-Eintrag zu pflegen.
-
----
-
 ## Phase 13 – Referenz-Einträge ohne Volltext
 
 **Ziel:** Ein Paper, von dem nur der Abstract öffentlich zugänglich ist, wird über seine **DOI oder arXiv-ID** zu einem vollwertigen, aber **ausdrücklich unvollständigen** Korpus-Eintrag – auffindbar, zitierfähig und als Ziel von Zitationskanten verfügbar, ohne je den Eindruck zu erwecken, es liege ein Volltext vor.
@@ -608,7 +461,7 @@ Mechanisch fehlt heute alles Nötige: Der Intake liest ausschließlich `*.pdf` u
 | --- | --- |
 | **Keine synthetische PDF** | Strukturierte Daten in ein PDF schreiben, um sie anschließend per Heuristik wieder herauszuparsen, ist ein Verlustkanal ohne Gegenwert – und `reportlab` ist heute reine Test-Abhängigkeit. Erzeugt wird eine **native Stub-Datei** (`.refjson`), die ein zweiter Extraktions-Adapter direkt in ein `CanonicalPaper` überführt. Eigene Endung, damit `papers/*.pdf`-Globs unberührt bleiben und die Datei nie mit `data/canonical/*.json` verwechselt wird. |
 | **„Unvollständig" ist kein Qualitäts-Flag** | Flags sind Befunde über *misslungene* Extraktion. Hier ist es eine **Eigenschaft des Dokuments** – also ein Feld `document_kind` (`full` / `reference`) im Canonical- und im Index-Schema. Nur so können Retrieval, Evaluation und Antwortsynthese darauf reagieren, statt es bloß anzuzeigen. |
-| **Genau ein Weg in den Korpus** | Das Skript schreibt nach `new_papers/`, nie nach `papers/`. Die Übernahme macht der Intake aus [Phase 8](#phase-8--korpus-zufluss-new_papers--intake) – mitsamt Duplikatprüfung. Ein zweiter Einlassweg wäre eine Fehlerquelle, wie schon in [S2](#s2--volltext-holen-opt-in-lizenz-whitelist) festgehalten. |
+| **Genau ein Weg in den Korpus** | Das Skript schreibt nach `new_papers/`, nie nach `papers/`. Die Übernahme macht der Intake aus [Phase 8](docs/roadmap-historie.md#phase-8--korpus-zufluss-new_papers--intake) – mitsamt Duplikatprüfung. Ein zweiter Einlassweg wäre eine Fehlerquelle, wie schon in [S2](#s2--volltext-holen-opt-in-lizenz-whitelist) festgehalten. |
 | **Kein MCP-Werkzeug** | Der Lauf benötigt Netz **und** schreibt Dateien. Copilot ruft Werkzeuge autonom auf; beides gehört daher nicht in Agent-Reichweite (gleiche Begründung wie beim Intake, [ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md), und bei `scripts.resolve_metadata`, [ADR 0026](docs/adr/0026-online-metadata-resolution.md)). |
 
 ### R0 – Ausbeute, Nutzen und Verdrängung messen (zwingend zuerst, mit Abbruchkriterium)
