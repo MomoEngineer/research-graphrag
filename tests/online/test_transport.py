@@ -13,6 +13,7 @@ from typing import Any, cast
 import pytest
 
 from research_graphrag.errors import DomainError, ErrorCode
+from research_graphrag.online import transport
 from research_graphrag.online.transport import (
     MAX_RESPONSE_BYTES,
     PROXY_ENV,
@@ -198,16 +199,82 @@ def test_create_client_reads_proxy_from_environment(monkeypatch: pytest.MonkeyPa
     client = create_client()
 
     assert isinstance(client, ProxyHttpClient)
-    assert client._proxy == "proxy.example:8080"
+    assert client._proxy_for("api.example") == "proxy.example:8080"
 
 
-def test_create_client_without_environment_connects_directly(
+def test_create_client_falls_back_to_the_system_configuration(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Ohne Variable wird direkt verbunden; der Proxy ist die Ausnahme, nicht die Regel."""
+    """Ohne Umgebungsvariable wird Windows befragt – das ist der Weg über eine PAC-Datei."""
+    monkeypatch.delenv(PROXY_ENV, raising=False)
+    monkeypatch.setattr(transport, "detect_system_proxy", lambda _url: "pac.example:8080")
+
+    client = create_client()
+
+    assert isinstance(client, ProxyHttpClient)
+    assert client._proxy_for("api.example") == "pac.example:8080"
+
+
+def test_explicit_proxy_suppresses_the_system_configuration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Eine ausdrückliche Angabe gilt; Windows wird dann gar nicht erst gefragt."""
+    monkeypatch.setattr(transport, "detect_system_proxy", _forbidden)
+    client = ProxyHttpClient("proxy.example:8080", auto_proxy=True)
+
+    assert client._proxy_for("api.example") == "proxy.example:8080"
+
+
+def test_without_autodetection_the_client_stays_direct(monkeypatch: pytest.MonkeyPatch) -> None:
+    """``auto_proxy=False`` heißt Direktverbindung – der bisherige Vertrag bleibt erhalten."""
+    monkeypatch.setattr(transport, "detect_system_proxy", _forbidden)
+
+    assert ProxyHttpClient()._proxy_for("api.example") is None
+
+
+def test_system_proxy_is_detected_once_per_host(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Die Auswertung einer PAC-Datei kostet Zeit; je Host wird deshalb nur einmal gefragt."""
+    seen: list[str] = []
+
+    def _detect(url: str) -> str:
+        seen.append(url)
+        return "pac.example:8080"
+
+    monkeypatch.setattr(transport, "detect_system_proxy", _detect)
+    client = ProxyHttpClient(auto_proxy=True)
+
+    client._proxy_for("api.example")
+    client._proxy_for("api.example")
+    client._proxy_for("arxiv.example")
+
+    assert seen == ["https://api.example/", "https://arxiv.example/"]
+
+
+@pytest.mark.parametrize("detected", ["DIRECT", "proxy ohne port", "", None])
+def test_unusable_system_proxy_leads_to_a_direct_connection(
+    monkeypatch: pytest.MonkeyPatch, detected: str | None
+) -> None:
+    """Der Wert stammt von außen: Was nicht ``host:port`` ist, wird verworfen statt zu scheitern."""
+    monkeypatch.setattr(transport, "detect_system_proxy", lambda _url: detected)
+
+    assert ProxyHttpClient(auto_proxy=True)._proxy_for("api.example") is None
+
+
+def _forbidden(url: str) -> str | None:
+    """Platzhalter für die Systemabfrage, die in diesem Fall nicht stattfinden darf."""
+    raise AssertionError(f"Die Systemkonfiguration wurde unerwartet für {url} befragt.")
+
+
+def test_create_client_without_environment_detects_the_system_proxy(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ohne Variable steht kein Endpunkt fest – die Ermittlung wird dafür eingeschaltet."""
     monkeypatch.delenv(PROXY_ENV, raising=False)
 
-    assert cast(Any, create_client())._proxy is None
+    client = cast(Any, create_client())
+
+    assert client._proxy is None
+    assert client._auto_proxy is True
 
 
 def test_direct_connection_failure_names_the_proxy_variable() -> None:

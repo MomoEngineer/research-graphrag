@@ -54,9 +54,12 @@ Windows-Anmeldekontext über `sspi` (pywin32), danach TLS mit dem **certifi**-Bu
 
 - **Der Proxy-Endpunkt kommt ausschließlich aus der Umgebungsvariablen
   `RESEARCH_GRAPHRAG_PROXY`** (Form `host:port`). Ein Unternehmens-Hostname ist ein Firmeninternum
-  und gehört nicht in ein Repository.
+  und gehört nicht in ein Repository. *(Ergänzt durch
+  [ADR 0032](0032-system-proxy-autodetection.md): Fehlt die Variable, wird der Endpunkt aus der
+  Windows-Systemkonfiguration ermittelt – weiterhin ohne Hostname im Repository.)*
 - **Ohne die Variable** wird direkt verbunden. Das hält den Code an anderen Standorten brauchbar
-  und macht den Proxy zur Ausnahme, nicht zur Voraussetzung.
+  und macht den Proxy zur Ausnahme, nicht zur Voraussetzung. *(Seit ADR 0032: ohne die Variable
+  **und** ohne ermittelbaren Systemproxy.)*
 - **Warum certifi statt des Windows-Speichers:** arXiv wird von der CA „Certainly" ausgestellt,
   deren Wurzelzertifikat im gemessenen Windows-Speicher fehlt (`certificate verify failed`). Mit
   certifi antwortet dieselbe Anfrage mit HTTP 200. Die Verifikation wird **nicht** abgeschaltet.

@@ -386,7 +386,9 @@ python -m scripts.ask "Welche Datensätze werden genutzt?" --synthese
 
 # 3d. (optional, benötigt Netz) Neue Literatur zu einem Thema des eigenen Korpus suchen
 #     Lädt nichts herunter, schreibt nur einen Bericht nach data/online_candidates.md
-$env:RESEARCH_GRAPHRAG_PROXY = "host:port"   # nur nötig, wenn ein Proxy davor liegt
+#     Der Proxy wird aus der Windows-Konfiguration (auch PAC) ermittelt; die Variable
+#     überschreibt das nur, wenn ein anderer Endpunkt gelten soll:
+# $env:RESEARCH_GRAPHRAG_PROXY = "host:port"
 python -m scripts.discover --community 2
 python -m scripts.discover --seed <paper_id> --seit 2023
 

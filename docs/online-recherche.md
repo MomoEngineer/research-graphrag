@@ -29,14 +29,30 @@ eine beobachtete Handlung bleiben.
 
 ## 2. Einrichtung (einmalig)
 
-### 2.1 Ohne Proxy
+### 2.1 Im Regelfall: nichts einzurichten
 
-Besteht direkter Internetzugang, ist **nichts** einzurichten. Weiter bei Abschnitt 3.
+Der Endpunkt wird in zwei Stufen bestimmt
+([ADR 0032](adr/0032-system-proxy-autodetection.md)):
 
-### 2.2 Mit Unternehmens-Proxy
+1. die ausdrückliche Angabe – `RESEARCH_GRAPHRAG_PROXY` oder `--proxy`,
+2. andernfalls die **Windows-Systemkonfiguration**, einschließlich einer hinterlegten
+   **PAC-Datei**.
 
-Der Proxy-Endpunkt wird über die Umgebungsvariable `RESEARCH_GRAPHRAG_PROXY` bekannt gemacht –
-er steht bewusst nirgends im Repository. So ermittelst du ihn unter Windows:
+Damit gilt: Wer über den Browser ins Netz kommt, kommt auch mit diesem Werkzeug ins Netz – ohne
+Vorbereitung. Besteht direkter Internetzugang, ist ohnehin nichts einzurichten. Weiter bei
+Abschnitt 3.
+
+Was Windows für ein Ziel meldet, lässt sich jederzeit nachsehen:
+
+```powershell
+.\.venv\Scripts\python.exe -c "from research_graphrag.online.systemproxy import detect_system_proxy as d; print(d('https://api.openalex.org/'))"
+```
+
+### 2.2 Endpunkt ausdrücklich vorgeben
+
+Nötig nur, wenn die Ermittlung nichts findet (Ausgabe `None`) oder ein **anderer** Endpunkt
+genutzt werden soll. Der Endpunkt steht bewusst nirgends im Repository. So ermittelst du ihn
+unter Windows von Hand:
 
 ```powershell
 # 1. Ist eine automatische Proxy-Konfiguration (PAC) hinterlegt?
@@ -189,8 +205,9 @@ das Herunterladen von Bekanntem.
 | Meldung | Ursache | Lösung |
 | --- | --- | --- |
 | `Bitte mindestens --community oder --seed angeben.` | Kein Anfrageweg gewählt | Abschnitt 3 |
-| `[dependency_error] Keine direkte Verbindung zu … Falls ein Proxy nötig ist …` | Kein Netz oder Proxy nicht gesetzt | `RESEARCH_GRAPHRAG_PROXY` setzen (Abschnitt 2.2) |
-| `[dependency_error] Proxy … nicht erreichbar` | Falscher Endpunkt oder Tippfehler | Endpunkt erneut aus der PAC-Datei ermitteln |
+| `[dependency_error] Keine direkte Verbindung zu …; die Windows-Proxy-Konfiguration nennt für dieses Ziel keinen Endpunkt` | Kein Netz, oder Windows kennt keinen zuständigen Proxy | Endpunkt von Hand setzen (Abschnitt 2.2) |
+| `[dependency_error] Keine direkte Verbindung zu … Falls ein Proxy nötig ist …` | Ein gesetzter Endpunkt fehlt und die Ermittlung war abgeschaltet | `RESEARCH_GRAPHRAG_PROXY` setzen (Abschnitt 2.2) |
+| `[dependency_error] Proxy … nicht erreichbar` | Falscher Endpunkt oder Tippfehler | Gesetzte Variable entfernen (dann greift die Ermittlung) oder Endpunkt erneut aus der PAC-Datei ermitteln |
 | `[dependency_error] Proxy lehnt die Verbindung ab: … 407 …` | Anmeldung am Proxy gescheitert | Windows-Anmeldung prüfen (Sperrbildschirm, abgelaufenes Kerberos-Ticket) |
 | `[dependency_error] … benötigt pywin32 (nur unter Windows verfügbar)` | Proxy-Anmeldung außerhalb von Windows | Ohne Proxy betreiben (Variable nicht setzen) |
 | `[invalid_input] Proxy-Angabe muss die Form 'host:port' haben` | Schreibfehler, z. B. `http://` davor | Nur `host:port` angeben, ohne Schema |

@@ -15,8 +15,10 @@ Zwei gemessene Eigenheiten der Zielumgebung bestimmen den Aufbau
 * Die Verifikation nutzt das **certifi**-Bundle, weil im Windows-Zertifikatsspeicher die
   Wurzel der ausstellenden CA von arXiv fehlt. Abgeschaltet wird die Verifikation nie.
 
-Der Proxy-Endpunkt stammt ausschließlich aus :data:`PROXY_ENV`; ohne diese Variable wird direkt
-verbunden.
+Der Endpunkt wird in zwei Stufen bestimmt: zuerst die ausdrückliche Angabe (``--proxy`` bzw.
+:data:`PROXY_ENV`), danach die **Windows-Systemkonfiguration** über
+:func:`~.systemproxy.detect_system_proxy` – sie wertet auch eine PAC-Datei aus. Erst wenn beides
+nichts liefert, wird direkt verbunden (docs/adr/0032-system-proxy-autodetection.md).
 """
 
 from __future__ import annotations
@@ -33,11 +35,13 @@ from urllib.parse import urlsplit
 import certifi
 
 from ..errors import DomainError, ErrorCode
+from .systemproxy import detect_system_proxy
 
 PROXY_ENV = "RESEARCH_GRAPHRAG_PROXY"
 """Umgebungsvariable mit dem Proxy-Endpunkt (``host:port``).
 
-Ein Unternehmens-Hostname ist ein Firmeninternum und gehört nicht in ein Repository.
+Ein Unternehmens-Hostname ist ein Firmeninternum und gehört nicht in ein Repository. Die Variable
+ist der **Vorrang**-Weg; ohne sie wird die Windows-Systemkonfiguration befragt.
 """
 
 USER_AGENT = "research-graphrag/0.1 (persoenlicher Forschungsassistent; Einzelabfragen)"
@@ -108,12 +112,20 @@ class _NegotiateAuth:
 class ProxyHttpClient:
     """Einzige Implementierung des Ports: direkt oder über einen authentifizierenden Proxy."""
 
-    def __init__(self, proxy: str | None = None, *, timeout: float = DEFAULT_TIMEOUT) -> None:
+    def __init__(
+        self,
+        proxy: str | None = None,
+        *,
+        timeout: float = DEFAULT_TIMEOUT,
+        auto_proxy: bool = False,
+    ) -> None:
         """Erzeugt den Client.
 
         Args:
-            proxy: Endpunkt als ``host:port`` oder ``None`` für eine direkte Verbindung.
+            proxy: Endpunkt als ``host:port``; ``None`` überlässt die Wahl ``auto_proxy``.
             timeout: Zeitgrenze je Verbindung und Lesevorgang in Sekunden.
+            auto_proxy: Ermittelt den Endpunkt ohne ``proxy`` je Zielhost aus der
+                Windows-Systemkonfiguration. Ohne Fund wird direkt verbunden.
 
         Raises:
             DomainError: ``invalid_input`` wenn ``proxy`` nicht der Form ``host:port`` entspricht.
@@ -124,6 +136,8 @@ class ProxyHttpClient:
                 f"Proxy-Angabe muss die Form 'host:port' haben, erhalten: {proxy!r}",
             )
         self._proxy = proxy
+        self._auto_proxy = auto_proxy
+        self._detected: dict[str, str | None] = {}
         self._timeout = timeout
         self._context = ssl.create_default_context(cafile=certifi.where())
 
@@ -171,24 +185,42 @@ class ProxyHttpClient:
 
     def _connect(self, host: str, port: int) -> socket.socket:
         """Öffnet die Verbindung – direkt oder als authentifizierter Tunnel."""
-        if self._proxy is None:
+        proxy = self._proxy_for(host)
+        if proxy is None:
             return self._connect_direct(host, port)
-        return self._connect_tunnel(host, port)
+        return self._connect_tunnel(proxy, host, port)
+
+    def _proxy_for(self, host: str) -> str | None:
+        """Bestimmt den Endpunkt für einen Zielhost; das Ergebnis wird je Host gemerkt.
+
+        Die ausdrückliche Angabe gilt unverändert für jedes Ziel. Nur ohne sie und nur bei
+        ``auto_proxy`` wird Windows befragt – eine PAC-Datei entscheidet hostabhängig, deshalb
+        wird je Host einmal ermittelt und das Ergebnis für weitere Anfragen behalten.
+        """
+        if self._proxy is not None or not self._auto_proxy:
+            return self._proxy
+        if host not in self._detected:
+            self._detected[host] = _validated(detect_system_proxy(f"https://{host}/"))
+        return self._detected[host]
 
     def _connect_direct(self, host: str, port: int) -> socket.socket:
         try:
             sock = socket.create_connection((host, port), timeout=self._timeout)
         except OSError as exc:
+            searched = (
+                "; die Windows-Proxy-Konfiguration nennt für dieses Ziel keinen Endpunkt"
+                if self._auto_proxy
+                else ""
+            )
             raise DomainError(
                 ErrorCode.DEPENDENCY_ERROR,
-                f"Keine direkte Verbindung zu {host}:{port} ({exc}). "
+                f"Keine direkte Verbindung zu {host}:{port} ({exc}){searched}. "
                 f"Falls ein Proxy nötig ist, {PROXY_ENV}=host:port setzen.",
             ) from exc
         sock.settimeout(self._timeout)
         return sock
 
-    def _connect_tunnel(self, host: str, port: int) -> socket.socket:
-        proxy = self._proxy or ""
+    def _connect_tunnel(self, proxy: str, host: str, port: int) -> socket.socket:
         proxy_host, _, proxy_port = proxy.partition(":")
         auth = _NegotiateAuth(proxy_host)
         try:
@@ -238,7 +270,11 @@ class ProxyHttpClient:
 
 
 def create_client(*, proxy: str | None = None, timeout: float = DEFAULT_TIMEOUT) -> HttpClient:
-    """Erzeugt den Standard-Client; der Proxy stammt aus :data:`PROXY_ENV`, wenn nicht gesetzt.
+    """Erzeugt den Standard-Client mit der zweistufigen Endpunkt-Wahl.
+
+    Stufe 1 ist die ausdrückliche Angabe – ``proxy`` oder :data:`PROXY_ENV`. Fehlt sie, ermittelt
+    der Client den Endpunkt bei Bedarf aus der Windows-Systemkonfiguration (Stufe 2, schließt die
+    Auswertung einer PAC-Datei ein). Bleibt auch das ergebnislos, wird direkt verbunden.
 
     Args:
         proxy: Ausdrücklicher Endpunkt ``host:port``; ``None`` liest :data:`PROXY_ENV`.
@@ -248,7 +284,18 @@ def create_client(*, proxy: str | None = None, timeout: float = DEFAULT_TIMEOUT)
         Ein einsatzbereiter :class:`HttpClient`.
     """
     resolved = proxy if proxy is not None else (os.environ.get(PROXY_ENV) or None)
-    return ProxyHttpClient(resolved, timeout=timeout)
+    return ProxyHttpClient(resolved, timeout=timeout, auto_proxy=resolved is None)
+
+
+def _validated(proxy: str | None) -> str | None:
+    """Lässt nur einen Endpunkt der Form ``host:port`` durch; alles andere heißt „kein Proxy".
+
+    Der Wert stammt aus der Windows-Schnittstelle und damit nicht aus der eigenen Konfiguration;
+    ein unerwarteter Wert darf deshalb nicht zum Abbruch führen, sondern nur zur Direktverbindung.
+    """
+    if proxy is None or not _PROXY_PATTERN.match(proxy):
+        return None
+    return proxy
 
 
 def _split_url(url: str) -> tuple[str, int, str]:

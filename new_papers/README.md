@@ -69,8 +69,10 @@ arXiv:2404.16130
   Intake läuft.
 - **Ohne Titel entsteht keine Datei.** Eine kaputte oder unbekannte Kennung wird als Befund
   gemeldet, statt einen wertlosen Eintrag zu erzeugen.
-- **Netz nötig.** Führt der Weg nach außen über einen Proxy, wird er über
-  `RESEARCH_GRAPHRAG_PROXY=host:port` oder `--proxy` angegeben (siehe
+- **Netz nötig.** Führt der Weg nach außen über einen Proxy, wird er aus der
+  Windows-Konfiguration ermittelt – auch aus einer PAC-Datei
+  ([ADR 0032](../docs/adr/0032-system-proxy-autodetection.md)); `RESEARCH_GRAPHRAG_PROXY=host:port`
+  oder `--proxy` überschreiben das (siehe
   [docs/online-recherche.md](../docs/online-recherche.md)). Ohne Netz endet der Lauf mit
   `dependency_error` – ohne Stacktrace und ohne halbe Datei.
 - **Der Intake übernimmt sie regulär.** `python -m scripts.intake` liest neben `*.pdf` auch
