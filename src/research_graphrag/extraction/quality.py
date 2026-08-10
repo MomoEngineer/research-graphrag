@@ -22,6 +22,10 @@ Flag-Katalog:
   siehe docs/adr/0013-chunking-refinement-phase7.md).
 - ``long_chunk:<id>`` – Chunk oberhalb des Zielfensters (bleibt pro Chunk: selten und einzeln
   handlungsleitend, weil ein unteilbarer Übersatz dahintersteht).
+
+Für **Referenz-Einträge ohne Volltext** gilt der Katalog nicht: Dort ist genau ein Befund
+sinnvoll – ``reference_without_abstract`` (siehe :func:`assess_reference` und
+docs/adr/0030-reference-entries-in-corpus-phase13.md).
 """
 
 from __future__ import annotations
@@ -37,6 +41,9 @@ from research_graphrag.extraction.model import (
     Section,
 )
 from research_graphrag.extraction.structure import looks_tabular
+
+FLAG_REFERENCE_WITHOUT_ABSTRACT = "reference_without_abstract"
+"""Einziger Befund eines Referenz-Eintrags: die Datei trägt keinen Abstract."""
 
 _MIN_OCR_LEN = 200
 _OCR_ALNUM_RATIO = 0.55
@@ -102,7 +109,11 @@ def assess(
     min_chars: int = MIN_CHARS,
     max_chars: int = MAX_CHARS,
 ) -> tuple[str, ...]:
-    """Bewertet die Extraktion und liefert eine sortierte, deduplizierte Flag-Liste.
+    """Bewertet die Extraktion **eines Volltext-Dokuments** und liefert die Flag-Liste.
+
+    Für Referenz-Einträge ohne Volltext gilt :func:`assess_reference` – die Prüfungen hier
+    setzen Seitentext, erkannte Abschnitte und ein Chunk-Zielfenster voraus, wovon dort nichts
+    zutrifft (docs/adr/0030-reference-entries-in-corpus-phase13.md).
 
     Args:
         pages: ``(Seitennummer, Seitentext)`` in Reihenfolge.
@@ -145,3 +156,20 @@ def assess(
     flags.extend(f"long_chunk:{chunk.chunk_id}" for chunk in chunks if chunk.char_count > max_chars)
 
     return tuple(sorted(set(flags)))
+
+
+def assess_reference(*, has_abstract: bool) -> tuple[str, ...]:
+    """Bewertet einen **Referenz-Eintrag** ohne Volltext.
+
+    Es gibt hier genau einen sinnvollen Befund. Alle übrigen Flags aus :func:`assess` wären
+    entweder sinnlos (`missing_references`, `short_chunks`) oder sachlich falsch
+    (`no_chunks`, `missing_abstract`); ungeprüft löste jeder Stub zwei bis drei davon aus und
+    verrauschte den Report (docs/adr/0030-reference-entries-in-corpus-phase13.md).
+
+    Args:
+        has_abstract: ``True``, wenn ein Abstract vorliegt.
+
+    Returns:
+        ``("reference_without_abstract",)`` oder ein leeres Tupel.
+    """
+    return () if has_abstract else (FLAG_REFERENCE_WITHOUT_ABSTRACT,)

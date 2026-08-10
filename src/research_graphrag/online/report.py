@@ -11,6 +11,11 @@ vertrauenswürdige Eingabe**. Vor dem Schreiben werden sie deshalb entschärft
 entfallen, Markdown-Steuerzeichen werden maskiert, Längen begrenzt, und Verweise erscheinen nur
 als Klartext mit ``http(s)``-Schema – nie als Markdown-Link mit fremdbestimmtem Ziel
 (docs/adr/0020-online-candidate-search-phase9.md).
+
+Über :func:`append_section` teilen sich drei Vorgänge denselben Anhänge-Mechanismus: die
+Kandidatensuche (``data/online_candidates.md``), die Metadaten-Auflösung
+(``data/metadata_log.md``, docs/adr/0026-online-metadata-resolution.md) und die Referenz-Auflösung
+(``data/references_log.md``, docs/adr/0029-reference-stub-resolution-phase13.md).
 """
 
 from __future__ import annotations
@@ -22,6 +27,7 @@ from pathlib import Path
 
 from .candidates import Candidate, KnownCandidate
 from .metadata import Resolution
+from .references import ACTION_SKIPPED, ACTION_WRITTEN, ReferenceOutcome
 from .sources import SearchQuery, SourceResult
 
 REPORT_NAME = "online_candidates.md"
@@ -29,6 +35,9 @@ REPORT_NAME = "online_candidates.md"
 
 METADATA_REPORT_NAME = "metadata_log.md"
 """Dateiname des Protokolls der Metadaten-Auflösung (append-only)."""
+
+REFERENCES_REPORT_NAME = "references_log.md"
+"""Dateiname des Protokolls der Referenz-Auflösung (append-only, Phase 13 / R1)."""
 
 RAW_DIR_NAME = "online_raw"
 """Verzeichnis der datierten Rohantworten (Reproduzierbarkeit)."""
@@ -60,6 +69,16 @@ _METADATA_HEADER = (
     "Append-only Protokoll von `python -m scripts.resolve_metadata` (Phase 12 / K2).",
     "Jede Übernahme nennt Quelle, Belegart und Konfidenz; schwach belegte Einträge sind",
     "als solche markiert (docs/adr/0026-online-metadata-resolution.md).",
+    "",
+)
+
+_REFERENCES_HEADER = (
+    "# Referenz-Einträge",
+    "",
+    "Append-only Protokoll von `python -m scripts.resolve_references` (Phase 13 / R1).",
+    "Erzeugt werden Stub-Dateien `*.refjson` im Eingangsordner – **kein** Bestand: Der Weg in",
+    "den Korpus führt ausschließlich über `python -m scripts.intake`",
+    "(docs/adr/0029-reference-stub-resolution-phase13.md).",
     "",
 )
 
@@ -332,4 +351,76 @@ def append_resolutions(data_path: Path, timestamp: str, resolutions: Sequence[Re
         data_path / METADATA_REPORT_NAME,
         render_resolutions(timestamp, resolutions),
         _METADATA_HEADER,
+    )
+
+
+def render_references(timestamp: str, outcomes: Sequence[ReferenceOutcome]) -> list[str]:
+    """Rendert einen Lauf der Referenz-Auflösung als Markdown-Abschnitt.
+
+    Der Abschnitt trennt die **geschriebenen** Stub-Dateien von den übersprungenen und den nicht
+    aufgelösten Kennungen. Ein Stub ohne Abstract wird ausdrücklich markiert – er verlangt den
+    manuellen Nachtrag (docs/adr/0029-reference-stub-resolution-phase13.md).
+
+    Args:
+        timestamp: Zeitpunkt des Laufs (UTC, sortierbar).
+        outcomes: Die Ergebnisse des Laufs.
+
+    Returns:
+        Die Zeilen des Abschnitts (ohne abschließenden Zeilenumbruch).
+    """
+    written = [item for item in outcomes if item.action == ACTION_WRITTEN]
+    skipped = [item for item in outcomes if item.action == ACTION_SKIPPED]
+    open_items = [item for item in outcomes if item.action not in (ACTION_WRITTEN, ACTION_SKIPPED)]
+    without_abstract = [item for item in written if not item.has_abstract]
+
+    lines = [
+        f"## Lauf {timestamp}",
+        "",
+        f"- Gelesen: {len(outcomes)} Einträge · geschrieben: {len(written)} "
+        f"(davon {len(without_abstract)} ohne Abstract) · übersprungen: {len(skipped)} · "
+        f"offen: {len(open_items)}",
+        "",
+    ]
+    if written:
+        lines += ["### Stub-Dateien erzeugt", ""]
+        for item in written:
+            marker = "" if item.has_abstract else " **(ohne Abstract – bitte nachtragen)**"
+            name = item.path.name if item.path is not None else ""
+            lines.append(
+                f"- `{escape_markdown(item.request.label, limit=200)}` → "
+                f"`{escape_markdown(name, limit=200)}`{marker}\n"
+                f"    - {escape_markdown(item.title, limit=MAX_TITLE_CHARS) or '(ohne Titel)'}"
+            )
+        lines.append("")
+    if skipped:
+        lines += ["### Übersprungen (keine Abfrage gestellt)", ""]
+        for item in skipped:
+            lines.append(
+                f"- `{escape_markdown(item.request.label, limit=200)}` — "
+                f"{escape_markdown(item.reason, limit=100)}: "
+                f"{escape_markdown(item.note, limit=300)}"
+            )
+        lines.append("")
+    if open_items:
+        lines += ["### Nicht aufgelöst", ""]
+        for item in open_items:
+            lines.append(
+                f"- Zeile {item.request.line_number} "
+                f"`{escape_markdown(item.request.label, limit=200)}` — "
+                f"{escape_markdown(item.note, limit=300)}"
+            )
+        lines.append("")
+    if not outcomes:
+        lines += ["*Nichts zu tun – die Kennungsliste enthält keine offenen Einträge.*", ""]
+    return lines
+
+
+def append_references(
+    data_path: Path, timestamp: str, outcomes: Sequence[ReferenceOutcome]
+) -> Path:
+    """Hängt einen Lauf an ``data/references_log.md`` an (byte-erhaltend, atomar)."""
+    return append_section(
+        data_path / REFERENCES_REPORT_NAME,
+        render_references(timestamp, outcomes),
+        _REFERENCES_HEADER,
     )

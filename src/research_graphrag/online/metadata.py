@@ -42,7 +42,8 @@ from .sources import (
     OPENALEX_ENDPOINT,
     SearchQuery,
     SourceResult,
-    fetch_arxiv,
+    authors_from_feed,
+    fetch_arxiv_by_id,
     parse_openalex,
 )
 from .transport import HttpClient
@@ -132,9 +133,15 @@ def _clean(text: str, *, limit: int = MAX_FIELD_CHARS) -> str:
     return collapsed[:limit].strip()
 
 
-def openalex_id_url(identifier: str) -> str:
-    """Baut die OpenAlex-Abfrage über einen DOI (der Dienst löst DOIs direkt auf)."""
-    return f"{OPENALEX_ENDPOINT}/doi:{quote(identifier, safe='')}?select={quote(METADATA_FIELDS)}"
+def openalex_id_url(identifier: str, *, fields: str = METADATA_FIELDS) -> str:
+    """Baut die OpenAlex-Abfrage über einen DOI (der Dienst löst DOIs direkt auf).
+
+    Args:
+        identifier: DOI des gesuchten Werks (für arXiv der DataCite-DOI).
+        fields: Angeforderter Feldsatz; die Referenz-Auflösung fordert zusätzlich den
+            invertierten Abstract-Index an (docs/adr/0029-reference-stub-resolution-phase13.md).
+    """
+    return f"{OPENALEX_ENDPOINT}/doi:{quote(identifier, safe='')}?select={quote(fields)}"
 
 
 def openalex_title_url(title: str, *, limit: int = TITLE_SEARCH_LIMIT) -> str:
@@ -233,8 +240,19 @@ def _record_from(
     )
 
 
-def _fetch(client: HttpClient, url: str) -> SourceResult:
-    """Führt eine OpenAlex-Abfrage aus und verpackt sie wie die übrigen Quellen."""
+def fetch_openalex_url(client: HttpClient, url: str) -> SourceResult:
+    """Führt eine OpenAlex-Abfrage aus und verpackt sie wie die übrigen Quellen.
+
+    Öffentlich, weil die Referenz-Auflösung denselben Weg nimmt und keine zweite
+    Abruf-Mechanik entstehen soll (docs/adr/0029-reference-stub-resolution-phase13.md).
+
+    Args:
+        client: Injizierter Transport-Port (die einzige Stelle mit Netzzugriff).
+        url: Vollständige Abfrage-URL.
+
+    Returns:
+        Das Quellenergebnis samt Rohantwort und Kontingent-Angaben.
+    """
     response = client.get(url, accept="application/json")
     note = "" if response.status == 200 else f"OpenAlex antwortete mit HTTP {response.status}"
     return SourceResult(
@@ -259,7 +277,7 @@ def _by_identifier(client: HttpClient, target: ResolutionTarget) -> Resolution |
 
     collected: list[SourceResult] = []
     for match, identifier in attempts:
-        source = _fetch(client, openalex_id_url(identifier))
+        source = fetch_openalex_url(client, openalex_id_url(identifier))
         collected.append(source)
         if source.status != 200:
             continue
@@ -286,7 +304,7 @@ def _by_title(client: HttpClient, target: ResolutionTarget) -> Resolution | None
     """Versucht die Titel-Suche mit Ähnlichkeitsprüfung."""
     if not target.title.strip():
         return None
-    source = _fetch(client, openalex_title_url(target.title))
+    source = fetch_openalex_url(client, openalex_title_url(target.title))
     if source.status != 200:
         return Resolution(target=target, record=None, note=source.note, raw=(source,))
 
@@ -317,11 +335,22 @@ def _by_title(client: HttpClient, target: ResolutionTarget) -> Resolution | None
 
 
 def _by_arxiv_feed(client: HttpClient, target: ResolutionTarget) -> Resolution | None:
-    """Rückfall auf den arXiv-Feed (liefert Titel, Autoren und das Preprint-Jahr)."""
+    """Rückfall auf den arXiv-Feed – abgefragt über die **Kennung**, nicht über eine Volltextsuche.
+
+    Die Abfrage nutzt ``id_list``: Die früher verwendete Suche ``search_query=all:"<id>"``
+    durchsucht den **Volltext** und liefert dadurch fremde Werke (gemessen in Phase 13 / R1:
+    ``1706.03762`` ergab ``2002.05202``). Die ID-Prüfung unten hätte den Fehlgriff zwar verworfen –
+    damit war der Rückfall aber wirkungslos statt falsch
+    (docs/adr/0026-online-metadata-resolution.md, Nachtrag).
+
+    Der Feed liefert Titel, **Autoren** und das Preprint-Jahr. Ohne die Autoren bliebe der
+    Datensatz unvollständig, und genau dafür existiert dieser Rückfall
+    (docs/adr/0025-citable-paper-metadata.md).
+    """
     if not target.arxiv_id:
         return None
     query = SearchQuery(query_id=target.paper_id, terms=(target.arxiv_id,), reason="Metadaten")
-    source = fetch_arxiv(client, query, limit=1)
+    source = fetch_arxiv_by_id(client, target.arxiv_id, query)
     if source.status != 200 or not source.candidates:
         return Resolution(target=target, record=None, note=source.note, raw=(source,))
 
@@ -339,7 +368,7 @@ def _by_arxiv_feed(client: HttpClient, target: ResolutionTarget) -> Resolution |
         paper_id=target.paper_id,
         origin=ORIGIN_RESOLVED,
         title=_clean(candidate.title),
-        authors=(),
+        authors=authors_from_feed(source.raw)[:MAX_AUTHORS],
         year=candidate.year,
         doi=_clean(candidate.doi, limit=200),
         arxiv_id=target.arxiv_id,

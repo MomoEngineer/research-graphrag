@@ -14,20 +14,31 @@ from pathlib import Path
 from typing import Any
 
 from research_graphrag.bibliography.styles import reference_payload
+from research_graphrag.extraction.model import DOCUMENT_KIND_REFERENCE
 from research_graphrag.generation.synthesis import Evidence, EvidenceSource
 from research_graphrag.indexing.metadata_index import load_paper_metadata
 from research_graphrag.retrieval.basic import BasicSearchResult
 from research_graphrag.retrieval.drift import DriftSearchResult
 from research_graphrag.retrieval.global_search import GlobalSearchResult
 from research_graphrag.retrieval.local import LocalSearchResult
-from research_graphrag.retrieval.provenance import Citation, PaperRef, page_label
+from research_graphrag.retrieval.provenance import (
+    REFERENCE_EVIDENCE_MARKER,
+    Citation,
+    PaperRef,
+    page_label,
+)
+
+
+def _marker(document_kind: str) -> str:
+    """Anhängsel des Provenienz-Labels, das einen Referenz-Eintrag als solchen ausweist."""
+    return f" · {REFERENCE_EVIDENCE_MARKER}" if document_kind == DOCUMENT_KIND_REFERENCE else ""
 
 
 def _citation_entry(citation: Citation) -> EvidenceSource:
     """Bildet ein Chunk-Zitat auf einen Beleg mit Abschnitts-/Seiten-Label ab."""
     section = f" · Abschnitt {citation.section_title}" if citation.section_title else ""
     pages = page_label(citation.page_number, citation.page_end)
-    label = f"Paper {citation.paper_id}{section} · {pages}"
+    label = f"Paper {citation.paper_id}{section} · {pages}{_marker(citation.document_kind)}"
     return EvidenceSource(
         paper_id=citation.paper_id,
         label=label,
@@ -35,6 +46,7 @@ def _citation_entry(citation: Citation) -> EvidenceSource:
         source_uri=citation.source_uri,
         identifiers=citation.identifiers,
         citation_key=citation.citation_key,
+        document_kind=citation.document_kind,
     )
 
 
@@ -42,11 +54,12 @@ def _paper_entry(ref: PaperRef, community_id: int) -> EvidenceSource:
     """Bildet ein repräsentatives Paper einer Community auf einen Beleg ab."""
     return EvidenceSource(
         paper_id=ref.paper_id,
-        label=f"Paper {ref.paper_id} · Community #{community_id}",
+        label=f"Paper {ref.paper_id} · Community #{community_id}{_marker(ref.document_kind)}",
         snippet=ref.snippet,
         source_uri=ref.source_uri,
         identifiers=ref.identifiers,
         citation_key=ref.citation_key,
+        document_kind=ref.document_kind,
     )
 
 

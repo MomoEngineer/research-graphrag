@@ -140,6 +140,7 @@ def test_result_to_dict_shape(tmp_path: Path) -> None:
     assert set(payload) == {"paper", "cites", "cited_by"}
     assert set(payload["paper"]) == {
         "paper_id",
+        "document_kind",
         "source_uri",
         "identifiers",
         "citation_key",
@@ -147,6 +148,7 @@ def test_result_to_dict_shape(tmp_path: Path) -> None:
     }
     assert set(payload["cited_by"][0]) == {
         "paper_id",
+        "document_kind",
         "source_uri",
         "identifiers",
         "citation_key",

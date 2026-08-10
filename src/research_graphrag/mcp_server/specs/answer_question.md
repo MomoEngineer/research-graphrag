@@ -12,7 +12,7 @@
 | Feld | Wert |
 | --- | --- |
 | **Tool-Name** | `answer_question` |
-| **Version** | `0.1.0` |
+| **Version** | `0.2.0` |
 | **Capability-Schicht** | Antwort / Synthese (siehe README.md) |
 | **Status** | Implementiert (Phase 7 / A1) |
 
@@ -58,6 +58,7 @@ Für Clients mit eigenem Modell (GitHub Copilot) ist der **Default ohne Synthese
       {
         "index": 1,
         "paper_id": "…",
+        "document_kind": "full",
         "label": "Paper … · Abschnitt … · Seite 7",
         "snippet": "…",
         "source_uri": "file:///…",
@@ -92,6 +93,7 @@ Für Clients mit eigenem Modell (GitHub Copilot) ist der **Default ohne Synthese
 - `mode` ist der **tatsächlich verwendete** Modus (bei `auto` die Router-Entscheidung).
 - `routing` weist aus, **warum** dieser Modus gewählt wurde – `confidence` ist `strong` (eindeutiger Kandidat), `weak` (Gleichstand → Fallback `basic`) oder `none` (kein strukturelles Signal → Default `basic`), `signals` nennt die auslösenden Signale. Bei **explizit** gewähltem `mode` ist das Feld `null`, weil keine Heuristik beteiligt war ([ADR 0017](../../../../docs/adr/0017-router-hardening-phase7.md)).
 - `evidence.items` sind **deterministisch nummeriert** (`index` = Zitatmarke `[n]`); `label` bündelt die Provenienz (Paper · Abschnitt · Seite bzw. Community-Vertreter). Läuft ein Chunk über einen Seitenumbruch, nennt das Label eine Range („Seiten 7–8", [ADR 0013](../../../../docs/adr/0013-chunking-refinement-phase7.md)). `identifiers` und `citation_key` machen jeden Beleg **extern auflösbar** und können leer sein.
+- `document_kind` ist `full` (Volltext) oder `reference` (**Referenz-Eintrag ohne Volltext**). Bei `reference` trägt das `label` zusätzlich den Klartext-Zusatz „Referenz-Eintrag ohne Volltext" und statt einer Seite die Angabe „ohne Seite (Abstract)". Der `citation_contract` verlangt, diese Einschränkung im Antworttext zu **benennen**; die zugehörige Literaturangabe in `references` bleibt davon unberührt vollständig ([ADR 0031](../../../../docs/adr/0031-reference-contract-and-guardrail-phase13.md)).
 - `references` ist die **Literaturliste** zur Evidenz: je beteiligtem Paper **ein** Eintrag mit der fertigen Angabe in Harvard und APA, in der Reihenfolge des ersten Auftretens in `evidence.items`. Die Nutzlast ist dieselbe wie das Feld `reference` von `get_reference`; `citable = false` weist einen unvollständigen Datensatz aus, statt fehlende Felder zu raten ([ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md)).
 - `answer` ist bei `generated = false` leer; `model` benennt bei erfolgreichem Sampling das Client-Modell.
 - `citation_contract` ist die verbindliche Vorgabe für die Formulierung (auch für den Aufrufer, der selbst formuliert).

@@ -20,7 +20,7 @@ nachdem eine Suche ihm eine Paper-ID geliefert hat.
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
 | `get_paper` | Funktion | Paper-ID → `PaperDetail` |
-| `PaperDetail` | Dataclass | Metadaten mit `to_dict()` |
+| `PaperDetail` | Dataclass | Metadaten mit `to_dict()`, inkl. `document_kind` |
 
 ## 3. Ablauf
 
@@ -48,6 +48,14 @@ nutzerbestimmter Pfad in eine Dateisystem-Operation gelangt.
 Aus demselben Grund liest das Modul **nicht** aus `data/canonical/`, obwohl dort mehr Details
 lägen: Der Index ist die Quelle der Wahrheit, und der Canonical-Cache ist nicht versioniert und
 könnte fehlen.
+
+### `document_kind` trennt „unvollständig" von „defekt"
+
+Ein Referenz-Eintrag ohne Volltext liefert `n_pages = 0`, `n_chunks = 1` und genau einen
+Abschnitt. Ohne die Dokumentart sähe das nach einer misslungenen Extraktion aus; mit ihr ist es
+die vollständige Auskunft über ein Paper, dessen Volltext nicht beschaffbar war. Die
+Literaturangabe in `reference` bleibt davon unberührt vollständig
+([ADR 0031](../../../../docs/adr/0031-reference-contract-and-guardrail-phase13.md)).
 
 ### Die Abschnittsfolge
 

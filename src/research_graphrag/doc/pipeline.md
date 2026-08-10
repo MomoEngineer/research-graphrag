@@ -4,7 +4,7 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/pipeline.py` |
 | **Paket** | Top-Level – Orchestrierung |
-| **Phase** | 0b (eingeführt), 6 (atomarer Swap), 7 / A2 (Zitationsgraph), 12 / K1 (Zitierdaten) |
+| **Phase** | 0b (eingeführt), 6 (atomarer Swap), 7 / A2 (Zitationsgraph), 12 / K1 (Zitierdaten), 13 / R2 (zweiter Dokumenttyp) |
 | **Grundlagen** | [ADR 0005](../../../docs/adr/0005-graphrag-index-backend-open.md), [ADR 0010](../../../docs/adr/0010-drop-in-workflow-and-qa-phase6.md), [ADR 0011](../../../docs/adr/0011-intra-corpus-citation-graph-phase7.md) |
 
 ---
@@ -24,6 +24,7 @@ Neubau schließt Inkonsistenzen aus.
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
 | `ingest` | Funktion | Führt den gesamten Lauf aus und liefert die Zählwerte |
+| `forget_source` | Funktion | Vergisst eine nicht mehr vorhandene Korpus-Datei (Manifest-Eintrag und verwaistes Canonical) |
 | `IngestReport` | Dataclass | Zählwerte: extrahiert, übersprungen, Chunks, Flags, Graph, Zitationen, Zitierdaten |
 | `OVERVIEW_FILENAME` | Konstante | Dateiname der kuratierten Übersicht (Quelle der Herkunft `curated`) |
 

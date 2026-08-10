@@ -28,7 +28,7 @@ research-graphrag/
 │  ├─ glossary.md
 │  └─ adr/
 │     ├─ README.md
-│     └─ 0001-*.md … 0028-*.md
+│     └─ 0001-*.md … 0030-*.md
 ├─ templates/
 │  ├─ tool-spec.md
 │  ├─ module-doc.md              # Vorlage Modul-Doku (ADR 0018)
@@ -48,6 +48,7 @@ research-graphrag/
 │  ├─ cite.py                    # Literaturangabe in Harvard/APA (read-only, Phase 12 / K1)
 │  ├─ discover.py                # Online-Kandidatensuche ohne Download (separat startbar, Phase 9 / S1)
 │  ├─ resolve_metadata.py        # Zitationsdaten online auflösen (separat startbar, Phase 12 / K2)
+│  ├─ resolve_references.py      # DOI/arXiv-Liste → Stub-Dateien im Eingang (separat startbar, Phase 13 / R1)
 │  ├─ status.py                  # Read-only Index-/Korpus-Status + Konsistenz (Phase 6)
 │  ├─ backup.py                  # Sicherung des nicht reproduzierbaren Bestandes (Phase 11 / B1)
 │  ├─ qa.py                      # Prüf-Fragen je Modus durchspielen (QS-Harness, Phase 6; `--quantitativ` seit Phase 7 / A6)
@@ -110,6 +111,7 @@ research-graphrag/
 │  │  ├─ candidates.py           #   Kandidaten-Modell + Dedup (nutzt die Intake-Logik)
 │  │  ├─ search.py               #   Anfragen aus dem Bestand + Laufsteuerung
 │  │  ├─ metadata.py             #   Auflösung der Zitationsdaten (Phase 12 / K2)
+│  │  ├─ references.py           #   Kennungsliste → Stub-Dateien *.refjson (Phase 13 / R1)
 │  │  └─ report.py               #   append-only Berichte + Ablage der Rohantworten
 │  ├─ bibliography/              # Zitierfähige Metadaten (Phase 12 / K1)
 │  │  ├─ doc/                    #   Modul-Dokus
@@ -137,10 +139,11 @@ research-graphrag/
 ├─ metadata/                     # versionierte Zitationsdaten (Phase 12)
 │  ├─ README.md
 │  └─ paper_metadata.json        #   Herkünfte `resolved` (online) und `manual` (Handpflege)
-├─ new_papers/                   # Eingangsordner des Intake (nicht versioniert, außer README.md)
+├─ new_papers/                   # Eingangsordner des Intake (nicht versioniert, außer README.md und referenzen.txt)
+│  ├─ referenzen.txt             #   kuratierte DOI-/arXiv-Liste der Referenz-Einträge (versioniert, Phase 13 / R1)
 │  └─ _duplikate/                #   Quarantäne der Identifikator-Duplikate (vom Intake angelegt)
-├─ papers/                       # PDF-Korpus (nicht versioniert)
-├─ data/                         # Canonical JSON 0.4.0, manifest.json, index/, quality_report.*, intake_log.md, online_candidates.md, metadata_log.md, online_raw/ (nicht versioniert)
+├─ papers/                       # PDF-Korpus und Referenz-Einträge `*.refjson` (nicht versioniert)
+├─ data/                         # Canonical JSON 0.4.0, manifest.json, index/, quality_report.*, intake_log.md, online_candidates.md, metadata_log.md, references_log.md, online_raw/ (nicht versioniert)
 └─ tests/                        # gespiegelt zu src/research_graphrag/
    ├─ conftest.py                # anyio-Backend + make_pdf-Fixture
    ├─ test_smoke.py
@@ -154,7 +157,7 @@ research-graphrag/
    ├─ overview/                  # Übersicht-Entwürfe (Phase 2)
    ├─ generation/                # LLM-Bridge: Port, Evidenz, Synthese, CLI-Pfad (Phase 7 / A1)
    ├─ evaluation/                # Gold-Set, Kennzahlen, Modus-Lauf, Baseline, Ausgabe (Phase 7 / A6) + Router-Messung (A7) + Multi-Hop (Phase 10 / V3)
-   ├─ online/                   # Transport-Port, Quellen-Adapter, Dedup, Bericht, CLI (Phase 9 / S1) + Metadaten-Auflösung (Phase 12 / K2)
+   ├─ online/                   # Transport-Port, Quellen-Adapter, Dedup, Bericht, CLI (Phase 9 / S1) + Metadaten-Auflösung (Phase 12 / K2) + Referenz-Einträge (Phase 13 / R1)
    ├─ bibliography/            # Modell, Auflösung, Speicher, kuratierte Quelle, Stile (Phase 12 / K1)
    ├─ mcp_server/                # Server-Contract via In-Memory-Client (Phase 5) + Sampling (Phase 7)
    └─ integration/               # End-to-End-Durchstich (M1) + Drop-in-Freshness/atomarer Swap + Status (Phase 6/7)
@@ -227,13 +230,42 @@ research-graphrag/
 > Änderung am Retrieval-Contract
 > ([ADR 0023](adr/0023-multihop-citation-evaluation-phase10.md)).
 
-> **Geplant (Phasen 9–11, [Roadmap.md](../Roadmap.md)):** Aus **Phase 9** sind S0 (Machbarkeit)
-> und S1 (Kandidatensuche) erledigt; **S2** (Volltext-Download) bleibt zurückgestellt, weil die
-> Lizenzangaben der Quellen keine belastbare Whitelist tragen. Aus **Phase 10** sind **V1**
-> (Local Multi-Seed) und **V2** (DRIFT-Vereinigung + Fallback) erledigt; **V3–V4** und die
-> Betriebsthemen der Phase 11 arbeiten die
-> übrigen in [ADR 0016](adr/0016-quantitative-retrieval-evaluation-phase7.md) belegten
-> Retrieval-Befunde ab. Die abgeschlossenen Phasen 0–7 sind in der
+> **Phase 13 / R1** ergänzt das Paket `online/` um `references.py` und `scripts/` um das dünne
+> `scripts/resolve_references.py`. Aus der kuratierten Kennungsliste `new_papers/referenzen.txt`
+> (versioniert – Ausnahme in `.gitignore`) entstehen Stub-Dateien `*.refjson` im Eingangsordner;
+> protokolliert wird append-only nach `data/references_log.md`, das zusammen mit der Liste in den
+> Sicherungsumfang aus [ADR 0027](adr/0027-corpus-backup-phase11.md) aufgenommen ist.
+> `online/metadata.py` wird dafür minimal geöffnet (`fetch_openalex_url`, wählbarer Feldsatz in
+> `openalex_id_url`). Kein Schema-Eingriff, **kein Re-Ingest**, kein Contract berührt, **kein**
+> MCP-Werkzeug ([ADR 0029](adr/0029-reference-stub-resolution-phase13.md)).
+
+> **Phase 13 / R2** macht Intake, Extraktion und Index **dokumententyp-fähig**: Neu sind
+> `extraction/refstub.py` (zweiter Adapter und einzige Definitionsstelle des Stub-Formats),
+> `pipeline.forget_source` und `overview.drafts.retarget_overview_row`. `document_kind` wandert
+> ins Canonical- (**0.4.0 → 0.5.0**, erzwingt Re-Extract) und Index-Schema (**0.4.0 → 0.5.0**,
+> voller Re-Index genügt). Ein Referenz-Eintrag wird nach seinem **Titel** benannt, trägt keine
+> Seitenangabe (`page_number = 0`) und wird von einem später eintreffenden **Volltext abgelöst**.
+> Kein Contract berührt, **kein** MCP-Werkzeug
+> ([ADR 0030](adr/0030-reference-entries-in-corpus-phase13.md)).
+
+> **Phase 13 / R3** bricht den Contract bewusst: `document_kind` wird **Pflichtbestandteil** von
+> `Hit`, `Citation`, `PaperRef`, `EvidenceItem` und `PaperDetail`; sieben Tool-Spezifikationen
+> steigen in der Version (`search_local`/`search_drift` auf `0.3.0`, die übrigen auf `0.2.0`,
+> `get_reference` bleibt bewusst unverändert). Neu sind `REFERENCE_EVIDENCE_MARKER` in
+> `retrieval/provenance.py` und `demote_references` in `indexing/tfidf_index.py` – die
+> **gemessene** Nachrangigkeits-Guardrail, die umsortiert statt auszusortieren.
+> `evaluation/gold.py` schließt Referenz-Einträge von der mechanischen Label-Ableitung aus
+> (`INDEX_SCHEMA_VERSION` **0.5.0**), beide Baselines werden neu eingefroren. **Kein**
+> Schema-Eingriff, **kein Re-Ingest**, **kein** neues MCP-Werkzeug
+> ([ADR 0031](adr/0031-reference-contract-and-guardrail-phase13.md)).
+
+> **Geplant (Phasen 9–11 und 13, [Roadmap.md](../Roadmap.md)):** Aus **Phase 9** sind S0
+> (Machbarkeit) und S1 (Kandidatensuche) erledigt; **S2** (Volltext-Download) bleibt
+> zurückgestellt, weil die Lizenzangaben der Quellen keine belastbare Whitelist tragen. Aus
+> **Phase 10** sind **V1** (Local Multi-Seed), **V2** (DRIFT-Vereinigung + Fallback) und **V3**
+> (Multi-Hop-Evaluation) erledigt; offen bleibt **V4**. Aus **Phase 11** sind **B1** (Sicherung)
+> erledigt und **B6** geprüft und verworfen. Aus **Phase 13** sind **R1** und **R2** erledigt;
+> **R3** (Contract, Baselines, Guardrail) ist offen. Die abgeschlossenen Phasen 0–7 sind in der
 > [Roadmap-Historie](roadmap-historie.md) archiviert.
 
 ### Zuordnung zu den Roadmap-Phasen

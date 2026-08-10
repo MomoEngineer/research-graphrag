@@ -137,6 +137,7 @@ def test_result_to_dict_shape() -> None:
     assert set(payload["evidence"]["items"][0]) == {
         "index",
         "paper_id",
+        "document_kind",
         "label",
         "snippet",
         "source_uri",

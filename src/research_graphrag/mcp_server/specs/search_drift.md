@@ -16,7 +16,7 @@
 | Feld | Wert |
 | --- | --- |
 | **Tool-Name** | `search_drift` (generisch) |
-| **Version** | `0.2.0` |
+| **Version** | `0.3.0` |
 | **Capability-Schicht** | Retrieval – DRIFT Search (siehe README.md) |
 | **Status** | Implementiert (Phase 4; Community-Vereinigung und Fallback seit Phase 10 / V2) |
 
@@ -50,17 +50,19 @@ Liefert dieser Pfad **keine** Belege, fällt das Werkzeug sichtbar auf die Chunk
       "score": 0.21,
       "size": 27,
       "keywords": ["graph", "graphrag", "retrieval", "…"],
-      "representatives": [ { "paper_id": "…", "source_uri": "file:///…", "snippet": "…", "identifiers": { "arxiv": "…" }, "citation_key": "…" } ]
+      "representatives": [ { "paper_id": "…", "document_kind": "full", "source_uri": "file:///…", "snippet": "…", "identifiers": { "arxiv": "…" }, "citation_key": "…" } ]
     }
   ],
   "fallback": false,
   "citations": [
-    { "paper_id": "…", "section_title": "…", "page_number": 6, "page_end": 6, "chunk_id": "…", "score": 0.0325, "score_tfidf": 0.3, "score_bm25": 14.2, "source_uri": "file:///…", "snippet": "…", "identifiers": { "doi": "10.…", "arxiv": "2503.06689", "url": "https://…" }, "citation_key": "Beispiel2023" }
+    { "paper_id": "…", "document_kind": "full", "section_title": "…", "page_number": 6, "page_end": 6, "chunk_id": "…", "score": 0.0325, "score_tfidf": 0.3, "score_bm25": 14.2, "source_uri": "file:///…", "snippet": "…", "identifiers": { "doi": "10.…", "arxiv": "2503.06689", "url": "https://…" }, "citation_key": "Beispiel2023" }
   ]
 }
 ```
 
 `communities` ist absteigend nach Score sortiert und **leer**, wenn keine Community zur Anfrage passt. In diesem Fall ist `fallback` **`true`**, und die `citations` stammen aus der corpusweiten Chunk-Suche – sie sind dann **nicht** auf Community-Mitglieder beschränkt. `fallback` ist ebenfalls `true`, wenn Communities gefunden wurden, ihre Mitglieder aber keinen passenden Chunk enthalten. Sind auch corpusweit keine Belege zu finden, bleibt `citations` leer.
+
+`document_kind` ist `full` (Volltext) oder `reference` (**Referenz-Eintrag ohne Volltext**). In den `citations` sind Referenz-Einträge **nachrangig** ([ADR 0031](../../../../docs/adr/0031-reference-contract-and-guardrail-phase13.md)); als Community-Vertreter treten sie nicht auf, weil sie keiner Community angehören.
 
 `communities[*].score` ist der TF-IDF-Score des Community-Rankings (unverändert); in den `citations` ist `score` dagegen der **Fusionswert** der Hybrid-Wertung mit den Rohwerten `score_tfidf`/`score_bm25` ([ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)). Die beiden Werte sind **nicht** miteinander vergleichbar.
 

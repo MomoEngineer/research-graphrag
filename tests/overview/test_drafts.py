@@ -10,19 +10,23 @@ import pytest
 
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.model import (
+    DOCUMENT_KIND_REFERENCE,
     SECTION_KIND_ABSTRACT,
     CanonicalPaper,
     Chunk,
     Section,
 )
 from research_graphrag.overview.drafts import (
+    REFERENCE_DRAFT_PREFIX,
     append_overview_rows,
     build_draft_row,
+    display_name,
     extractive_summary,
     keyword_table,
     link_column,
     next_draft_number,
     parse_internal_links,
+    retarget_overview_row,
 )
 
 _HEADER = (
@@ -132,6 +136,102 @@ def test_next_draft_number_continues_existing_series() -> None:
     """Die ID-Reihe setzt hinter der höchsten vorhandenen Z-Nummer fort."""
     assert next_draft_number(_UEBERSICHT) == 1
     assert next_draft_number(_UEBERSICHT + "| Z2 | x | y | z | w |\n") == 3
+
+
+def test_build_draft_row_marks_a_reference_entry() -> None:
+    """Ein Referenz-Eintrag ist in der Übersicht als solcher erkennbar."""
+    paper = CanonicalPaper(
+        "pid",
+        "file:///x.refjson",
+        "0" * 64,
+        0,
+        (Chunk("pid-c0001", "pid", 0, "Titel\n\nAbstract", 15, "pid-s0001", "Abstract"),),
+        (),
+        (),
+        {"doi": "10.1/abc"},
+        DOCUMENT_KIND_REFERENCE,
+    )
+
+    row = build_draft_row("Z1", "Ein Titel.refjson", paper, [])
+
+    assert REFERENCE_DRAFT_PREFIX in row
+    assert "| Ein Titel |" in row
+    assert "papers/Ein%20Titel.refjson" in row
+
+
+@pytest.mark.parametrize(
+    ("filename", "expected"),
+    [
+        ("Paper A.pdf", "Paper A"),
+        ("Ein Titel.refjson", "Ein Titel"),
+        ("Ohne Endung", "Ohne Endung"),
+        ("Version 1.2.pdf", "Version 1.2"),
+    ],
+)
+def test_display_name_strips_known_suffixes(filename: str, expected: str) -> None:
+    """Beide Dokumenttypen führen zum selben Anzeigenamen."""
+    assert display_name(filename) == expected
+
+
+def test_retarget_overview_row_replaces_name_and_link(tmp_path: Path) -> None:
+    """Der Upgrade biegt genau eine Zeile um – Name und interner Link."""
+    target = tmp_path / "Übersicht.md"
+    target.write_bytes(
+        (
+            _UEBERSICHT + "| Z1 | Alt | (manuell) | k | ENTWURF: s "
+            "| [Quelle](papers/Alt%20Titel.refjson) | (manuell) | (manuell) | y |\n"
+        ).encode("utf-8")
+    )
+
+    changed = retarget_overview_row(
+        target,
+        old_filename="Alt Titel.refjson",
+        new_filename="Neuer Titel.pdf",
+        new_name="Neuer Titel",
+    )
+
+    text = target.read_text(encoding="utf-8")
+    assert changed is True
+    assert "papers/Neuer%20Titel.pdf" in text
+    assert ".refjson" not in text
+    assert "| Z1 | Neuer Titel |" in text
+
+
+def test_retarget_overview_row_keeps_curated_cells_and_other_bytes(tmp_path: Path) -> None:
+    """Nur die eine Zeile wird angefasst; alle anderen Bytes bleiben identisch."""
+    target = tmp_path / "Übersicht.md"
+    original = (
+        _UEBERSICHT.replace("\n", "\r\n") + "| Z1 | Alt | Cluster A | k | ENTWURF: s "
+        "| [Quelle](papers/Alt%20Titel.refjson) | sehr hoch | SRQ2 | y |\r\n"
+    ).encode("utf-8")
+    target.write_bytes(original)
+
+    retarget_overview_row(
+        target,
+        old_filename="Alt Titel.refjson",
+        new_filename="Neu.pdf",
+        new_name="Neu",
+    )
+
+    after = target.read_bytes()
+    assert after.startswith(original[: original.index(b"| Z1 |")])
+    assert b"sehr hoch" in after and b"SRQ2" in after and b"Cluster A" in after
+    assert after.endswith(b"\r\n")
+
+
+def test_retarget_overview_row_reports_a_missing_row(tmp_path: Path) -> None:
+    """Ohne passende Zeile wird nichts geschrieben und ``False`` gemeldet."""
+    target = tmp_path / "Übersicht.md"
+    target.write_bytes(_UEBERSICHT.encode("utf-8"))
+    before = target.read_bytes()
+
+    assert (
+        retarget_overview_row(
+            target, old_filename="fehlt.refjson", new_filename="x.pdf", new_name="x"
+        )
+        is False
+    )
+    assert target.read_bytes() == before
 
 
 def test_append_overview_rows_skips_listed_and_is_idempotent(tmp_path: Path) -> None:

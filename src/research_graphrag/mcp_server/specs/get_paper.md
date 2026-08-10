@@ -11,7 +11,7 @@
 | Feld | Wert |
 | --- | --- |
 | **Tool-Name** | `get_paper` |
-| **Version** | `0.1.0` |
+| **Version** | `0.2.0` |
 | **Capability-Schicht** | Katalog / Provenienz (siehe README.md) |
 | **Status** | Implementiert (Phase 5) |
 
@@ -34,6 +34,7 @@ Liefert die **Metadaten eines einzelnen Papers** anhand seiner stabilen `paper_i
 ```json
 {
   "paper_id": "…",
+  "document_kind": "full",
   "source_uri": "file:///…",
   "identifiers": { "doi": "…", "arxiv": "…" },
   "n_pages": 12,
@@ -62,6 +63,8 @@ Liefert die **Metadaten eines einzelnen Papers** anhand seiner stabilen `paper_i
 ```
 
 `identifiers` enthält nur tatsächlich erkannte Schlüssel (`doi`/`arxiv`) und kann leer sein. `sections` sind die **eindeutigen** (heuristischen) Abschnittstitel in Dokument-Reihenfolge; `snippet` ist der Ausschnitt des ersten nicht-leeren Chunks.
+
+`document_kind` ist `full` (aus einem PDF extrahierter Volltext) oder `reference` (**Referenz-Eintrag ohne Volltext**). Bei `reference` sind `n_pages = 0`, `n_chunks = 1` und `sections = ["Abstract"]` **kein Befund**, sondern die vollständige Auskunft über ein Paper, dessen Volltext nicht beschaffbar war; die Literaturangabe in `reference` bleibt davon unberührt vollständig ([ADR 0031](../../../../docs/adr/0031-reference-contract-and-guardrail-phase13.md)).
 
 `reference` ist der **aufgelöste** bibliografische Datensatz samt fertiger Angabe in Harvard und APA. Er ist die **gleiche** Nutzlast wie das Feld `reference` von `get_reference`; dort kommen mit `missing` und `note` zusätzlich die Diagnose der fehlenden Pflichtfelder hinzu. `origins` weist je Feld die Herkunft aus (`manual` > `curated` > `resolved` > `extracted`), `confidence` die schwächste beitragende Quelle, `citable` die Vollständigkeit ([ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md)).
 

@@ -26,7 +26,7 @@ Schichten sauber und macht die Synthese ohne Index testbar.
 | `synthesize_answer` | Funktion | Evidenz + Provider → `SynthesisResult` |
 | `Evidence` | Dataclass | Beleg-Sammlung mit `build()`, `as_context()`, `is_empty()`, `to_dict()` |
 | `EvidenceSource` | Dataclass | Beleg-Eingabe **vor** der Nummerierung (benannt statt Tupel) |
-| `EvidenceItem` | Dataclass | Ein nummerierter Beleg inkl. `identifiers` und `citation_key` |
+| `EvidenceItem` | Dataclass | Ein nummerierter Beleg inkl. `identifiers`, `citation_key` und `document_kind` |
 | `SynthesisResult` | Dataclass | Antwort, Flag, Evidenz, Modell, Routing und Literaturangaben – mit `to_dict()` |
 
 ## 3. Ablauf

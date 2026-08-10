@@ -27,6 +27,7 @@ Titel-Ähnlichkeit.
 | `Resolution` | Dataclass | Ergebnis inkl. Belegart, Begründung und Rohantworten |
 | `openalex_id_url` / `openalex_title_url` | Funktionen | Abfrage-URLs |
 | `parse_openalex_work` / `authors_of` / `venue_of` | Funktionen | Antwort-Auswertung |
+| `fetch_openalex_url` | Funktion | eine OpenAlex-URL abrufen (auch von der Referenz-Auflösung genutzt) |
 | `MATCH_DOI` / `MATCH_ARXIV` / `MATCH_TITLE` | Konstanten | Belegarten |
 | `METADATA_FIELDS` / `MAX_AUTHORS` / `MAX_FIELD_CHARS` / `TITLE_SEARCH_LIMIT` / `ARXIV_DOI_PREFIX` | Konstanten | Abfrage- und Bereinigungsgrenzen |
 
@@ -45,9 +46,9 @@ flowchart TD
     H -- ja --> I["übernehmen · immer weak"]
     H -- nein --> J
     F -- nein --> J{"arXiv-ID bekannt?"}
-    J -- ja --> K["arXiv-Feed"]
+    J -- ja --> K["arXiv-Feed über id_list"]
     K --> L{"gleiche ID?"}
-    L -- ja --> M["übernehmen · Titel und Preprint-Jahr"]
+    L -- ja --> M["übernehmen · Titel, Autoren, Preprint-Jahr"]
     L -- nein --> N["nichts übernehmen, Grund vermerken"]
     J -- nein --> N
 ```
@@ -58,6 +59,16 @@ Eine ID-Abfrage ist **eindeutig**, eine Titel-Suche ist eine Ähnlichkeitsaussag
 Reihenfolge fest verdrahtet und nicht konfigurierbar. Die arXiv-ID wird dabei über ihren
 DataCite-DOI (`10.48550/arXiv.…`) abgefragt – so genügt **ein** Abfrageweg für beide
 Identifikatorarten.
+
+### Der arXiv-Rückfall fragt nach der Kennung, nicht nach dem Text
+
+Der Feed wird über `id_list` abgerufen (`fetch_arxiv_by_id`). Die naheliegende Volltextsuche
+`search_query=all:"<id>"` durchsucht den **Volltext** und liefert dadurch fremde Werke – in
+Phase 13 / R1 nachgewiesen: `1706.03762` ergab `2002.05202`. Die ID-Prüfung hätte den Fehlgriff
+zwar verworfen, doch damit wäre der Rückfall **wirkungslos** gewesen statt falsch. Er liefert
+außerdem die **Autoren** (`authors_from_feed`) – ohne sie bliebe der Datensatz genau bei den
+Papern unvollständig, für die dieser Weg gedacht ist
+([ADR 0026](../../../../docs/adr/0026-online-metadata-resolution.md), Nachtrag).
 
 ### Automatisch übernehmen, aber die Belegkraft ausweisen
 

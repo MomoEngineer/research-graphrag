@@ -21,6 +21,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from research_graphrag.extraction.refstub import STUB_SUFFIX
+
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _DEFAULT_DATA = _REPO_ROOT / "data"
 _DEFAULT_PAPERS = _REPO_ROOT / "papers"
@@ -43,6 +45,7 @@ class StatusReport:
     n_communities: int
     n_citation_edges: int
     n_identified: int
+    n_reference_entries: int
     n_citable: int
     n_weak_metadata: int
     flagged_papers: int | None
@@ -86,6 +89,11 @@ def _table_exists(connection: sqlite3.Connection, name: str) -> bool:
     return row is not None
 
 
+def _column_exists(connection: sqlite3.Connection, table: str, column: str) -> bool:
+    """Prüft, ob eine Spalte existiert (ein vor Phase 13 gebauter Index kennt sie nicht)."""
+    return any(row[1] == column for row in connection.execute(f"PRAGMA table_info({table})"))
+
+
 def _load_manifest(path: Path) -> dict[str, dict[str, str]]:
     """Lädt das Dedup-Manifest (Dateiname → {sha256, paper_id}); leer, wenn nicht vorhanden."""
     if not path.is_file():
@@ -117,7 +125,7 @@ def collect_status(data_dir: str | Path, papers_dir: str | Path) -> StatusReport
     citation_schema_version: str | None = None
     metadata_schema_version: str | None = None
     n_papers = n_chunks = n_communities = n_citation_edges = n_identified = 0
-    n_citable = n_weak_metadata = 0
+    n_citable = n_weak_metadata = n_reference_entries = 0
     if index_present:
         connection = sqlite3.connect(str(index_path))
         try:
@@ -130,6 +138,11 @@ def collect_status(data_dir: str | Path, papers_dir: str | Path) -> StatusReport
                 connection,
                 "SELECT COUNT(*) FROM papers WHERE identifiers IS NOT NULL AND identifiers != '{}'",
             )
+            if _column_exists(connection, "papers", "document_kind"):
+                n_reference_entries = _scalar(
+                    connection,
+                    "SELECT COUNT(*) FROM papers WHERE document_kind = 'reference'",
+                )
             if _table_exists(connection, "communities"):
                 n_communities = _scalar(connection, "SELECT COUNT(*) FROM communities")
             if _table_exists(connection, "citation_edges"):
@@ -159,7 +172,12 @@ def collect_status(data_dir: str | Path, papers_dir: str | Path) -> StatusReport
     manifest_names = set(manifest.keys())
     manifest_paper_ids = {entry["paper_id"] for entry in manifest.values()}
 
-    pdf_names = {pdf.name for pdf in papers.glob("*.pdf")} if papers.is_dir() else set()
+    pdf_names = (
+        {path.name for path in papers.glob("*.pdf")}
+        | {path.name for path in papers.glob(f"*{STUB_SUFFIX}")}
+        if papers.is_dir()
+        else set()
+    )
     canonical_dir = data / "canonical"
     canonical_ids = (
         {path.stem for path in canonical_dir.glob("*.json")} if canonical_dir.is_dir() else set()
@@ -176,6 +194,7 @@ def collect_status(data_dir: str | Path, papers_dir: str | Path) -> StatusReport
         n_communities=n_communities,
         n_citation_edges=n_citation_edges,
         n_identified=n_identified,
+        n_reference_entries=n_reference_entries,
         n_citable=n_citable,
         n_weak_metadata=n_weak_metadata,
         flagged_papers=flagged_papers,
@@ -222,6 +241,8 @@ def render(status: StatusReport) -> list[str]:
             f"Communities: {status.n_communities} · Zitationskanten: {status.n_citation_edges}"
         )
         lines.append(f"  Mit Identifikatoren (DOI/arXiv): {status.n_identified}/{status.n_papers}")
+        if status.n_reference_entries:
+            lines.append(f"  Davon Referenz-Einträge ohne Volltext: {status.n_reference_entries}")
         lines.append(
             f"  Zitierfähig (Titel/Autoren/Jahr): {status.n_citable}/{status.n_papers} · "
             f"schwach belegt: {status.n_weak_metadata}"

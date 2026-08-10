@@ -995,6 +995,27 @@
         "year": 2024
       }
     ],
+    "2613d4fa00d684e3": [
+      {
+        "arxiv_id": "2512.16381",
+        "authors": [
+          "Wang, Zhihao",
+          "Cornacchia, Alessandro",
+          "Sacco, Alessio",
+          "Galante, Franco",
+          "Canini, Marco",
+          "Jiang, Dingde"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2512.16381",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2512.16381",
+        "origin": "resolved",
+        "title": "A Network Arena for Benchmarking AI Agents on Network Troubleshooting",
+        "url": "https://arxiv.org/pdf/2512.16381",
+        "venue": "arXiv (Cornell University)",
+        "year": 2025
+      }
+    ],
     "28296441e7a995a6": [
       {
         "arxiv_id": "2212.08037",

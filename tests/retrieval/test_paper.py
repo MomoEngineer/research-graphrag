@@ -82,6 +82,7 @@ def test_get_paper_to_dict_shape(tmp_path: Path) -> None:
     payload = get_paper(_build(tmp_path), "aaaa1111").to_dict()
     assert set(payload) == {
         "paper_id",
+        "document_kind",
         "source_uri",
         "identifiers",
         "n_pages",

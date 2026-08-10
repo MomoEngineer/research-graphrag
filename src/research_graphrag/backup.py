@@ -43,12 +43,19 @@ SOURCE_DIRECTORIES: tuple[str, ...] = ("papers",)
 SOURCE_FILES: tuple[str, ...] = (
     "Übersicht.md",
     "metadata/paper_metadata.json",
+    "new_papers/referenzen.txt",
     "data/manifest.json",
     "data/intake_log.md",
     "data/metadata_log.md",
     "data/online_candidates.md",
+    "data/references_log.md",
 )
-"""Einzeln gesicherte Dateien; fehlende gelten als ``missing``, nicht als Fehler."""
+"""Einzeln gesicherte Dateien; fehlende gelten als ``missing``, nicht als Fehler.
+
+``new_papers/referenzen.txt`` ist die kuratierte Kennungsliste der Referenz-Einträge und aus
+keiner Quelle rekonstruierbar; ``data/references_log.md`` ist – wie die übrigen Protokolle –
+append-only (docs/adr/0029-reference-stub-resolution-phase13.md).
+"""
 
 REQUIRED_DIRECTORY = "papers"
 """Ohne dieses Verzeichnis gibt es nichts zu sichern (``not_found``)."""

@@ -4,7 +4,7 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/extraction/model.py` |
 | **Paket** | `extraction` – PDF zu Canonical JSON |
-| **Phase** | 2 (eingeführt), 7 / A3 + A5 (Schema geschärft) |
+| **Phase** | 2 (eingeführt), 7 / A3 + A5 (Schema geschärft), 13 / R2 (Dokumentart) |
 | **Grundlagen** | [ADR 0006](../../../../docs/adr/0006-canonical-model-phase2-scope.md), [ADR 0013](../../../../docs/adr/0013-chunking-refinement-phase7.md), [ADR 0015](../../../../docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md) |
 
 ---
@@ -19,12 +19,20 @@ Index. Es enthält ausschließlich serialisierbare Datenstrukturen und hat **kei
 
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
-| `CanonicalPaper` | Dataclass | Ein extrahiertes Paper: Identität, Chunks, Abschnitte, Identifikatoren, Qualitäts-Flags |
+| `CanonicalPaper` | Dataclass | Ein extrahiertes Paper: Identität, Dokumentart, Chunks, Abschnitte, Identifikatoren, Qualitäts-Flags |
 | `Chunk` | Dataclass | Kleinste retrievbare Einheit mit Seiten-Range und Abschnitts-Provenienz |
 | `Section` | Dataclass | Heuristisch erkannter Abschnitt als Provenienz-Anker |
 | `SCHEMA_VERSION` | Konstante | Version des Canonical-Schemas |
 | `SECTION_KIND_FRONT` / `_ABSTRACT` / `_BODY` / `_REFERENCES` | Konstanten | Klassifikation eines Abschnitts |
+| `DOCUMENT_KIND_FULL` / `DOCUMENT_KIND_REFERENCE` | Konstanten | Dokumentart: Volltext bzw. Referenz-Eintrag ohne Volltext |
 | `read_schema_version` | Funktion | Liest nur die Schema-Version einer Datei (für die Upgrade-Erkennung) |
+
+> **`document_kind` ist bewusst kein Qualitäts-Flag.** Flags sind Befunde über *misslungene*
+> Extraktion; die Dokumentart ist eine **Eigenschaft des Dokuments**. Nur so können Retrieval,
+> Evaluation und Antwortsynthese darauf reagieren, statt sie bloß anzuzeigen
+> ([ADR 0030](../../../../docs/adr/0030-reference-entries-in-corpus-phase13.md)).
+> `from_dict` bleibt tolerant: Ein Alt-Artefakt ohne das Feld gilt als `full` – vor Schema 0.5.0
+> gab es nur Volltext-Dokumente.
 
 Jede Dataclass ist `frozen` und trägt `to_dict()` / `from_dict()`; `CanonicalPaper` zusätzlich
 `save_json()` / `load_json()`.

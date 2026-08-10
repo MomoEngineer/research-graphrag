@@ -297,7 +297,7 @@ async def test_search_modes_smoke(index_db: Path, tool: str, arguments: dict[str
 
 @pytest.mark.anyio
 async def test_search_local_returns_the_seed_list(index_db: Path) -> None:
-    """Das Werkzeug liefert das Feld ``seeds`` als Liste (Spec 0.2.0, ADR 0021)."""
+    """Das Werkzeug liefert das Feld ``seeds`` als Liste (Spec 0.3.0, ADR 0021/0031)."""
     async with client_session(mcp) as client:
         result = await client.call_tool("search_local", {"query": "attention", "fan_out": 0})
 
@@ -310,7 +310,7 @@ async def test_search_local_returns_the_seed_list(index_db: Path) -> None:
 
 @pytest.mark.anyio
 async def test_search_drift_returns_community_list_and_fallback_flag(index_db: Path) -> None:
-    """Das Werkzeug liefert ``communities`` als Liste und weist den Fallback aus (Spec 0.2.0)."""
+    """Das Werkzeug liefert ``communities`` als Liste und weist den Fallback aus (Spec 0.3.0)."""
     async with client_session(mcp) as client:
         result = await client.call_tool("search_drift", {"query": "attention"})
 

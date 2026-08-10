@@ -51,7 +51,10 @@ generierte Antwort überhaupt akzeptabel ist:
 
 - ausschließlich die nummerierten Belege verwenden, kein Vorwissen,
 - jede Aussage mit einer Marke in eckigen Klammern belegen,
-- Unbelegtes ausdrücklich als „nicht belegt" kennzeichnen statt zu spekulieren.
+- Unbelegtes ausdrücklich als „nicht belegt" kennzeichnen statt zu spekulieren,
+- die **Unvollständigkeit** eines Belegs benennen, wenn er aus einem Referenz-Eintrag ohne
+  Volltext stammt (erkennbar am Zusatz im Provenienz-Label,
+  [ADR 0031](../../../../docs/adr/0031-reference-contract-and-guardrail-phase13.md)).
 
 Der Contract wird nicht nur an das Modell gesendet, sondern auch **im Ergebnis mitgeliefert**, so
 dass ein Aufrufer nachvollziehen kann, unter welcher Auflage die Antwort entstand.

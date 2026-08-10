@@ -21,7 +21,7 @@ Paper-Provenienz an, sodass keine Folgeaufrufe nötig sind, um die Antwort zu be
 | --- | --- | --- |
 | `get_citations` | Funktion | Paper-ID → `CitationsResult` |
 | `CitationsResult` | Dataclass | Das Paper selbst plus `cites` und `cited_by`, mit `to_dict()` |
-| `CitationLink` | Dataclass | Ein Gegenüber-Paper plus Match-Kriterium |
+| `CitationLink` | Dataclass | Ein Gegenüber-Paper (inkl. `document_kind`) plus Match-Kriterium |
 
 ## 3. Ablauf
 

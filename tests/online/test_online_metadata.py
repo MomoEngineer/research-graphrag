@@ -78,6 +78,8 @@ _ARXIV_FEED = f"""<?xml version="1.0" encoding="UTF-8"?>
     <published>2024-01-02T10:00:00Z</published>
     <title>{_TITLE}</title>
     <summary>Abstract.</summary>
+    <author><name>Anna Beispiel</name></author>
+    <author><name>Bert Muster</name></author>
   </entry>
 </feed>
 """.encode()
@@ -302,6 +304,48 @@ def test_arxiv_feed_rejects_a_different_identifier() -> None:
 
     assert result.record is None
     assert "andere ID" in result.note
+
+
+def test_arxiv_feed_is_queried_by_identifier_not_by_full_text_search() -> None:
+    """Der Rückfall nutzt ``id_list``; die Volltextsuche liefert nachweislich fremde Werke.
+
+    In R1 lieferte ``search_query=all:"1706.03762"`` das Werk ``2002.05202`` – der Feed sucht
+    dabei im **Volltext**, nicht in der Kennung. Die ID-Prüfung hätte den Fehlgriff zwar
+    verworfen, damit wäre der Rückfall aber wirkungslos
+    (docs/adr/0026-online-metadata-resolution.md).
+    """
+    client = _FakeClient(by_title=_payload(), arxiv=_ARXIV_FEED)
+
+    resolve_target(client, _target(doi="", arxiv_id=_ARXIV))
+
+    arxiv_urls = [url for url in client.urls if "arxiv.org" in url]
+    assert arxiv_urls, "der Rückfall hat arXiv gar nicht befragt"
+    assert f"id_list={_ARXIV}" in arxiv_urls[0]
+    assert "search_query" not in arxiv_urls[0]
+
+
+def test_arxiv_feed_supplies_the_authors() -> None:
+    """Der Feed nennt die Autoren – ohne sie bliebe der Datensatz nicht zitierfähig."""
+    client = _FakeClient(by_title=_payload(), arxiv=_ARXIV_FEED)
+
+    result = resolve_target(client, _target(doi="", arxiv_id=_ARXIV))
+
+    assert result.record is not None
+    assert result.record.authors == ("Anna Beispiel", "Bert Muster")
+
+
+def test_arxiv_feed_tolerates_an_entry_without_authors() -> None:
+    """Ein Feed ohne Autoren liefert weiterhin Titel und Jahr, nur eben ohne Namen."""
+    feed = _ARXIV_FEED.replace(b"<author><name>Anna Beispiel</name></author>", b"").replace(
+        b"<author><name>Bert Muster</name></author>", b""
+    )
+    client = _FakeClient(by_title=_payload(), arxiv=feed)
+
+    result = resolve_target(client, _target(doi="", arxiv_id=_ARXIV))
+
+    assert result.record is not None
+    assert result.record.authors == ()
+    assert result.record.title == _TITLE
 
 
 def test_target_without_identifier_and_title_is_reported() -> None:

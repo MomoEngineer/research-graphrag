@@ -272,12 +272,21 @@ def test_unreadable_pdf_is_kept_with_finding(workspace: dict[str, Path]) -> None
 
 
 def test_decision_to_dict_shape(workspace: dict[str, Path], make_pdf: MakePdf) -> None:
-    """Die serialisierte Entscheidung trägt die sechs vereinbarten Schlüssel."""
+    """Die serialisierte Entscheidung trägt die acht vereinbarten Schlüssel."""
     make_pdf(_pages("Ein völlig neues Paper", "arXiv:2402.22222v1"), "new_papers/Neu.pdf")
 
     payload = _run(workspace, dry_run=True).decisions[0].to_dict()
 
-    assert set(payload) == {"filename", "sha256", "action", "reason", "detail", "flags"}
+    assert set(payload) == {
+        "filename",
+        "sha256",
+        "action",
+        "reason",
+        "detail",
+        "flags",
+        "target_name",
+        "replaces",
+    }
     assert payload["filename"] == "Neu.pdf"
     assert payload["action"] == ACTION_ACCEPTED
 

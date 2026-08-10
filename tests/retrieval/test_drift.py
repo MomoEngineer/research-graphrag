@@ -216,7 +216,7 @@ def test_drift_missing_index_raises_not_found(tmp_path: Path) -> None:
 
 
 def test_drift_to_dict_shape(tmp_path: Path) -> None:
-    """to_dict liefert das dokumentierte Output-Schema (Spec 0.2.0)."""
+    """to_dict liefert das dokumentierte Output-Schema (Spec 0.3.0)."""
     payload = search_drift(_build(tmp_path), "transformer attention", k=4).to_dict()
 
     assert set(payload) == {"query", "communities", "fallback", "citations"}
@@ -230,6 +230,7 @@ def test_drift_to_dict_shape(tmp_path: Path) -> None:
     }
     assert set(payload["citations"][0]) == {
         "paper_id",
+        "document_kind",
         "section_title",
         "page_number",
         "page_end",

@@ -31,6 +31,7 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.metrics.pairwise import linear_kernel
 
 from research_graphrag.errors import DomainError, ErrorCode
+from research_graphrag.extraction.model import DOCUMENT_KIND_FULL, DOCUMENT_KIND_REFERENCE
 from research_graphrag.extraction.pdf import CanonicalPaper
 from research_graphrag.indexing import bm25
 from research_graphrag.indexing.fusion import fuse_rankings
@@ -43,8 +44,11 @@ DEFAULT_SCORING: Scoring = "hybrid"
 
 _SCORINGS: frozenset[str] = frozenset(("hybrid", "tfidf", "bm25"))
 
-SCHEMA_VERSION = "0.4.0"
-"""Version des Index-Schemas. ``0.3.0 -> 0.4.0``: ``chunks`` um ``page_end`` erweitert – die
+SCHEMA_VERSION = "0.5.0"
+"""Version des Index-Schemas. ``0.4.0 -> 0.5.0``: ``papers`` um ``document_kind`` erweitert –
+ein Referenz-Eintrag ohne Volltext ist eine **Eigenschaft des Dokuments**, kein Qualitäts-Flag
+(siehe docs/adr/0030-reference-entries-in-corpus-phase13.md). ``0.3.0 -> 0.4.0``: ``chunks`` um
+``page_end`` erweitert – die
 Seite ist keine Chunk-Grenze mehr, sondern eine Provenienz-Range (siehe
 docs/adr/0013-chunking-refinement-phase7.md). ``0.2.0 -> 0.3.0``: ``papers`` um die JSON-Spalte
 ``identifiers`` (DOI/arXiv) erweitert, damit ``get_paper`` zitierfähige Identifikatoren aus der
@@ -59,7 +63,8 @@ CREATE TABLE papers (
     source_uri    TEXT NOT NULL,
     source_sha256 TEXT NOT NULL,
     n_pages       INTEGER NOT NULL,
-    identifiers   TEXT NOT NULL DEFAULT '{}'
+    identifiers   TEXT NOT NULL DEFAULT '{}',
+    document_kind TEXT NOT NULL DEFAULT 'full'
 );
 CREATE TABLE chunks (
     chunk_id      TEXT PRIMARY KEY,
@@ -87,6 +92,12 @@ class Hit:
     ``identifiers`` und ``citation_key`` stammen aus der Tabelle ``paper_metadata`` und machen
     jeden Treffer **extern auflösbar** (docs/adr/0025-citable-paper-metadata.md); sie sind leer,
     wenn zu dem Paper nichts bekannt ist oder der Index vor Phase 12 gebaut wurde.
+
+    ``document_kind`` weist aus, ob der Treffer aus einem Volltext oder aus einem
+    **Referenz-Eintrag** (nur Titel und Abstract) stammt. Er ist Pflichtbestandteil des
+    Contracts: Ein Beleg ohne Volltext muss als solcher erkennbar sein, sonst wirkt ein
+    Abstract-Zitat wie ein Volltext-Beleg
+    (docs/adr/0031-reference-contract-and-guardrail-phase13.md).
     """
 
     chunk_id: str
@@ -101,6 +112,7 @@ class Hit:
     score_bm25: float = 0.0
     identifiers: Mapping[str, str] = field(default_factory=dict)
     citation_key: str = ""
+    document_kind: str = DOCUMENT_KIND_FULL
 
 
 @dataclass(frozen=True)
@@ -116,6 +128,7 @@ class _ChunkRef:
     page_end: int = 0
     identifiers: Mapping[str, str] = field(default_factory=dict)
     citation_key: str = ""
+    document_kind: str = DOCUMENT_KIND_FULL
 
 
 def _snippet(text: str, limit: int = 200) -> str:
@@ -141,10 +154,35 @@ def _hit(ref: _ChunkRef, score: float, *, score_tfidf: float = 0.0, score_bm25: 
         score_bm25=score_bm25,
         identifiers=ref.identifiers,
         citation_key=ref.citation_key,
+        document_kind=ref.document_kind,
     )
 
 
 _NO_CITATION_DATA: tuple[Mapping[str, str], str] = ({}, "")
+
+
+def demote_references(hits: list[Hit]) -> list[Hit]:
+    """Sortiert Referenz-Einträge **hinter** die Volltext-Treffer derselben Liste.
+
+    Die Guardrail der Chunk-Suche: Ein Referenz-Eintrag besteht nur aus Titel und Abstract und
+    wird von den längennormierenden Wertungen (BM25, TF-IDF) systematisch bevorzugt – sein Score
+    ist deshalb mit dem eines Volltext-Chunks **nicht vergleichbar**.
+
+    Sie wirkt **nachrangig, nicht ausschließend**: Die *Auswahl* der Top-k bleibt unverändert,
+    nur ihre *Reihenfolge* ändert sich. Gibt es keinen passenden Volltext, steht der
+    Referenz-Eintrag weiterhin ganz vorn – genau der Fall, für den er existiert. Die Sortierung
+    ist stabil, innerhalb beider Gruppen bleibt die Wertungsreihenfolge erhalten.
+
+    Messgrundlage und verworfene Varianten:
+    docs/adr/0031-reference-contract-and-guardrail-phase13.md.
+
+    Args:
+        hits: Trefferliste in Wertungsreihenfolge.
+
+    Returns:
+        Dieselben Treffer, Volltext zuerst.
+    """
+    return sorted(hits, key=lambda hit: hit.document_kind == DOCUMENT_KIND_REFERENCE)
 
 
 def _load_citation_data(
@@ -208,8 +246,9 @@ def build_index(papers: Sequence[CanonicalPaper], db_path: str | Path) -> int:
                 continue
             seen_papers.add(paper.paper_id)
             connection.execute(
-                "INSERT INTO papers (paper_id, source_uri, source_sha256, n_pages, identifiers) "
-                "VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO papers "
+                "(paper_id, source_uri, source_sha256, n_pages, identifiers, document_kind) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
                 (
                     paper.paper_id,
                     paper.source_uri,
@@ -219,6 +258,7 @@ def build_index(papers: Sequence[CanonicalPaper], db_path: str | Path) -> int:
                         {key: paper.identifiers[key] for key in sorted(paper.identifiers)},
                         ensure_ascii=False,
                     ),
+                    paper.document_kind,
                 ),
             )
         for row_index, (chunk, _paper) in enumerate(indexable):
@@ -287,7 +327,7 @@ class TfidfIndex:
         try:
             rows = connection.execute(
                 "SELECT c.chunk_id, c.paper_id, c.page_number, c.text, p.source_uri, "
-                "c.section_title, c.page_end "
+                "c.section_title, c.page_end, p.document_kind "
                 "FROM chunks c JOIN papers p ON p.paper_id = c.paper_id "
                 "ORDER BY c.row_index"
             ).fetchall()
@@ -309,6 +349,7 @@ class TfidfIndex:
                 page_end=int(row[6]),
                 identifiers=citation_data.get(str(row[1]), _NO_CITATION_DATA)[0],
                 citation_key=citation_data.get(str(row[1]), _NO_CITATION_DATA)[1],
+                document_kind=str(row[7]),
             )
             for row in rows
         )
@@ -359,6 +400,8 @@ class TfidfIndex:
         Returns:
             Absteigend sortierte Treffer; ein Chunk erscheint nur, wenn mindestens eines der
             beteiligten Verfahren ihn positiv bewertet. Leere Liste ohne Übereinstimmung.
+            **Referenz-Einträge stehen hinter den Volltext-Treffern** (siehe
+            :func:`demote_references`).
 
         Raises:
             DomainError: ``invalid_input`` bei leerer Anfrage, ``k <= 0`` oder unbekannter
@@ -397,7 +440,7 @@ class TfidfIndex:
                     score_bm25=float(bm25_scores[i]),
                 )
             )
-        return hits
+        return demote_references(hits)
 
     def neighbors_of_chunk(self, chunk_id: str, k: int = 5) -> list[Hit]:
         """Liefert die nächsten Chunks zu einem gegebenen Chunk (Chunk↔Chunk-Kosinus).
@@ -415,6 +458,8 @@ class TfidfIndex:
         Returns:
             Absteigend sortierte Nachbar-Treffer mit Score > 0; leer ohne Übereinstimmung.
             ``score`` und ``score_tfidf`` sind identisch, ``score_bm25`` ist ``0.0``.
+            **Referenz-Einträge stehen hinter den Volltext-Nachbarn** (siehe
+            :func:`demote_references`).
 
         Raises:
             DomainError: ``invalid_input`` bei ``k <= 0``; ``not_found`` wenn die ``chunk_id``
@@ -442,4 +487,4 @@ class TfidfIndex:
             if score <= 0.0:
                 continue
             hits.append(_hit(self._refs[i], score, score_tfidf=score))
-        return hits
+        return demote_references(hits)

@@ -17,6 +17,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
+from research_graphrag.extraction.model import DOCUMENT_KIND_FULL
 from research_graphrag.generation.provider import (
     DEFAULT_SYSTEM_PROMPT,
     GenerationProvider,
@@ -38,6 +39,7 @@ class EvidenceSource:
     source_uri: str
     identifiers: Mapping[str, str] = field(default_factory=dict)
     citation_key: str = ""
+    document_kind: str = DOCUMENT_KIND_FULL
 
 
 @dataclass(frozen=True)
@@ -48,6 +50,11 @@ class EvidenceItem:
     ``identifiers`` und ``citation_key`` machen den Beleg extern auflösbar; die vollständige
     Literaturangabe steht gesammelt in ``references``
     (docs/adr/0025-citable-paper-metadata.md).
+
+    ``document_kind`` trennt Volltext-Belege von **Referenz-Einträgen**, die nur Titel und
+    Abstract kennen. Die Unterscheidung steht nicht nur im Datensatz, sondern auch im
+    ``label`` – dort sieht sie das Modell, das die Antwort formuliert
+    (docs/adr/0031-reference-contract-and-guardrail-phase13.md).
     """
 
     index: int
@@ -57,12 +64,14 @@ class EvidenceItem:
     source_uri: str
     identifiers: Mapping[str, str] = field(default_factory=dict)
     citation_key: str = ""
+    document_kind: str = DOCUMENT_KIND_FULL
 
     def to_dict(self) -> dict[str, Any]:
         """Serialisiert den Beleg."""
         return {
             "index": self.index,
             "paper_id": self.paper_id,
+            "document_kind": self.document_kind,
             "label": self.label,
             "snippet": self.snippet,
             "source_uri": self.source_uri,
@@ -95,6 +104,7 @@ class Evidence:
                 source_uri=source.source_uri,
                 identifiers=source.identifiers,
                 citation_key=source.citation_key,
+                document_kind=source.document_kind,
             )
             for position, source in enumerate(entries, start=1)
         )

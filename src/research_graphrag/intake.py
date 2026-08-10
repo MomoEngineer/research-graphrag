@@ -16,6 +16,13 @@ nicht am Verdacht (docs/adr/0019-corpus-intake-new-papers-phase8.md):
 Ohne Treffer wandert die Datei nach ``papers/``; danach läuft **ein** regulärer
 :func:`research_graphrag.pipeline.ingest` (voller Re-Index mit atomarem Swap) und die kuratierte
 Übersicht bekommt je neuem Paper eine Entwurfszeile. ``dry_run`` verändert **nichts**.
+
+Seit Phase 13 / R2 nimmt der Eingang **zwei Dokumenttypen** an: ``*.pdf`` und ``*.refjson``
+(Referenz-Einträge ohne Volltext). Die drei Prüfstufen gelten unverändert für beide – nur die
+Eingangsseite unterscheidet sich: Für einen Stub kommen Titel und Identifikatoren **aus der
+Datei**, nicht aus einer Heuristik über die Titelseite. Neu ist eine Regel, ohne die das
+Standardverhalten falsch wäre: **Volltext schlägt Referenz-Eintrag**
+(docs/adr/0030-reference-entries-in-corpus-phase13.md).
 """
 
 from __future__ import annotations
@@ -27,7 +34,7 @@ import json
 import logging
 import shutil
 from collections.abc import Callable
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -37,22 +44,29 @@ from pypdf import PdfReader
 from pypdf.errors import PyPdfError
 
 from research_graphrag.errors import DomainError, ErrorCode
-from research_graphrag.extraction.model import SECTION_KIND_REFERENCES, CanonicalPaper
+from research_graphrag.extraction.model import (
+    DOCUMENT_KIND_REFERENCE,
+    CanonicalPaper,
+)
 from research_graphrag.extraction.normalization import normalize_text
+from research_graphrag.extraction.refstub import STUB_SUFFIX, ReferenceStub, parse_stub
 from research_graphrag.extraction.structure import extract_identifiers
 from research_graphrag.indexing.citation_graph import (
     MIN_TITLE_CHARS,
     MIN_TITLE_WORDS,
     TITLE_PAGE_PAGES,
+    front_matter_text,
     normalize_title,
+    title_from_uri,
     title_of,
 )
 from research_graphrag.overview.drafts import (
     OverviewReport,
     append_overview_rows,
     ensure_overview_target,
+    retarget_overview_row,
 )
-from research_graphrag.pipeline import IngestReport, ingest
+from research_graphrag.pipeline import IngestReport, forget_source, ingest
 
 _logger = logging.getLogger(__name__)
 
@@ -71,6 +85,11 @@ TITLE_CANDIDATE_LINES = 5
 PDF_MAGIC = b"%PDF-"
 """Signatur einer PDF-Datei; alles andere wird nicht übernommen."""
 
+MAX_STUB_NAME_CHARS = 120
+"""Längengrenze des aus dem Titel erzeugten Stub-Dateinamens (ohne Endung)."""
+
+_FORBIDDEN_NAME_CHARS = '<>:"/\\|?*'
+
 ACTION_ACCEPTED = "accepted"
 ACTION_DELETED = "deleted"
 ACTION_QUARANTINED = "quarantined"
@@ -83,6 +102,14 @@ REASON_TITLE_SUSPICION = "title_suspicion"
 REASON_NAME_COLLISION = "name_collision"
 REASON_NOT_A_PDF = "not_a_pdf"
 REASON_UNREADABLE = "unreadable"
+REASON_INVALID_STUB = "invalid_stub"
+"""Grund: Die ``*.refjson`` ist kein brauchbarer Referenz-Eintrag (Formatprüfung)."""
+
+REASON_UPGRADE = "upgrade_from_reference"
+"""Grund: Ein Volltext-PDF ersetzt einen vorhandenen Referenz-Eintrag."""
+
+REASON_SUPERSEDED = "superseded_by_full_text"
+"""Grund der Gegenbuchung: Der Referenz-Eintrag wurde durch den Volltext abgelöst."""
 
 _LOG_HEADER = "\n".join(
     [
@@ -101,7 +128,21 @@ _LOG_HEADER = "\n".join(
 
 @dataclass(frozen=True)
 class IntakeDecision:
-    """Entscheidung über **eine** Datei des Eingangsordners."""
+    """Entscheidung über **eine** Datei des Eingangsordners.
+
+    Attributes:
+        filename: Name der Eingangsdatei.
+        sha256: Hash der Eingangsdatei.
+        action: Eine der ``ACTION_*``-Konstanten.
+        reason: Eine der ``REASON_*``-Konstanten.
+        detail: Klartext-Begründung.
+        flags: Qualitäts-Flags des übernommenen Papers (erst nach dem Ingest bekannt).
+        target_name: Name im Korpus, falls er vom Eingangsnamen abweicht – ein Referenz-Eintrag
+            wird nach seinem **Titel** benannt, damit die Konvention „Dateiname = Titel" gilt.
+        replaces: Name des abgelösten Referenz-Eintrags in ``papers/`` (Upgrade-Pfad).
+        superseded_sha256: Hash des abgelösten Referenz-Eintrags – die forensische Spur der
+            einzigen Löschung, die in ``papers/`` stattfindet.
+    """
 
     filename: str
     sha256: str
@@ -109,6 +150,14 @@ class IntakeDecision:
     reason: str
     detail: str
     flags: tuple[str, ...] = ()
+    target_name: str = ""
+    replaces: str = ""
+    superseded_sha256: str = ""
+
+    @property
+    def corpus_name(self) -> str:
+        """Der Name, unter dem die Datei im Korpus liegt (bzw. läge)."""
+        return self.target_name or self.filename
 
     def to_dict(self) -> dict[str, Any]:
         """Serialisiert die Entscheidung (stabile Schlüssel für Bericht und Tests)."""
@@ -119,6 +168,8 @@ class IntakeDecision:
             "reason": self.reason,
             "detail": self.detail,
             "flags": list(self.flags),
+            "target_name": self.target_name,
+            "replaces": self.replaces,
         }
 
 
@@ -153,11 +204,15 @@ class CorpusView:
         sha256_to_name: Dateihash → Dateiname aus ``manifest.json``.
         identifier_to_paper: Gehärteter ``(Art, Wert)``-Schlüssel → ``paper_id``.
         titles: Normalisierter Titel → Originaltitel.
+        reference_papers: ``paper_id`` → Dateiname der **Referenz-Einträge** im Korpus. Nur sie
+            dürfen von einem eintreffenden Volltext abgelöst werden
+            (docs/adr/0030-reference-entries-in-corpus-phase13.md).
     """
 
     sha256_to_name: dict[str, str]
     identifier_to_paper: dict[tuple[str, str], str]
     titles: dict[str, str]
+    reference_papers: dict[str, str] = field(default_factory=dict)
 
 
 def _manifest_hashes(data_path: Path) -> dict[str, str]:
@@ -172,18 +227,6 @@ def _manifest_hashes(data_path: Path) -> dict[str, str]:
     return hashes
 
 
-def _front_matter(paper: CanonicalPaper) -> str:
-    """Liefert den Titelseiten-Text eines Korpus-Papers **ohne** Referenzabschnitt."""
-    ref_ids = {
-        section.section_id for section in paper.sections if section.kind == SECTION_KIND_REFERENCES
-    }
-    return " ".join(
-        chunk.text
-        for chunk in paper.chunks
-        if chunk.page_end <= TITLE_PAGE_PAGES and chunk.section_id not in ref_ids
-    ).lower()
-
-
 def _identifier_keys(papers: list[CanonicalPaper]) -> dict[tuple[str, str], str]:
     """Baut die **gehärteten** Duplikat-Schlüssel ``(art, wert) → paper_id``.
 
@@ -192,13 +235,15 @@ def _identifier_keys(papers: list[CanonicalPaper]) -> dict[tuple[str, str], str]
 
     1. **Frontmatter-Beleg** – der Wert steht auf der eigenen Titelseite außerhalb der
        Bibliografie. Ohne diese Bedingung zeigen fehl-extrahierte, *zitierte* fremde
-       Identifikatoren auf das falsche Paper (derselbe Guard wie im Zitationsgraphen).
+       Identifikatoren auf das falsche Paper. Genutzt wird derselbe Guard wie im
+       Zitationsgraphen – er kennt auch den Sonderfall des Referenz-Eintrags, dessen
+       Identifikatoren aus der Datei selbst stammen.
     2. **Eindeutigkeit** – Werte mit mehreren Trägern (z. B. der unausgefüllte
        ACM-Vorlagen-Platzhalter) sind **kein** Duplikat-Kriterium.
     """
     owners: dict[tuple[str, str], set[str]] = {}
     for paper in papers:
-        front = _front_matter(paper)
+        front = front_matter_text(paper)
         for kind, value in paper.identifiers.items():
             if value and value.lower() in front:
                 owners.setdefault((kind, value.lower()), set()).add(paper.paper_id)
@@ -214,6 +259,15 @@ def _corpus_titles(papers: list[CanonicalPaper]) -> dict[str, str]:
         if len(normalized) >= MIN_TITLE_CHARS and len(normalized.split()) >= MIN_TITLE_WORDS:
             titles.setdefault(normalized, original)
     return titles
+
+
+def _reference_papers(papers: list[CanonicalPaper]) -> dict[str, str]:
+    """Bildet ``paper_id → Dateiname`` für alle Referenz-Einträge des Korpus."""
+    return {
+        paper.paper_id: unquote(Path(urlparse(paper.source_uri).path).name)
+        for paper in papers
+        if paper.document_kind == DOCUMENT_KIND_REFERENCE
+    }
 
 
 def load_corpus(data_path: Path) -> CorpusView:
@@ -235,6 +289,7 @@ def load_corpus(data_path: Path) -> CorpusView:
         sha256_to_name=_manifest_hashes(data_path),
         identifier_to_paper=_identifier_keys(papers),
         titles=_corpus_titles(papers),
+        reference_papers=_reference_papers(papers),
     )
 
 
@@ -315,75 +370,228 @@ def _same_file(path: Path, sha256: str) -> bool:
     return hashlib.sha256(path.read_bytes()).hexdigest() == sha256
 
 
-def _classify(
-    pdf: Path, raw: bytes, sha256: str, corpus: CorpusView, papers_path: Path
+def safe_stub_name(title: str) -> str:
+    """Bildet aus dem Titel einen dateisystemsicheren Namen für einen Referenz-Eintrag.
+
+    Der Titel ist eine fremde Zeichenkette, der Name entsteht deshalb über eine **Filterung**:
+    Pfadtrennzeichen und die unter Windows verbotenen Zeichen entfallen, Whitespace wird
+    verdichtet, die Länge begrenzt. Damit gilt für Stubs dieselbe Konvention wie für PDFs –
+    **der Dateiname ist der Titel** (docs/adr/0030-reference-entries-in-corpus-phase13.md).
+
+    Args:
+        title: Titel aus der Stub-Datei.
+
+    Returns:
+        Den Dateinamen inklusive :data:`~research_graphrag.extraction.refstub.STUB_SUFFIX`.
+    """
+    printable = "".join(
+        " " if char in _FORBIDDEN_NAME_CHARS or not char.isprintable() else char for char in title
+    )
+    cleaned = " ".join(printable.split())[:MAX_STUB_NAME_CHARS].strip(" .")
+    return f"{cleaned or 'Referenz-Eintrag'}{STUB_SUFFIX}"
+
+
+def _decision(
+    filename: str,
+    sha256: str,
+    action: str,
+    reason: str,
+    detail: str,
+    *,
+    target_name: str = "",
+    replaces: str = "",
 ) -> IntakeDecision:
-    """Entscheidet über **eine** Eingangsdatei – rein lesend, ohne Seiteneffekt."""
+    """Baut eine Entscheidung (Hilfsform, damit die Zweige lesbar bleiben)."""
+    return IntakeDecision(
+        filename=filename,
+        sha256=sha256,
+        action=action,
+        reason=reason,
+        detail=detail,
+        target_name=target_name,
+        replaces=replaces,
+    )
 
-    def decision(action: str, reason: str, detail: str) -> IntakeDecision:
-        return IntakeDecision(
-            filename=pdf.name, sha256=sha256, action=action, reason=reason, detail=detail
+
+def _classify_identifiers(
+    identifiers: dict[str, str], corpus: CorpusView, *, is_full_text: bool
+) -> tuple[str, str, str] | None:
+    """Prüft die Identifikatoren gegen den Korpus (Stufe 2).
+
+    Trifft ein **Volltext** auf einen **Referenz-Eintrag**, ist die Antwort nicht „Duplikat",
+    sondern „Upgrade": Ohne diese Unterscheidung wanderte das echte Paper in die Quarantäne,
+    während der Abstract-Stub im Korpus bliebe – genau verkehrt herum.
+
+    Returns:
+        ``(Grund, Detail, abgelöster Dateiname)`` – der dritte Wert ist nur beim Upgrade gesetzt;
+        ``None``, wenn kein Identifikator im Korpus liegt.
+    """
+    for kind, value in sorted(identifiers.items()):
+        owner = corpus.identifier_to_paper.get((kind, value.lower()))
+        if owner is None:
+            continue
+        stub_name = corpus.reference_papers.get(owner)
+        if is_full_text and stub_name is not None:
+            return (
+                REASON_UPGRADE,
+                f"{kind}:{value} ersetzt den Referenz-Eintrag {stub_name}",
+                stub_name,
+            )
+        return (
+            REASON_DUPLICATE_IDENTIFIER,
+            f"{kind}:{value} bereits im Korpus (Paper {owner})",
+            "",
         )
+    return None
 
+
+def _classify_pdf(
+    path: Path, raw: bytes, sha256: str, corpus: CorpusView, papers_path: Path
+) -> IntakeDecision:
+    """Entscheidet über eine eingehende PDF – rein lesend, ohne Seiteneffekt."""
     if not raw.startswith(PDF_MAGIC):
-        return decision(ACTION_KEPT, REASON_NOT_A_PDF, "Datei trägt keine PDF-Signatur")
-
-    # Der Manifest-Treffer allein rechtfertigt die Löschung **nicht**: Wird eine PDF aus
-    # ``papers/`` entfernt, ohne neu zu indizieren, zeigt der Eintrag ins Leere – und die
-    # einzige verbliebene Kopie würde vernichtet. Deshalb wird der Beleg am Dateisystem
-    # nachgerechnet (Existenz **und** Hash), bevor gelöscht wird.
-    known_name = corpus.sha256_to_name.get(sha256)
-    if known_name is not None and _same_file(papers_path / known_name, sha256):
-        return decision(
-            ACTION_DELETED, REASON_DUPLICATE_SHA256, f"byte-identisch zu papers/{known_name}"
+        return _decision(
+            path.name, sha256, ACTION_KEPT, REASON_NOT_A_PDF, "Datei trägt keine PDF-Signatur"
         )
-
     try:
         front_pages = read_front_pages(raw)
     except DomainError as exc:
-        return decision(ACTION_KEPT, REASON_UNREADABLE, exc.message)
+        return _decision(path.name, sha256, ACTION_KEPT, REASON_UNREADABLE, exc.message)
 
-    identifiers = extract_identifiers("\n".join(front_pages))
-    for kind, value in sorted(identifiers.items()):
-        owner = corpus.identifier_to_paper.get((kind, value.lower()))
-        if owner is not None:
-            return decision(
-                ACTION_QUARANTINED,
-                REASON_DUPLICATE_IDENTIFIER,
-                f"{kind}:{value} bereits im Korpus (Paper {owner})",
+    verdict = _classify_identifiers(
+        extract_identifiers("\n".join(front_pages)), corpus, is_full_text=True
+    )
+    if verdict is not None:
+        reason, detail, replaced = verdict
+        if reason == REASON_UPGRADE:
+            return _decision(
+                path.name, sha256, ACTION_ACCEPTED, REASON_UPGRADE, detail, replaces=replaced
             )
+        return _decision(path.name, sha256, ACTION_QUARANTINED, reason, detail)
 
     # Die Namenskollision wird **vor** der Verdachtsstufe geprüft: Sie ist eine Tatsache über den
     # Zielort, keine Vermutung – und sie ist die handlungsleitendere Meldung.
-    if (papers_path / pdf.name).exists():
-        return decision(
-            ACTION_KEPT, REASON_NAME_COLLISION, f"papers/{pdf.name} existiert mit anderem Inhalt"
+    if (papers_path / path.name).exists():
+        return _decision(
+            path.name,
+            sha256,
+            ACTION_KEPT,
+            REASON_NAME_COLLISION,
+            f"papers/{path.name} existiert mit anderem Inhalt",
         )
 
-    ratio, matched = best_title_match(title_candidates(pdf.name, front_pages), corpus.titles)
+    ratio, matched = best_title_match(title_candidates(path.name, front_pages), corpus.titles)
     if ratio >= TITLE_SIMILARITY:
-        return decision(
-            ACTION_KEPT, REASON_TITLE_SUSPICION, f"Titel zu {ratio:.2f} ähnlich zu '{matched}'"
+        return _decision(
+            path.name,
+            sha256,
+            ACTION_KEPT,
+            REASON_TITLE_SUSPICION,
+            f"Titel zu {ratio:.2f} ähnlich zu '{matched}'",
+        )
+    return _decision(path.name, sha256, ACTION_ACCEPTED, REASON_NEW, f"neu → papers/{path.name}")
+
+
+def _classify_stub(
+    path: Path, raw: bytes, sha256: str, corpus: CorpusView, papers_path: Path
+) -> IntakeDecision:
+    """Entscheidet über einen eingehenden Referenz-Eintrag.
+
+    Die Eingangsseite ist hier **genauer** als bei einem PDF: Titel und Identifikatoren stehen in
+    der Datei, es braucht keine Heuristik über eine Titelseite. Die drei Prüfstufen bleiben
+    dieselben.
+    """
+    try:
+        stub: ReferenceStub = parse_stub(raw)
+    except DomainError as exc:
+        return _decision(path.name, sha256, ACTION_KEPT, REASON_INVALID_STUB, exc.message)
+
+    verdict = _classify_identifiers(stub.identifiers, corpus, is_full_text=False)
+    if verdict is not None:
+        reason, detail, _ = verdict
+        return _decision(path.name, sha256, ACTION_QUARANTINED, reason, detail)
+
+    target_name = safe_stub_name(stub.title)
+    if (papers_path / target_name).exists():
+        return _decision(
+            path.name,
+            sha256,
+            ACTION_KEPT,
+            REASON_NAME_COLLISION,
+            f"papers/{target_name} existiert mit anderem Inhalt",
+            target_name=target_name,
         )
 
-    return decision(ACTION_ACCEPTED, REASON_NEW, f"neu → papers/{pdf.name}")
+    normalized = normalize_title(stub.title)
+    candidates = (
+        [normalized]
+        if len(normalized) >= MIN_TITLE_CHARS and len(normalized.split()) >= MIN_TITLE_WORDS
+        else []
+    )
+    ratio, matched = best_title_match(candidates, corpus.titles)
+    if ratio >= TITLE_SIMILARITY:
+        return _decision(
+            path.name,
+            sha256,
+            ACTION_KEPT,
+            REASON_TITLE_SUSPICION,
+            f"Titel zu {ratio:.2f} ähnlich zu '{matched}'",
+            target_name=target_name,
+        )
+    return _decision(
+        path.name,
+        sha256,
+        ACTION_ACCEPTED,
+        REASON_NEW,
+        f"neu → papers/{target_name}",
+        target_name=target_name,
+    )
+
+
+def _classify(
+    path: Path, raw: bytes, sha256: str, corpus: CorpusView, papers_path: Path
+) -> IntakeDecision:
+    """Entscheidet über **eine** Eingangsdatei – rein lesend, ohne Seiteneffekt.
+
+    Stufe 1 (sha256) ist dateiformatunabhängig und gilt deshalb vor der Typunterscheidung: Wird
+    eine Datei aus ``papers/`` entfernt, ohne neu zu indizieren, zeigt der Manifest-Eintrag ins
+    Leere – und die einzige verbliebene Kopie würde vernichtet. Deshalb wird der Beleg am
+    Dateisystem nachgerechnet (Existenz **und** Hash), bevor gelöscht wird.
+    """
+    known_name = corpus.sha256_to_name.get(sha256)
+    if known_name is not None and _same_file(papers_path / known_name, sha256):
+        return _decision(
+            path.name,
+            sha256,
+            ACTION_DELETED,
+            REASON_DUPLICATE_SHA256,
+            f"byte-identisch zu papers/{known_name}",
+        )
+    if path.suffix.lower() == STUB_SUFFIX:
+        return _classify_stub(path, raw, sha256, corpus, papers_path)
+    return _classify_pdf(path, raw, sha256, corpus, papers_path)
 
 
 def _apply(
-    decision: IntakeDecision, pdf: Path, papers_path: Path, *, delete_duplicates: bool
+    decision: IntakeDecision, path: Path, papers_path: Path, *, delete_duplicates: bool
 ) -> None:
     """Führt die zu einer Entscheidung gehörende Dateioperation aus."""
     if decision.action == ACTION_DELETED:
-        pdf.unlink()
+        path.unlink()
     elif decision.action == ACTION_QUARANTINED:
         if delete_duplicates:
-            pdf.unlink()
+            path.unlink()
         else:
-            quarantine = pdf.parent / QUARANTINE_DIR
+            quarantine = path.parent / QUARANTINE_DIR
             quarantine.mkdir(parents=True, exist_ok=True)
-            shutil.move(str(pdf), str(quarantine / pdf.name))
+            shutil.move(str(path), str(quarantine / path.name))
     elif decision.action == ACTION_ACCEPTED:
-        shutil.move(str(pdf), str(papers_path / pdf.name))
+        shutil.move(str(path), str(papers_path / decision.corpus_name))
+        if decision.replaces:
+            # „Volltext schlägt Referenz-Eintrag": die einzige Löschung in ``papers/`` – und die
+            # einzige, die konstruktionsbedingt unbedenklich ist, weil ein Stub aus
+            # ``new_papers/referenzen.txt`` jederzeit neu entsteht.
+            (papers_path / decision.replaces).unlink(missing_ok=True)
 
 
 def _attach_flags(decisions: list[IntakeDecision], data_path: Path) -> list[IntakeDecision]:
@@ -397,11 +605,25 @@ def _attach_flags(decisions: list[IntakeDecision], data_path: Path) -> list[Inta
         for entry in report.get("papers", [])
     }
     return [
-        replace(item, flags=flags_by_name.get(item.filename, ()))
+        replace(item, flags=flags_by_name.get(item.corpus_name, ()))
         if item.action == ACTION_ACCEPTED
         else item
         for item in decisions
     ]
+
+
+def _superseded_entry(decision: IntakeDecision, papers_path: Path) -> tuple[str, str] | None:
+    """Liefert ``(Dateiname, sha256)`` des abgelösten Referenz-Eintrags – **vor** dem Löschen.
+
+    Der Hash ist der Kern der forensischen Spur: Nur mit ihm ist im Nachhinein belegbar, welche
+    Datei genau verschwunden ist (docs/adr/0019-corpus-intake-new-papers-phase8.md).
+    """
+    if not decision.replaces:
+        return None
+    stub_path = papers_path / decision.replaces
+    if not stub_path.is_file():
+        return None
+    return (decision.replaces, hashlib.sha256(stub_path.read_bytes()).hexdigest())
 
 
 def _write_log(data_path: Path, decisions: list[IntakeDecision]) -> None:
@@ -411,11 +633,19 @@ def _write_log(data_path: Path, decisions: list[IntakeDecision]) -> None:
     log_path = data_path / INTAKE_LOG
     log_path.parent.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(UTC).isoformat(timespec="seconds")
-    rows = [
-        f"| {stamp} | {item.action} | {item.filename} | {item.sha256} "
-        f"| {item.reason}: {item.detail} |"
-        for item in decisions
-    ]
+    rows: list[str] = []
+    for item in decisions:
+        rows.append(
+            f"| {stamp} | {item.action} | {item.corpus_name} | {item.sha256} "
+            f"| {item.reason}: {item.detail} |"
+        )
+        # Der Upgrade-Pfad löscht eine Datei in ``papers/`` – diese Löschung bekommt eine eigene
+        # Zeile mit eigenem Hash, statt in der Begründung des Nachfolgers unterzugehen.
+        if item.superseded_sha256:
+            rows.append(
+                f"| {stamp} | {ACTION_DELETED} | {item.replaces} | {item.superseded_sha256} "
+                f"| {REASON_SUPERSEDED}: abgelöst durch {item.corpus_name} |"
+            )
     with log_path.open("a", encoding="utf-8", newline="\n") as handle:
         if log_path.stat().st_size == 0:
             handle.write(_LOG_HEADER)
@@ -433,7 +663,11 @@ def run_intake(
     on_file: Callable[[str, int, int], None] | None = None,
     on_ingest_start: Callable[[], None] | None = None,
 ) -> IntakeReport:
-    """Übernimmt neue PDFs aus dem Eingangsordner in den Korpus.
+    """Übernimmt neue Dateien aus dem Eingangsordner in den Korpus.
+
+    Angenommen werden ``*.pdf`` und ``*.refjson`` (Referenz-Einträge ohne Volltext). Trifft ein
+    Volltext auf einen vorhandenen Referenz-Eintrag, wird er **übernommen** und der Stub
+    abgelöst (docs/adr/0030-reference-entries-in-corpus-phase13.md).
 
     Args:
         inbox_dir: Eingangsordner (``new_papers/``); wird **nicht** rekursiv gelesen, die
@@ -467,17 +701,24 @@ def run_intake(
 
     corpus = load_corpus(data_path)
     decisions: list[IntakeDecision] = []
-    pdfs = sorted(inbox_path.glob("*.pdf"))
-    total = len(pdfs)
-    for i, pdf in enumerate(pdfs):
+    sources = sorted(
+        [*inbox_path.glob("*.pdf"), *inbox_path.glob(f"*{STUB_SUFFIX}")],
+        key=lambda item: item.name,
+    )
+    total = len(sources)
+    for i, source in enumerate(sources):
         if on_file is not None:
-            on_file(pdf.name, i + 1, total)
-        raw = pdf.read_bytes()
+            on_file(source.name, i + 1, total)
+        raw = source.read_bytes()
         sha256 = hashlib.sha256(raw).hexdigest()
-        decision = _classify(pdf, raw, sha256, corpus, papers_path)
+        decision = _classify(source, raw, sha256, corpus, papers_path)
+        # Der Hash des abzulösenden Stubs muss **vor** der Dateioperation feststehen.
+        superseded = _superseded_entry(decision, papers_path)
+        if superseded is not None:
+            decision = replace(decision, superseded_sha256=superseded[1])
         decisions.append(decision)
         if not dry_run:
-            _apply(decision, pdf, papers_path, delete_duplicates=delete_identifier_duplicates)
+            _apply(decision, source, papers_path, delete_duplicates=delete_identifier_duplicates)
 
     if dry_run:
         return IntakeReport(decisions=tuple(decisions), dry_run=True, ingest=None, overview=None)
@@ -492,7 +733,22 @@ def run_intake(
 
     if on_ingest_start is not None:
         on_ingest_start()
+    # Der abgelöste Referenz-Eintrag muss **vor** dem Re-Index vergessen werden: Sein Canonical
+    # bliebe sonst als Waise liegen und das Paper erschiene doppelt.
+    for item in decisions:
+        if item.action == ACTION_ACCEPTED and item.replaces:
+            forget_source(data_path, item.replaces)
     ingest_report = ingest(papers_path, data_path)
+    # Erst die Zeile des abgelösten Referenz-Eintrags umbiegen, **dann** die Entwurfszeilen:
+    # Sonst gilt der neue Dateiname als unbekannt und bekäme eine zweite Zeile.
+    for item in decisions:
+        if item.action == ACTION_ACCEPTED and item.replaces:
+            retarget_overview_row(
+                uebersicht_path,
+                old_filename=item.replaces,
+                new_filename=item.corpus_name,
+                new_name=title_from_uri(item.corpus_name),
+            )
     overview_report = append_overview_rows(data_dir=data_path, target_path=uebersicht_path)
     _logger.info(
         "Intake: %d Paper übernommen, %d Übersicht-Zeile(n) ergänzt.",

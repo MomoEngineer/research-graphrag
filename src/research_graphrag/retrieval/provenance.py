@@ -17,6 +17,7 @@ from typing import Any
 
 from research_graphrag.bibliography.model import PaperMetadata, empty_metadata
 from research_graphrag.errors import DomainError, ErrorCode
+from research_graphrag.extraction.model import DOCUMENT_KIND_FULL
 from research_graphrag.indexing.metadata_index import load_paper_metadata
 from research_graphrag.indexing.tfidf_index import Hit
 
@@ -31,13 +32,34 @@ def _snippet(text: str, limit: int = _SNIPPET_LIMIT) -> str:
     return collapsed[: limit - 1].rstrip() + "…"
 
 
+REFERENCE_PAGE_LABEL = "ohne Seite (Abstract)"
+"""Anzeigeform der Provenienz eines Referenz-Eintrags ohne Volltext.
+
+„Seite 1" wäre dort eine **falsche Aussage über die Herkunft**; die fehlende Seitenangabe steht
+deshalb als ``page_number = 0`` im Datenmodell selbst
+(docs/adr/0030-reference-entries-in-corpus-phase13.md).
+"""
+
+REFERENCE_EVIDENCE_MARKER = "Referenz-Eintrag ohne Volltext"
+"""Klartext-Kennzeichnung eines Belegs, der nur auf Titel und Abstract beruht.
+
+Steht in jedem Ausgabekanal an derselben Stelle – im Provenienz-Label. Die fehlende Seite allein
+reicht als Hinweis nicht: Sie sagt, *wo* der Beleg herkommt, nicht, dass der Volltext **fehlt**
+(docs/adr/0031-reference-contract-and-guardrail-phase13.md).
+"""
+
+
 def page_label(page_number: int, page_end: int) -> str:
     """Anzeigeform der Seiten-Provenienz: „Seite 7" bzw. „Seiten 7–8".
 
     Single Source of Truth für alle Ausgabekanäle (CLI, QS-Harness, Evidenz-Aufbereitung),
     seit ein Chunk über einen Seitenumbruch laufen darf
-    (docs/adr/0013-chunking-refinement-phase7.md).
+    (docs/adr/0013-chunking-refinement-phase7.md). Ein Chunk **ohne** Seite – also ein
+    Referenz-Eintrag – wird als solcher benannt statt mit einer erfundenen Seite
+    (docs/adr/0030-reference-entries-in-corpus-phase13.md).
     """
+    if page_number <= 0:
+        return REFERENCE_PAGE_LABEL
     if page_end <= page_number:
         return f"Seite {page_number}"
     return f"Seiten {page_number}–{page_end}"
@@ -62,6 +84,11 @@ class Citation:
     ohne sie zeigt ein Zitat nur auf eine interne ``paper_id`` und einen lokalen Dateipfad
     (siehe docs/adr/0025-citable-paper-metadata.md). Die vollständige Literaturangabe liefert
     bewusst nicht jedes Zitat, sondern ``answer_question``, ``get_paper`` und ``get_reference``.
+
+    ``document_kind`` sagt, **worauf** der Beleg beruht: ``full`` auf einem Volltext,
+    ``reference`` auf einem Referenz-Eintrag aus Titel und Abstract. Ohne dieses Feld sieht ein
+    Abstract-Zitat aus wie ein Volltext-Beleg – die Unvollständigkeit wäre unsichtbar
+    (docs/adr/0031-reference-contract-and-guardrail-phase13.md).
     """
 
     paper_id: str
@@ -76,6 +103,7 @@ class Citation:
     score_bm25: float = 0.0
     identifiers: Mapping[str, str] = field(default_factory=dict)
     citation_key: str = ""
+    document_kind: str = DOCUMENT_KIND_FULL
 
     def __post_init__(self) -> None:
         """Normalisiert die Seiten-Range: ``page_end`` fällt auf die Startseite zurück."""
@@ -98,12 +126,14 @@ class Citation:
             score_bm25=hit.score_bm25,
             identifiers=hit.identifiers,
             citation_key=hit.citation_key,
+            document_kind=hit.document_kind,
         )
 
     def to_dict(self) -> dict[str, Any]:
         """Serialisiert das Zitat (Output-Schema der Retrieval-Tools)."""
         return {
             "paper_id": self.paper_id,
+            "document_kind": self.document_kind,
             "section_title": self.section_title,
             "page_number": self.page_number,
             "page_end": self.page_end,
@@ -125,7 +155,9 @@ class PaperRef:
     Trägt ``source_uri`` und ein extraktives Leit-Snippet (Text des ersten Chunks); es gibt
     hier bewusst **keinen** Seiten-/Chunk-Anker, da corpusweite Synthese nicht auf eine
     einzelne Passage zurückführbar ist. ``identifiers`` und ``citation_key`` machen die
-    Referenz extern auflösbar (docs/adr/0025-citable-paper-metadata.md).
+    Referenz extern auflösbar (docs/adr/0025-citable-paper-metadata.md). ``document_kind``
+    weist Referenz-Einträge ohne Volltext aus
+    (docs/adr/0031-reference-contract-and-guardrail-phase13.md).
     """
 
     paper_id: str
@@ -133,11 +165,13 @@ class PaperRef:
     snippet: str = ""
     identifiers: Mapping[str, str] = field(default_factory=dict)
     citation_key: str = ""
+    document_kind: str = DOCUMENT_KIND_FULL
 
     def to_dict(self) -> dict[str, Any]:
         """Serialisiert die Paper-Referenz."""
         return {
             "paper_id": self.paper_id,
+            "document_kind": self.document_kind,
             "source_uri": self.source_uri,
             "identifiers": dict(self.identifiers),
             "citation_key": self.citation_key,
@@ -158,10 +192,12 @@ class ProvenanceAssembler:
         source_uris: dict[str, str],
         leading_snippets: dict[str, str],
         metadata: dict[str, PaperMetadata] | None = None,
+        document_kinds: dict[str, str] | None = None,
     ) -> None:
         self._source_uris = source_uris
         self._leading_snippets = leading_snippets
         self._metadata = metadata or {}
+        self._document_kinds = document_kinds or {}
 
     @classmethod
     def load(cls, db_path: str | Path) -> ProvenanceAssembler:
@@ -182,7 +218,9 @@ class ProvenanceAssembler:
 
         connection = sqlite3.connect(str(path))
         try:
-            uri_rows = connection.execute("SELECT paper_id, source_uri FROM papers").fetchall()
+            uri_rows = connection.execute(
+                "SELECT paper_id, source_uri, document_kind FROM papers"
+            ).fetchall()
             snippet_rows = connection.execute(
                 "SELECT c.paper_id, c.text FROM chunks c "
                 "JOIN (SELECT paper_id, MIN(row_index) AS rmin FROM chunks GROUP BY paper_id) m "
@@ -191,9 +229,10 @@ class ProvenanceAssembler:
         finally:
             connection.close()
 
-        source_uris = {str(pid): str(uri) for pid, uri in uri_rows}
+        source_uris = {str(row[0]): str(row[1]) for row in uri_rows}
+        kinds = {str(row[0]): str(row[2]) for row in uri_rows}
         leading = {str(pid): _snippet(str(text)) for pid, text in snippet_rows}
-        return cls(source_uris, leading, load_paper_metadata(path))
+        return cls(source_uris, leading, load_paper_metadata(path), kinds)
 
     def metadata(self, paper_id: str) -> PaperMetadata:
         """Liefert den bibliografischen Datensatz eines Papers (unbekannt ⇒ leerer Datensatz)."""
@@ -214,4 +253,5 @@ class ProvenanceAssembler:
             snippet=self._leading_snippets.get(paper_id, ""),
             identifiers=metadata.identifiers,
             citation_key=metadata.citation_key(),
+            document_kind=self._document_kinds.get(paper_id, DOCUMENT_KIND_FULL),
         )

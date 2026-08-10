@@ -123,6 +123,7 @@ def test_global_to_dict_shape(tmp_path: Path) -> None:
     assert set(community) == {"community_id", "score", "size", "keywords", "representatives"}
     assert set(community["representatives"][0]) == {
         "paper_id",
+        "document_kind",
         "source_uri",
         "identifiers",
         "citation_key",

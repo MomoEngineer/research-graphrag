@@ -15,6 +15,12 @@ Ordners werden per `.gitignore` ausgeschlossen (siehe README.md,
   Übersicht-Zeile in einem Schritt ([ADR 0019](../docs/adr/0019-corpus-intake-new-papers-phase8.md)).
   Der direkte Weg (PDF hier ablegen, dann `python -m scripts.ingest`) bleibt daneben bestehen;
   er dedupliziert allerdings nur über Dateiname und Hash.
+- **Zweiter Dokumenttyp:** Neben `*.pdf` liegen hier seit Phase 13 / R2 auch **Referenz-Einträge**
+  `*.refjson` – Paper, von denen nur der Abstract öffentlich ist. Sie tragen ihren Titel als
+  Dateinamen wie jedes PDF und werden von einem später eintreffenden Volltext **abgelöst**
+  ([ADR 0030](../docs/adr/0030-reference-entries-in-corpus-phase13.md)). Seit R3 weist jede
+  Ausgabe sie als unvollständig aus, und in der Chunk-Suche stehen sie hinter den
+  Volltext-Treffern ([ADR 0031](../docs/adr/0031-reference-contract-and-guardrail-phase13.md)).
 
 Aktueller Stand: **204 PDFs** nach Korpuszufluss und fachlicher Bereinigung am
 03.08.2026. Alle PDFs besitzen genau einen Eintrag in [`Übersicht.md`](../Übersicht.md).

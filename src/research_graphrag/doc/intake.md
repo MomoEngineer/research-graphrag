@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/intake.py` |
 | **Paket** | Top-Level – Korpus-Zufluss über den Eingangsordner |
-| **Phase** | 8 |
-| **Grundlagen** | [ADR 0019](../../../docs/adr/0019-corpus-intake-new-papers-phase8.md), [ADR 0011](../../../docs/adr/0011-intra-corpus-citation-graph-phase7.md), [ADR 0010](../../../docs/adr/0010-drop-in-workflow-and-qa-phase6.md) |
+| **Phase** | 8 (eingeführt), 13 / R2 (zweiter Dokumenttyp) |
+| **Grundlagen** | [ADR 0019](../../../docs/adr/0019-corpus-intake-new-papers-phase8.md), [ADR 0030](../../../docs/adr/0030-reference-entries-in-corpus-phase13.md), [ADR 0011](../../../docs/adr/0011-intra-corpus-citation-graph-phase7.md), [ADR 0010](../../../docs/adr/0010-drop-in-workflow-and-qa-phase6.md) |
 
 ---
 
@@ -20,15 +20,46 @@ und nur der bitgenaue Nachweis rechtfertigt eine unwiderrufliche Löschung.
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
 | `run_intake` | Funktion | Vollständiger Lauf: prüfen, verschieben, indizieren, Übersicht ergänzen |
-| `IntakeDecision` | Dataclass | Entscheidung über **eine** Datei (Aktion, Grund, Detail, Flags) |
+| `IntakeDecision` | Dataclass | Entscheidung über **eine** Datei (Aktion, Grund, Detail, Flags, Zielname, abgelöster Eintrag) |
 | `IntakeReport` | Dataclass | Alle Entscheidungen + Ingest- und Übersicht-Bericht |
 | `read_front_pages` | Funktion | Normalisierter Text der ersten beiden Seiten (ohne Volltext-Fallback) |
 | `title_candidates` | Funktion | Titelkandidaten aus Dateiname und Titelseite |
 | `best_title_match` | Funktion | Beste Titel-Ähnlichkeit gegen den Korpus |
+| `safe_stub_name` | Funktion | Dateisystemsicherer Name eines Referenz-Eintrags aus seinem Titel |
 | `load_corpus` | Funktion | Bestandssicht aus `manifest.json` und Index laden (auch vom Online-Modus genutzt) |
-| `CorpusView` | Dataclass | Diese Bestandssicht: Hashes, gehärtete Identifikator-Schlüssel, Titel |
+| `CorpusView` | Dataclass | Diese Bestandssicht: Hashes, gehärtete Identifikator-Schlüssel, Titel, Referenz-Einträge |
 | `ACTION_*`, `REASON_*` | Konstanten | Stabiles Vokabular für Bericht und Protokoll |
-| `TITLE_SIMILARITY`, `TITLE_CANDIDATE_LINES`, `QUARANTINE_DIR`, `INTAKE_LOG`, `PDF_MAGIC` | Konstanten | Schwellen und Pfade |
+| `TITLE_SIMILARITY`, `TITLE_CANDIDATE_LINES`, `QUARANTINE_DIR`, `INTAKE_LOG`, `PDF_MAGIC`, `MAX_STUB_NAME_CHARS` | Konstanten | Schwellen und Pfade |
+
+## 2.1 Der zweite Dokumenttyp (Phase 13 / R2)
+
+Der Eingang nimmt neben `*.pdf` auch `*.refjson` an. Die **drei Prüfstufen gelten unverändert**;
+nur die Eingangsseite unterscheidet sich – und ist für einen Stub sogar **genauer**, weil Titel
+und Identifikatoren aus der Datei stammen statt aus einer Heuristik über die Titelseite.
+
+| Aspekt | PDF | Referenz-Eintrag |
+| --- | --- | --- |
+| Robustheits-Gate | `%PDF-`-Signatur | Formatprüfung (`parse_stub`): JSON, Dokumentart, Titel |
+| Titelquelle | Dateiname + erste Seite | Feld `title` der Datei |
+| Identifikatoren | Titelseite ohne Volltext-Fallback | Felder `doi` / `arxiv_id` |
+| Zielname | unverändert | `safe_stub_name(titel)` – **der Dateiname ist der Titel** |
+
+### Upgrade-Pfad: „Volltext schlägt Referenz-Eintrag"
+
+Trifft ein eingehendes **PDF** in Stufe 2 auf einen Korpus-Eintrag, der ein **Referenz-Eintrag**
+ist, wird es übernommen und der Stub aus `papers/` entfernt. Ohne diese Regel griffe die
+Quarantäne – und das *echte* Paper landete im `_duplikate/`-Ordner, während der Abstract-Stub im
+Korpus bliebe. Drei Dinge gehören dazu:
+
+1. Der Stub wird gelöscht (die einzige Löschung in `papers/` – und die einzige, die
+   konstruktionsbedingt unbedenklich ist, weil sie aus `new_papers/referenzen.txt` rückgängig
+   gemacht werden kann).
+2. Er wird **vergessen** (`pipeline.forget_source`): Manifest-Eintrag und Canonical verschwinden,
+   sonst bliebe eine Waise liegen und das Paper erschiene nach dem Re-Index doppelt.
+3. Seine Übersichtszeile wird **umgebogen**, nicht dupliziert
+   (`overview.drafts.retarget_overview_row`) – und zwar **vor** den Entwurfszeilen.
+
+Der Vorgang steht mit **eigenem Hash** im Protokoll (`superseded_by_full_text`).
 
 ## 3. Ablauf
 

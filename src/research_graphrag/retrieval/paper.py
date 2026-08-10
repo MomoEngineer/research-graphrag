@@ -17,6 +17,7 @@ from typing import Any
 from research_graphrag.bibliography.model import PaperMetadata, empty_metadata
 from research_graphrag.bibliography.styles import reference_payload
 from research_graphrag.errors import DomainError, ErrorCode
+from research_graphrag.extraction.model import DOCUMENT_KIND_FULL
 from research_graphrag.indexing.metadata_index import load_paper_metadata
 
 _SNIPPET_LIMIT = 200
@@ -39,6 +40,11 @@ class PaperDetail:
     ``identifiers`` bleibt die **extrahierte** Rohsicht aus der Tabelle ``papers``; der
     aufgelöste, zitierfähige Datensatz steht in ``reference``
     (docs/adr/0025-citable-paper-metadata.md).
+
+    ``document_kind`` trennt Volltexte von **Referenz-Einträgen**. Gerade hier ist das Feld
+    unverzichtbar: ``n_pages = 0`` und ``n_chunks = 1`` sähen sonst nach einem defekten
+    Volltext aus statt nach einem bewusst unvollständigen Eintrag
+    (docs/adr/0031-reference-contract-and-guardrail-phase13.md).
     """
 
     paper_id: str
@@ -49,11 +55,13 @@ class PaperDetail:
     sections: tuple[str, ...]
     snippet: str
     reference: PaperMetadata = field(default_factory=lambda: empty_metadata(""))
+    document_kind: str = DOCUMENT_KIND_FULL
 
     def to_dict(self) -> dict[str, Any]:
         """Serialisiert die Paper-Metadaten (Output-Schema des Tools ``get_paper``)."""
         return {
             "paper_id": self.paper_id,
+            "document_kind": self.document_kind,
             "source_uri": self.source_uri,
             "identifiers": dict(self.identifiers),
             "n_pages": self.n_pages,
@@ -89,7 +97,7 @@ def get_paper(db_path: str | Path, paper_id: str) -> PaperDetail:
     connection = sqlite3.connect(str(path))
     try:
         paper_row = connection.execute(
-            "SELECT source_uri, n_pages, identifiers FROM papers WHERE paper_id = ?",
+            "SELECT source_uri, n_pages, identifiers, document_kind FROM papers WHERE paper_id = ?",
             (paper_id,),
         ).fetchone()
         if paper_row is None:
@@ -123,4 +131,5 @@ def get_paper(db_path: str | Path, paper_id: str) -> PaperDetail:
         sections=tuple(sections),
         snippet=leading,
         reference=load_paper_metadata(path).get(paper_id, empty_metadata(paper_id)),
+        document_kind=str(paper_row[3]),
     )

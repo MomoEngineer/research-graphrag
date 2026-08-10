@@ -44,7 +44,10 @@ eine zweite Wahrheit über dieselben Regeln.
 
 **Der Modus ist die geteilte Primitive.** Was `search_basic` liefert, ist exakt die Ausgabe der
 Index-Suche in Zitat-Form. Genau deshalb wird es in der Evaluation als **Contract-Test** geführt
-statt als eigene Kennzahl: Eine Abweichung zwischen beiden wäre ein Fehler, keine Messgröße.
+statt als eigene Kennzahl: Eine Abweichung zwischen beiden wäre ein Fehler, keine Messgröße. Das
+gilt auch für die Guardrail: Referenz-Einträge sind bereits in der Primitive nachrangig
+([ADR 0031](../../../../docs/adr/0031-reference-contract-and-guardrail-phase13.md)), dieses
+Modul kennt die Regel gar nicht.
 
 **Kein Treffer ist kein Fehler.** Passt nichts, ist `citations` leer – der Aufrufer entscheidet,
 wie er das darstellt.

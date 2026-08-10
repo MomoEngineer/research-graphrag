@@ -21,10 +21,18 @@ DEFAULT_SYSTEM_PROMPT = (
     "Du beantwortest Fragen zu einem wissenschaftlichen Paper-Korpus. "
     "Nutze ausschließlich die nummerierten Belege im Kontext – kein Vorwissen, keine Vermutungen. "
     "Belege jede Aussage mit der passenden Marke in eckigen Klammern, z. B. [1] oder [2, 3]. "
+    "Manche Belege sind im Label ausdrücklich als Referenz-Eintrag ohne Volltext gekennzeichnet: "
+    "Von diesen Papern liegen nur Titel und Abstract vor. Stützt du eine Aussage darauf, "
+    "benenne diese Einschränkung im Antworttext. "
     "Wenn die Belege eine Teilfrage nicht abdecken, schreibe dazu ausdrücklich "
     "'nicht belegt' statt zu spekulieren. Antworte knapp und auf Deutsch."
 )
-"""Verbindlicher Antwort-Contract der Synthese (strikt evidenzgebunden, ADR 0012)."""
+"""Verbindlicher Antwort-Contract der Synthese (strikt evidenzgebunden, ADR 0012).
+
+Seit R3 nennt er auch die **Unvollständigkeit** eines Belegs: Ein Referenz-Eintrag trägt nur
+Titel und Abstract, und genau das muss die Antwort sagen – die Literaturangabe selbst bleibt
+davon unberührt vollständig (docs/adr/0031-reference-contract-and-guardrail-phase13.md).
+"""
 
 MAX_ANSWER_TOKENS = 800
 """Obergrenze der angeforderten Completion (Sampling)."""

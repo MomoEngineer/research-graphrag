@@ -34,6 +34,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.model import (
+    DOCUMENT_KIND_REFERENCE,
     SECTION_KIND_ABSTRACT,
     CanonicalPaper,
 )
@@ -46,6 +47,13 @@ _SUMMARY_MAX_LEN = 300
 _TOKEN_PATTERN = r"(?u)\b[a-zA-Z][a-zA-Z]{2,}\b"
 _LINK_TARGET = re.compile(r"\]\((.+)\)")
 _MANUAL = "(manuell)"
+_CORPUS_SUFFIXES = (".pdf", ".refjson")
+
+DRAFT_PREFIX = "ENTWURF"
+"""Marker der maschinell erzeugten Zusammenfassung."""
+
+REFERENCE_DRAFT_PREFIX = "ENTWURF (Referenz-Eintrag, nur Abstract)"
+"""Marker eines Referenz-Eintrags – sichtbar, ohne das Spaltenlayout anzutasten."""
 
 DRAFT_ID_PREFIX = "Z"
 """Präfix der maschinell vergebenen ID-Reihe (kuratierte IDs sind Themencluster)."""
@@ -121,6 +129,20 @@ def _filename_from_uri(uri: str) -> str:
     return unquote(Path(urlparse(uri).path).name)
 
 
+def display_name(filename: str) -> str:
+    """Bildet den Anzeigenamen eines Korpus-Eintrags (Dateiname ohne bekannte Endung).
+
+    Bewusst eine eigene, winzige Funktion statt eines Imports aus ``indexing``: Die Schichtkante
+    ``overview → indexing`` wurde in docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md
+    ausdrücklich vermieden.
+    """
+    lowered = filename.lower()
+    for suffix in _CORPUS_SUFFIXES:
+        if lowered.endswith(suffix):
+            return filename[: -len(suffix)]
+    return filename
+
+
 def _cell(text: str) -> str:
     """Bereitet Text als sichere Tabellenzelle auf (einzeilig, ``|`` maskiert)."""
     collapsed = " ".join(text.split())
@@ -191,12 +213,19 @@ def build_draft_row(row_id: str, filename: str, paper: CanonicalPaper, keywords:
     Spalten: ``ID``, ``Name``, ``Themenfokus``, ``Keyword``, ``Kompakte Zusammenfassung``,
     ``Interner Link``, ``Relevanz fuer Expose``, ``SRQ-Zuordnung``,
     ``Externer Link/Indetifikator``. Die drei wertenden Spalten bleiben ``(manuell)``.
+
+    Ein **Referenz-Eintrag** ohne Volltext wird in der Zusammenfassung als solcher benannt –
+    ohne das Spaltenlayout anzutasten, das jede kuratierte Zeile teilt
+    (docs/adr/0030-reference-entries-in-corpus-phase13.md).
     """
-    name = filename[:-4] if filename.lower().endswith(".pdf") else filename
+    name = display_name(filename)
     internal = f"[Quelle](papers/{quote(filename)})"
     keyword_cell = _cell(", ".join(keywords)) if keywords else _MANUAL
     summary = extractive_summary(paper)
-    summary_cell = f"ENTWURF: {_cell(summary)}" if summary else "ENTWURF"
+    prefix = (
+        REFERENCE_DRAFT_PREFIX if paper.document_kind == DOCUMENT_KIND_REFERENCE else DRAFT_PREFIX
+    )
+    summary_cell = f"{prefix}: {_cell(summary)}" if summary else prefix
     external = _cell(_external_link(dict(paper.identifiers)))
     columns = [
         row_id,
@@ -258,6 +287,79 @@ def _append_rows(target: Path, rows: list[str]) -> None:
         os.replace(tmp_path, target)
     finally:
         tmp_path.unlink(missing_ok=True)
+
+
+def retarget_overview_row(
+    target_path: str | Path, *, old_filename: str, new_filename: str, new_name: str
+) -> bool:
+    """Biegt die Zeile eines abgelösten Referenz-Eintrags auf den Volltext um.
+
+    Der **einzige** Eingriff in eine bestehende Zeile der kuratierten Übersicht – und ein bewusst
+    eng gefasster: Geändert werden nur ``Name`` und ``Interner Link``, die wertenden Spalten
+    (``Themenfokus``, ``Relevanz fuer Expose``, ``SRQ-Zuordnung``) bleiben unangetastet, damit
+    eine bereits erfolgte Kuratierung den Upgrade überlebt. Alle **anderen** Zeilen bleiben
+    byte-identisch: Gelesen und geschrieben wird binär, ersetzt wird genau eine Zeile
+    (docs/adr/0030-reference-entries-in-corpus-phase13.md).
+
+    Ohne diesen Schritt zeigte die vorhandene Zeile auf eine gelöschte Datei – ein toter interner
+    Link in einer versionierten Datei; eine zweite Zeile wäre eine Dublette.
+
+    Args:
+        target_path: Pfad zur kuratierten ``Übersicht.md``.
+        old_filename: Dateiname des abgelösten Referenz-Eintrags (wie im internen Link).
+        new_filename: Dateiname des übernommenen Volltextes.
+        new_name: Anzeigename für die ``Name``-Spalte.
+
+    Returns:
+        ``True``, wenn eine Zeile geändert wurde; ``False``, wenn keine passende Zeile existiert.
+    """
+    target = Path(target_path)
+    if not target.is_file():
+        return False
+    column = link_column(target.read_text(encoding="utf-8"))
+    if column is None:
+        return False
+
+    raw = target.read_bytes()
+    lines = raw.splitlines(keepends=True)
+    changed = False
+    for index, line in enumerate(lines):
+        text = line.decode("utf-8")
+        stripped = text.strip()
+        if not stripped.startswith("|"):
+            continue
+        cells = split_row(stripped)
+        if column >= len(cells) or old_filename not in _link_targets(cells[column]):
+            continue
+        cells[column] = f" [Quelle](papers/{quote(new_filename)}) "
+        if len(cells) > 1:
+            cells[1] = f" {_cell(new_name)} "
+        rebuilt = "|" + "|".join(cells) + "|"
+        ending = text[len(text.rstrip("\r\n")) :]
+        lines[index] = (rebuilt + ending).encode("utf-8")
+        changed = True
+        break
+
+    if not changed:
+        return False
+    tmp_path = target.with_name(target.name + ".tmp")
+    try:
+        tmp_path.write_bytes(b"".join(lines))
+        os.replace(tmp_path, target)
+    finally:
+        tmp_path.unlink(missing_ok=True)
+    _logger.info("Übersicht: Zeile von %s auf %s umgebogen.", old_filename, new_filename)
+    return True
+
+
+def _link_targets(cell: str) -> set[str]:
+    """Liefert die (dekodierten) Dateinamen einer ``Interner Link``-Zelle."""
+    match = _LINK_TARGET.search(cell)
+    if not match:
+        return set()
+    target = match.group(1).strip()
+    name = target.split("/", 1)[1] if "/" in target else target
+    return {unquote(name)}
 
 
 def ensure_overview_target(target_path: str | Path) -> Path:

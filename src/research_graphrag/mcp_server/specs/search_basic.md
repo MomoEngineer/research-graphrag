@@ -11,7 +11,7 @@
 | Feld | Wert |
 | --- | --- |
 | **Tool-Name** | `search_basic` (generisch) |
-| **Version** | `0.1.0` |
+| **Version** | `0.2.0` |
 | **Capability-Schicht** | Retrieval – Basic Search (siehe README.md) |
 | **Status** | Implementiert (Phase 0b, Durchstich) |
 
@@ -38,6 +38,7 @@ Beantwortet exakte/faktische Fragen über **Top-k-Vektorsuche (TF-IDF)** auf Pap
   "citations": [
     {
       "paper_id": "…",
+      "document_kind": "full",
       "section_title": "…",
       "page_number": 1,
       "page_end": 1,
@@ -55,6 +56,8 @@ Beantwortet exakte/faktische Fragen über **Top-k-Vektorsuche (TF-IDF)** auf Pap
 ```
 
 `citations` ist absteigend nach `score` sortiert (Tie-Break über `chunk_id`) und **leer**, wenn keine Übereinstimmung besteht.
+
+`document_kind` ist `full` (Volltext) oder `reference` (**Referenz-Eintrag ohne Volltext** – nur Titel und Abstract). Ein Beleg mit `reference` trägt `page_number = 0`; er belegt die Aussage **nicht vollständig** und ist deshalb in der Trefferliste **nachrangig** ([ADR 0031](../../../../docs/adr/0031-reference-contract-and-guardrail-phase13.md)).
 
 `identifiers` und `citation_key` machen jeden Beleg **extern auflösbar** und stammen aus dem aufgelösten Metadatensatz des Papers; `identifiers` enthält nur belegte Schlüssel und kann leer sein, `citation_key` ist eine Anzeigehilfe ohne Eindeutigkeitsgarantie. Die **fertige** Literaturangabe liefert `get_reference` ([ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md)).
 

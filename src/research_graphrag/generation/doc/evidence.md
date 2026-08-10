@@ -52,6 +52,12 @@ flowchart TD
 Der Abschnitt erscheint nur, wenn ein Titel erkannt wurde; die Seitenangabe kommt aus
 `page_label` und ist damit identisch zu allen anderen Ausgabekanälen.
 
+Stammt ein Beleg aus einem **Referenz-Eintrag ohne Volltext**, hängt an beiden Label-Formen der
+Zusatz `· Referenz-Eintrag ohne Volltext`, und `document_kind` steht zusätzlich als Feld im
+Beleg. Das Label ist dabei der wirksamere Teil: Nur dort sieht das Modell die Einschränkung, die
+der Zitier-Contract im Antworttext verlangt
+([ADR 0031](../../../../docs/adr/0031-reference-contract-and-guardrail-phase13.md)).
+
 Global ist die Ausnahme mit gutem Grund: Es gibt dort keine Passage, auf die man zeigen könnte.
 Das Label nennt deshalb die Community statt einer Seite – ehrlicher als ein erfundener
 Seitenanker.

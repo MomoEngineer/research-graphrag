@@ -21,7 +21,11 @@ from typing import Any
 from urllib.parse import unquote
 
 from research_graphrag.errors import DomainError, ErrorCode
-from research_graphrag.extraction.model import SECTION_KIND_REFERENCES, CanonicalPaper
+from research_graphrag.extraction.model import (
+    DOCUMENT_KIND_REFERENCE,
+    SECTION_KIND_REFERENCES,
+    CanonicalPaper,
+)
 
 CITATION_SCHEMA_VERSION = "0.1.0"
 """Version des Zitations-Teilschemas in ``index.sqlite`` (für spätere Migrationen)."""
@@ -111,11 +115,12 @@ def title_from_uri(source_uri: str) -> str:
         source_uri: Quellverweis eines Papers.
 
     Returns:
-        Den Dateinamen ohne Pfad und ohne ``.pdf``-Endung.
+        Den Dateinamen ohne Pfad und ohne Endung (``.pdf`` oder ``.refjson``).
     """
     name = unquote(source_uri.rsplit("/", 1)[-1])
-    if name.lower().endswith(".pdf"):
-        name = name[:-4]
+    for suffix in (".pdf", ".refjson"):
+        if name.lower().endswith(suffix):
+            return name[: -len(suffix)]
     return name
 
 
@@ -154,13 +159,21 @@ def front_matter_text(paper: CanonicalPaper) -> str:
 
     Öffentlich, weil die Herkunftsbewertung der bibliografischen Daten denselben Guard nutzt
     (docs/adr/0025-citable-paper-metadata.md).
+
+    Für einen **Referenz-Eintrag** treten die eigenen Identifikatoren zum Fenster hinzu: Sie
+    stammen dort aus der Datei selbst, nicht aus einer Heuristik über Seitentext – der Guard
+    hätte hier nichts zu prüfen und würde den Eintrag stattdessen als Ziel unerreichbar machen
+    (docs/adr/0030-reference-entries-in-corpus-phase13.md).
     """
     ref_ids = _reference_section_ids(paper)
-    return " ".join(
+    parts = [
         chunk.text
         for chunk in paper.chunks
         if chunk.page_end <= TITLE_PAGE_PAGES and chunk.section_id not in ref_ids
-    ).lower()
+    ]
+    if paper.document_kind == DOCUMENT_KIND_REFERENCE:
+        parts.extend(paper.identifiers.values())
+    return " ".join(parts).lower()
 
 
 def _unique(papers: Sequence[CanonicalPaper]) -> list[CanonicalPaper]:

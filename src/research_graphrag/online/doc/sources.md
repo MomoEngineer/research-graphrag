@@ -22,10 +22,18 @@ Antwort in `Candidate` überführen. Die beiden Quellen antworten in unterschied
 | `SearchQuery` | Dataclass | Anfrage: Kennung, Suchbegriffe, Herkunftsbegründung |
 | `SourceResult` | Dataclass | Antwort einer Quelle: Status, Roh-Nutzlast, Kandidaten, Kontingent |
 | `arxiv_url`, `openalex_url` | Funktionen | Bauen die jeweilige Anfrage-URL |
+| `arxiv_id_url` | Funktion | Abfrage **eines** Werks über seine Kennung (`id_list`) |
 | `parse_arxiv`, `parse_openalex` | Funktionen | Lesen die Antwort (ohne Netz testbar) |
+| `authors_from_feed` | Funktion | Autorennamen des ersten Feed-Eintrags |
 | `fetch_arxiv`, `fetch_openalex` | Funktionen | Abruf über den injizierten Port plus Auswertung |
+| `fetch_arxiv_by_id` | Funktion | Abruf über die Kennung statt über eine Volltextsuche |
 | `ARXIV_ENDPOINT`, `OPENALEX_ENDPOINT` | Konstanten | Basis-URLs |
 | `OPENALEX_FIELDS`, `DEFAULT_LIMIT`, `MAX_ARXIV_TERMS` | Konstanten | Umfang der Anfrage |
+
+> **Suche und Kennung sind zwei verschiedene Dinge.** `search_query=all:"2404.16130"` sucht die
+> Zeichenkette im **Volltextindex** und liefert dabei zuverlässig ein *fremdes* Paper – am realen
+> Dienst gemessen. Wer ein bestimmtes Werk meint, nimmt `arxiv_id_url` bzw. `fetch_arxiv_by_id`
+> ([ADR 0029](../../../../docs/adr/0029-reference-stub-resolution-phase13.md)).
 
 ## 3. Ablauf
 

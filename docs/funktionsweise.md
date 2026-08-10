@@ -162,6 +162,50 @@ Port, weshalb alles außer dem Transport ohne Netz testbar ist
 Proxy einrichten, Anfrage wählen, Bericht lesen, Vorschlag übernehmen – steht in
 [online-recherche.md](online-recherche.md).
 
+### Und wenn es den Volltext gar nicht gibt
+
+Manches Paper ist nur als Abstract öffentlich. Dafür gibt es einen zweiten, ebenso separat
+startbaren Weg: Eine kuratierte Liste von DOI- und arXiv-Kennungen wird zu **Stub-Dateien**
+`*.refjson` im selben Eingangsordner – mit Titel, Autoren, Jahr, Venue und Abstract, aber ohne
+jeden Volltext.
+
+```mermaid
+flowchart LR
+    A["new_papers/referenzen.txt"] --> B["Kennung deuten<br/>DOI · arXiv · DataCite"]
+    B --> C{"schon erledigt?<br/>Korpus · Eingang · Quarantäne"}
+    C -- ja --> D["übersprungen<br/>ohne Abfrage"]
+    C -- nein --> E["OpenAlex über (DataCite-)DOI"]
+    E --> F{"Abstract dabei?"}
+    F -- nein --> G["arXiv-Feed ergänzt<br/>oder trägt den Eintrag"]
+    F -- ja --> H
+    G --> H{"Titel vorhanden?"}
+    H -- nein --> I["Befund im Protokoll<br/>keine Datei"]
+    H -- ja --> J["new_papers/ref-….refjson"]
+```
+
+Drei Eigenschaften sind hier wesentlich, und alle drei folgen demselben Muster wie oben. Die
+Prüfung „kenne ich das schon?" nutzt wieder die **Intake-Grundlage** und findet **vor** der
+ersten Abfrage statt – ein Wiederholungslauf verbraucht also weder Kontingent noch erzeugt er
+eine zweite Datei. Die Stub-Datei **ist** die eingefrorene Antwort: Das Netz wird genau einmal
+befragt, alles Weitere ist deterministisch. Und der Weg endet wieder im Eingang, nicht im Korpus
+([ADR 0029](adr/0029-reference-stub-resolution-phase13.md),
+[Modul-Doku](../src/research_graphrag/online/doc/references.md)).
+
+> **Und dann?** Seit Phase 13 / R2 nimmt der Intake `*.refjson` regulär an: dieselben drei
+> Prüfstufen, Benennung nach dem **Titel**, `document_kind` im Canonical- und Index-Schema. Ein
+> Referenz-Eintrag hat genau einen Chunk (Titel + Abstract) und **keine** Seitenangabe. Taucht
+> später das echte PDF auf, gilt **„Volltext schlägt Referenz-Eintrag"** – es wird übernommen,
+> der Stub abgelöst und seine Übersichtszeile umgebogen statt dupliziert
+> ([ADR 0030](adr/0030-reference-entries-in-corpus-phase13.md)).
+>
+> **Seit R3 ist die Unvollständigkeit sichtbar und folgenlos zugleich.** Sichtbar: `document_kind`
+> steht in jedem Zitat, jeder Paper-Referenz, jedem Beleg und in `get_paper`; ein Abstract-Beleg
+> trägt zusätzlich den Klartext „Referenz-Eintrag ohne Volltext" im Provenienz-Label, und der
+> Zitier-Contract verlangt, das in der Antwort zu benennen. Folgenlos für die Messung: Die
+> mechanische Gold-Ableitung überspringt Referenz-Einträge, und in der Chunk-Suche stehen sie
+> **hinter** den Volltext-Treffern – umsortiert, nicht aussortiert, damit sie dort weiterhin
+> vorn stehen, wo kein Volltext antworten kann
+> ([ADR 0031](adr/0031-reference-contract-and-guardrail-phase13.md)).
 ---
 
 ## 3. Extraktion: von Seitentext zu Chunks
@@ -573,12 +617,12 @@ erkennbar.
 | Paket | Modul-Dokus |
 | --- | --- |
 | Top-Level | [errors](../src/research_graphrag/doc/errors.md) · [intake](../src/research_graphrag/doc/intake.md) · [keywords](../src/research_graphrag/doc/keywords.md) · [pipeline](../src/research_graphrag/doc/pipeline.md) |
-| `extraction/` | [model](../src/research_graphrag/extraction/doc/model.md) · [normalization](../src/research_graphrag/extraction/doc/normalization.md) · [structure](../src/research_graphrag/extraction/doc/structure.md) · [chunking](../src/research_graphrag/extraction/doc/chunking.md) · [quality](../src/research_graphrag/extraction/doc/quality.md) · [pdf](../src/research_graphrag/extraction/doc/pdf.md) |
+| `extraction/` | [model](../src/research_graphrag/extraction/doc/model.md) · [normalization](../src/research_graphrag/extraction/doc/normalization.md) · [structure](../src/research_graphrag/extraction/doc/structure.md) · [chunking](../src/research_graphrag/extraction/doc/chunking.md) · [quality](../src/research_graphrag/extraction/doc/quality.md) · [pdf](../src/research_graphrag/extraction/doc/pdf.md) · [refstub](../src/research_graphrag/extraction/doc/refstub.md) |
 | `indexing/` | [tfidf_index](../src/research_graphrag/indexing/doc/tfidf_index.md) · [bm25](../src/research_graphrag/indexing/doc/bm25.md) · [fusion](../src/research_graphrag/indexing/doc/fusion.md) · [graph_index](../src/research_graphrag/indexing/doc/graph_index.md) · [citation_graph](../src/research_graphrag/indexing/doc/citation_graph.md) · [metadata_index](../src/research_graphrag/indexing/doc/metadata_index.md) |
 | `retrieval/` | [basic](../src/research_graphrag/retrieval/doc/basic.md) · [local](../src/research_graphrag/retrieval/doc/local.md) · [global_search](../src/research_graphrag/retrieval/doc/global_search.md) · [drift](../src/research_graphrag/retrieval/doc/drift.md) · [router](../src/research_graphrag/retrieval/doc/router.md) · [provenance](../src/research_graphrag/retrieval/doc/provenance.md) · [paper](../src/research_graphrag/retrieval/doc/paper.md) · [citations](../src/research_graphrag/retrieval/doc/citations.md) · [reference](../src/research_graphrag/retrieval/doc/reference.md) |
 | `generation/` | [provider](../src/research_graphrag/generation/doc/provider.md) · [synthesis](../src/research_graphrag/generation/doc/synthesis.md) · [evidence](../src/research_graphrag/generation/doc/evidence.md) · [answer](../src/research_graphrag/generation/doc/answer.md) |
 | `evaluation/` | [gold](../src/research_graphrag/evaluation/doc/gold.md) · [metrics](../src/research_graphrag/evaluation/doc/metrics.md) · [runner](../src/research_graphrag/evaluation/doc/runner.md) · [baseline](../src/research_graphrag/evaluation/doc/baseline.md) · [routing](../src/research_graphrag/evaluation/doc/routing.md) · [multihop](../src/research_graphrag/evaluation/doc/multihop.md) · [report](../src/research_graphrag/evaluation/doc/report.md) |
 | `overview/` | [drafts](../src/research_graphrag/overview/doc/drafts.md) |
-| `online/` | [transport](../src/research_graphrag/online/doc/transport.md) · [sources](../src/research_graphrag/online/doc/sources.md) · [candidates](../src/research_graphrag/online/doc/candidates.md) · [search](../src/research_graphrag/online/doc/search.md) · [metadata](../src/research_graphrag/online/doc/metadata.md) · [report](../src/research_graphrag/online/doc/report.md) |
+| `online/` | [transport](../src/research_graphrag/online/doc/transport.md) · [sources](../src/research_graphrag/online/doc/sources.md) · [candidates](../src/research_graphrag/online/doc/candidates.md) · [search](../src/research_graphrag/online/doc/search.md) · [metadata](../src/research_graphrag/online/doc/metadata.md) · [references](../src/research_graphrag/online/doc/references.md) · [report](../src/research_graphrag/online/doc/report.md) |
 | `bibliography/` | [model](../src/research_graphrag/bibliography/doc/model.md) · [resolve](../src/research_graphrag/bibliography/doc/resolve.md) · [curated](../src/research_graphrag/bibliography/doc/curated.md) · [store](../src/research_graphrag/bibliography/doc/store.md) · [styles](../src/research_graphrag/bibliography/doc/styles.md) |
 | `mcp_server/` | [server](../src/research_graphrag/mcp_server/doc/server.md) · [sampling](../src/research_graphrag/mcp_server/doc/sampling.md) |

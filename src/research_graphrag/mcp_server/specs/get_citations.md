@@ -12,7 +12,7 @@
 | Feld | Wert |
 | --- | --- |
 | **Tool-Name** | `get_citations` |
-| **Version** | `0.1.0` |
+| **Version** | `0.2.0` |
 | **Capability-Schicht** | Graph / Zitationsnetz (siehe README.md) |
 | **Status** | Implementiert (Phase 7 / A2) |
 
@@ -34,19 +34,20 @@ Beantwortet **Zitationsfragen innerhalb des eigenen Korpus**: „welche Paper zi
 
 ```json
 {
-  "paper": { "paper_id": "…", "source_uri": "file:///…", "snippet": "…", "identifiers": { "arxiv": "…" }, "citation_key": "…" },
+  "paper": { "paper_id": "…", "document_kind": "full", "source_uri": "file:///…", "snippet": "…", "identifiers": { "arxiv": "…" }, "citation_key": "…" },
   "cites": [
-    { "paper_id": "…", "source_uri": "file:///…", "snippet": "…", "identifiers": { "doi": "10.…" }, "citation_key": "Beispiel2023", "method": "doi" }
+    { "paper_id": "…", "document_kind": "reference", "source_uri": "file:///…", "snippet": "…", "identifiers": { "doi": "10.…" }, "citation_key": "Beispiel2023", "method": "doi" }
   ],
   "cited_by": [
-    { "paper_id": "…", "source_uri": "file:///…", "snippet": "…", "identifiers": {}, "citation_key": "", "method": "title" }
+    { "paper_id": "…", "document_kind": "full", "source_uri": "file:///…", "snippet": "…", "identifiers": {}, "citation_key": "", "method": "title" }
   ]
 }
 ```
 
 - `cites` = Paper, die das angefragte Paper **zitiert**; `cited_by` = Paper, die es **zitieren**.
+- `document_kind` ist `full` (Volltext) oder `reference` (**Referenz-Eintrag ohne Volltext**). Gerade in `cites` ist das häufig: Ein Referenz-Eintrag existiert oft genau deshalb, weil sein Volltext nicht beschaffbar war – als Kanten**ziel** ist er trotzdem vollwertig ([ADR 0031](../../../../docs/adr/0031-reference-contract-and-guardrail-phase13.md)).
 - `method` ∈ `doi` | `arxiv` | `title` und benennt das **präziseste** Kriterium, über das die Kante erkannt wurde (Präzedenz `doi` > `arxiv` > `title`) – damit ist die Belastbarkeit einer Kante für den Aufrufer sichtbar.
-- `identifiers` und `citation_key` machen jedes genannte Paper **extern auflösbar**; beide stammen aus dem aufgelösten Metadatensatz und können leer sein ([ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md)).
+- `identifiers` und `citation_key` machen jedes genannte Paper **extern auflösbar**; beide stammen aus dem aufgelösten Metadatensatz und können leer sein ([ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md)). Belegte Schlüssel sind `doi`, `arxiv` und `url`.
 - Beide Listen können leer sein (kein erkannter Bezug innerhalb des Korpus) und sind **stabil sortiert** (nach der `paper_id` des Gegenübers).
 
 ## 4. Annahmen und Vorbedingungen

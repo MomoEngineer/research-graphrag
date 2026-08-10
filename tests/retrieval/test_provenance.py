@@ -11,6 +11,7 @@ from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
 from research_graphrag.indexing.tfidf_index import TfidfIndex, build_index
 from research_graphrag.retrieval.provenance import (
+    REFERENCE_PAGE_LABEL,
     Citation,
     PaperRef,
     ProvenanceAssembler,
@@ -66,6 +67,7 @@ def test_citation_to_dict_shape(tmp_path: Path) -> None:
 
     assert set(payload) == {
         "paper_id",
+        "document_kind",
         "section_title",
         "page_number",
         "page_end",
@@ -99,6 +101,12 @@ def test_page_label_renders_single_page_and_range() -> None:
     assert page_label(7, 8) == "Seiten 7–8"
 
 
+def test_page_label_names_a_missing_page_instead_of_inventing_one() -> None:
+    """Ein Referenz-Eintrag hat keine Seite 1 – „Seite 1" wäre eine falsche Herkunftsangabe."""
+    assert page_label(0, 0) == REFERENCE_PAGE_LABEL
+    assert "Seite" not in REFERENCE_PAGE_LABEL.replace("ohne Seite", "")
+
+
 def test_assembler_builds_paper_ref(tmp_path: Path) -> None:
     """Der Assembler liefert source_uri und ein Leit-Snippet aus dem ersten Chunk."""
     assembler = ProvenanceAssembler.load(_build(tmp_path))
@@ -109,6 +117,7 @@ def test_assembler_builds_paper_ref(tmp_path: Path) -> None:
     assert "transformer" in ref.snippet
     assert ref.to_dict() == {
         "paper_id": "aaaa1111",
+        "document_kind": "full",
         "source_uri": "file:///aaaa1111.pdf",
         "identifiers": {},
         "citation_key": "aaaa1111",

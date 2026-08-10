@@ -61,12 +61,16 @@ def workspace(tmp_path: Path) -> Path:
     (root / "metadata").mkdir()
     (root / "metadata" / "paper_metadata.json").write_bytes(b'{"papers": {}}')
 
+    (root / "new_papers").mkdir()
+    (root / "new_papers" / "referenzen.txt").write_bytes(b"# Kennungen\n10.1145/x\n")
+
     data = root / "data"
     data.mkdir()
     (data / "manifest.json").write_bytes(b'{"files": {}}')
     (data / "intake_log.md").write_bytes(b"# Intake\n")
     (data / "metadata_log.md").write_bytes(b"# Metadaten\n")
     (data / "online_candidates.md").write_bytes(b"# Kandidaten\n")
+    (data / "references_log.md").write_bytes("# Referenz-Einträge\n".encode())
 
     # Abgeleitet – darf NICHT in der Sicherung landen.
     (data / "canonical").mkdir()

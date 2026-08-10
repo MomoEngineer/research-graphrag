@@ -15,6 +15,10 @@ Hält das Ergebnis eines Laufs und schreibt es anhängend nach `data/online_cand
 Eigenschaften sind dabei nicht verhandelbar: Der Bericht ist **append-only**, und fremder Text
 darf seine Struktur nicht verändern.
 
+Über `append_section` teilen sich drei Vorgänge denselben Anhänge-Mechanismus: die
+Kandidatensuche (`data/online_candidates.md`), die Metadaten-Auflösung (`data/metadata_log.md`)
+und die Referenz-Auflösung (`data/references_log.md`, Phase 13 / R1).
+
 ## 2. Öffentliche Schnittstelle
 
 | Symbol | Art | Aufgabe |
@@ -22,12 +26,13 @@ darf seine Struktur nicht verändern.
 | `DiscoveryReport` | Dataclass | Ergebnis eines Laufs (Anfragen, Quellen, Bilanz, Kandidaten) |
 | `render_report` | Funktion | Rendert einen Lauf als Markdown-Abschnitt |
 | `append_report` | Funktion | Hängt den Abschnitt byte-erhaltend und atomar an |
-| `append_section` | Funktion | gemeinsamer Anhänge-Mechanismus beider Berichte |
+| `append_section` | Funktion | gemeinsamer Anhänge-Mechanismus aller drei Protokolle |
 | `render_resolutions` / `append_resolutions` | Funktionen | Bericht der Metadaten-Auflösung (`data/metadata_log.md`) |
+| `render_references` / `append_references` | Funktionen | Protokoll der Referenz-Auflösung (`data/references_log.md`) |
 | `store_raw` | Funktion | Legt die Rohantworten datiert ab |
 | `escape_markdown` | Funktion | Entschärft fremden Text |
 | `safe_url` | Funktion | Prüft einen fremden Verweis |
-| `REPORT_NAME`, `METADATA_REPORT_NAME`, `RAW_DIR_NAME` | Konstanten | Dateinamen beider Berichte und Ablageverzeichnis der Rohantworten |
+| `REPORT_NAME`, `METADATA_REPORT_NAME`, `REFERENCES_REPORT_NAME`, `RAW_DIR_NAME` | Konstanten | Dateinamen der Protokolle und Ablageverzeichnis der Rohantworten |
 | `MAX_TITLE_CHARS`, `MAX_ABSTRACT_CHARS`, `MAX_URL_CHARS` | Konstanten | Längengrenzen |
 
 ## 3. Ablauf

@@ -72,12 +72,15 @@ _TRANSLITERATION = str.maketrans(
 )
 
 
-def _ascii_fold(text: str) -> str:
+def ascii_fold(text: str) -> str:
     """Bildet Umlaute/Akzente auf ASCII ab (für stabile, dateinamensichere Zitierschlüssel).
 
     Deutsche Umlaute werden **transliteriert** (``ü`` → ``ue``), nicht nur entkleidet – das ist
     die im deutschsprachigen Raum übliche Schreibweise eines Nachnamens ohne Sonderzeichen.
     Alle übrigen diakritischen Zeichen werden nach NFKD verworfen.
+
+    Öffentlich, weil auch die Referenz-Auflösung dateinamensichere Slugs bildet
+    (docs/adr/0029-reference-stub-resolution-phase13.md) – zwei Faltungen wären zwei Wahrheiten.
     """
     transliterated = text.translate(_TRANSLITERATION)
     decomposed = unicodedata.normalize("NFKD", transliterated)
@@ -227,9 +230,9 @@ class PaperMetadata:
         """
         base = ""
         if self.authors:
-            base = _KEY_SEPARATORS.sub("", _ascii_fold(surname_of(self.authors[0])))
+            base = _KEY_SEPARATORS.sub("", ascii_fold(surname_of(self.authors[0])))
         if not base and self.title:
-            for word in _KEY_SEPARATORS.split(_ascii_fold(self.title)):
+            for word in _KEY_SEPARATORS.split(ascii_fold(self.title)):
                 if word and word.lower() not in _STOPWORDS_IN_KEY:
                     base = word
                     break

@@ -48,7 +48,7 @@ Dieses Dokument ist das zentrale Regelwerk für die Arbeit am Repository **Resea
 - **Tests:** `pytest`; asynchrone Tests über das `anyio`-Plugin (offline, siehe [ADR 0003](docs/adr/0003-offline-test-and-coverage-tooling.md)).
 - **Statische Qualität:** `ruff` (Lint + Format) und `mypy` (Typen).
 - **Netzzugang (nur Online-Modus):** ausschließlich in `online/transport.py` hinter einem injizierbaren Port – CONNECT-Tunnel mit Proxy-Authentifizierung über `pywin32`/SSPI, TLS-Verifikation über `certifi`, Endpunkt aus `RESEARCH_GRAPHRAG_PROXY` ([ADR 0020](docs/adr/0020-online-candidate-search-phase9.md)). Der Kern bleibt netzfrei; das gilt auch für die Auflösung der Zitationsdaten, die als **separater** Lauf läuft und nur eine Datei schreibt ([ADR 0026](docs/adr/0026-online-metadata-resolution.md)).
-- **Zitationsdaten:** versioniert in `metadata/paper_metadata.json`, **feldweise** aufgelöst nach `manual > curated > resolved > extracted`; Literaturangaben in Harvard und APA entstehen deterministisch ohne LLM ([ADR 0025](docs/adr/0025-citable-paper-metadata.md)).
+- **Zitationsdaten:** versioniert in `metadata/paper_metadata.json`, **feldweise** aufgelöst nach `manual > curated > resolved > extracted`; Literaturangaben in Harvard und APA entstehen deterministisch ohne LLM ([ADR 0025](docs/adr/0025-citable-paper-metadata.md)). Für Paper **ohne** beschaffbaren Volltext entstehen aus der kuratierten Liste `new_papers/referenzen.txt` native Stub-Dateien `*.refjson` im Eingangsordner – ebenfalls in einem **separaten** Lauf ([ADR 0029](docs/adr/0029-reference-stub-resolution-phase13.md)).
 - **Dependencies/Lockfile:** `pip` + `requirements.lock` (Offline-Kompromiss, [ADR 0002](docs/adr/0002-venv-and-offline-dependency-strategy.md)). `uv` ist das bevorzugte Ziel, sobald ein Mirror verfügbar ist.
 - **LLM/Embeddings:** LLM-Bridge über MCP-Sampling (Client-Modell) zur Abfragezeit; Index-Backend als Offline-Hybrid entschieden ([ADR 0004](docs/adr/0004-llm-bridge-via-mcp-sampling.md), [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).
 
@@ -58,7 +58,7 @@ Alle Werkzeuge werden über `python -m <tool>` gestartet (WinPython ohne Konsole
 
 ## 4. Arbeitsablauf (phasenorientiert)
 
-Die Umsetzung folgt der [Roadmap.md](Roadmap.md) (aktiv: Phasen 9–11 und Phase 13; Phase 8 und Phase 12 sind umgesetzt, die abgeschlossenen Phasen 0–7 sind in der [Roadmap-Historie](docs/roadmap-historie.md) archiviert). Für neuen Code gilt:
+Die Umsetzung folgt der [Roadmap.md](Roadmap.md) (aktiv: Phasen 9–11; Phase 8, Phase 12 und Phase 13 sind umgesetzt, die abgeschlossenen Phasen 0–7 sind in der [Roadmap-Historie](docs/roadmap-historie.md) archiviert). Für neuen Code gilt:
 
 1. **Entscheidung dokumentieren**, falls architektonisch relevant (ADR, siehe [docs/adr/README.md](docs/adr/README.md)).
 2. **Spezifikation vor Code** für jedes MCP-Tool ([templates/tool-spec.md](templates/tool-spec.md)) – das Input-/Output-Schema ist die Single Source of Truth.

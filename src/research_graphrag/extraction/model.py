@@ -5,7 +5,10 @@ Enthält die serialisierbaren Kernstrukturen der Extraktion – :class:`Section`
 die reinen Datenstrukturen unabhängig von der Extraktions-Mechanik testbar; die
 Orchestrierung liegt in :mod:`research_graphrag.extraction.pdf`.
 
-Schema-Version **0.4.0**: Die Struktur ist unverändert, der **Inhalts-Contract** ist geschärft –
+Schema-Version **0.5.0**: Ein Paper trägt jetzt seine **Dokumentart** (:data:`DOCUMENT_KIND_FULL`
+für ein extrahiertes PDF, :data:`DOCUMENT_KIND_REFERENCE` für einen Referenz-Eintrag ohne
+Volltext, siehe docs/adr/0030-reference-entries-in-corpus-phase13.md). ``0.3.0 -> 0.4.0``: Die
+Struktur blieb unverändert, der **Inhalts-Contract** wurde geschärft –
 der Seitentext wird vor der Analyse normalisiert (Ligaturen repariert, Glyph-Artefakte entfernt)
 und die Überschriften-Erkennung verwirft Bibliografie-Zeilen (siehe
 docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md); die Anhebung ist zugleich der
@@ -26,13 +29,23 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "0.4.0"
+SCHEMA_VERSION = "0.5.0"
 """Version des Canonical-JSON-Schemas (für spätere Migrationen)."""
 
 SECTION_KIND_FRONT = "front"
 SECTION_KIND_ABSTRACT = "abstract"
 SECTION_KIND_BODY = "body"
 SECTION_KIND_REFERENCES = "references"
+
+DOCUMENT_KIND_FULL = "full"
+"""Dokumentart: aus einem PDF extrahierter Volltext."""
+
+DOCUMENT_KIND_REFERENCE = "reference"
+"""Dokumentart: Referenz-Eintrag ohne Volltext – nur Titel und Abstract.
+
+Bewusst **kein** Qualitäts-Flag: Flags sind Befunde über *misslungene* Extraktion, dies hier ist
+eine Eigenschaft des Dokuments (docs/adr/0030-reference-entries-in-corpus-phase13.md).
+"""
 
 
 @dataclass(frozen=True)
@@ -135,6 +148,7 @@ class CanonicalPaper:
     quality_flags: tuple[str, ...]
     sections: tuple[Section, ...] = ()
     identifiers: Mapping[str, str] = field(default_factory=dict)
+    document_kind: str = DOCUMENT_KIND_FULL
 
     def to_dict(self) -> dict[str, Any]:
         """Serialisiert das Paper als Canonical-JSON-kompatibles Dict."""
@@ -143,6 +157,7 @@ class CanonicalPaper:
             "paper_id": self.paper_id,
             "source_uri": self.source_uri,
             "source_sha256": self.source_sha256,
+            "document_kind": self.document_kind,
             "n_pages": self.n_pages,
             "identifiers": {key: self.identifiers[key] for key in sorted(self.identifiers)},
             "quality_flags": list(self.quality_flags),
@@ -165,6 +180,9 @@ class CanonicalPaper:
             quality_flags=tuple(str(flag) for flag in data.get("quality_flags", [])),
             sections=sections,
             identifiers=identifiers,
+            # Vor Schema 0.5.0 gab es nur Volltext-Dokumente; ein fehlendes Feld ist deshalb
+            # eindeutig deutbar und kein Grund, ein Alt-Artefakt abzulehnen.
+            document_kind=str(data.get("document_kind", DOCUMENT_KIND_FULL)),
         )
 
     def save_json(self, path: str | Path) -> None:

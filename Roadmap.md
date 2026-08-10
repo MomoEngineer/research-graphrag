@@ -2,7 +2,7 @@
 
 Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistenten. Der Plan ist **iterativ**: erst ein dünner, lauffähiger Durchstich, dann gezielte Ausbaustufen. **Bewusst ohne Zeitschätzungen** – Fortschritt wird über die „Definition of Done" (DoD) je Phase und über Meilensteine gemessen.
 
-> Ergänzt die [README](README.md). **Die Phasen 0–7 sind abgeschlossen** und hier nur noch als Ergebnis-Tabelle zusammengefasst; die vollständigen Status-Blockquotes mit allen Kennzahlen, korrigierten Annahmen und offen dokumentierten Abweichungen stehen wörtlich in der [Roadmap-Historie](docs/roadmap-historie.md). **Phase 8 und Phase 12 sind umgesetzt** (Statusblöcke dort); aktiv geplant sind die **Phasen 9–11** sowie **Phase 13** (Referenz-Einträge ohne Volltext).
+> Ergänzt die [README](README.md). **Die Phasen 0–7 sind abgeschlossen** und hier nur noch als Ergebnis-Tabelle zusammengefasst; die vollständigen Status-Blockquotes mit allen Kennzahlen, korrigierten Annahmen und offen dokumentierten Abweichungen stehen wörtlich in der [Roadmap-Historie](docs/roadmap-historie.md). **Phase 8, Phase 12 und Phase 13 sind umgesetzt** (Statusblöcke dort); aktiv geplant sind die **Phasen 9–11**.
 
 ---
 
@@ -444,12 +444,16 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 
 ## Phase 13 – Referenz-Einträge ohne Volltext
 
-> **Status: R0 beantwortet** (Messung vom 2026-08-09, bewusst **ohne ADR** – R0 baut nichts und
-> entscheidet keine Architektur; dieselbe Handhabung wie bei [S0](#s0--recherche--machbarkeit-zwingend-zuerst-mit-abbruchkriterium)
+> **Status: R0 beantwortet, R1 und R2 umgesetzt** (Messung vom 2026-08-09, bewusst **ohne ADR** –
+> R0 baut nichts und entscheidet keine Architektur; dieselbe Handhabung wie bei [S0](#s0--recherche--machbarkeit-zwingend-zuerst-mit-abbruchkriterium)
 > und [B6](#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen)). Gemessen wurde gegen den
 > Korpusstand **373 Paper / 26 003 Chunks / 118 Communities / 1481 `CITES`-Kanten**. Kein
 > Produktivcode, kein Schema-Eingriff, kein Re-Ingest; die Wegwerf-Skripte sind gelöscht, die
-> Rohantworten liegen unter `data/online_probe/` (nicht versioniert).
+> Rohantworten liegen unter `data/online_probe/` (nicht versioniert). Die Umsetzungen stehen in
+> [ADR 0029](docs/adr/0029-reference-stub-resolution-phase13.md) und
+> [ADR 0030](docs/adr/0030-reference-entries-in-corpus-phase13.md) samt den Statusblöcken bei
+> [R1](#r1--auflösung--stub-erzeugung-kein-volltext-download) und
+> [R2](#r2--intake--index-der-zweite-dokumenttyp); **R3 ist offen.**
 >
 > **Ergebnis: die Phase entfällt nicht, aber ihr Zuschnitt ändert sich an einer Stelle** – die
 > Guardrail aus [R3](#r3--wirkung-sichern-contract-baselines-guardrail) ist **nicht länger
@@ -588,6 +592,66 @@ Wie in S0, V1–V3 und B6 beginnt die Phase mit einer Wegwerf-Messung, nicht mit
 
 ### R1 – Auflösung & Stub-Erzeugung (kein Volltext-Download)
 
+> **Status: umgesetzt** (2026-08-09, [ADR 0029](docs/adr/0029-reference-stub-resolution-phase13.md)).
+> Neu sind `src/research_graphrag/online/references.py`, das dünne `scripts/resolve_references.py`
+> und das append-only Protokoll `data/references_log.md`. **Kein** Schema-Eingriff, **kein**
+> Re-Ingest, **kein** MCP-Werkzeug (der Server bleibt bei neun), kein Contract berührt.
+>
+> **Zwei Vorgaben wurden präzisiert, beide aus R0 begründet:**
+>
+> **1. Ein Titel ist Pflicht, ein Abstract nicht.** Die Vorgabe regelt den Fall „kein Abstract"
+> (Datei entsteht trotzdem, Abstract wird von Hand nachgetragen) – **nicht** den Fall „Kennung
+> gar nicht auflösbar". Ohne Titel entsteht deshalb **keine** Datei, nur ein Befund: Ein solcher
+> Eintrag wäre weder zitierfähig noch als Ziel einer Titel-Kante brauchbar (er unterschreitet
+> `MIN_TITLE_CHARS`/`MIN_TITLE_WORDS`) und ergäbe in R2 ein sinnloses Korpus-Paper. R0 hat
+> gezeigt, dass der Fall real ist: **4 von 60** geprüften Kennungen waren abgeschnittene
+> Extraktionsartefakte.
+>
+> **2. Der Dateiname trägt ein sprechendes Wort.** Die Vorgabe verlangt einen Namen „deterministisch
+> aus dem Identifikator, nie aus einer Serverantwort". Die Sicherheitsauflage dahinter – kein
+> Pfad-Traversal – bleibt vollständig gewahrt: Der Name wird **erzeugt**, nicht übernommen, und
+> zwar über eine **Whitelist** (`a`–`z`, `0`–`9`) mit Längengrenze. Die Kennung bleibt der
+> eindeutige Anker (`ref-graphrag-arxiv-2404.16130.refjson`). Die eigentliche Funktion der
+> Vorgabe – Idempotenz – wird **strenger** erfüllt als gefordert: **inhaltsbasiert** statt über
+> den Namen, sodass auch eine von Hand umbenannte Stub-Datei wiedererkannt wird.
+>
+> **Über die Vorgabe hinaus** geht der Auflösungsweg an einer Stelle: Der arXiv-Feed ist nicht nur
+> Rückfall, wenn OpenAlex nichts kennt, sondern auch **Abstract- und Autoren-Quelle**, wenn
+> OpenAlex zwar Metadaten, aber keinen Abstract liefert. Genau diese Kombination hat R0 gemessen –
+> ohne sie wäre die dort belegte Ausbeute von 93 % nicht reproduzierbar.
+>
+> **Ein echter Defekt kam erst im realen Lauf ans Licht** – ein Beleg dafür, dass der
+> Offline-Nachweis allein nicht genügt hätte: Der arXiv-Feed wurde bislang über
+> `search_query=all:"…"` abgefragt, also über den **Volltextindex**. Nach einer Kennung gesucht
+> liefert das zuverlässig ein *fremdes* Paper (`1706.03762` → `2002.05202`); der Rückfall war
+> damit praktisch wirkungslos. Neu sind deshalb `sources.arxiv_id_url` und
+> `sources.fetch_arxiv_by_id` (`id_list`). **Derselbe Defekt steckt in `metadata._by_arxiv_feed`**
+> (Phase 12 / K2) – dort ohne Schaden, weil die Identitätsprüfung den Fehltreffer verwirft, aber
+> ebenso wirkungslos. Er wird hier **bewusst nicht mitkorrigiert** (Verhalten außerhalb dieses
+> Schnitts); der Befund ist im ADR notiert.
+>
+> **Realer Nachweis** (373-Paper-Korpus, über den Unternehmens-Proxy): 3 Kennungen abgefragt,
+> **2 Stub-Dateien mit vollständigem Abstract** (`ref-attention-is-all-arxiv-1706.03762.refjson`
+> mit 8 Autoren aus dem Feed, `ref-identity-anonymization-graphs-doi-10.1145_1376616.1376629.refjson`
+> von OpenAlex); die absichtlich abgeschnittene DOI `10.18653/v1/` wird als **Befund** gemeldet
+> statt still eine falsche Kante zu stiften – der in R0 vorhergesagte selbstkorrigierende Effekt.
+> Der zweite Lauf übersprang die bereits erzeugte Datei ohne Abfrage.
+>
+> **Akzeptanz erfüllt** (offline nachgewiesen, 67 neue Tests, Gesamtstand **852**): Ein Lauf
+> erzeugt für jede auflösbare Kennung genau eine Stub-Datei; ein zweiter Lauf erzeugt **keine**
+> und stellt **keine** Abfrage (geprüft über einen zählenden Client und real bestätigt); ohne
+> Netz endet der Lauf mit `dependency_error` statt in einem Stacktrace; die Liste ist danach
+> **byte-identisch**. `--dry-run` erzeugt nicht einmal einen Client. Vorgezogen aus R3 ist die
+> Sicherung: `new_papers/referenzen.txt` und `data/references_log.md` stehen im Umfang aus
+> [B1](#b1--sicherung-des-korpus) (Nachtrag in [ADR 0027](docs/adr/0027-corpus-backup-phase11.md)).
+>
+> **Ehrlich dazu:** Bis R2 sind die erzeugten `.refjson`-Dateien **wirkungslos** – der Intake
+> liest weiterhin nur `*.pdf`. Das ist der Preis des inkrementellen Schnitts und in der Anleitung
+> ausdrücklich vermerkt. Ebenfalls ausgewiesen: Die Korpus-Prüfung nutzt den **gehärteten**
+> Schlüsselsatz, ein Paper mit nicht frontmatter-belegtem Identifikator würde also erneut als
+> Stub vorgeschlagen – dieselbe bewusst getragene Grenze wie in
+> [ADR 0020](docs/adr/0020-online-candidate-search-phase9.md); die Absicherung ist der Intake.
+
 - **Eingabe** ist `new_papers/referenzen.txt`: **eine Kennung je Zeile**, zulässig sind **DOI und arXiv-ID**; `#` leitet einen Kommentar ein, Leerzeilen werden ignoriert. Beide Abfragewege existieren bereits in `online/metadata.py` (DOI direkt, arXiv über den DataCite-DOI) – neu ist im Wesentlichen, dass `abstract_inverted_index` mit angefordert und über das vorhandene `sources._restore_abstract` zurückgebaut wird.
 - **Logik im Paket, Skript dünn** (Repo-Konvention): ein Modul unter `src/research_graphrag/online/`, dazu `scripts/resolve_references.py`. Der Netzzugang läuft **ausschließlich** über den injizierbaren Port aus [ADR 0020](docs/adr/0020-online-candidate-search-phase9.md); alles Übrige bleibt offline testbar. Fremde Titel und Abstracts sind **nicht vertrauenswürdige Eingaben** und werden wie in S1 entschärft, bevor sie in eine Datei gelangen.
 - **Ausgabe** ist je Kennung **eine** Stub-Datei in `new_papers/`. Der Dateiname wird **selbst erzeugt** – deterministisch aus dem Identifikator, nie aus einer Serverantwort (kein Pfad-Traversal, gleiche Auflage wie in S2).
@@ -599,6 +663,62 @@ Wie in S0, V1–V3 und B6 beginnt die Phase mit einer Wegwerf-Messung, nicht mit
 
 ### R2 – Intake & Index: der zweite Dokumenttyp
 
+> **Status: umgesetzt** (2026-08-09, [ADR 0030](docs/adr/0030-reference-entries-in-corpus-phase13.md)).
+> Neu sind `src/research_graphrag/extraction/refstub.py`, `pipeline.forget_source`,
+> `overview.drafts.retarget_overview_row` und der zweite Zweig im Intake. **Schema-Anhebung**
+> Canonical **0.4.0 → 0.5.0** und Index **0.4.0 → 0.5.0**; ein voller Re-Extract war damit
+> erzwungen und ist byte-genau nachgewiesen. Kein Contract berührt, **kein** MCP-Werkzeug (der
+> Server bleibt bei neun).
+>
+> **Zwei Vorgaben wurden präzisiert, beide aus dem Bestand begründet:**
+>
+> **1. Der Dateiname bleibt die einzige Titelquelle.** Die Vorgabe sagt „Titel und Identifikatoren
+> eines Stubs kommen aus der Datei selbst" – im Repo entsteht der Titel aber überall aus dem
+> **Dateinamen** (`title_from_uri`), und daran hängen Titel-Match, Intake-Stufe 3,
+> `metadata_index` und die Übersichtszeile. Gelöst ist das nicht durch ein zweites Titelfeld,
+> sondern durch **Umbenennen beim Übernehmen**: Der Stub heißt danach `<Titel>.refjson`. Ein
+> `title`-Feld im Canonical wäre im Datenmodell sauberer, schüfe aber zwei Titelquellen – genau
+> die Dualität, die dieses Repo vermeidet.
+>
+> **2. „Die Seitenangabe entfällt" ist ohne Contract-Bruch lösbar.** Die Vorgabe legt
+> `page_label` in R2, den Contract-Bruch aber in R3 – `page_label` kennt `document_kind` also
+> gar nicht. Der Referenz-Chunk trägt deshalb `page_number = 0`: Die fehlende Seite steht damit
+> im **Datenmodell** statt im Contract, und R3 bleibt unangetastet.
+>
+> **Zwei Befunde, die erst die Umsetzung sichtbar gemacht hat – beide behoben:**
+>
+> **(a) Der Frontmatter-Guard hätte den Hauptnutzen der Phase vernichtet.** Er verlangt, dass ein
+> Identifikator im **Titelseiten-Text** vorkommt (Präzisions-Härtung aus
+> [ADR 0011](docs/adr/0011-intra-corpus-citation-graph-phase7.md)). Bei einem Stub steht die DOI
+> aber im **Feld**, nicht im Text – der Eintrag wäre damit weder als Duplikat erkennbar noch als
+> **Ziel** von `CITES`-Kanten erreichbar, also genau der in R0 bezifferte Gewinn (bis zu 5333
+> Kanten) verfehlt. `front_matter_text` nimmt für Referenz-Einträge jetzt die eigenen
+> Identifikatoren hinzu; die Kopie dieses Guards im Intake ist zugleich entfallen (eine Wahrheit
+> statt zweier).
+>
+> **(b) Der Upgrade ließ eine Waise zurück.** Nach „Volltext schlägt Referenz-Eintrag" blieben
+> Manifest-Eintrag und Canonical des Stubs liegen – das Paper erschien nach dem Re-Index
+> **doppelt**. Neu ist `pipeline.forget_source`; ein Regressionstest hält den Fall fest.
+>
+> **Die Übersichtszeile wird umgebogen, nicht dupliziert.** Die Vorgabe sagt nur „nicht
+> dupliziert" – dann zeigte die vorhandene `Z`-Zeile aber auf eine gelöschte Datei. Geändert
+> werden ausschließlich `Name` und `Interner Link`; die wertenden Spalten und **alle anderen
+> Zeilen** bleiben byte-identisch. Das ist die einzige Ausnahme von der append-only-Regel aus
+> [ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md), und sie trifft nur eine Zeile,
+> die das Werkzeug selbst erzeugt hat.
+>
+> **Akzeptanz erfüllt** (47 neue Tests, Gesamtstand **899**): Eine Stub-Datei durchläuft
+> `scripts.intake` regulär und landet in Index und Übersicht; `--dry-run` verändert nachweislich
+> nichts (Hash-Abbild des Baums identisch); ein Stub zu einem vorhandenen Paper wird als Duplikat
+> erkannt; ein Volltext-PDF zu einem vorhandenen Stub wird **übernommen** statt quarantäniert –
+> mit eigener Protokollzeile samt Hash; die Qualitäts-Flags der Volltext-Paper bleiben
+> **unverändert**.
+>
+> **Betriebsregel bis R3, ausdrücklich:** Ein Referenz-Eintrag ist jetzt auffindbar, aber in den
+> Ausgaben **noch nicht** als unvollständig ausgewiesen – genau den Zustand beendet R3. Bis dahin
+> gehören keine Stubs in den Produktivkorpus; der Nachweis dieser Phase lief deshalb auf
+> Miniatur-Korpora, der Produktivkorpus bekam nur den erzwungenen Re-Extract.
+
 - **Der Intake wird dokumententyp-fähig.** Er nimmt neben `*.pdf` auch `*.refjson` an; die `%PDF-`-Signaturprüfung und das Lesen der Titelseite über `pypdf` gelten nur noch für den PDF-Zweig. Titel und Identifikatoren eines Stubs kommen aus der Datei selbst – damit ist die Eingangsseite **genauer** als bei einem PDF, nicht ungenauer.
 - **Alle drei Prüfstufen gelten unverändert weiter.** sha256, gehärteter Identifikator-Vergleich und Titel-Ähnlichkeit sind dateiformatunabhängig; eine zweite Dedup-Logik entsteht nicht.
 - **`document_kind` wird im Canonical- und im Index-Schema geführt** (Schema-Anhebung, damit ein Re-Extract erzwungen wird). Ein Referenz-Eintrag hat genau einen Chunk – den Abstract – und keine Referenz-Sektion.
@@ -609,6 +729,94 @@ Wie in S0, V1–V3 und B6 beginnt die Phase mit einer Wegwerf-Messung, nicht mit
 - *Akzeptanz:* Eine Stub-Datei durchläuft `scripts.intake` regulär; `--dry-run` verändert nichts; ein Stub zu einem bereits vorhandenen Paper wird als Duplikat erkannt; ein Volltext-PDF zu einem vorhandenen Stub wird **übernommen** statt quarantäniert; die Qualitäts-Flags der Volltext-Paper bleiben gegenüber heute **unverändert**.
 
 ### R3 – Wirkung sichern: Contract, Baselines, Guardrail
+
+> **Status (2026-08-09): umgesetzt.** `document_kind` ist Pflichtbestandteil jeder Ausgabe, der
+> Zitier-Contract nennt die Unvollständigkeit, die Gold-Ableitung schließt Referenz-Einträge aus,
+> beide Baselines sind neu eingefroren, und die Guardrail steht – **gemessen, nicht vermutet**
+> ([ADR 0031](docs/adr/0031-reference-contract-and-guardrail-phase13.md)).
+>
+> **Die Messung kam zuerst, und sie hat sich selbst geprüft.** Der R0-Aufbau wurde vollständig
+> reproduziert (52 echte Abstracts, dieselben zehn Ebenen, dasselbe Gold). Der eingebaute
+> Selbsttest: **Kontrolle A gegen R0 = 0 abweichende qid-Ränge, B_real gegen R0 = 0 abweichende
+> qid-Ränge.** Damit ist belegt, dass weder die Rekonstruktion der Stubs noch der
+> Schema-Wechsel `0.4.0 → 0.5.0` noch die Beschleunigung der Messung einen einzigen Rang bewegt
+> hat – erst danach waren die Varianten vergleichbar.
+>
+> **Die Entscheidungsregel stand vor der Messung fest** („die meisten der 13 Regressionen
+> beheben, ohne einen Handproben-Treffer aus den Top 5 zu verlieren; bei Gleichstand die
+> einfachere"), und sie hat die naheliegende Lösung **verworfen**:
+>
+> | Variante | Regressionen (davon Totalverlust) | Handprobe |
+> | --- | --- | --- |
+> | ohne Guardrail (= R0) | 13 (2) | 10/10 |
+> | **Umsortieren (gewählt)** | **3 (0)** | **10/10** |
+> | Auswahl: Volltext zuerst befüllen | 0 (0) | **0/10** |
+> | Kontingent ⌈k/5⌉ | 39 (5) | 10/10 |
+>
+> Die harte Nachrangigkeit hätte die Messwerte gerettet, indem sie den gemessenen Gegenstand
+> entfernt: **keine einzige** der zehn Handproben-Fragen findet ihren Referenz-Eintrag noch. Das
+> Kontingent wiederum reserviert einen Platz, statt nur zu begrenzen, und verdrängt dadurch
+> Volltext-Treffer – es misst schlechter als **gar keine** Guardrail. Gewählt ist deshalb die
+> schmalste Regel: `demote_references` sortiert Referenz-Einträge stabil hinter die
+> Volltext-Treffer und lässt die **Auswahl** unangetastet. Sie hat **keinen Parameter** und wirkt
+> in einem stubfreien Korpus als Identität – deshalb bewegt sie die Baselines nicht.
+>
+> **Beide Totalverluste sind behoben** (`C50` 1 → None wird 1 → 3, `C35` 1 → None wird 1 → 2);
+> die drei verbleibenden Befunde sind Rangverschiebungen um ein bis zwei Plätze. **Ehrlich
+> dazu:** In der Handprobe rutschen alle zehn Treffer von Rang 1 auf Rang 5 (MRR 1,000 → 0,200).
+> Rang 1 hatten sie nur, weil vier thematisch unpassende Volltext-Chunks schwächer bewertet
+> wurden – gefunden werden sie weiterhin vollständig.
+>
+> **Der Contract-Bruch geht über die Vorgabe hinaus.** Neben `Citation` (12 → 13 Schlüssel),
+> `PaperRef` (5 → 6) und `EvidenceItem` (7 → 8) trägt auch `PaperDetail` (8 → 9) das Feld: Dort
+> sähen `n_pages = 0` und `n_chunks = 1` sonst nach **defekter Extraktion** aus statt nach einem
+> bewusst unvollständigen Eintrag. `get_reference` bleibt dagegen bei `0.1.0` – die
+> Literaturangabe ist von der Verfügbarkeit des Volltextes unabhängig, und genau das ist ihre
+> Aussage. Sieben Spezifikationen steigen (`search_local`/`search_drift` auf `0.3.0`, die übrigen
+> auf `0.2.0`).
+>
+> **Der Beleg wird zweifach kenntlich:** als Feld `document_kind` für maschinelle Auswerter und
+> als Klartext „Referenz-Eintrag ohne Volltext" im Provenienz-Label – die wirksame Stelle, denn
+> nur das Label steht im Prompt-Kontext. Der `citation_contract` verlangt zusätzlich, die
+> Einschränkung im Antworttext zu **benennen**, ohne den Marker wörtlich zu zitieren (sonst
+> stünde derselbe Text an zwei Orten).
+>
+> **Beide Gold-Sets und Baselines sind neu abgeleitet und eingefroren.** Retrieval-Gold `1.4.0`
+> (34 Fragen, 11 mit geänderten Zielen), Multi-Hop-Gold **121 Anker** (vorher 113) – der
+> quantitative Regressionsschutz ist damit nach dem Korpuswachstum 341 → 373 wieder in Betrieb.
+> Beide `--check`-Läufe melden **„Keine Abweichung – alle Ränge unverändert"** (Exit 0).
+>
+> | Ebene | Hit@5 / MRR@5 | | Multi-Hop-Ebene | Hit@5 / MRR@5 |
+> | --- | --- | --- | --- | --- |
+> | `primitive` | 0.824 / 0.745 | | `graph` | 0.612 / 0.480 |
+> | `basic` | 0.824 / 0.745 | | `basic_title` | 0.661 / 0.625 |
+> | `local` | 0.824 / 0.745 | | `local_title` | 0.876 / 0.782 |
+> | `global` | 0.529 / 0.412 | | `basic_topic` | 0.140 / 0.136 |
+> | `drift` | 0.559 / 0.458 | | `local_topic` | 0.653 / 0.504 |
+>
+> **Die Realprobe zeigt Contract und Guardrail in einem Bild.** Auf einer Index-Kopie mit den 52
+> echten Abstracts liefert die Handproben-Frage nach `k-isomorphism` den Referenz-Eintrag auf
+> **Rang 5** – obwohl er mit `0.0328` den **höchsten** Score der Liste trägt. Er wird also
+> zurückgesetzt, aber nicht entfernt, und trägt in jeder Ausgabe seine Kennzeichnung:
+>
+> ```text
+> 5. Paper 5dd6ce89fed00513 · ohne Seite (Abstract) · Abschnitt Abstract · Score 0.0328
+>    · Referenz-Eintrag ohne Volltext
+> ```
+>
+> Über den In-Memory-MCP-Client gegengeprüft: `search_basic` weist `document_kind` je Zitat aus,
+> `get_paper` meldet `reference` bei `n_pages = 0`, `get_citations` ebenso, und in
+> `answer_question` trägt der Beleg den Marker im Label, während der `citation_contract` die
+> Benennung im Antworttext verlangt.
+>
+> **Akzeptanz erfüllt** (13 neue Tests, Gesamtstand **912**): Jede Ausgabe weist einen
+> Referenz-Eintrag aus, `--check` meldet nach dem Neu-Einfrieren 0 Abweichungen, und die
+> Handprobe aus R0 findet die Abstracts.
+>
+> **Betriebsregel, weiterhin bewusst:** Der Produktivkorpus bleibt vorerst **stubfrei**. Die
+> neuen Baselines beschreiben damit einen sauberen Referenzzustand; die Aufnahme echter
+> Referenz-Einträge ist eine eigene Entscheidung, deren Wirkung der nächste `--check` sauber
+> anzeigt.
 
 - **Der Contract wird bewusst gebrochen.** `document_kind` wird als **Pflichtfeld** bis in `Citation`, `PaperRef` und `EvidenceItem` durchgereicht, die betroffenen Tool-Specs steigen in der Version. Die Begründung ist dieselbe wie bei `LocalSearchResult.seeds` und `DriftSearchResult.communities` in [V1](#v1--local-mehrere-seeds-statt-eines)/[V2](#v2--drift-community-auswahl-statt-top-1-mit-rückfallebene): Ein stiller Zustand wäre eine **falsche Provenienz-Behauptung**. Ein optionales Feld würde jede konsumierende Stelle zwingen, die Abwesenheit richtig zu deuten – und irgendwann zitiert `answer_question` einen Abstract, als stamme er aus dem Volltext.
 - **Der Zitier-Contract nennt die Unvollständigkeit.** Ein Beleg aus einem Referenz-Eintrag ist im Antworttext als solcher erkennbar; die Literaturangabe selbst bleibt vollständig (Harvard/APA, [ADR 0025](docs/adr/0025-citable-paper-metadata.md)) – zitiert wird schließlich das Paper, nicht der Abstract.
@@ -649,4 +857,4 @@ Kein Volltext-Download (das bleibt [S2](#s2--volltext-holen-opt-in-lizenz-whitel
 - **M6 – Online-Recherche entschieden:** ✅ erreicht – S0 ist beantwortet: Die Quellen sind über den authentifizierten Unternehmens-Proxy erreichbar (arXiv/OpenAlex/Crossref mit HTTP 200), und die Handprobe liegt mit 76–82 % deutlich über der vorab festgelegten Schwelle von 30 %. Empfohlen ist ein **engerer Zuschnitt** als geplant: S1 nur mit arXiv + OpenAlex, S2 zurückgestellt (Phase 9).
 - **M7 – Local schlägt Basic:** ✅ erreicht – der für Detailfragen vorgesehene Modus ist nicht länger schwächer als seine Rückfallebene (Hit 0,618 → **0,912**, MRR 0,532 → **0,654** gegen Basic 0,882 / 0,650). **Ehrlich dazu:** Der Zugewinn ist teilweise definitorisch, weil Locals Bündel mit fünf Seeds die Top-5 der Chunk-Suche enthält; belastbar sind die **13 qid-genauen Verbesserungen ohne Regression** (Phase 10 / V1).
 - **M8 – Aus dem Fund wird eine Quelle:** ✅ erreicht – jeder Beleg trägt einen extern auflösbaren Identifikator, und aus einem Suchtreffer entsteht ohne Handarbeit eine korrekte Literaturangabe in Harvard und APA. **336 von 341** Papern sind vollständig zitierfähig (vorher **0**). **Ehrlich dazu:** 66 Datensätze beruhen auf einem nicht eindeutigen Beleg und sind als `weak` markiert; 5 Paper bleiben ohne Auflösung (Phase 12).
-- **M9 – Auch das Unerreichbare zählt:** ⬜ offen – ein Paper, von dem nur der Abstract öffentlich ist, ist über seine DOI auffindbar, zitierfähig und als Ziel von `CITES`-Kanten verknüpft – und in **jeder** Ausgabe als unvollständig ausgewiesen (Phase 13).
+- **M9 – Auch das Unerreichbare zählt:** ✅ erreicht – ein Paper, von dem nur der Abstract öffentlich ist, ist über seine DOI auffindbar, zitierfähig und als Ziel von `CITES`-Kanten verknüpft – und in **jeder** Ausgabe als unvollständig ausgewiesen (Phase 13). **Ehrlich dazu:** Der Produktivkorpus ist bewusst noch stubfrei; der Nachweis lief auf Index-Kopien mit **52 echten** Abstracts, deren Handprobe **10/10** trifft. Die Nachrangigkeits-Guardrail senkt die in R0 belegten 13 qid-Regressionen auf **3 ohne Totalverlust** – gemessen, nicht geschätzt, und gegen zwei besser klingende Varianten verteidigt.

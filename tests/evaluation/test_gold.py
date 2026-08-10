@@ -19,6 +19,7 @@ from research_graphrag.evaluation.gold import (
     unlabelled_questions,
     verify_labels,
 )
+from research_graphrag.extraction.model import DOCUMENT_KIND_REFERENCE
 from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
 from research_graphrag.indexing.tfidf_index import build_index
 
@@ -69,6 +70,34 @@ def test_derive_expected_papers_requires_all_terms(tmp_path: Path) -> None:
 def test_derive_expected_papers_is_case_insensitive(tmp_path: Path) -> None:
     """Groß-/Kleinschreibung spielt für die Ableitung keine Rolle."""
     assert derive_expected_papers(_build(tmp_path), ("FAISS",)) == ("aaaa0001",)
+
+
+def test_derive_expected_papers_ignores_reference_entries(tmp_path: Path) -> None:
+    """Ein Referenz-Eintrag wird **nie** zum Gold-Ziel – er kann nichts belegen.
+
+    Sein Chunk besteht aus Titel und Abstract; ohne diese Ausnahme würde ein dort zufällig
+    vorkommender Suchstring die Messgrundlage still verfälschen
+    (docs/adr/0031-reference-contract-and-guardrail-phase13.md).
+    """
+    stub = _paper("cccc0003", ["faiss benchmarks for vector search"])
+    db = tmp_path / "mit-stub.sqlite"
+    build_index(
+        [
+            _paper("aaaa0001", ["evaluation on faiss benchmarks"]),
+            CanonicalPaper(
+                paper_id=stub.paper_id,
+                source_uri="file:///cccc0003.refjson",
+                source_sha256=stub.source_sha256,
+                n_pages=0,
+                chunks=stub.chunks,
+                quality_flags=(),
+                document_kind=DOCUMENT_KIND_REFERENCE,
+            ),
+        ],
+        db,
+    )
+
+    assert derive_expected_papers(db, ("faiss",)) == ("aaaa0001",)
 
 
 def test_verify_labels_detects_stale_expectations(tmp_path: Path) -> None:

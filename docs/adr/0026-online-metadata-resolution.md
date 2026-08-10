@@ -71,6 +71,18 @@ Drittel der Fälle, zusätzliche Ratenbegrenzung – für den Zugewinn zu teuer.
 Der **Identifikator-Weg hat Vorrang vor der Titel-Suche**: Eine ID-Abfrage ist eindeutig, eine
 Titel-Suche ist eine Ähnlichkeitsaussage.
 
+> **Nachtrag (2026-08-10): Der arXiv-Rückfall war wirkungslos – behoben.** Er rief den Feed über
+> `search_query=all:"<id>"` ab. Diese Suche geht in den **Volltext**, nicht in die Kennung; in
+> Phase 13 / R1 lieferte sie für `1706.03762` das fremde Werk `2002.05202`
+> ([ADR 0029](0029-reference-stub-resolution-phase13.md)). Die ID-Prüfung dieses Moduls hat solche
+> Fehlgriffe zwar stets verworfen – es entstand also **nie ein falscher Datensatz** –, aber der
+> Rückfall griff dadurch praktisch nie. Zusätzlich setzte er `authors=()` hart, obwohl der Feed die
+> Autoren nennt. Beides ist jetzt behoben: Abfrage über `fetch_arxiv_by_id` (`id_list`), Autoren
+> über `authors_from_feed`. Betroffen waren am realen Korpus **10** von 373 Papern, bei denen
+> ausschließlich die Autoren fehlten. Zwei Regressionstests halten den Fall fest: Die URL muss
+> `id_list` enthalten und darf **kein** `search_query` tragen, und die Autoren müssen ankommen.
+> Kein Schema-Eingriff, keine Baseline berührt – die Auflösung ist ein separater Lauf.
+
 ### 4. Schonender Umgang mit fremden Diensten
 
 Standardmäßig werden nur Paper angefragt, deren Datensatz **unvollständig** ist

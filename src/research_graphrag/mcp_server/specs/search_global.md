@@ -11,7 +11,7 @@
 | Feld | Wert |
 | --- | --- |
 | **Tool-Name** | `search_global` (generisch) |
-| **Version** | `0.1.0` |
+| **Version** | `0.2.0` |
 | **Capability-Schicht** | Retrieval – Global Search (siehe README.md) |
 | **Status** | Implementiert (Phase 4) |
 
@@ -44,6 +44,7 @@ Beantwortet **Cross-Paper-/Themenfragen** als Offline-Analog zum GraphRAG-„Glo
       "representatives": [
         {
           "paper_id": "…",
+          "document_kind": "full",
           "source_uri": "file:///…",
           "snippet": "…",
           "identifiers": { "doi": "10.…", "arxiv": "2503.06689", "url": "https://…" },
@@ -56,6 +57,8 @@ Beantwortet **Cross-Paper-/Themenfragen** als Offline-Analog zum GraphRAG-„Glo
 ```
 
 `communities` ist absteigend nach `score` sortiert (Tie-Break kleinere `community_id`) und **leer**, wenn keine Community zur Anfrage passt.
+
+`document_kind` ist `full` (Volltext) oder `reference` (**Referenz-Eintrag ohne Volltext**, [ADR 0031](../../../../docs/adr/0031-reference-contract-and-guardrail-phase13.md)). Als Community-Vertreter treten Referenz-Einträge nicht auf – sie gehören keiner Community an.
 
 Jeder Vertreter trägt zusätzlich `identifiers` und `citation_key` und ist damit **extern auflösbar**; beide stammen aus dem aufgelösten Metadatensatz des Papers und können leer sein ([ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md)).
 

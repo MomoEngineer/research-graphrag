@@ -8,6 +8,8 @@ wird.
 > [ADR 0020](adr/0020-online-candidate-search-phase9.md); *wie* er intern arbeitet, in den
 > [Modul-Dokus](../src/research_graphrag/online/doc/search.md); der konzeptionelle Ablauf in
 > [funktionsweise.md](funktionsweise.md). Hier geht es ausschließlich um die **Bedienung**.
+> Die Abschnitte 1–8 beschreiben die **Kandidatensuche**; der zweite Online-Lauf für Paper ohne
+> Volltext steht in [Abschnitt 9](#9-der-zweite-online-lauf-paper-ohne-volltext).
 
 ---
 
@@ -215,3 +217,36 @@ Status jeder Quelle steht im Bericht.
   unübersichtlich wird, archiviere ihn von Hand – das Werkzeug löscht dort nichts.
 - **Nichts davon ist versioniert.** `data/` steht in `.gitignore`; Bericht und Rohantworten sind
   lokale Arbeitsstände.
+
+---
+
+## 9. Der zweite Online-Lauf: Paper ohne Volltext
+
+Dieselbe Einrichtung (Abschnitt 2) gilt für einen zweiten, ebenfalls separat startbaren Lauf.
+Er richtet sich an Paper, deren Volltext gar nicht beschaffbar ist – nur der Abstract:
+
+```powershell
+python -m scripts.resolve_references --dry-run   # zeigt die geplanten Abfragen, verändert nichts
+python -m scripts.resolve_references
+```
+
+Gelesen wird die kuratierte Liste `new_papers/referenzen.txt` (eine DOI oder arXiv-ID je Zeile),
+geschrieben wird je Kennung **eine** Stub-Datei `*.refjson` im Eingangsordner. Welche
+Schreibweisen die Liste versteht und was beim manuellen Nachtragen eines Abstracts zu tun ist,
+steht in [`new_papers/README.md`](../new_papers/README.md); *warum* der Lauf so gebaut ist, in
+[ADR 0029](adr/0029-reference-stub-resolution-phase13.md).
+
+Drei Unterschiede zur Kandidatensuche sind wichtig:
+
+| Kandidatensuche (`discover`) | Referenz-Einträge (`resolve_references`) |
+| --- | --- |
+| Anfrage aus dem eigenen Bestand, Ergebnis offen | Anfrage ist eine **konkrete Kennung**, die du gewählt hast |
+| Schreibt nur einen **Bericht** | Schreibt **Dateien** in den Eingangsordner |
+| Jeder Lauf fragt erneut | Ein zweiter Lauf fragt **nichts** erneut ab (Prüfung gegen Korpus, Eingang und Quarantäne) |
+
+> **Noch wirkungslos:** Bis Phase 13 / R2 liest `python -m scripts.intake` ausschließlich
+> `*.pdf` – die erzeugten Stub-Dateien bleiben bis dahin im Eingang liegen.
+
+Das Protokoll dieses Laufs ist `data/references_log.md` (append-only). Anders als der Bericht der
+Kandidatensuche ist die **Eingabeliste** versioniert und Teil des Sicherungsumfangs
+([ADR 0027](adr/0027-corpus-backup-phase11.md)).

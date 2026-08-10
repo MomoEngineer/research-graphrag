@@ -13,7 +13,7 @@
 
 Definiert die **Ground Truth** der Retrieval-Messung – und zwar so, dass sie sich jederzeit
 nachrechnen lässt. Ein Paper gilt für eine Frage genau dann als relevant, wenn mindestens einer
-seiner Chunks **alle** Suchstrings der Regel enthält.
+seiner Chunks **alle** Suchstrings der Regel enthält – und wenn es ein **Volltext**-Paper ist.
 
 Das ist der zentrale methodische Punkt des gesamten Evaluationspakets: Die Labels stammen
 **nicht** aus einem Urteil und **nicht** aus einem Retriever, sondern aus einer mechanischen
@@ -47,12 +47,20 @@ flowchart TD
     F["eval/retrieval-gold.json"] --> L["load_gold_set"]
     L --> G["GoldSet: Fragen mit<br/>match_all + eingefrorene Paper-IDs"]
     G --> V["verify_labels"]
-    IDX[("chunks im Index")] --> D["derive_expected_papers:<br/>LOWER(text) LIKE für jeden Term,<br/>UND-verknüpft"]
+    IDX[("chunks im Index")] --> D["derive_expected_papers:<br/>LOWER(text) LIKE für jeden Term,<br/>UND-verknüpft,<br/>nur document_kind = 'full'"]
     D --> V
     V --> R{"eingefroren = abgeleitet?"}
     R -- ja --> OK["keine Meldung"]
     R -- nein --> M["Meldung je abweichender Frage"]
 ```
+
+### Warum Referenz-Einträge nie Gold-Ziel werden
+
+Ein Referenz-Eintrag ohne Volltext besteht aus Titel und Abstract. Er könnte die Suchstrings
+einer Frage rein zufällig enthalten und würde damit **still** zum erwarteten Paper – obwohl er
+die Frage gar nicht belegen kann. Die Messung bliebe formal nachrechenbar und wäre inhaltlich
+falsch. Der Filter `document_kind = 'full'` schließt das aus
+([ADR 0031](../../../../docs/adr/0031-reference-contract-and-guardrail-phase13.md)).
 
 ### Warum keine kuratierten Labels
 

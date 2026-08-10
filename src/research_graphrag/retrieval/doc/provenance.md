@@ -4,7 +4,7 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/retrieval/provenance.py` |
 | **Paket** | `retrieval` – Suchmodi und Provenienz |
-| **Phase** | 4 (eingeführt), 7 / A3 + A4 (erweitert) |
+| **Phase** | 4 (eingeführt), 7 / A3 + A4 (erweitert), 13 / R2 (Referenz-Einträge) |
 | **Grundlagen** | [ADR 0008](../../../../docs/adr/0008-retrieval-and-query-router-phase4.md), [ADR 0013](../../../../docs/adr/0013-chunking-refinement-phase7.md), [ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md) |
 
 ---
@@ -22,10 +22,16 @@ Quellenanker**.
 
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
-| `Citation` | Dataclass | Beleg auf **Chunk-Ebene**: Paper, Abschnitt, Seiten-Range, Chunk, Scores, Ausschnitt, `identifiers`, `citation_key` |
-| `PaperRef` | Dataclass | Beleg auf **Paper-Ebene**: Paper, Quelle, Leit-Ausschnitt, `identifiers`, `citation_key` |
+| `Citation` | Dataclass | Beleg auf **Chunk-Ebene**: Paper, Abschnitt, Seiten-Range, Chunk, Scores, Ausschnitt, `identifiers`, `citation_key`, `document_kind` |
+| `PaperRef` | Dataclass | Beleg auf **Paper-Ebene**: Paper, Quelle, Leit-Ausschnitt, `identifiers`, `citation_key`, `document_kind` |
 | `ProvenanceAssembler` | Klasse | Lädt Paper-Provenienz direkt aus dem Index und beantwortet `paper_ref()` |
-| `page_label` | Funktion | Anzeigeform der Seiten-Provenienz: „Seite 7" bzw. „Seiten 7–8" |
+| `page_label` | Funktion | Anzeigeform der Seiten-Provenienz: „Seite 7", „Seiten 7–8" bzw. „ohne Seite (Abstract)" |
+| `REFERENCE_PAGE_LABEL` | Konstante | Anzeigeform eines Referenz-Eintrags ohne Volltext |
+| `REFERENCE_EVIDENCE_MARKER` | Konstante | Klartext-Kennzeichnung eines Belegs ohne Volltext („Referenz-Eintrag ohne Volltext") |
+
+> Ein Referenz-Eintrag hat keine Seite. Statt „Seite 1" zu behaupten, trägt sein Chunk
+> `page_number = 0` – die fehlende Angabe steht damit im **Datenmodell**, nicht nur in der
+> Anzeige ([ADR 0030](../../../../docs/adr/0030-reference-entries-in-corpus-phase13.md)).
 
 ## 3. Ablauf
 

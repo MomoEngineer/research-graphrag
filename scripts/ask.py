@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import Any
 
 from research_graphrag.errors import DomainError
+from research_graphrag.extraction.model import DOCUMENT_KIND_REFERENCE
 from research_graphrag.generation.answer import answer_question
 from research_graphrag.generation.provider import GenerationProvider, NoopGenerationProvider
 from research_graphrag.indexing.tfidf_index import DEFAULT_SCORING, Scoring
@@ -41,18 +42,31 @@ from research_graphrag.retrieval.basic import search_basic
 from research_graphrag.retrieval.drift import search_drift
 from research_graphrag.retrieval.global_search import search_global
 from research_graphrag.retrieval.local import DEFAULT_SEEDS, search_local
-from research_graphrag.retrieval.provenance import Citation, page_label
+from research_graphrag.retrieval.provenance import (
+    REFERENCE_EVIDENCE_MARKER,
+    Citation,
+    PaperRef,
+    page_label,
+)
 from research_graphrag.retrieval.router import MODES, route
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _DEFAULT_INDEX = _REPO_ROOT / "data" / "index" / "index.sqlite"
 
 
+def _kind_marker(document_kind: str) -> str:
+    """Kennzeichnet einen Beleg ohne Volltext (leer bei Volltext-Papern)."""
+    return f" · {REFERENCE_EVIDENCE_MARKER}" if document_kind == DOCUMENT_KIND_REFERENCE else ""
+
+
 def _print_citation(rank: int, citation: Citation) -> None:
     """Gibt ein Chunk-Zitat inkl. Abschnitts-/Seiten-Provenienz und Teil-Scores aus."""
     section = f" · Abschnitt {citation.section_title}" if citation.section_title else ""
     pages = page_label(citation.page_number, citation.page_end)
-    print(f"  {rank}. Paper {citation.paper_id} · {pages}{section} · Score {citation.score:.4f}")
+    print(
+        f"  {rank}. Paper {citation.paper_id} · {pages}{section} · "
+        f"Score {citation.score:.4f}{_kind_marker(citation.document_kind)}"
+    )
     print(f"     TF-IDF {citation.score_tfidf:.3f} · BM25 {citation.score_bm25:.2f}")
     print(f"     {citation.snippet}")
     print(f"     Quelle: {citation.source_uri}")
@@ -66,6 +80,15 @@ def _print_identifiers(identifiers: Mapping[str, str], citation_key: str) -> Non
     parts = [f"{key}:{value}" for key, value in identifiers.items()]
     suffix = f" · Schlüssel {citation_key}" if citation_key else ""
     print(f"     Identifikator: {' · '.join(parts)}{suffix}")
+
+
+def _print_paper_ref(ref: PaperRef) -> None:
+    """Gibt eine Paper-Referenz mit Quelle, Art und Leit-Snippet aus."""
+    print(
+        f"     Vertreter {ref.paper_id}{_kind_marker(ref.document_kind)} · Quelle: {ref.source_uri}"
+    )
+    if ref.snippet:
+        print(f"       {ref.snippet}")
 
 
 def _render_basic(index: str, query: str, k: int, scoring: Scoring, _seeds: int) -> None:
@@ -117,9 +140,7 @@ def _render_global(index: str, query: str, k: int, _scoring: Scoring, _seeds: in
             f"· Keywords: {keywords}"
         )
         for ref in match.representatives:
-            print(f"     Vertreter {ref.paper_id} · Quelle: {ref.source_uri}")
-            if ref.snippet:
-                print(f"       {ref.snippet}")
+            _print_paper_ref(ref)
 
 
 def _render_drift(index: str, query: str, k: int, scoring: Scoring, _seeds: int) -> None:

@@ -19,6 +19,8 @@ import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
 
+from research_graphrag.extraction.model import DOCUMENT_KIND_FULL
+
 MECHANICAL_LABELS = frozenset({"mechanical"})
 """Label-Quellen, die sich aus dem Index nachrechnen lassen."""
 
@@ -37,14 +39,15 @@ CITATION_LABELS = frozenset({CITATION_LABEL_SOURCE})
 DEFAULT_LABEL_SOURCE = "mechanical"
 """Quelle, wenn das Gold-Set nichts anderes angibt."""
 
-INDEX_SCHEMA_VERSION = "0.4.0"
+INDEX_SCHEMA_VERSION = "0.5.0"
 """Index-Schema, gegen das die Labels abgeleitet werden."""
 
 LABEL_RULE = (
     "Ein Paper gilt als relevant, wenn mindestens einer seiner Chunks alle Strings aus "
-    "match_all (case-insensitive) enthaelt. Die Labels sind damit unabhaengig von jeder "
-    "Ranking-Funktion und ueber 'python -m scripts.eval_retrieval --verify-labels' "
-    "reproduzierbar."
+    "match_all (case-insensitive) enthaelt. Referenz-Eintraege ohne Volltext "
+    "(document_kind = 'reference') sind ausgeschlossen. Die Labels sind damit unabhaengig von "
+    "jeder Ranking-Funktion und ueber "
+    "'python -m scripts.eval_retrieval --verify-labels' reproduzierbar."
 )
 """Die Label-Regel im Klartext (steht so in der Gold-Set-Datei)."""
 
@@ -112,6 +115,11 @@ def derive_expected_papers(db_path: str | Path, match_all: tuple[str, ...]) -> t
     ``match_all`` (case-insensitive) enthält. Die Regel ist bewusst unabhängig von jeder
     Ranking-Funktion, damit die Messung nicht das eigene Verfahren bestätigt.
 
+    **Referenz-Einträge ohne Volltext sind ausgeschlossen.** Ihr Chunk besteht aus Titel und
+    Abstract; ein dort zufällig enthaltener Suchstring würde sie still zum Gold-Ziel machen,
+    obwohl sie die Frage gar nicht belegen können. Die Messgrundlage bliebe formal korrekt und
+    wäre inhaltlich falsch (docs/adr/0031-reference-contract-and-guardrail-phase13.md).
+
     Args:
         db_path: Pfad zur SQLite-Index-Datei.
         match_all: Nicht-leere Folge von Suchstrings.
@@ -119,12 +127,14 @@ def derive_expected_papers(db_path: str | Path, match_all: tuple[str, ...]) -> t
     Returns:
         Aufsteigend sortierte Paper-IDs.
     """
-    condition = " AND ".join("LOWER(text) LIKE ?" for _ in match_all)
+    condition = " AND ".join("LOWER(c.text) LIKE ?" for _ in match_all)
     parameters = [f"%{term.lower()}%" for term in match_all]
     connection = sqlite3.connect(str(db_path))
     try:
         rows = connection.execute(
-            f"SELECT DISTINCT paper_id FROM chunks WHERE {condition}", parameters
+            "SELECT DISTINCT c.paper_id FROM chunks c JOIN papers p ON p.paper_id = c.paper_id "
+            f"WHERE p.document_kind = ? AND {condition}",
+            [DOCUMENT_KIND_FULL, *parameters],
         ).fetchall()
     finally:
         connection.close()

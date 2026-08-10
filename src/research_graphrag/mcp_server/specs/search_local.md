@@ -15,7 +15,7 @@
 | Feld | Wert |
 | --- | --- |
 | **Tool-Name** | `search_local` (generisch) |
-| **Version** | `0.2.0` |
+| **Version** | `0.3.0` |
 | **Capability-Schicht** | Retrieval – Local Search (siehe README.md) |
 | **Status** | Implementiert (Phase 4; Multi-Seed seit Phase 10 / V1) |
 
@@ -47,6 +47,7 @@ Die Verankerung an mehreren Seeds ersetzt die frühere Verankerung an einem einz
   "seeds": [
     {
       "paper_id": "…",
+      "document_kind": "full",
       "section_title": "…",
       "page_number": 6,
       "page_end": 6,
@@ -60,12 +61,14 @@ Die Verankerung an mehreren Seeds ersetzt die frühere Verankerung an einem einz
       "citation_key": "Beispiel2023"
     }
   ],
-  "neighborhood": [ { "paper_id": "…", "section_title": "…", "page_number": 5, "page_end": 5, "chunk_id": "…", "score": 0.0164, "score_tfidf": 0.33, "score_bm25": 0.0, "source_uri": "file:///…", "snippet": "…", "identifiers": { "arxiv": "…" }, "citation_key": "…" } ],
-  "fan_out": [ { "paper_id": "…", "weight": 0.46, "citation": { "paper_id": "…", "section_title": "…", "page_number": 6, "page_end": 7, "chunk_id": "…", "score": 0.0164, "score_tfidf": 0.2, "score_bm25": 9.1, "source_uri": "file:///…", "snippet": "…", "identifiers": { "arxiv": "…" }, "citation_key": "…" } } ]
+  "neighborhood": [ { "paper_id": "…", "document_kind": "reference", "section_title": "…", "page_number": 0, "page_end": 0, "chunk_id": "…", "score": 0.0164, "score_tfidf": 0.33, "score_bm25": 0.0, "source_uri": "file:///…", "snippet": "…", "identifiers": { "arxiv": "…" }, "citation_key": "…" } ],
+  "fan_out": [ { "paper_id": "…", "weight": 0.46, "citation": { "paper_id": "…", "document_kind": "full", "section_title": "…", "page_number": 6, "page_end": 7, "chunk_id": "…", "score": 0.0164, "score_tfidf": 0.2, "score_bm25": 9.1, "source_uri": "file:///…", "snippet": "…", "identifiers": { "arxiv": "…" }, "citation_key": "…" } } ]
 }
 ```
 
 `seeds` ist **leer**, wenn keine Übereinstimmung besteht (dann sind `neighborhood`/`fan_out` ebenfalls leer). Die Liste ist absteigend nach Relevanz sortiert; `seeds[0]` ist der bisherige Top-1-Treffer und das **Ankerpaper** des Fan-outs. Ein Fan-out-`citation` kann `null` sein, wenn der Nachbar zur Anfrage keinen Treffer hat.
+
+`document_kind` ist `full` (Volltext) oder `reference` (**Referenz-Eintrag ohne Volltext**). Referenz-Einträge sind in Seeds und Nachbarschaft **nachrangig**: Sie erscheinen, aber hinter allen Volltext-Belegen derselben Liste ([ADR 0031](../../../../docs/adr/0031-reference-contract-and-guardrail-phase13.md)).
 
 In der `neighborhood` erscheint **kein** Chunk, der bereits Seed ist; ihre Reihenfolge ist der Fusionswert über die Teilranglisten aller Seeds.
 

@@ -4,7 +4,7 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/indexing/tfidf_index.py` |
 | **Paket** | `indexing` – Canonical JSON zum Offline-Hybrid-Index |
-| **Phase** | 0b (eingeführt), 4 + 5 + 7 / A3 + A4 (erweitert) |
+| **Phase** | 0b (eingeführt), 4 + 5 + 7 / A3 + A4 (erweitert), 13 / R2 (Dokumentart) |
 | **Grundlagen** | [ADR 0005](../../../../docs/adr/0005-graphrag-index-backend-open.md), [ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md) |
 
 ---
@@ -26,10 +26,11 @@ Text. Das kostet Ladezeit, macht den Index aber inspizierbar, versionsunabhängi
 | --- | --- | --- |
 | `build_index` | Funktion | Papers → SQLite-Index (voller Re-Index) |
 | `TfidfIndex` | Klasse | Geladener Index mit `load()`, `search()`, `neighbors_of_chunk()`, `size` |
-| `Hit` | Dataclass | Ein Treffer mit Provenienz, Gesamt-Score, beiden Teil-Scores sowie `identifiers` und `citation_key` |
+| `Hit` | Dataclass | Ein Treffer mit Provenienz, Gesamt-Score, beiden Teil-Scores, `identifiers`, `citation_key` und `document_kind` |
+| `demote_references` | Funktion | Guardrail: sortiert Referenz-Einträge hinter die Volltext-Treffer |
 | `Scoring` | Typ-Alias | `hybrid` · `tfidf` · `bm25` |
 | `DEFAULT_SCORING` | Konstante | Die Standard-Wertung |
-| `SCHEMA_VERSION` | Konstante | Version des Index-Schemas |
+| `SCHEMA_VERSION` | Konstante | Version des Index-Schemas (**0.5.0**: `papers.document_kind`) |
 
 ## 3. Ablauf
 
@@ -88,9 +89,10 @@ flowchart TD
     R3 --> O
     O --> P["über die Reihenfolge laufen,<br/>paper_ids-Filter anwenden,<br/>bis k Treffer"]
     P --> H["Hit mit Gesamt-Score<br/>und beiden Teil-Scores"]
+    H --> G["demote_references:<br/>Referenz-Einträge ans Ende"]
 ```
 
-Drei Details, die das Verhalten prägen:
+Vier Details, die das Verhalten prägen:
 
 **Beide Score-Vektoren werden immer berechnet.** Das kostet wenig und sorgt dafür, dass jeder
 Treffer seine Teil-Scores ausweisen kann – unabhängig davon, welche Wertung gewählt wurde.
@@ -102,11 +104,19 @@ zur ungefilterten Rangfolge – genau das brauchen Local-Fan-out und DRIFT.
 **Der Score der Hybrid-Wertung ist ein Fusionswert.** Er stammt aus Rängen, nicht aus
 Ähnlichkeiten, und ist nur innerhalb einer Antwort vergleichbar.
 
+**Referenz-Einträge sind nachrangig, nicht ausgeschlossen.** `demote_references` sortiert sie
+ans Ende der fertigen Trefferliste – ihr Score ist mit dem eines Volltext-Chunks nicht
+vergleichbar, weil die Längennormierung kurze Texte bevorzugt. Die **Auswahl** der Top-k bleibt
+unangetastet: Ohne passenden Volltext steht der Referenz-Eintrag weiterhin vorn. Ein stubfreier
+Korpus merkt von der Regel nichts (die Sortierung ist dann die Identität), weshalb sie die
+eingefrorenen Baselines nicht bewegt ([ADR 0031](../../../../docs/adr/0031-reference-contract-and-guardrail-phase13.md)).
+
 ### 3.4 Chunk-Nachbarschaft
 
 `neighbors_of_chunk` bewertet einen **Chunk gegen alle anderen** und bleibt bewusst beim reinen
 Kosinus: BM25 ist ein Anfrage-Dokument-Modell und für Dokument-Dokument-Ähnlichkeit nicht
 gedacht. Der Ausgangs-Chunk wird ausgeschlossen; `score_bm25` ist in diesen Treffern `0.0`.
+Die Guardrail wirkt hier genauso wie in `search`.
 
 ## 4. Zusammenspiel
 

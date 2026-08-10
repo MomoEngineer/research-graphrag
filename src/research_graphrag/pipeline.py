@@ -1,12 +1,14 @@
 """Drop-in-Ingestion: papers/ → Canonical JSON → Offline-Hybrid-Index (Option B).
 
-Bindet Extraktion (``pypdf``), Dedup (``manifest.json`` über den Datei-Hash), Index-Bau
+Bindet Extraktion (``pypdf`` für PDFs, nativer Adapter für Referenz-Einträge ``*.refjson``),
+Dedup (``manifest.json`` über den Datei-Hash), Index-Bau
 (TF-IDF/SQLite), den Paper-Ähnlichkeitsgraphen samt Louvain-Communities und den
-Intra-Korpus-Zitationsgraphen zu einem Schritt zusammen. Nur neue/geänderte PDFs werden
+Intra-Korpus-Zitationsgraphen zu einem Schritt zusammen. Nur neue/geänderte Dateien werden
 extrahiert; Index, Graph und Zitationskanten werden als **voller Re-Index** aus allen
 Canonical-JSONs gebaut (Standard, siehe Roadmap.md). Grundsätze:
 docs/adr/0005-graphrag-index-backend-open.md, docs/adr/0007-graphrag-index-phase3-option-b.md,
-docs/adr/0011-intra-corpus-citation-graph-phase7.md.
+docs/adr/0011-intra-corpus-citation-graph-phase7.md,
+docs/adr/0030-reference-entries-in-corpus-phase13.md.
 """
 
 from __future__ import annotations
@@ -21,6 +23,7 @@ from research_graphrag.bibliography.store import metadata_path
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.model import SCHEMA_VERSION, read_schema_version
 from research_graphrag.extraction.pdf import CanonicalPaper, extract_pdf
+from research_graphrag.extraction.refstub import STUB_SUFFIX, extract_stub
 from research_graphrag.indexing.citation_graph import CitationBuildReport, build_citation_graph
 from research_graphrag.indexing.graph_index import GraphBuildReport, build_graph
 from research_graphrag.indexing.metadata_index import MetadataBuildReport, build_metadata_index
@@ -192,6 +195,37 @@ def _build_index_atomically(
     return indexed_chunks, graph_report, citation_report, metadata_report
 
 
+def forget_source(data_dir: str | Path, filename: str) -> bool:
+    """Vergisst eine Korpus-Datei: Manifest-Eintrag und – falls verwaist – ihr Canonical.
+
+    Nötig für den Upgrade-Pfad des Intake: Wird ein Referenz-Eintrag durch den Volltext abgelöst,
+    bliebe sein Canonical sonst als **Waise** im Datenbestand und das Paper erschiene nach dem
+    nächsten Re-Index doppelt – einmal als Stub, einmal als Volltext
+    (docs/adr/0030-reference-entries-in-corpus-phase13.md).
+
+    Args:
+        data_dir: Datenordner mit ``manifest.json`` und ``canonical/``.
+        filename: Name der nicht mehr vorhandenen Datei in ``papers/``.
+
+    Returns:
+        ``True``, wenn ein Eintrag entfernt wurde.
+    """
+    data_path = Path(data_dir)
+    manifest_path = data_path / "manifest.json"
+    if not manifest_path.is_file():
+        return False
+    manifest = _load_manifest(manifest_path)
+    entry = manifest.pop(filename, None)
+    if entry is None:
+        return False
+    paper_id = entry["paper_id"]
+    still_referenced = any(value["paper_id"] == paper_id for value in manifest.values())
+    if not still_referenced:
+        (data_path / "canonical" / f"{paper_id}.json").unlink(missing_ok=True)
+    _save_manifest(manifest_path, manifest)
+    return True
+
+
 def ingest(
     papers_dir: str | Path,
     data_dir: str | Path,
@@ -202,7 +236,8 @@ def ingest(
     """Führt deduplizierte Extraktion und Index-Bau für einen ``papers/``-Ordner aus.
 
     Args:
-        papers_dir: Ordner mit ``*.pdf``.
+        papers_dir: Ordner mit ``*.pdf`` und ``*.refjson`` (Referenz-Einträge ohne Volltext,
+            docs/adr/0030-reference-entries-in-corpus-phase13.md).
         data_dir: Zielordner für ``canonical/``, ``manifest.json`` und ``index/index.sqlite``.
         overview_path: Kuratierte Übersicht als Metadatenquelle; ohne Angabe wird
             ``<data_dir>/../Übersicht.md`` verwendet.
@@ -233,16 +268,24 @@ def ingest(
 
     extracted = 0
     skipped = 0
-    for pdf in sorted(papers_path.glob("*.pdf")):
-        sha256 = hashlib.sha256(pdf.read_bytes()).hexdigest()
-        entry = manifest.get(pdf.name)
+    sources = sorted(
+        [*papers_path.glob("*.pdf"), *papers_path.glob(f"*{STUB_SUFFIX}")],
+        key=lambda item: item.name,
+    )
+    for source in sources:
+        sha256 = hashlib.sha256(source.read_bytes()).hexdigest()
+        entry = manifest.get(source.name)
         if _can_skip(entry, sha256, canonical_dir):
             skipped += 1
             continue
-        paper = extract_pdf(pdf)
-        _remove_stale_canonical(canonical_dir, manifest, pdf.name, entry, paper.paper_id)
+        # Der Dokumenttyp entscheidet allein die Endung – ein Referenz-Eintrag wird nativ
+        # gelesen, nicht per Heuristik aus einer synthetischen PDF zurückgewonnen.
+        paper = (
+            extract_stub(source) if source.suffix.lower() == STUB_SUFFIX else extract_pdf(source)
+        )
+        _remove_stale_canonical(canonical_dir, manifest, source.name, entry, paper.paper_id)
         paper.save_json(canonical_dir / f"{paper.paper_id}.json")
-        manifest[pdf.name] = {"sha256": sha256, "paper_id": paper.paper_id}
+        manifest[source.name] = {"sha256": sha256, "paper_id": paper.paper_id}
         extracted += 1
 
     _save_manifest(manifest_path, manifest)

@@ -22,8 +22,11 @@ papers/*
 !papers/README.md
 
 # Eingangsordner des Intake (nicht versioniert – siehe Roadmap.md, Phase 8)
+# Ausnahme: die kuratierte Kennungsliste der Referenz-Einträge (Phase 13 / R1, ADR 0029) –
+# sie ist Quelle, nicht Durchgangsware, und aus keinem Artefakt rekonstruierbar.
 new_papers/*
 !new_papers/README.md
+!new_papers/referenzen.txt
 
 # Abgeleitete, regenerierbare Artefakte (nicht versioniert)
 data/*

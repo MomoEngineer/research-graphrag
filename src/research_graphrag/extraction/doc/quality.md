@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/extraction/quality.py` |
 | **Paket** | `extraction` – PDF zu Canonical JSON |
-| **Phase** | 2 (eingeführt), 7 / A3 (Flag-Katalog geschärft) |
-| **Grundlagen** | [ADR 0006](../../../../docs/adr/0006-canonical-model-phase2-scope.md), [ADR 0013](../../../../docs/adr/0013-chunking-refinement-phase7.md) |
+| **Phase** | 2 (eingeführt), 7 / A3 (Flag-Katalog geschärft), 13 / R2 (typabhängig) |
+| **Grundlagen** | [ADR 0006](../../../../docs/adr/0006-canonical-model-phase2-scope.md), [ADR 0013](../../../../docs/adr/0013-chunking-refinement-phase7.md), [ADR 0030](../../../../docs/adr/0030-reference-entries-in-corpus-phase13.md) |
 
 ---
 
@@ -20,6 +20,14 @@ Extraktion vermutlich unvollständig war, damit man dort gezielt nachsieht.
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
 | `assess` | Funktion | Seiten, Abschnitte und Chunks → sortiertes, dedupliziertes Flag-Tupel |
+| `assess_reference` | Funktion | Bewertung eines **Referenz-Eintrags** – genau ein möglicher Befund |
+| `FLAG_REFERENCE_WITHOUT_ABSTRACT` | Konstante | dieser eine Befund |
+
+> **Warum zwei Funktionen statt einer Fallunterscheidung:** `assess` prüft Seitentext, erkannte
+> Abschnitte und ein Chunk-Zielfenster – für einen Referenz-Eintrag trifft davon nichts zu.
+> Ungeprüft löste jeder Stub zwei bis drei Flags aus (`no_chunks`, `missing_abstract`,
+> `missing_references`) und verrauschte den Report, der in A3/A5 mühsam von 3074 auf 316 gedrückt
+> wurde ([ADR 0030](../../../../docs/adr/0030-reference-entries-in-corpus-phase13.md)).
 
 ## 3. Ablauf
 

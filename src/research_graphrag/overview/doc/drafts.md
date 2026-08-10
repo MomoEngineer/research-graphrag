@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/overview/drafts.py` |
 | **Paket** | `overview` – Entwürfe für die kuratierte Literaturübersicht |
-| **Phase** | 2 (eingeführt), 7 / A5 (Keyword-Politik), 8 (Übersicht als einzige Senke) |
-| **Grundlagen** | [ADR 0006](../../../../docs/adr/0006-canonical-model-phase2-scope.md), [ADR 0015](../../../../docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md), [ADR 0019](../../../../docs/adr/0019-corpus-intake-new-papers-phase8.md) |
+| **Phase** | 2 (eingeführt), 7 / A5 (Keyword-Politik), 8 (Übersicht als einzige Senke), 13 / R2 (Referenz-Einträge) |
+| **Grundlagen** | [ADR 0006](../../../../docs/adr/0006-canonical-model-phase2-scope.md), [ADR 0015](../../../../docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md), [ADR 0019](../../../../docs/adr/0019-corpus-intake-new-papers-phase8.md), [ADR 0030](../../../../docs/adr/0030-reference-entries-in-corpus-phase13.md) |
 
 ---
 
@@ -25,6 +25,8 @@ Forschungsfragen).
 | --- | --- | --- |
 | `append_overview_rows` | Funktion | Hängt fehlende Entwurfszeilen an die kuratierte Übersicht an |
 | `ensure_overview_target` | Funktion | Prüft die Zieldatei vorab (Existenz + Spaltenlayout) |
+| `retarget_overview_row` | Funktion | Biegt **eine** Zeile auf eine andere Datei um (Upgrade Stub → Volltext) |
+| `display_name` | Funktion | Anzeigename eines Korpus-Eintrags (Dateiname ohne bekannte Endung) |
 | `build_draft_row` | Funktion | Baut eine einzelne Tabellenzeile (mit vergebener ID) |
 | `next_draft_number` | Funktion | Ermittelt die nächste freie Nummer der ID-Reihe `Z1`, `Z2`, … |
 | `keyword_table` | Funktion | Extraktive Top-Terme je Dokument im Korpus-Kontext |
@@ -34,6 +36,13 @@ Forschungsfragen).
 | `split_row` | Funktion | Zellen einer Markdown-Tabellenzeile (auch vom Bibliografie-Paket genutzt) |
 | `OverviewReport` | Dataclass | Zählwerte eines Laufs samt vergebener IDs |
 | `DRAFT_ID_PREFIX`, `INTERNAL_LINK_COLUMN` | Konstanten | Präfix der ID-Reihe (`Z`) und erwarteter Spaltenindex des internen Links |
+| `DRAFT_PREFIX`, `REFERENCE_DRAFT_PREFIX` | Konstanten | Marker der Zusammenfassung – der zweite weist einen **Referenz-Eintrag** aus |
+
+> **Die einzige Ausnahme von „append-only":** `retarget_overview_row` ändert eine bestehende
+> Zeile – aber nur `Name` und `Interner Link`, und nur für den Fall, dass ein Volltext seinen
+> Referenz-Eintrag ablöst. Die wertenden Spalten bleiben unangetastet, alle **anderen** Zeilen
+> byte-identisch. Ohne diesen Eingriff zeigte die Zeile auf eine gelöschte Datei; eine zweite
+> Zeile wäre eine Dublette ([ADR 0030](../../../../docs/adr/0030-reference-entries-in-corpus-phase13.md)).
 
 ## 3. Ablauf
 

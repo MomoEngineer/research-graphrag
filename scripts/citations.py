@@ -20,7 +20,9 @@ import sys
 from pathlib import Path
 
 from research_graphrag.errors import DomainError
+from research_graphrag.extraction.model import DOCUMENT_KIND_REFERENCE
 from research_graphrag.retrieval.citations import CitationLink, get_citations
+from research_graphrag.retrieval.provenance import REFERENCE_EVIDENCE_MARKER
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _DEFAULT_INDEX = _REPO_ROOT / "data" / "index" / "index.sqlite"
@@ -33,7 +35,12 @@ def _print_links(heading: str, links: tuple[CitationLink, ...]) -> None:
         return
     print(f"[citations] {heading} ({len(links)}):")
     for link in links:
-        print(f"  · Paper {link.paper.paper_id} · Match: {link.method}")
+        marker = (
+            f" · {REFERENCE_EVIDENCE_MARKER}"
+            if link.paper.document_kind == DOCUMENT_KIND_REFERENCE
+            else ""
+        )
+        print(f"  · Paper {link.paper.paper_id} · Match: {link.method}{marker}")
         print(f"     Quelle: {link.paper.source_uri}")
         if link.paper.snippet:
             print(f"     {link.paper.snippet}")

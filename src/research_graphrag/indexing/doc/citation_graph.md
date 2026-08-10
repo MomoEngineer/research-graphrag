@@ -32,7 +32,13 @@ Korpus werden bewusst ignoriert – über sie ließe sich ohnehin nichts belegen
 | `normalize_title` | Funktion | Titel-Normalisierung (auch vom Korpus-Intake genutzt) |
 | `title_of` | Funktion | Paper-Titel aus der `source_uri` (Dateiname-Stamm) |
 | `front_matter_text` | Funktion | Text der Titelseite(n) ohne Referenzabschnitt (Beleg-Fenster) |
-| `title_from_uri` | Funktion | Dieselbe Ableitung direkt aus einer `source_uri` (vom Intake und der Multi-Hop-Messung genutzt; `title_of` delegiert dorthin) |
+| `title_from_uri` | Funktion | Dieselbe Ableitung direkt aus einer `source_uri` (vom Intake und der Multi-Hop-Messung genutzt; `title_of` delegiert dorthin); entfernt `.pdf` **und** `.refjson` |
+
+> **Sonderfall Referenz-Eintrag:** In `front_matter_text` treten die eigenen Identifikatoren zum
+> Fenster hinzu – sie stammen dort aus der Datei selbst, nicht aus einer Heuristik über
+> Seitentext. Ohne diese Ergänzung wäre ein Stub als **Ziel** von `CITES`-Kanten unerreichbar,
+> also genau der bezifferte Hauptnutzen der Phase 13 verfehlt
+> ([ADR 0030](../../../../docs/adr/0030-reference-entries-in-corpus-phase13.md)).
 | `MIN_TITLE_CHARS`, `MIN_TITLE_WORDS`, `TITLE_PAGE_PAGES` | Konstanten | Schwellen der Erkennung |
 
 ## 3. Ablauf

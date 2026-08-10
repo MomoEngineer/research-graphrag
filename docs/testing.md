@@ -16,6 +16,7 @@ tests/
 ├─ test_smoke.py          # Paket-Smoke-Test
 ├─ test_errors.py         # Fehlertaxonomie
 ├─ test_intake.py         # Korpus-Intake: Prüfstufen, --dry-run, Idempotenz (Phase 8)
+├─ test_intake_reference.py # zweiter Dokumenttyp: Stub-Intake, Upgrade-Pfad (Phase 13 / R2)
 ├─ test_backup.py         # Korpus-Sicherung: Umfang, Idempotenz, --dry-run, Prüfnachweis, CLI (Phase 11 / B1)
 ├─ test_keywords.py       # kuratierte Keyword-Politik (Phase 7 / A5)
 ├─ test_pipeline.py       # Drop-in-Ingestion
@@ -25,13 +26,13 @@ tests/
 ├─ overview/              # Übersicht-Entwürfe (Phase 2, 8)
 ├─ generation/            # LLM-Bridge: Port, Evidenz, Synthese, CLI-Pfad (Phase 7 / A1)
 ├─ evaluation/            # Gold-Set, Kennzahlen, Modus-Lauf, Baseline, Ausgabe (Phase 7 / A4 + A6) + Router-Contract (A7) + Multi-Hop (Phase 10 / V3)
-├─ online/               # Transport-Port, Quellen-Adapter, Dedup, Bericht, CLI (Phase 9 / S1) + Metadaten-Auflösung (Phase 12 / K2)
+├─ online/               # Transport-Port, Quellen-Adapter, Dedup, Bericht, CLI (Phase 9 / S1) + Metadaten-Auflösung (Phase 12 / K2) + Referenz-Einträge (Phase 13 / R1)
 ├─ bibliography/         # Modell, Auflösung, Speicher, kuratierte Quelle, Harvard/APA (Phase 12 / K1)
 ├─ integration/           # End-to-End-Durchstich (M1) + Drop-in-Freshness/atomarer Swap (Phase 6) + Status (Phase 7)
 └─ mcp_server/            # (Phase 5) Server-Contract via In-Memory-Client (test_server.py)
 ```
 
-> **Aktueller Stand (Phase 12 / K2):** Die Kernmodule (`errors`, `extraction/*` inkl. `model`/`structure`/`chunking`/`quality`, `indexing` inkl. `bm25`/`fusion`/`graph_index`/`citation_graph`/`metadata_index`, `retrieval/*` inkl. `basic`/`local`/`global_search`/`drift`/`router`/`provenance`/`paper`/`citations`/`reference`, `generation/*` inkl. `provider`/`synthesis`/`evidence`/`answer`, `evaluation/*` inkl. `gold`/`metrics`/`runner`/`baseline`/`routing`/`multihop`/`report`, `online/*` inkl. `transport`/`sources`/`candidates`/`search`/`metadata`/`report`, `bibliography/*` inkl. `model`/`resolve`/`curated`/`store`/`styles`, `intake`, `overview`, `pipeline`, `mcp_server/server`/`sampling`) sind mit Funktions-, Fehler-, Contract- und Property-Tests abgedeckt (Kernmodule ≥ 85 % Zeilenabdeckung, retrieval-, evaluation- und bibliography-Module nahe 100 %; **750 Tests**). Der **Contract-Test** (Abschnitt 2.1) ist umgesetzt: ein **In-Memory-Client-Roundtrip** (`tests/mcp_server/test_server.py`) prüft alle neun Tools über das echte MCP-Protokoll (Erfolg + strukturierte Fehlerausgabe) – inklusive eines **echten Sampling-Roundtrips** für `answer_question` (Sampling-Callback als Client-Modell-Attrappe) und der sichtbaren Degradation ohne Sampling-Fähigkeit. **Phase 6** ergänzt einen **Freshness-/Atomaritäts-Regressionstest** (`tests/integration/test_phase6_freshness.py`: neue PDF → `ingest` → On-Read liefert sie sofort; unveränderte übersprungen; ein fehlgeschlagener Re-Index lässt den Alt-Index intakt) und eine **QS-Harness-Regression** (`tests/retrieval/test_qa.py`: das feste Prüf-Fragen-Set liefert wohlgeformte Provenienz). **Phase 7** ergänzt die Zitationsgraph-Tests (`tests/indexing/test_citation_graph.py`, `tests/retrieval/test_citations.py`), eine Status-Regression (`tests/integration/test_status.py`), die Synthese-Tests (`tests/generation/`), eine **Konsolen-Encoding-Regression** (`tests/integration/test_cli_encoding.py`: die CLI-Skripte laufen auch bei cp1252-Ausgabe durch) sowie die **Chunking-Verfeinerung** (`tests/extraction/test_structure.py`: Reject-Regeln und Section-Absorption inkl. Schutz des Referenzabschnitts; `tests/extraction/test_chunking.py`: Seiten-Range statt Seitengrenze). **Phase 7 / A4** ergänzt die Wertungs-Tests (`tests/indexing/test_bm25.py`: Term-Sättigung, Längennormalisierung, positive IDF; `tests/indexing/test_fusion.py`: RRF-Formel und Fusionsverhalten; `tests/indexing/test_tfidf_index.py`: **Äquivalenz des TF-IDF-Raums zum früheren `TfidfVectorizer`**, Wertungs-Varianten, Determinismus) und den Eval-Harness (`tests/evaluation/test_gold.py`, `tests/evaluation/test_metrics.py`: mechanische Label-Ableitung, Hit@k/MRR, Gold-Set-Integrität).
+> **Aktueller Stand (Phase 13 / R3):** Die Kernmodule (`errors`, `extraction/*` inkl. `model`/`structure`/`chunking`/`quality`/`refstub`, `indexing` inkl. `bm25`/`fusion`/`graph_index`/`citation_graph`/`metadata_index`, `retrieval/*` inkl. `basic`/`local`/`global_search`/`drift`/`router`/`provenance`/`paper`/`citations`/`reference`, `generation/*` inkl. `provider`/`synthesis`/`evidence`/`answer`, `evaluation/*` inkl. `gold`/`metrics`/`runner`/`baseline`/`routing`/`multihop`/`report`, `online/*` inkl. `transport`/`sources`/`candidates`/`search`/`metadata`/`references`/`report`, `bibliography/*` inkl. `model`/`resolve`/`curated`/`store`/`styles`, `intake`, `overview`, `pipeline`, `mcp_server/server`/`sampling`) sind mit Funktions-, Fehler-, Contract- und Property-Tests abgedeckt (Kernmodule ≥ 85 % Zeilenabdeckung, retrieval-, evaluation- und bibliography-Module nahe 100 %; **915 Tests**). Der **Contract-Test** (Abschnitt 2.1) ist umgesetzt: ein **In-Memory-Client-Roundtrip** (`tests/mcp_server/test_server.py`) prüft alle neun Tools über das echte MCP-Protokoll (Erfolg + strukturierte Fehlerausgabe) – inklusive eines **echten Sampling-Roundtrips** für `answer_question` (Sampling-Callback als Client-Modell-Attrappe) und der sichtbaren Degradation ohne Sampling-Fähigkeit. **Phase 6** ergänzt einen **Freshness-/Atomaritäts-Regressionstest** (`tests/integration/test_phase6_freshness.py`: neue PDF → `ingest` → On-Read liefert sie sofort; unveränderte übersprungen; ein fehlgeschlagener Re-Index lässt den Alt-Index intakt) und eine **QS-Harness-Regression** (`tests/retrieval/test_qa.py`: das feste Prüf-Fragen-Set liefert wohlgeformte Provenienz). **Phase 7** ergänzt die Zitationsgraph-Tests (`tests/indexing/test_citation_graph.py`, `tests/retrieval/test_citations.py`), eine Status-Regression (`tests/integration/test_status.py`), die Synthese-Tests (`tests/generation/`), eine **Konsolen-Encoding-Regression** (`tests/integration/test_cli_encoding.py`: die CLI-Skripte laufen auch bei cp1252-Ausgabe durch) sowie die **Chunking-Verfeinerung** (`tests/extraction/test_structure.py`: Reject-Regeln und Section-Absorption inkl. Schutz des Referenzabschnitts; `tests/extraction/test_chunking.py`: Seiten-Range statt Seitengrenze). **Phase 7 / A4** ergänzt die Wertungs-Tests (`tests/indexing/test_bm25.py`: Term-Sättigung, Längennormalisierung, positive IDF; `tests/indexing/test_fusion.py`: RRF-Formel und Fusionsverhalten; `tests/indexing/test_tfidf_index.py`: **Äquivalenz des TF-IDF-Raums zum früheren `TfidfVectorizer`**, Wertungs-Varianten, Determinismus) und den Eval-Harness (`tests/evaluation/test_gold.py`, `tests/evaluation/test_metrics.py`: mechanische Label-Ableitung, Hit@k/MRR, Gold-Set-Integrität).
 
 > **Phase 7 / A5** ergänzt die Rausch-Reduktion: `tests/extraction/test_normalization.py`
 > (Ligatur-Reparatur, Entfernen der Glyph-Artefakte, Erhalt der mathematischen Alphanumerics und
@@ -77,6 +78,47 @@ tests/
 > strukturell unerreichbaren Paper benennen. Wie bei A6 sind die **Zahlen** korpusabhängig und
 > deshalb kein Gate – der Lauf gegen den realen Index bleibt manuell
 > ([ADR 0023](adr/0023-multihop-citation-evaluation-phase10.md)).
+
+> **Phase 13 / R3** ergänzt `tests/retrieval/test_reference_contract.py` und
+> `tests/indexing/test_reference_guardrail.py`. Die Aufteilung folgt der Beweislast:
+>
+> - **Der Contract wird am echten Index geprüft**, nicht an konstruierten Objekten: Ein
+>   Miniatur-Index mit **beiden** Dokumentarten wird gebaut, und `document_kind` muss vom `Hit`
+>   über `Citation`, `PaperRef` und `PaperDetail` bis in das Beleg-Label und dessen
+>   Serialisierung durchkommen. Ein Feld mit Default (`full`) fällt sonst still auf den falschen
+>   Wert zurück – genau das kann diese Kette nachweisen.
+> - **Die Guardrail wird an ihren Invarianten geprüft**, nicht an Kennzahlen: Umsortierung statt
+>   Aussortierung (die Treffermenge bleibt gleich), Stabilität innerhalb beider Gruppen,
+>   Idempotenz und der entscheidende Randfall – **ohne** Volltext-Konkurrenz bleibt der
+>   Referenz-Eintrag vorn. Die Wirkung auf reale Ränge ist korpusabhängig und steht deshalb im
+>   ADR, nicht im Test ([ADR 0031](adr/0031-reference-contract-and-guardrail-phase13.md)).
+> - **Der Gold-Ausschluss** hat einen eigenen Fall in `tests/evaluation/test_gold.py`: Ein
+>   Referenz-Eintrag, dessen Chunk den Suchstring enthält, darf **nicht** als erwartetes Paper
+>   erscheinen.
+
+> **Phase 13 / R2** ergänzt `tests/extraction/test_refstub.py` und
+> `tests/test_intake_reference.py`. Drei Zusicherungen tragen hier mehr als die Abdeckung:
+>
+> - **Der Upgrade lässt keine Waise zurück.** Nach „Volltext schlägt Referenz-Eintrag" wird
+>   geprüft, dass Manifest-Eintrag und Canonical des Stubs verschwunden sind – sonst erschiene
+>   das Paper nach dem Re-Index doppelt (genau dieser Fehler ist bei der Umsetzung aufgetreten).
+> - **Die Übersichtszeile wird umgebogen, nicht dupliziert**, und die kuratierten Spalten sowie
+>   alle anderen Zeilen bleiben byte-identisch – geprüft auf **Bytes**, inklusive CRLF.
+> - **`--dry-run` verändert nichts**, belegt über ein Hash-Abbild des gesamten Baums.
+
+> **Phase 13 / R1** ergänzt `tests/online/test_online_references.py` und
+> `tests/online/test_resolve_references_cli.py`. Vier Zusicherungen tragen hier mehr als die
+> Abdeckung:
+>
+> - **Ein zweiter Lauf ist folgenlos.** Der Test zählt die Abfragen eines injizierten Clients und
+>   prüft, dass sie nach dem ersten Lauf **nicht** steigen; die Vorschau `--dry-run` läuft gegen
+>   eine `create_client`-Attrappe, die beim Aufruf den Test scheitern lässt.
+> - **Der Dateiname kann den Eingangsordner nicht verlassen.** Titel wie `../../etc/passwd`
+>   werden parametrisiert durchgespielt – der Slug entsteht über eine Whitelist.
+> - **Die Kennungsliste bleibt byte-identisch**, geprüft auf **Bytes** statt auf Text (sonst
+>   verdeckt die Zeilenenden-Umsetzung unter Windows jede Änderung).
+> - **Ohne Titel entsteht keine Datei, ohne Abstract entsteht sie mit Hinweis** – die beiden
+>   Fälle, die R2 auseinanderhalten muss.
 
 > **Phase 12** ergänzt den Testbaum `tests/bibliography/` sowie
 > `tests/indexing/test_metadata_index.py`, `tests/retrieval/test_reference.py`,

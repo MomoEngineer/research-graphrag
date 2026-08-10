@@ -100,6 +100,25 @@ def openalex_url(query: SearchQuery, *, limit: int = DEFAULT_LIMIT) -> str:
     )
 
 
+def arxiv_id_url(arxiv_id: str) -> str:
+    """Baut die arXiv-Abfrage über die **Kennung** statt über eine Freitextsuche.
+
+    Der Unterschied ist keine Feinheit: ``search_query=all:"2404.16130"`` sucht die Zeichenkette
+    im Volltextindex und liefert dabei zuverlässig ein **fremdes** Paper. Nur ``id_list``
+    adressiert das gemeinte Werk (docs/adr/0029-reference-stub-resolution-phase13.md).
+
+    Args:
+        arxiv_id: Kennung ohne Version (neu ``2404.16130`` oder alt ``cs/0501001``).
+
+    Raises:
+        DomainError: ``invalid_input`` wenn keine Kennung übergeben wurde.
+    """
+    cleaned = arxiv_id.strip()
+    if not cleaned:
+        raise DomainError(ErrorCode.INVALID_INPUT, "arXiv-Abfrage ohne Kennung.")
+    return f"{ARXIV_ENDPOINT}?id_list={quote(cleaned, safe='/')}&max_results=1"
+
+
 def parse_arxiv(payload: bytes, query: SearchQuery) -> list[Candidate]:
     """Liest den Atom-Feed der arXiv-API.
 
@@ -193,11 +212,57 @@ def parse_openalex(payload: bytes, query: SearchQuery) -> list[Candidate]:
     return candidates
 
 
+def authors_from_feed(payload: bytes) -> tuple[str, ...]:
+    """Liest die Autorennamen des **ersten** Eintrags eines arXiv-Feeds.
+
+    Bewusst eine eigene Funktion statt eines weiteren Feldes an :class:`~.candidates.Candidate`:
+    Die Kandidatensuche braucht keine Autoren, die Referenz-Auflösung dagegen schon – ohne sie
+    ist ein Eintrag nicht zitierfähig (docs/adr/0025-citable-paper-metadata.md).
+
+    Args:
+        payload: Rohantwort der arXiv-API.
+
+    Returns:
+        Die Namen in Nennreihenfolge; ein unlesbarer Feed ergibt ein leeres Tupel.
+    """
+    try:
+        root = ET.fromstring(payload.decode("utf-8", errors="replace"))
+    except ET.ParseError:
+        return ()
+    entry = root.find("a:entry", _ATOM)
+    if entry is None:
+        return ()
+    names = (
+        _squeeze(author.findtext("a:name", default="", namespaces=_ATOM))
+        for author in entry.findall("a:author", _ATOM)
+    )
+    return tuple(name for name in names if name)
+
+
 def fetch_arxiv(
     client: HttpClient, query: SearchQuery, *, limit: int = DEFAULT_LIMIT
 ) -> SourceResult:
     """Ruft arXiv für eine Anfrage ab (genau eine Anfrage, kein Bulk)."""
     url = arxiv_url(query, limit=limit)
+    return _fetch_arxiv_url(client, url, query)
+
+
+def fetch_arxiv_by_id(client: HttpClient, arxiv_id: str, query: SearchQuery) -> SourceResult:
+    """Ruft **ein** arXiv-Werk über seine Kennung ab (``id_list``, keine Volltextsuche).
+
+    Args:
+        client: Injizierter Transport-Port.
+        arxiv_id: Kennung ohne Version.
+        query: Auslösende Anfrage (liefert Kennung und Begründung für den Kandidaten).
+
+    Returns:
+        Das Quellenergebnis; ein unbekanntes Werk ergibt einen leeren Feed ohne Kandidaten.
+    """
+    return _fetch_arxiv_url(client, arxiv_id_url(arxiv_id), query)
+
+
+def _fetch_arxiv_url(client: HttpClient, url: str, query: SearchQuery) -> SourceResult:
+    """Führt eine arXiv-Abfrage aus und wertet den Feed aus."""
     response = client.get(url, accept="application/atom+xml")
     if response.status != 200:
         return SourceResult(

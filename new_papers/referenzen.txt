@@ -1,0 +1,19 @@
+# Kennungsliste der Referenz-Einträge (Phase 13 / R1)
+#
+# Eine Kennung je Zeile – DOI oder arXiv-ID. Erzeugt wird daraus je Kennung eine Stub-Datei
+# `*.refjson` in diesem Ordner:
+#
+#     python -m scripts.resolve_references --dry-run
+#     python -m scripts.resolve_references
+#
+# `#` leitet einen Kommentar ein, auch hinter einer Kennung. Erledigte Einträge dürfen stehen
+# bleiben: Vor jeder Abfrage wird gegen Korpus, vorhandene Stub-Dateien und `_duplikate/`
+# geprüft. Diese Datei wird vom Lauf nur gelesen, nie verändert.
+#
+# Erkannte Schreibweisen (siehe README.md in diesem Ordner):
+#   10.1145/3696410.3714748          doi:10.1145/…          https://doi.org/10.1145/…
+#   2404.16130                       arXiv:2404.16130v3     https://arxiv.org/abs/2404.16130
+#   cs/0501001                       10.48550/arXiv.2404.16130
+#
+# Beispiel:
+#   10.1145/3696410.3714748   # Grundlagenarbeit, von mehreren Korpus-Papern zitiert

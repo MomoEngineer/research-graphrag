@@ -250,12 +250,13 @@ def test_local_missing_index_raises_not_found(tmp_path: Path) -> None:
 
 
 def test_local_to_dict_shape(tmp_path: Path) -> None:
-    """to_dict liefert das dokumentierte Output-Schema (Spec 0.2.0)."""
+    """to_dict liefert das dokumentierte Output-Schema (Spec 0.3.0)."""
     payload = search_local(_build(tmp_path), "attention", k=2, fan_out=2).to_dict()
 
     assert set(payload) == {"query", "seeds", "neighborhood", "fan_out"}
     assert set(payload["seeds"][0]) == {
         "paper_id",
+        "document_kind",
         "section_title",
         "page_number",
         "page_end",

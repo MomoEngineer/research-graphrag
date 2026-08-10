@@ -69,6 +69,14 @@ ist; alles deterministisch Ableitbare bleibt draußen. Der Sicherungsumfang ist 
 | `data/intake_log.md` | Protokoll der unwiderruflichen Löschungen |
 | `data/metadata_log.md`, `data/online_candidates.md` | append-only Berichte eines vergangenen Netzzustands |
 
+> **Nachtrag 2026-08-09 (Phase 13 / R1, [ADR 0029](0029-reference-stub-resolution-phase13.md)):**
+> Der Umfang wächst um zwei Einträge derselben beiden Klassen –
+> `new_papers/referenzen.txt` (kuratierte Kennungsliste der Referenz-Einträge, aus keiner Quelle
+> rekonstruierbar) und `data/references_log.md` (append-only Protokoll der Referenz-Auflösung).
+> Die **Stub-Dateien** selbst brauchen keinen eigenen Eintrag: Sie liegen nach dem Intake in
+> `papers/` und sind damit bereits erfasst – und solange sie im Eingang liegen, sind sie aus der
+> Liste jederzeit neu erzeugbar.
+
 **Nicht** gesichert werden `data/canonical/`, `data/index/`, `data/quality_report.*` und
 `data/online_raw/`. Der Grund ist **Korrektheit, nicht Platz**: Eine Sicherung, die einen
 fertigen Index enthält, verleitet dazu, ihn zurückzuspielen – und damit einen Index, der nicht
