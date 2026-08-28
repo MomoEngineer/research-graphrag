@@ -198,12 +198,10 @@ _Modell-Tipp: Claude Opus 5._
 - *Akzeptanz:* Eine geladene Datei durchläuft den Intake regulär; ein nicht frei lizenzierter Treffer wird nachweislich **nicht** geladen; ein Netzfehler hinterlässt keine halbe Datei.
 
 ### Bewusst ausgeschlossen
-_Modell-Tipp: Claude Sonnet 5._
 
 Vollautomatischer Dauerbetrieb, Hintergrund-Suche, automatische Übernahme ohne Sichtung, Umgehung von Zugangsbeschränkungen. Der Mensch entscheidet, was in den Korpus kommt – andernfalls verliert die kuratierte Übersicht ihren Sinn und der Korpus seine Qualität.
 
 ### Definition of Done
-_Modell-Tipp: Claude Sonnet 5._
 
 S0 ist beantwortet und dokumentiert (auch ein „lohnt sich nicht" ist ein gültiges Ergebnis). Bei positivem Befund liefert S1 einen belegten, deduplizierten Kandidaten-Bericht; S2 bleibt opt-in und lizenzgebunden.
 
@@ -481,7 +479,6 @@ _Modell-Tipp: Claude Opus 5._
 **Ziel:** Ein Paper, von dem nur der Abstract öffentlich zugänglich ist, wird über seine **DOI oder arXiv-ID** zu einem vollwertigen, aber **ausdrücklich unvollständigen** Korpus-Eintrag – auffindbar, zitierfähig und als Ziel von Zitationskanten verfügbar, ohne je den Eindruck zu erwecken, es liege ein Volltext vor.
 
 ### Warum das nötig ist (und was heute fehlt)
-_Modell-Tipp: Claude Sonnet 5._
 
 Zwei Lücken; die zweite wiegt schwerer als die naheliegende erste.
 
@@ -491,7 +488,6 @@ Zwei Lücken; die zweite wiegt schwerer als die naheliegende erste.
 Mechanisch fehlt heute alles Nötige: Der Intake liest ausschließlich `*.pdf` und verlangt die `%PDF-`-Signatur, `pipeline.ingest` iteriert `papers/*.pdf`, die `paper_id` ist der sha256 der **Datei**, jeder `Citation` trägt eine Seitenangabe als Pflichtfeld, und `quality.assess` kennt nur Dokumente mit Volltext.
 
 ### Vier Festlegungen, die vorab getroffen sind
-_Modell-Tipp: Claude Sonnet 5._
 
 | Festlegung | Begründung |
 | --- | --- |
@@ -763,12 +759,10 @@ _Modell-Tipp: Claude Opus 5._
 - *Akzeptanz:* Jede Ausgabe, die einen Referenz-Eintrag enthält, weist ihn aus – CLI, MCP-Werkzeuge und `answer_question`; `--check` meldet nach dem Neu-Einfrieren 0 Abweichungen; die Handprobe aus R0 findet die Abstracts.
 
 ### Bewusst ausgeschlossen
-_Modell-Tipp: Claude Sonnet 5._
 
 Kein Volltext-Download (das bleibt [S2](#s2--volltext-holen-opt-in-lizenz-whitelist) und damit zurückgestellt), keine Umgehung von Bezahlschranken, keine automatische Übernahme ohne Sichtung, **keine LLM-gestützte Anreicherung** eines Abstracts zu etwas, das wie ein Volltext aussieht – das wäre Scheinsicherheit in Reinform –, kein MCP-Werkzeug und keine zweite Duplikatlogik neben der aus Phase 8.
 
 ### Definition of Done
-_Modell-Tipp: Claude Sonnet 5._
 
 - DOI/arXiv-Liste in `new_papers/referenzen.txt` → **ein** Befehl → Stub-Dateien liegen im Eingang → `python -m scripts.intake` → die Paper sind auffindbar, zitierfähig, im Graphen verknüpft und **überall als unvollständig ausgewiesen**.
 - R0 ist beantwortet und dokumentiert – auch ein „lohnt sich nicht" ist ein gültiges Ergebnis, wie bei [B6](docs/roadmap-historie.md#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen).
@@ -805,7 +799,6 @@ stammt aus der Zeit mit 145 Papern und ist praktisch erreicht; sie wird in diese
 **gemessen ersetzt**, nicht stillschweigend überschritten.
 
 ### Der Ist-Stand, der diese Phase auslöst (gemessen am 2026-08-28)
-_Modell-Tipp: Claude Sonnet 5._
 
 | Kennzahl | Wert |
 | --- | --- |
@@ -842,7 +835,6 @@ und damit genau die Art Annahme, die in A3, A5, A7, V1–V3, B6 und R0 jedes Mal
 Sie zu prüfen ist Aufgabe von [G0.1](#g01--wo-genau-liegt-die-wand).
 
 ### Sechs Festlegungen, die vorab getroffen sind
-_Modell-Tipp: Claude Sonnet 5._
 
 | Festlegung | Begründung |
 | --- | --- |
@@ -1020,7 +1012,6 @@ sind.
 Darunter ist die Skalierung nicht erreicht, sondern nur die Laufzeit repariert.
 
 #### Gesamtes Abbruchkriterium
-_Modell-Tipp: Claude Sonnet 5._
 
 Die Phase entfällt, wenn G0.0 Punkt 5 einen billigeren gleichwertigen Weg findet **oder** G0.1 die
 Wand erst jenseits des Auslegungspunkts findet (dann genügt [G5](#g5--auslegung-neu-festschreiben)
@@ -1179,7 +1170,6 @@ weist den Stand aus, gegen den gemessen wurde.
 ---
 
 ### Bewusst ausgeschlossen
-_Modell-Tipp: Claude Sonnet 5._
 
 - **Kein Wechsel des Speichermodells** – kein Qdrant, kein Weaviate, kein Neo4j, kein LanceDB.
   Sie bleiben im [Zielbild](#zielbild--erst-bei-belegter-beschaffbarkeit) und sind offline nicht
@@ -1198,7 +1188,6 @@ _Modell-Tipp: Claude Sonnet 5._
   Re-Index eingelöst.
 
 ### Definition of Done
-_Modell-Tipp: Claude Sonnet 5._
 
 - **G0 ist beantwortet und als Statusblock eingetragen** – einschließlich G0.0 und einschließlich
   eines möglichen „lohnt sich nicht"; der Validitätsanker ist bestanden.
@@ -1255,7 +1244,6 @@ ist gebaut ([ADR 0030](docs/adr/0030-reference-entries-in-corpus-phase13.md)), a
 **im Kleinen** belegt.
 
 ### Der Zuschnitt in einem Satz – und was er ausdrücklich nicht ist
-_Modell-Tipp: Claude Sonnet 5._
 
 Phase 14 baut **keinen zweiten Weg in den Korpus**. Sie erzeugt eine **Vorschlagsliste** und
 befüllt daraus – auf ausdrückliche Anweisung – `new_papers/referenzen.txt`. Alles danach ist
@@ -1281,7 +1269,6 @@ Neu sind ausschließlich **Ernte**, **Vorschlagsbericht** und **Kuration** – p
 dass die bestehende Kette auch im **Maßstab** hält.
 
 ### Warum das nötig ist (und was heute fehlt)
-_Modell-Tipp: Claude Sonnet 5._
 
 1. **Der Befund verfällt bei jedem Ingest.** `citation_graph` verwirft jeden Verweis, dessen Ziel
    nicht im Korpus liegt – ohne Spur. Die in [R0](#r0--ausbeute-nutzen-und-verdrängung-messen-zwingend-zuerst-mit-abbruchkriterium)
@@ -1297,7 +1284,6 @@ _Modell-Tipp: Claude Sonnet 5._
    Massenlauf ist eine andere Belastungsprobe.
 
 ### Fünf Festlegungen, die vorab getroffen sind
-_Modell-Tipp: Claude Sonnet 5._
 
 | Festlegung | Begründung |
 | --- | --- |
@@ -1469,7 +1455,6 @@ Fakt-Fragen, deren Antwort nur im Abstract von X steht), und vor/nach der Aufnah
 Darunter ist der Nutzen nicht belegt, und die Phase endet mit einem dokumentierten Befund.
 
 #### Gesamtes Abbruchkriterium
-_Modell-Tipp: Claude Sonnet 5._
 
 Die Phase entfällt, wenn E0.0 einen billigeren gleichwertigen Weg findet **oder** E0.2 schon bei
 50 Einträgen einen Totalverlust zeigt **oder** E0.7 unter der Schwelle bleibt. Ein „lohnt sich
@@ -1629,7 +1614,6 @@ jede Ausgabe weist Referenz-Einträge weiterhin als unvollständig aus (Contract
 ---
 
 ### Bewusst ausgeschlossen
-_Modell-Tipp: Claude Sonnet 5._
 
 - **Kein Volltext-Download.** Das bleibt [S2](#s2--volltext-holen-opt-in-lizenz-whitelist) und
   damit zurückgestellt; Phase 14 lädt keine PDFs.
@@ -1646,7 +1630,6 @@ _Modell-Tipp: Claude Sonnet 5._
   ([ADR 0014](docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)).
 
 ### Definition of Done
-_Modell-Tipp: Claude Sonnet 5._
 
 - **E0 ist beantwortet und als Statusblock eingetragen** – einschließlich E0.0 und
   einschließlich eines möglichen „lohnt sich nicht".
