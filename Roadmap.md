@@ -136,6 +136,7 @@ dieselbe Regel, nach der die Phasen 0–8, 11 und 12 dort stehen.
 **Abgrenzung, die nicht verhandelbar ist:** Der Kern bleibt netzfrei. Ohne Internet funktioniert alles Bisherige unverändert. Insbesondere bekommt der MCP-Server **kein** Netz-Tool im ersten Schritt – er wird von Copilot autonom aufgerufen, und niemand soll durch eine beiläufige Frage ungewollten Netzverkehr auslösen.
 
 ### S0 – Recherche & Machbarkeit (zwingend zuerst, mit Abbruchkriterium)
+_Modell-Tipp: Claude Opus 5._
 
 Dieser Schritt ist der Grund, warum die Phase überhaupt so geschnitten ist: **Es ist offen, ob das hier sinnvoll und überhaupt möglich ist.** Zu klären, bevor eine Zeile Code entsteht:
 
@@ -147,6 +148,7 @@ Dieser Schritt ist der Grund, warum die Phase überhaupt so geschnitten ist: **E
 *Abbruchkriterium:* Ist keine Quelle erreichbar, ist die Rechtslage unklar, oder liefert eine Handprobe überwiegend Irrelevantes, **entfällt die Phase** – dokumentiert, wie in A5 die verworfene Seitenbereichs-Regel und die verworfene Stopword-Variante im Vektorraum.
 
 ### S1 – Kandidaten finden (Metadaten, kein Download)
+_Modell-Tipp: Claude Opus 5._
 
 > **Status: umgesetzt** ([ADR 0020](docs/adr/0020-online-candidate-search-phase9.md)) – mit einem
 > **engeren Zuschnitt** als unten vorgesehen, entlang der S0-Messung.
@@ -187,6 +189,7 @@ Dieser Schritt ist der Grund, warum die Phase überhaupt so geschnitten ist: **E
 - *Akzeptanz:* Ein Lauf gegen eine reale Community liefert plausible Kandidaten; in einer Stichprobe sind **null** bereits vorhandene Paper als „neu" ausgewiesen; ohne Netz bricht der Modus **sauber** ab (klare Meldung, kein Stacktrace, kein halber Zustand).
 
 ### S2 – Volltext holen (opt-in, Lizenz-Whitelist)
+_Modell-Tipp: Claude Opus 5._
 
 - **Nur mit explizitem Flag** (`--download`), nie als Standard.
 - **Nur bei frei lizenzierten Quellen** (Whitelist, z. B. CC0/CC-BY/CC-BY-SA und die arXiv-Lizenzen). Alles andere wird **nicht** geladen, sondern nur als Link berichtet. Eine Umgehung von Bezahlschranken ist ausgeschlossen.
@@ -195,10 +198,12 @@ Dieser Schritt ist der Grund, warum die Phase überhaupt so geschnitten ist: **E
 - *Akzeptanz:* Eine geladene Datei durchläuft den Intake regulär; ein nicht frei lizenzierter Treffer wird nachweislich **nicht** geladen; ein Netzfehler hinterlässt keine halbe Datei.
 
 ### Bewusst ausgeschlossen
+_Modell-Tipp: Claude Sonnet 5._
 
 Vollautomatischer Dauerbetrieb, Hintergrund-Suche, automatische Übernahme ohne Sichtung, Umgehung von Zugangsbeschränkungen. Der Mensch entscheidet, was in den Korpus kommt – andernfalls verliert die kuratierte Übersicht ihren Sinn und der Korpus seine Qualität.
 
 ### Definition of Done
+_Modell-Tipp: Claude Sonnet 5._
 
 S0 ist beantwortet und dokumentiert (auch ein „lohnt sich nicht" ist ein gültiges Ergebnis). Bei positivem Befund liefert S1 einen belegten, deduplizierten Kandidaten-Bericht; S2 bleibt opt-in und lizenzgebunden.
 
@@ -209,6 +214,7 @@ S0 ist beantwortet und dokumentiert (auch ein „lohnt sich nicht" ist ein gült
 **Ziel:** Die drei Schwachstellen beheben, die [ADR 0016](docs/adr/0016-quantitative-retrieval-evaluation-phase7.md) **belegt, aber bewusst nicht behoben** hat. Diese Punkte sind die am besten begründeten im ganzen Repo: Der Messapparat existiert bereits (`--modi`, eingefrorene Baseline, qid-genauer `--check` mit Fingerprint-Guard), also ist jede Änderung **vor** dem Bauen abschätzbar und **nach** dem Bauen gegen Regression abgesichert.
 
 ### V1 – Local: mehrere Seeds statt eines
+_Modell-Tipp: Claude Opus 5._
 
 > **Status: umgesetzt** ([ADR 0021](docs/adr/0021-local-multi-seed-phase10.md)) – mit einem
 > **größeren *m*** als hier vorgeschlagen und einer **verworfenen** Teilmaßnahme.
@@ -253,6 +259,7 @@ S0 ist beantwortet und dokumentiert (auch ein „lohnt sich nicht" ist ein gült
 *Akzeptanz:* Local erreicht mindestens die Basic-Werte; die Diagnose-Verteilung verschiebt sich nachweisbar; `--check` meldet keine qid-Regression; Determinismus und `Citation`-Contract unverändert.
 
 ### V2 – DRIFT: Community-Auswahl statt Top-1, mit Rückfallebene
+_Modell-Tipp: Claude Opus 5._
 
 > **Status: umgesetzt** ([ADR 0022](docs/adr/0022-drift-community-union-and-fallback-phase10.md)) –
 > beide Maßnahmen wie vorgesehen, aber mit einer **korrigierten Lesart der Akzeptanzkriterien**.
@@ -294,6 +301,7 @@ S0 ist beantwortet und dokumentiert (auch ein „lohnt sich nicht" ist ein gült
 *Akzeptanz:* Die erreichbare Deckelung steigt von 8 auf ≥ 12; die Diagnose `no_community` geht auf 0, und zwar durch einen **ausgewiesenen** Fallback, nicht durch Verstecken; Determinismus; `--check` ohne Regression.
 
 ### V3 – Multi-Hop-Fragen gegen den Zitationsgraphen messbar machen
+_Modell-Tipp: Claude Opus 5._
 
 > **Status: umgesetzt** ([ADR 0023](docs/adr/0023-multihop-citation-evaluation-phase10.md)) – mit
 > **einem korrigierten Anspruch** und **einer entlarvten Vorgabe-Annahme**.
@@ -347,6 +355,7 @@ S0 ist beantwortet und dokumentiert (auch ein „lohnt sich nicht" ist ein gült
 *Akzeptanz:* neue Label-Quelle neben der mechanischen; Fragen deterministisch aus dem Graphen erzeugt („welche Paper bauen auf *X* auf?"); `--verify-labels` prüft sie gegen `citation_edges`; gemessen werden `get_citations` und der Local-Fan-out; die Baseline wird um diese Ebene erweitert.
 
 ### V4 – Global: Community-Ranking über die Mitglieds-Chunks (erst messen, dann entscheiden)
+_Modell-Tipp: Claude Opus 5._
 
 *Befund:* Global erreicht **0,353 / 0,269** bei einem Lift von **3,55** gegen ≈ **1,0** bei beiden Trivial-Baselines – die Auswahl ist also klar besser als Zufall, die Coverage bleibt mit **0,248** aber niedrig. *Verdacht:* Das Ranking vergleicht die Frage gegen einen sehr **dünnen** Text – zehn Keywords plus eine extraktive Zusammenfassung je Community. Die eigentliche Textmasse der Mitglieder bleibt ungenutzt.
 
@@ -472,6 +481,7 @@ S0 ist beantwortet und dokumentiert (auch ein „lohnt sich nicht" ist ein gült
 **Ziel:** Ein Paper, von dem nur der Abstract öffentlich zugänglich ist, wird über seine **DOI oder arXiv-ID** zu einem vollwertigen, aber **ausdrücklich unvollständigen** Korpus-Eintrag – auffindbar, zitierfähig und als Ziel von Zitationskanten verfügbar, ohne je den Eindruck zu erwecken, es liege ein Volltext vor.
 
 ### Warum das nötig ist (und was heute fehlt)
+_Modell-Tipp: Claude Sonnet 5._
 
 Zwei Lücken; die zweite wiegt schwerer als die naheliegende erste.
 
@@ -481,6 +491,7 @@ Zwei Lücken; die zweite wiegt schwerer als die naheliegende erste.
 Mechanisch fehlt heute alles Nötige: Der Intake liest ausschließlich `*.pdf` und verlangt die `%PDF-`-Signatur, `pipeline.ingest` iteriert `papers/*.pdf`, die `paper_id` ist der sha256 der **Datei**, jeder `Citation` trägt eine Seitenangabe als Pflichtfeld, und `quality.assess` kennt nur Dokumente mit Volltext.
 
 ### Vier Festlegungen, die vorab getroffen sind
+_Modell-Tipp: Claude Sonnet 5._
 
 | Festlegung | Begründung |
 | --- | --- |
@@ -490,6 +501,7 @@ Mechanisch fehlt heute alles Nötige: Der Intake liest ausschließlich `*.pdf` u
 | **Kein MCP-Werkzeug** | Der Lauf benötigt Netz **und** schreibt Dateien. Copilot ruft Werkzeuge autonom auf; beides gehört daher nicht in Agent-Reichweite (gleiche Begründung wie beim Intake, [ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md), und bei `scripts.resolve_metadata`, [ADR 0026](docs/adr/0026-online-metadata-resolution.md)). |
 
 ### R0 – Ausbeute, Nutzen und Verdrängung messen (zwingend zuerst, mit Abbruchkriterium)
+_Modell-Tipp: Claude Opus 5._
 
 > **Beantwortet am 2026-08-09** – die Zahlen und die korrigierten Annahmen stehen im Statusblock
 > am [Anfang dieser Phase](#phase-13--referenz-einträge-ohne-volltext). Kurzfassung: Ausbeute
@@ -507,6 +519,7 @@ Wie in S0, V1–V3 und B6 beginnt die Phase mit einer Wegwerf-Messung, nicht mit
 **Die Grenze dieser Messung wird offen ausgewiesen, nicht kaschiert.** Die Gold-Labels stammen mechanisch aus `chunks.text`; ein Stub ist damit **nie** ein Gold-Ziel und kann in der Messung ausschließlich schaden. Punkt 3 taugt deshalb – wie das End-to-End-Maß in [A7](docs/adr/0017-router-hardening-phase7.md) – nur als **Veto**, niemals als Nutzennachweis. Der eigentliche Nutzen ist mit den bestehenden Gold-Sets prinzipiell nicht messbar. Daneben tritt daher eine **Handprobe**: rund zehn Fragen, deren Antwort ausschließlich im Abstract eines Stubs steht – findet das Retrieval sie, ist der Nutzen belegt; findet es sie nicht, ist die Phase auch bei bestandenem Veto wertlos.
 
 ### R1 – Auflösung & Stub-Erzeugung (kein Volltext-Download)
+_Modell-Tipp: Claude Opus 5._
 
 > **Status: umgesetzt** (2026-08-09, [ADR 0029](docs/adr/0029-reference-stub-resolution-phase13.md)).
 > Neu sind `src/research_graphrag/online/references.py`, das dünne `scripts/resolve_references.py`
@@ -578,6 +591,7 @@ Wie in S0, V1–V3 und B6 beginnt die Phase mit einer Wegwerf-Messung, nicht mit
 - *Akzeptanz:* Ein Lauf über eine reale Liste erzeugt für jede auflösbare Kennung genau eine Stub-Datei; ein zweiter Lauf erzeugt **keine** und stellt **keine** Abfrage; ohne Netz endet der Lauf mit `dependency_error` und handlungsleitender Meldung statt in einem Stacktrace; die Liste ist danach byte-identisch.
 
 ### R2 – Intake & Index: der zweite Dokumenttyp
+_Modell-Tipp: Claude Opus 5._
 
 > **Status: umgesetzt** (2026-08-09, [ADR 0030](docs/adr/0030-reference-entries-in-corpus-phase13.md)).
 > Neu sind `src/research_graphrag/extraction/refstub.py`, `pipeline.forget_source`,
@@ -645,6 +659,7 @@ Wie in S0, V1–V3 und B6 beginnt die Phase mit einer Wegwerf-Messung, nicht mit
 - *Akzeptanz:* Eine Stub-Datei durchläuft `scripts.intake` regulär; `--dry-run` verändert nichts; ein Stub zu einem bereits vorhandenen Paper wird als Duplikat erkannt; ein Volltext-PDF zu einem vorhandenen Stub wird **übernommen** statt quarantäniert; die Qualitäts-Flags der Volltext-Paper bleiben gegenüber heute **unverändert**.
 
 ### R3 – Wirkung sichern: Contract, Baselines, Guardrail
+_Modell-Tipp: Claude Opus 5._
 
 > **Status (2026-08-09): umgesetzt.** `document_kind` ist Pflichtbestandteil jeder Ausgabe, der
 > Zitier-Contract nennt die Unvollständigkeit, die Gold-Ableitung schließt Referenz-Einträge aus,
@@ -748,10 +763,12 @@ Wie in S0, V1–V3 und B6 beginnt die Phase mit einer Wegwerf-Messung, nicht mit
 - *Akzeptanz:* Jede Ausgabe, die einen Referenz-Eintrag enthält, weist ihn aus – CLI, MCP-Werkzeuge und `answer_question`; `--check` meldet nach dem Neu-Einfrieren 0 Abweichungen; die Handprobe aus R0 findet die Abstracts.
 
 ### Bewusst ausgeschlossen
+_Modell-Tipp: Claude Sonnet 5._
 
 Kein Volltext-Download (das bleibt [S2](#s2--volltext-holen-opt-in-lizenz-whitelist) und damit zurückgestellt), keine Umgehung von Bezahlschranken, keine automatische Übernahme ohne Sichtung, **keine LLM-gestützte Anreicherung** eines Abstracts zu etwas, das wie ein Volltext aussieht – das wäre Scheinsicherheit in Reinform –, kein MCP-Werkzeug und keine zweite Duplikatlogik neben der aus Phase 8.
 
 ### Definition of Done
+_Modell-Tipp: Claude Sonnet 5._
 
 - DOI/arXiv-Liste in `new_papers/referenzen.txt` → **ein** Befehl → Stub-Dateien liegen im Eingang → `python -m scripts.intake` → die Paper sind auffindbar, zitierfähig, im Graphen verknüpft und **überall als unvollständig ausgewiesen**.
 - R0 ist beantwortet und dokumentiert – auch ein „lohnt sich nicht" ist ein gültiges Ergebnis, wie bei [B6](docs/roadmap-historie.md#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen).
@@ -788,6 +805,7 @@ stammt aus der Zeit mit 145 Papern und ist praktisch erreicht; sie wird in diese
 **gemessen ersetzt**, nicht stillschweigend überschritten.
 
 ### Der Ist-Stand, der diese Phase auslöst (gemessen am 2026-08-28)
+_Modell-Tipp: Claude Sonnet 5._
 
 | Kennzahl | Wert |
 | --- | --- |
@@ -824,6 +842,7 @@ und damit genau die Art Annahme, die in A3, A5, A7, V1–V3, B6 und R0 jedes Mal
 Sie zu prüfen ist Aufgabe von [G0.1](#g01--wo-genau-liegt-die-wand).
 
 ### Sechs Festlegungen, die vorab getroffen sind
+_Modell-Tipp: Claude Sonnet 5._
 
 | Festlegung | Begründung |
 | --- | --- |
@@ -837,6 +856,7 @@ Sie zu prüfen ist Aufgabe von [G0.1](#g01--wo-genau-liegt-die-wand).
 ---
 
 ### G0 – Alles hinterfragen und messen (zwingend zuerst)
+_Modell-Tipp: Claude Sonnet 5._
 
 Zuerst werden die Vorgaben dieser Phase selbst geprüft (G0.0), danach folgen sieben Messfragen mit
 **vorab fixierten** Schwellen. Es entsteht **kein Produktivcode** – nur Wegwerf-Skripte, deren
@@ -850,6 +870,7 @@ Architektur; dieselbe Handhabung wie S0, R0 und B6).
 > G0 hier: Zahlen aus einem Korpus, der die Wirklichkeit nicht trifft, sind schlimmer als keine.
 
 #### G0.0 – Die Vorgaben dieser Phase auf den Prüfstand stellen
+_Modell-Tipp: Claude Sonnet 5._
 
 Bevor gemessen wird, wird **diese Roadmap-Seite selbst** gegen den Code geprüft. Zu beantworten
 sind mindestens:
@@ -895,6 +916,7 @@ sind mindestens:
 dann), wenn sie den Zuschnitt unten verkleinert.
 
 #### G0.1 – Wo genau liegt die Wand?
+_Modell-Tipp: Claude Sonnet 5._
 
 *Zu messen* an synthetischen Ständen, gestaffelt **500 / 1000 / 2500 / 5000 Einträge**, jeweils in
 zwei Mischungen (überwiegend Volltext und die erwartete Mischung aus Volltexten und
@@ -906,6 +928,7 @@ Lauf mehr als **2 GB** belegt. Genau dieser Stand ist die heutige, faktische Aus
 und die Zahl, die [G5](#g5--auslegung-neu-festschreiben) ersetzen muss.
 
 #### G0.2 – Was kostet ein Referenz-Eintrag wirklich?
+_Modell-Tipp: Claude Sonnet 5._
 
 Die beiden Achsen werden **getrennt** beziffert, sonst mittelt die Messung genau den Effekt weg,
 um den es geht: Ein Stub bringt 1 Chunk (linear, vernachlässigbar) und einen vollen Knoten
@@ -919,6 +942,7 @@ Staffelung, getrennt nach Volltexten und Referenz-Einträgen.
 nur wünschenswert.
 
 #### G0.3 – Bleibt die Retrieval-Güte bei fünffacher Chunkmenge?
+_Modell-Tipp: Claude Sonnet 5._
 
 Mehr Chunks heißt mehr Konkurrenz um dieselben fünf Plätze. Ob BM25 und TF-IDF ihre Trennschärfe
 behalten, ist **unbelegt** – und es wäre der teuerste blinde Fleck dieser Phase, weil eine
@@ -934,6 +958,7 @@ gleichbleibender oder sinkender Selektivität. Darunter ist die Skalierung ein *
 und nicht länger ein Laufzeitproblem – der Zuschnitt der Phase ändert sich dann grundlegend.
 
 #### G0.4 – Trägt die Community-Struktur den gewachsenen Bestand?
+_Modell-Tipp: Claude Sonnet 5._
 
 [B6](docs/roadmap-historie.md#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen) hat belegt, dass
 der Graph auf Dichteänderungen empfindlich reagiert und dass die naheliegende Stellschraube
@@ -949,6 +974,7 @@ Schwelle verfehlt, ist das kein Nebenbefund, sondern der Beleg dafür, dass
 **Voraussetzung** wird – dann wird die Reihenfolge hier vermerkt und geändert, nicht umgangen.
 
 #### G0.5 – Erübrigt sich das inkrementelle Update?
+_Modell-Tipp: Claude Sonnet 5._
 
 Der frühere Punkt B2 wurde 2026-08 mit „wächst linear mit dem Bestand" begründet. Ist der
 quadratische Anteil aus [G1](#g1--aufnahmepfad-begradigen-die-quadratischen-stellen) erst entfernt,
@@ -964,6 +990,7 @@ darüber wird er als [G1](#g1--aufnahmepfad-begradigen-die-quadratischen-stellen
 gebaut, und dann mit dem Identitätsnachweis, den B2 immer schon verlangt hat.
 
 #### G0.6 – Was kostet Bit-Identität?
+_Modell-Tipp: Claude Sonnet 5._
 
 Zwei Wege stehen zur Wahl, und sie unterscheiden sich nicht in der Geschwindigkeit, sondern in
 dem, was sie mit der Messgrundlage machen:
@@ -983,6 +1010,7 @@ eingefrorenen Baselines. Eine Mischung „A für die Wertung, B für die Auswahl
 aber dieselbe qid-Prüfung bestehen.
 
 #### G0.7 – Handprobe: bleibt das Werkzeug im Alltag brauchbar?
+_Modell-Tipp: Claude Sonnet 5._
 
 Kennzahlen sind kein Selbstzweck. Wie in R0 und E0 werden **zehn** reale Fragen – je zwei aus
 jedem Fragetyp des README-Contracts – gegen den Auslegungsstand gestellt und mit dem heutigen
@@ -992,6 +1020,7 @@ sind.
 Darunter ist die Skalierung nicht erreicht, sondern nur die Laufzeit repariert.
 
 #### Gesamtes Abbruchkriterium
+_Modell-Tipp: Claude Sonnet 5._
 
 Die Phase entfällt, wenn G0.0 Punkt 5 einen billigeren gleichwertigen Weg findet **oder** G0.1 die
 Wand erst jenseits des Auslegungspunkts findet (dann genügt [G5](#g5--auslegung-neu-festschreiben)
@@ -1008,6 +1037,7 @@ bestanden; die Wegwerf-Skripte sind gelöscht, die Rohdaten liegen unter `data/o
 ---
 
 ### G1 – Aufnahmepfad begradigen (die quadratischen Stellen)
+_Modell-Tipp: Claude Sonnet 5._
 
 > Erst umsetzen, wenn G0 die Phase bestätigt **und** ihren Zuschnitt festgelegt hat.
 
@@ -1038,6 +1068,7 @@ kein Schema-Eingriff, kein Contract berührt.
 ---
 
 ### G2 – Antwortzeit: den Vektorraum nicht bei jeder Frage neu bauen
+_Modell-Tipp: Claude Sonnet 5._
 
 **Aufgabe:** Den in G0.6 gewählten Weg umsetzen – und **nur** ihn.
 
@@ -1063,6 +1094,7 @@ eingefroren; ein nach dem Laden ausgetauschter Index wird beim nächsten Aufruf 
 ---
 
 ### G3 – Messung ohne Wartezeit
+_Modell-Tipp: Claude Sonnet 5._
 
 **Aufgabe (früher B3):** Ein `--modi`- oder `--zitationen`-Lauf lädt den Index **einmal** und
 reicht ihn durch, statt ihn je Ebene neu aufzubauen.
@@ -1080,6 +1112,7 @@ Messdauer ist vorher und nachher dokumentiert.
 ---
 
 ### G4 – Zuflussregel und Ablösung der Übersicht
+_Modell-Tipp: Claude Sonnet 5._
 
 **Aufgabe:** Zwei Dinge, die zusammengehören, weil sie dieselbe Frage beantworten – *was ist
 dieser Korpus eigentlich, wenn er wächst?*
@@ -1125,6 +1158,7 @@ Ablage ab; die Stoppregel steht schriftlich und mit Zahlen, bevor Phase 14 den e
 ---
 
 ### G5 – Auslegung neu festschreiben
+_Modell-Tipp: Claude Sonnet 5._
 
 **Aufgabe:** Die Zahl „≤ 500 Paper" steht in den [Leitprinzipien](#leitprinzipien), in der
 [README](README.md) und im [Zielbild](#zielbild--erst-bei-belegter-beschaffbarkeit). Sie stammt aus
@@ -1145,6 +1179,7 @@ weist den Stand aus, gegen den gemessen wurde.
 ---
 
 ### Bewusst ausgeschlossen
+_Modell-Tipp: Claude Sonnet 5._
 
 - **Kein Wechsel des Speichermodells** – kein Qdrant, kein Weaviate, kein Neo4j, kein LanceDB.
   Sie bleiben im [Zielbild](#zielbild--erst-bei-belegter-beschaffbarkeit) und sind offline nicht
@@ -1163,6 +1198,7 @@ weist den Stand aus, gegen den gemessen wurde.
   Re-Index eingelöst.
 
 ### Definition of Done
+_Modell-Tipp: Claude Sonnet 5._
 
 - **G0 ist beantwortet und als Statusblock eingetragen** – einschließlich G0.0 und einschließlich
   eines möglichen „lohnt sich nicht"; der Validitätsanker ist bestanden.
@@ -1219,6 +1255,7 @@ ist gebaut ([ADR 0030](docs/adr/0030-reference-entries-in-corpus-phase13.md)), a
 **im Kleinen** belegt.
 
 ### Der Zuschnitt in einem Satz – und was er ausdrücklich nicht ist
+_Modell-Tipp: Claude Sonnet 5._
 
 Phase 14 baut **keinen zweiten Weg in den Korpus**. Sie erzeugt eine **Vorschlagsliste** und
 befüllt daraus – auf ausdrückliche Anweisung – `new_papers/referenzen.txt`. Alles danach ist
@@ -1244,6 +1281,7 @@ Neu sind ausschließlich **Ernte**, **Vorschlagsbericht** und **Kuration** – p
 dass die bestehende Kette auch im **Maßstab** hält.
 
 ### Warum das nötig ist (und was heute fehlt)
+_Modell-Tipp: Claude Sonnet 5._
 
 1. **Der Befund verfällt bei jedem Ingest.** `citation_graph` verwirft jeden Verweis, dessen Ziel
    nicht im Korpus liegt – ohne Spur. Die in [R0](#r0--ausbeute-nutzen-und-verdrängung-messen-zwingend-zuerst-mit-abbruchkriterium)
@@ -1259,6 +1297,7 @@ dass die bestehende Kette auch im **Maßstab** hält.
    Massenlauf ist eine andere Belastungsprobe.
 
 ### Fünf Festlegungen, die vorab getroffen sind
+_Modell-Tipp: Claude Sonnet 5._
 
 | Festlegung | Begründung |
 | --- | --- |
@@ -1271,6 +1310,7 @@ dass die bestehende Kette auch im **Maßstab** hält.
 ---
 
 ### E0 – Alles hinterfragen und messen (zwingend zuerst)
+_Modell-Tipp: Claude Sonnet 5._
 
 Dieser Schritt ist der **wichtigste der Phase**, und er hat zwei Teile: Zuerst werden die
 Vorgaben dieser Phase selbst geprüft (E0.0), danach folgen sieben Messfragen mit **vorab
@@ -1285,6 +1325,7 @@ Architektur; dieselbe Handhabung wie S0, R0 und B6).
 > dieser Stelle – die Messung wird nicht fortgesetzt, sondern die Abweichung geklärt.
 
 #### E0.0 – Die Vorgaben dieser Phase auf den Prüfstand stellen
+_Modell-Tipp: Claude Sonnet 5._
 
 Bevor gemessen wird, wird **diese Roadmap-Seite selbst** gegen den Code geprüft. In A3, A5, A7,
 V1–V3, B6 und R0–R3 hat sich jede einzelne Vorgabe mindestens einmal als ungenau erwiesen; es
@@ -1323,6 +1364,7 @@ wäre bemerkenswert, wenn ausgerechnet diese fehlerfrei wäre. Zu beantworten si
 gerade dann), wenn sie den Zuschnitt unten verkleinert.
 
 #### E0.1 – Präzision der geernteten Kennungen
+_Modell-Tipp: Claude Sonnet 5._
 
 R0 hat 40 Treffer von Hand geprüft: arXiv **10/10**, DOI **27/30**; die drei Fehler waren
 Abschneide- und Anklebefehler am Zeilenumbruch (`10.3390/electronics14112102vol`), dazu **95**
@@ -1336,6 +1378,7 @@ defekt markiert. Darunter wird nicht die Ernte verbessert, sondern die Phase auf
 **arXiv-Kennungen** beschränkt (dort war die Präzision 10/10).
 
 #### E0.2 – Skaliert die Guardrail? (das schärfste Abbruchkriterium)
+_Modell-Tipp: Claude Sonnet 5._
 
 [R3](#r3--wirkung-sichern-contract-baselines-guardrail) hat `demote_references` an **52** Stubs
 gemessen: 13 qid-Regressionen sinken auf **3 ohne Totalverlust**. Diese Zahl sagt **nichts** über
@@ -1353,6 +1396,7 @@ Genau diese Zahl wird zur **Kontingent-Empfehlung** von [E2](#e2--kuratierte-üb
 auf eine **feste Obergrenze** unterhalb dieser Stufe gestutzt – oder gestrichen.
 
 #### E0.3 – Was macht der Ähnlichkeitsgraph mit vielen einchunkigen Papern?
+_Modell-Tipp: Claude Sonnet 5._
 
 Ein Referenz-Eintrag hat **genau einen** kurzen Chunk. [B6](docs/roadmap-historie.md#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen)
 hat gezeigt, dass der Graph empfindlich auf Dichteänderungen reagiert – und zwar an der Ebene,
@@ -1369,6 +1413,7 @@ Andernfalls braucht die Phase eine Zusatzentscheidung (Referenz-Einträge aus de
 und eigene Messung bekommt, statt nebenbei zu passieren.
 
 #### E0.4 – Die Zirkularitätsfalle der Multi-Hop-Messung
+_Modell-Tipp: Claude Sonnet 5._
 
 Das Multi-Hop-Gold wählt Anker mit **≥ 3 zitierenden** Korpus-Papern
 ([ADR 0023](docs/adr/0023-multihop-citation-evaluation-phase10.md), `min_citing`). **Genau nach
@@ -1386,6 +1431,7 @@ Stubs als Multi-Hop-Ziele ausdrücklich zulässt: Ziel bleiben sie, **Anker** d�
 werden. Diese Unterscheidung ist vorab zu belegen, nicht zu behaupten.
 
 #### E0.5 – Verträgt die kuratierte Übersicht den Zufluss?
+_Modell-Tipp: Claude Sonnet 5._
 
 Jeder Intake-Lauf hängt je neuem Paper eine `Z`-Entwurfszeile an
 [`Übersicht.md`](Übersicht.md) ([ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md),
@@ -1400,6 +1446,7 @@ bestehende Festlegung und braucht daher eine Begründung im ADR von [E2](#e2--ku
 zitierfähig und soll sichtbar sein), die **Menge** ist das Problem – nicht die Zeile.
 
 #### E0.6 – Kontingent, Laufzeit und der Weg dorthin
+_Modell-Tipp: Claude Sonnet 5._
 
 Drei harte Betriebsgrenzen sind zu beziffern, bevor irgendetwas läuft:
 
@@ -1413,6 +1460,7 @@ Drei harte Betriebsgrenzen sind zu beziffern, bevor irgendetwas läuft:
 die Reihenfolge geändert – nicht umgangen.
 
 #### E0.7 – Handprobe: wird eine echte Frage besser beantwortet?
+_Modell-Tipp: Claude Sonnet 5._
 
 Kanten sind kein Selbstzweck. Wie in R0 werden **zehn Fragen** formuliert, die sich auf die
 Kandidaten der Ernte beziehen (Multi-Hop: „welche Paper meines Korpus stützen sich auf X?" sowie
@@ -1421,6 +1469,7 @@ Fakt-Fragen, deren Antwort nur im Abstract von X steht), und vor/nach der Aufnah
 Darunter ist der Nutzen nicht belegt, und die Phase endet mit einem dokumentierten Befund.
 
 #### Gesamtes Abbruchkriterium
+_Modell-Tipp: Claude Sonnet 5._
 
 Die Phase entfällt, wenn E0.0 einen billigeren gleichwertigen Weg findet **oder** E0.2 schon bei
 50 Einträgen einen Totalverlust zeigt **oder** E0.7 unter der Schwelle bleibt. Ein „lohnt sich
@@ -1435,6 +1484,7 @@ bestanden; die Wegwerf-Skripte sind gelöscht, die Rohdaten liegen unter `data/o
 ---
 
 ### E1 – Ernte: tote Verweise sichtbar und sortierbar machen
+_Modell-Tipp: Claude Sonnet 5._
 
 > Erst umsetzen, wenn E0 die Phase bestätigt **und** ihren Zuschnitt festgelegt hat.
 
@@ -1493,6 +1543,7 @@ Kandidaten`. Die Kandidatenzahl reproduziert den E0-Anker.
 ---
 
 ### E2 – Kuratierte Übernahme in `referenzen.txt`
+_Modell-Tipp: Claude Sonnet 5._
 
 **Aufgabe:** Aus dem Bericht wird auf ausdrückliche Anweisung eine begrenzte Auswahl an
 `new_papers/referenzen.txt` angehängt – append-only, byte-erhaltend, atomar.
@@ -1518,6 +1569,7 @@ ist danach – abgesehen von den neuen Zeilen – byte-identisch; kein Lauf ber�
 ---
 
 ### E3 – Der Massenlauf: Auflösung, Intake und Upgrade im Maßstab
+_Modell-Tipp: Claude Sonnet 5._
 
 **Aufgabe:** Nachweisen, dass die bestehende Kette R1 → R2 → R3 die in E0.2 ermittelte Menge
 trägt – und die Stellen härten, an denen sie es nicht tut. **Erwartet wird, dass mindestens eine
@@ -1547,6 +1599,7 @@ Produktivbestand; jede gefundene Schwachstelle ist behoben **und** durch einen T
 ---
 
 ### E4 – Wirkung messen, Baselines und Guardrail nachziehen
+_Modell-Tipp: Claude Sonnet 5._
 
 **Aufgabe:** Die Aufnahme sichtbar und der Regressionsschutz wieder scharf machen. Reihenfolge
 wie in R3 – **Messung zuerst**, dann Code, dann Neu-Einfrieren, zuletzt `--check`.
@@ -1576,6 +1629,7 @@ jede Ausgabe weist Referenz-Einträge weiterhin als unvollständig aus (Contract
 ---
 
 ### Bewusst ausgeschlossen
+_Modell-Tipp: Claude Sonnet 5._
 
 - **Kein Volltext-Download.** Das bleibt [S2](#s2--volltext-holen-opt-in-lizenz-whitelist) und
   damit zurückgestellt; Phase 14 lädt keine PDFs.
@@ -1592,6 +1646,7 @@ jede Ausgabe weist Referenz-Einträge weiterhin als unvollständig aus (Contract
   ([ADR 0014](docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)).
 
 ### Definition of Done
+_Modell-Tipp: Claude Sonnet 5._
 
 - **E0 ist beantwortet und als Statusblock eingetragen** – einschließlich E0.0 und
   einschließlich eines möglichen „lohnt sich nicht".
@@ -1682,3 +1737,4 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 - **M9 – Auch das Unerreichbare zählt:** ✅ erreicht – ein Paper, von dem nur der Abstract öffentlich ist, ist über seine DOI auffindbar, zitierfähig und als Ziel von `CITES`-Kanten verknüpft – und in **jeder** Ausgabe als unvollständig ausgewiesen (Phase 13). **Ehrlich dazu:** Der Produktivkorpus ist bewusst noch stubfrei; der Nachweis lief auf Index-Kopien mit **52 echten** Abstracts, deren Handprobe **10/10** trifft. Die Nachrangigkeits-Guardrail senkt die in R0 belegten 13 qid-Regressionen auf **3 ohne Totalverlust** – gemessen, nicht geschätzt, und gegen zwei besser klingende Varianten verteidigt.
 - **M10 – Der Korpus kennt seine eigenen Ränder:** ⏳ offen – die Verweise, die heute folgenlos ins Leere zeigen, werden **aus dem eigenen Bestand** geerntet, nach belegtem Nutzen sortiert und in begrenzter, gesichteter Menge zu Referenz-Einträgen; ein später eintreffendes Volltext-PDF löst seinen Stub auch **im Batch** ab (Phase 14). *Erreicht ist der Meilenstein erst, wenn beide `--check`-Läufe nach dem Neu-Einfrieren 0 Abweichungen melden und die Handprobe den Zugewinn belegt – ein durch [E0](#e0--alles-hinterfragen-und-messen-zwingend-zuerst) begründetes „lohnt sich nicht" ist ebenfalls ein gültiger Abschluss.*
 - **M11 – Der Bestand darf wachsen:** ⏳ offen – und er wird **vor M10** erreicht (die Nummern sind Kennungen, nicht die [Reihenfolge](#der-aktive-plan--bearbeitungsreihenfolge)). Der Aufnahmepfad hat keine in der Paperzahl quadratische Stelle mehr, eine Einzelanfrage bleibt am neuen Auslegungsstand unter **5 s**, die kuratierten Wertungen sind maschinenlesbar gerettet und die Auslegung ist mit **Messdatum** festgeschrieben statt aus der Zeit mit 145 Papern fortgeschrieben (Phase 15). *Erreicht ist der Meilenstein erst, wenn beide `--check`-Läufe 0 Abweichungen melden und die Handprobe aus [G0.7](#g07--handprobe-bleibt-das-werkzeug-im-alltag-brauchbar) mindestens 8 von 10 hält – ein durch [G0](#g0--alles-hinterfragen-und-messen-zwingend-zuerst) begründetes „lohnt sich nicht" ist ebenfalls ein gültiger Abschluss.*
+
