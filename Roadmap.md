@@ -2,7 +2,7 @@
 
 Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistenten. Der Plan ist **iterativ**: erst ein dünner, lauffähiger Durchstich, dann gezielte Ausbaustufen. **Bewusst ohne Zeitschätzungen** – Fortschritt wird über die „Definition of Done" (DoD) je Phase und über Meilensteine gemessen.
 
-> Ergänzt die [README](README.md). **Die Phasen 0–7 sind abgeschlossen** und hier nur noch als Ergebnis-Tabelle zusammengefasst; die vollständigen Status-Blockquotes mit allen Kennzahlen, korrigierten Annahmen und offen dokumentierten Abweichungen stehen wörtlich in der [Roadmap-Historie](docs/roadmap-historie.md). **Phase 8, Phase 12 und Phase 13 sind umgesetzt** (Statusblöcke dort); aktiv geplant sind die **Phasen 9–11**.
+> Ergänzt die [README](README.md). **Die Phasen 0–8 sowie 11, 12 und 13 sind abgeschlossen** und hier nur noch als Ergebnis-Tabelle zusammengefasst; die vollständigen Status-Blockquotes mit allen Kennzahlen, korrigierten Annahmen und offen dokumentierten Abweichungen stehen wörtlich in der [Roadmap-Historie](docs/roadmap-historie.md). **Phase 13 steht ausnahmsweise noch vollständig hier**, weil [Phase 14](#phase-14--referenz-ernte-externe-verweise-aus-dem-eigenen-bestand) unmittelbar darauf aufbaut. Aktiv geplant sind die **Phasen 15** (Skalierung) und **14** (Referenz-Ernte) – **in dieser Reihenfolge**, siehe [Bearbeitungsreihenfolge](#der-aktive-plan--bearbeitungsreihenfolge); beide beginnen vor jedem Code mit einer Mess- und Hinterfragungs-Stufe. Aus den Phasen 9 und 10 ist je ein Restpunkt offen ([S2](#s2--volltext-holen-opt-in-lizenz-whitelist) zurückgestellt, [V4](#v4--global-community-ranking-über-die-mitglieds-chunks-erst-messen-dann-entscheiden) nachgelagert).
 
 ---
 
@@ -11,14 +11,14 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 - **Lean & container-frei:** reine Python-Umgebung, kein Docker-/DB-Server.
 - **Provenienz zuerst:** jede Antwort ist auf Paper/Abschnitt/Seite rückführbar.
 - **Inkrementell nutzbar:** neue PDFs per Drop-in-Ordner + Skript, ohne alles neu aufzusetzen.
-- **Klein, aber wachstumsfähig:** optimiert für ≤ 500 Paper, mit klaren Erweiterungspfaden.
+- **Klein, aber wachstumsfähig:** ursprünglich optimiert für ≤ 500 Paper – eine Zahl aus der Zeit mit 145 Papern, die bei **468** faktisch erreicht ist und in [Phase 15 / G5](#g5--auslegung-neu-festschreiben) durch eine **gemessene** Auslegung mit Messdatum ersetzt wird.
 - **Offline zuerst:** umgesetzt ist die Offline-Variante (Option B, [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)); ein Netzzugriff bleibt eine **separat startbare Zusatzfunktion**, nie eine Voraussetzung.
 - **Erst messen, dann bauen.** Das ist die wichtigste Lehre aus den Phase-7-Punkten und keine Floskel: In **A3** war die vermutete Ursache der `short_chunk`-Flut falsch (nicht die Seitengrenze, sondern die Überschriften-Heuristik), in **A4** bestätigte sich die Annahme „Fusion schlägt Einzelverfahren" nicht, in **A5** saß das Keyword-Rauschen nicht im Vektorraum, sondern in der Auswahlpolitik, in **A6** hätte eine nackte Coverage-Kennzahl die triviale Strategie gekürt, und in **A7** waren die vermuteten Signal-Konflikte mit 1 von 44 Fragen praktisch inexistent. Jede Ausbaustufe beginnt daher mit einer Wegwerf-Messung und einem **Abbruchkriterium**.
 - **Präzision vor Recall**, wo Daten in den Korpus oder in den Graphen fließen ([ADR 0011](docs/adr/0011-intra-corpus-citation-graph-phase7.md)).
 
 ---
 
-## Stand: Phasen 0–8 und 12 (abgeschlossen)
+## Stand: Phasen 0–8, 11, 12 und 13 (abgeschlossen)
 
 | Phase                                       | Ergebnis                                                                                                               | Entscheidung                                                                                                                                                                                 |
 | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -38,10 +38,35 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 | **7 / A7** – Router-Härtung         | Match-Art je Signal,`basic` als Rückfallebene, ausgewiesene Konfidenz und Signale                                   | [ADR 0017](docs/adr/0017-router-hardening-phase7.md)                                                                                                                                          |
 | **8** – Korpus-Zufluss & Intake      | dreistufige Dedup (`new_papers/` → `papers/`), Robustheits-Gate, atomarer Swap, append-only Übersicht (`Z`-IDs), `scripts.intake`; **M5** erreicht | [ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md)                                                                                    |
 | **12** – Zitierfähigkeit            | `metadata/paper_metadata.json`, feldweise Auflösung (`manual > curated > resolved > extracted`), `get_reference`, Literaturangaben Harvard/APA; **M8** erreicht | [ADR 0025](docs/adr/0025-citable-paper-metadata.md) · [ADR 0026](docs/adr/0026-online-metadata-resolution.md)                                    |
+| **9 / S0+S1** – Online-Kandidatensuche | arXiv + OpenAlex hinter injizierbarem Transport-Port, Dedup über die Intake-Logik, append-only Bericht; **M6** erreicht. **Offen:** [S2](#s2--volltext-holen-opt-in-lizenz-whitelist) (Volltext-Download) – bewusst zurückgestellt, Volltexte kommen von Hand | [ADR 0020](docs/adr/0020-online-candidate-search-phase9.md) · [ADR 0032](docs/adr/0032-system-proxy-autodetection.md) |
+| **10 / V1–V3** – Retrieval-Vertiefung | Local mit fünf Seeds, DRIFT über die Community-Vereinigung mit Fallback, Multi-Hop gegen den Zitationsgraphen messbar; **M7** erreicht. **Offen:** [V4](#v4--global-community-ranking-über-die-mitglieds-chunks-erst-messen-dann-entscheiden) – nachgelagert, siehe Reihenfolge | [ADR 0021](docs/adr/0021-local-multi-seed-phase10.md) · [ADR 0022](docs/adr/0022-drift-community-union-and-fallback-phase10.md) · [ADR 0023](docs/adr/0023-multihop-citation-evaluation-phase10.md) |
+| **11** – Betrieb & Datensicherheit | Sicherungsweg (B1), nachführbare Messgrundlage (B5), Graph-Grad geprüft und **verworfen** (B6), Auto-Watcher gestrichen (B4). **Aufgelöst:** B2/B3 sind in [Phase 15](#phase-15--skalierung-den-wachsenden-bestand-tragen) übergegangen – [Archiv](docs/roadmap-historie.md#phase-11--betrieb-robustheit--datensicherheit) | [ADR 0027](docs/adr/0027-corpus-backup-phase11.md) · [ADR 0028](docs/adr/0028-similarity-graph-degree-phase11.md) |
+| **13** – Referenz-Einträge ohne Volltext | `*.refjson`-Stubs aus DOI/arXiv, `document_kind` bis in jeden Beleg, Nachrangigkeits-Guardrail (13 → **3** Regressionen ohne Totalverlust); **M9** erreicht – [Details unten](#phase-13--referenz-einträge-ohne-volltext) | [ADR 0029](docs/adr/0029-reference-stub-resolution-phase13.md) · [ADR 0030](docs/adr/0030-reference-entries-in-corpus-phase13.md) · [ADR 0031](docs/adr/0031-reference-contract-and-guardrail-phase13.md) |
 
-**Nicht umgesetzt aus Phase 7:** der Punkt **A8** (inkrementelles Update, Auto-Watcher). Er ist in dieser Fassung aufgelöst – das inkrementelle Update lebt als [B2](#b2--inkrementelles-update-statt-vollem-re-index) weiter, der Auto-Watcher ist [bewusst gestrichen](#b4--auto-watcher-bewusst-gestrichen) und wird durch den manuellen Intake der [Phase 8](docs/roadmap-historie.md#phase-8--korpus-zufluss-new_papers--intake) ersetzt.
+**Nicht umgesetzt aus Phase 7:** der Punkt **A8** (inkrementelles Update, Auto-Watcher). Er ist in dieser Fassung aufgelöst – das inkrementelle Update lebt über B2 in [Phase 15 / G1](#g1--aufnahmepfad-begradigen-die-quadratischen-stellen) weiter (dort ausdrücklich als **Frage**, siehe [G0.5](#g05--erübrigt-sich-das-inkrementelle-update)), der Auto-Watcher ist [bewusst gestrichen](docs/roadmap-historie.md#b4--auto-watcher-bewusst-gestrichen) und wird durch den manuellen Intake der [Phase 8](docs/roadmap-historie.md#phase-8--korpus-zufluss-new_papers--intake) ersetzt.
 
 > **Warum die Kennzahlen hier fehlen:** Sie stehen in den ADRs und in der [Historie](docs/roadmap-historie.md) und veralten dort nicht. Den **aktuellen** Bestand zeigt `python -m scripts.status`, die aktuelle Retrieval-Güte `python -m scripts.eval_retrieval`.
+
+---
+
+## Der aktive Plan – Bearbeitungsreihenfolge
+
+Die Phasennummern sind **Kennungen, keine Reihenfolge** – Phase 13 wurde vor den Phasen 9–11
+umgesetzt, und Phase 15 läuft vor Phase 14. Verbindlich ist diese Tabelle:
+
+| # | Phase | Warum an dieser Stelle |
+| --- | --- | --- |
+| **1** | [Phase 15 – Skalierung](#phase-15--skalierung-den-wachsenden-bestand-tragen) | Die Auslegung „≤ 500 Paper" ist bei **468** faktisch erreicht, und die drei belegten Engstellen sitzen genau dort, wo der geplante Zufluss drückt. Wer zuerst zuführt und danach misst, misst ein anderes System. |
+| **2** | [Phase 14 – Referenz-Ernte](#phase-14--referenz-ernte-externe-verweise-aus-dem-eigenen-bestand) | Baut auf der fertigen Kette aus Phase 13 auf und füllt den Bestand. Ihre Messungen E0.2/E0.3/E0.6 setzen voraus, dass Laufzeit und Community-Verhalten **vorher** bekannt und stabil sind. Zusätzlich liefert [G4](#g4--zuflussregel-und-ablösung-der-übersicht) die Stoppregel und das maschinenlesbare Relevanzurteil, ohne die die Auswahlregel der Ernte ein reines Popularitätsmaß bliebe. |
+| **3** | [Phase 10 / V4 – Global-Ranking](#v4--global-community-ranking-über-die-mitglieds-chunks-erst-messen-dann-entscheiden) | V4 misst die Community-Ebene – und genau die verändern **beide** vorangehenden Phasen (mehr Paper, hunderte einchunkige Einträge). Eine Messung davor wäre nach Phase 14 Makulatur. Zieht [G0.4](#g04--trägt-die-community-struktur-den-gewachsenen-bestand) die Schwelle, wird V4 zur **Voraussetzung** und rückt vor Phase 14. |
+| **–** | [Phase 9 / S2 – Volltext-Download](#s2--volltext-holen-opt-in-lizenz-whitelist) | **Bleibt zurückgestellt, ohne Termin.** Die Lizenzlage ist unverändert (arXiv weist im Feed keine Lizenz aus, OpenAlex bei 15 von 51 Treffern), und Volltexte werden bewusst von Hand beschafft. Der Punkt steht als dokumentierte Entscheidung, nicht als Vorhaben. |
+
+**Zur Anordnung dieses Dokuments:** Zuerst kommen die abgeschlossenen Phasen mit ihren
+Restpunkten (9, 10) und die Phase 13, auf der Phase 14 unmittelbar aufsetzt; danach folgen die
+beiden **aktiven** Phasen in Bearbeitungsreihenfolge (15, dann 14); zuletzt die
+querschnittlichen Abschnitte und die Meilensteine. Abgeschlossene Phasen werden nicht
+umsortiert, sondern beim Abschluss in die [Historie](docs/roadmap-historie.md) überführt –
+dieselbe Regel, nach der die Phasen 0–8, 11 und 12 dort stehen.
 
 ---
 
@@ -312,7 +337,7 @@ S0 ist beantwortet und dokumentiert (auch ein „lohnt sich nicht" ist ein gült
 > Contract-Test und als ausgewiesener trivialer Oberwert. Gold-Set und Baseline sind **eigene**
 > Artefakte statt einer Erweiterung der bestehenden – sonst mischten sich zwei unvergleichbare
 > Fragetypen in dieselben Aggregate, und jeder Regressions-Check dauerte ein Vielfaches
-> (siehe [B3](#b3--messung-ohne-wartezeit)). Kein Schema-Eingriff, **kein Re-Ingest**, und
+> (siehe [B3](docs/roadmap-historie.md#phase-11--betrieb-robustheit--datensicherheit)). Kein Schema-Eingriff, **kein Re-Ingest**, und
 > **keine** Retrieval-Änderung: Die Messung bestätigt den Contract, statt ihn zu widerlegen.
 
 *Lücke:* Das Gold-Set enthält ausschließlich **lexikalisch verankerte** Fragen. Der Fragetyp „Zitations-/Methodennetze (Multi-Hop)" aus dem README-Contract ist damit **überhaupt nicht gemessen** – obwohl mit **382 `CITES`-Kanten** und **44 Papern mit ≥ 3 zitierenden Quellen** eine objektive, **nicht-lexikalische** Labelquelle bereitsteht. A6 hat genau diesen Schritt als „naheliegendsten nächsten ohne Subjektivität" benannt und die Architektur dafür vorbereitet: `GoldQuestion` weist die **Label-Quelle** aus, damit weitere Quellen additiv danebentreten können.
@@ -329,116 +354,7 @@ S0 ist beantwortet und dokumentiert (auch ein „lohnt sich nicht" ist ein gült
 
 *Akzeptanz – bewusst als Frage formuliert:* Hebt die Aggregation Lift **und** Coverage bei gleicher Selektivität? Falls nein, wird der Punkt **verworfen und der Befund dokumentiert** – genau so, wie in A5 die naheliegende Variante „Stopwords in den Vektorraum" nach der Messung verworfen wurde, weil sie den Graphen ohne belegbaren Nutzen verschoben hätte.
 
----
-
-## Phase 11 – Betrieb, Robustheit & Datensicherheit
-
-### B1 – Sicherung des Korpus
-
-*Lücke:* `papers/` und `data/` sind **nicht versioniert**. Der gesamte Bestand hängt damit an einem Ordner auf einer Maschine – während der Index jederzeit aus den PDFs reproduzierbar wäre. Phase 8 verschärft das gleich doppelt: Der Intake **löscht** Dateien unwiderruflich, und Phase 9 fügt automatisiert neue hinzu.
-
-*Akzeptanz:* ein dokumentierter, einfacher Sicherungsweg – gesichert werden müssen nur `papers/`, [`Übersicht.md`](Übersicht.md) und `data/manifest.json`; alles Übrige ist rekonstruierbar. Dazu ein `--dry-run` überall dort, wo gelöscht wird. Bewusst **kein** eigenes Backup-Framework – das wäre für ein persönliches Werkzeug überzogen.
-
-> **Status: umgesetzt** (2026-08-06, [ADR 0027](docs/adr/0027-corpus-backup-phase11.md)). Neu sind `backup.py` (Top-Level) und das dünne `scripts/backup.py` mit `--dry-run`, `--pruefen` und einem Fortschrittsbalken.
->
-> **Der Umfang wurde gegenüber dieser Akzeptanz präzisiert**, weil sie aus der Zeit vor Phase 9 und Phase 12 stammt: Neben `papers/`, [`Übersicht.md`](Übersicht.md) und `data/manifest.json` sind auch `metadata/paper_metadata.json` (Herkunft `manual` ist aus **keiner** Quelle reproduzierbar) sowie die drei append-only Protokolle `data/intake_log.md`, `data/metadata_log.md` und `data/online_candidates.md` nicht rekonstruierbar. **Nicht** gesichert werden `data/canonical/`, `data/index/` und die Qualitätsberichte – und zwar aus **Korrektheits-, nicht aus Platzgründen**: Sie machen nur 8,7 % aus (68,7 MB von 788 MB), ein mitgesicherter Index verleitet aber dazu, ihn zurückzuspielen, obwohl er zum wiederhergestellten Korpus nicht passen muss. Der Weg zurück ist deshalb genau einer: zurückkopieren, dann `python -m scripts.ingest`.
->
-> **Die zweite Hälfte der Akzeptanz war bereits erfüllt** – belegt statt gebaut: Ein Scan aller löschenden Aufrufe unter `src/research_graphrag/` ergab genau vier Stellen mit Nutzerwirkung, alle vier in `intake.py`, und `scripts.intake` besitzt `--dry-run` seit Phase 8. Die übrigen Treffer sind Temporärdateien atomarer Schreibvorgänge und das Verwerfen **abgeleiteter** Artefakte.
->
-> **Realer Nachweis** (341 Paper): Vorschau und Lauf treffen dieselben Entscheidungen für **348 Dateien / 680,9 MiB**; der zweite Lauf kopiert **0** und ist nach 15 s fertig (Idempotenz über sha256); `--pruefen` bestätigt 348/348 mit Exit `0`, nach einer gezielten Manipulation meldet es die Datei namentlich mit Exit `1`. Der Sicherungsstand enthält nachweislich **kein** `canonical/` und **kein** `index/`. Kein Schema-Eingriff, kein Contract, kein neues MCP-Werkzeug (der Server bleibt bei **neun**).
-
-### B2 – Inkrementelles Update statt vollem Re-Index
-
-*Lücke (bisher A8a):* Der volle Re-Index ist bei ~145 Papern günstig und konsistent, wächst aber linear mit dem Bestand – und Phase 9 lässt den Bestand systematisch wachsen (Auslegung bis ~500 Paper).
-
-*Akzeptanz:* Nur neue/geänderte Paper extrahieren und indizieren, danach den Graphen neu bauen; das Ergebnis ist **nachweislich identisch** zum vollen Re-Index (Byte-Vergleich der Kanten, Communities und Zitationskanten – die Methodik ist in A3 und A5 etabliert). Der volle Re-Index bleibt Standard.
-
-### B3 – Messung ohne Wartezeit
-
-*Lücke:* Ein `--modi`-Lauf dauert mehrere Minuten, weil der Index je Ebene neu geladen wird (in A6 bewusst nicht optimiert, um keinen Contract anzufassen). Eine Messung, die man ungern startet, wird seltener gestartet – und genau diese Messungen haben in A3 bis A7 wiederholt die Annahmen korrigiert.
-
-*Akzeptanz:* Index einmal laden und durchreichen, **ohne** Eingriff in einen Contract; die Ergebnisse sind bit-identisch zur eingefrorenen Baseline (`--check` ist der Beweis).
-
-### B4 – Auto-Watcher: bewusst gestrichen
-
-Der frühere Punkt A8b entfällt. `watchdog` ist offline **vorhanden** – technisch scheitert es also nicht. Die Entscheidung ist fachlich: Der Intake **löscht Dateien** und verändert den Korpus; beides soll beobachtet und angestoßen werden, nicht im Hintergrund passieren. Ein Watcher würde die einzige Stelle automatisieren, an der ein Mensch hinsehen soll.
-
-### B5 – Messgrundlage nachführbar halten
-
-*Lücke (2026-08-06 aufgefallen, nachträglich aufgenommen):* Die Gold-Sets und Baselines waren auf den Stand von **145** Papern eingefroren, der Korpus ist auf **341** gewachsen. `--verify-labels` reproduzierte nur noch **1 von 34** Fragen, beide `--check`-Läufe verweigerten den Vergleich mit Exit `2`. Der Fingerprint-Guard hat damit korrekt gearbeitet – der quantitative Regressionsschutz war trotzdem faktisch außer Betrieb. Ursache war eine Werkzeuglücke: Für das Multi-Hop-Gold gab es einen reproduzierbaren Neuableitungs-Weg (`--zitationen --write-gold`), für das **Retrieval**-Gold nicht.
-
-*Akzeptanz:* Ein Befehl leitet die mechanischen Labels aus dem aktuellen Index neu ab, ohne die Fragen anzufassen; das Ergebnis ist über `--verify-labels` vollständig nachrechenbar, und eine Frage ohne Ziel wird als Befund gemeldet statt still geschrieben.
-
-> **Status: umgesetzt** (2026-08-06, Nachtrag in [ADR 0016](docs/adr/0016-quantitative-retrieval-evaluation-phase7.md)). Neu sind `relabel_gold_set`, `unlabelled_questions` und `save_gold_set` im Paket `evaluation` sowie `python -m scripts.eval_retrieval --write-gold` (mit `--gold-version` und `--notiz`).
->
-> **Warum ein Gold-Set einen Korpuswechsel nicht überlebt:** Die Labels sind Paper-IDs, und eine `paper_id` ist der sha256-Hash der Datei. Ein durch eine neuere Fassung **ersetztes** PDF bekommt eine neue ID – das eingefrorene Label zeigt danach ins Leere, unabhängig davon, ob der Inhalt noch im Korpus steht. Genau das erklärt die 6 weggefallenen Alt-Ziele restlos: Sie gehören zu **4 Papern, die nicht mehr im Bestand sind**.
->
-> **Gemessene Drift vor der Neuableitung:** 32 der 34 Fragen gewinnen Ziele hinzu, 2 bleiben gleich, keine verliert unterm Strich. Die Zielmenge wächst von **141 auf 355** (Faktor 2,52) bei einem Korpus-Faktor von 2,35 – die Label-Regel skaliert also proportional. Die breiteste Frage deckt **7,9 %** des Korpus ab, eine zufällige Fünferauswahl erreicht Hit@5 = **0,146**: Die Trennschärfe bleibt erhalten. Keine Frage steht ohne Ziel da.
->
-> **Neuer Stand** (Gold-Set **1.3.0**, Fragen wortgleich, **34/34** Labels reproduzierbar; Multi-Hop-Gold **44 → 113** Anker, 113/113 geprüft): primitive/basic/local **0,824 / 0,736**, global **0,559 / 0,412**, drift **0,588 / 0,472**; Community-Auswahl Lift **5,80** gegen größte-5 1,04 und zufällig-5 0,94. Multi-Hop: graph **0,593 / 0,452**, basic_title **0,673 / 0,634**, local_title **0,858 / 0,768**, basic_topic **0,142 / 0,133**, local_topic **0,628 / 0,464**; strukturelle Auswahl Lift **15,09** gegen 1,03. Beide Baselines sind neu eingefroren, beide `--check`-Läufe melden 0 Abweichungen.
->
-> **Ehrlich dazu:** Diese Zahlen sind mit den alten **nicht** vergleichbar – Korpus *und* Labels haben sich geändert. Belastbar ist allein das Verhältnis der Ebenen innerhalb eines Laufs. Global hat deutlich zugelegt (Lift 3,55 → 5,80), und auf dem fakt-orientierten Set liefert **Local exakt dasselbe wie Basic** – alle 28 Treffer aus den Seeds, null Beitrag von Nachbarschaft und Fan-out.
->
-> **Der naheliegende Schluss daraus wäre falsch** und wurde durch die Multi-Hop-Messung desselben Korpus widerlegt: Dort steuert der Fan-out **44 von 71** Treffern der Themen-Anfrage bei, und die strukturelle Auswahl über den Ähnlichkeitsgraphen erreicht **Lift 15,09** (vorher 8,20) – der Graph ist also **besser** geworden, nicht schlechter. Damit bestätigt sich erneut, was schon [ADR 0023](docs/adr/0023-multihop-citation-evaluation-phase10.md) festgehalten hat: „Der Fan-out trägt kaum bei" ist eine Eigenschaft des **fakt-orientierten Gold-Sets**, dessen Labels mechanisch aus dem Chunk-Text stammen und deshalb die direkte Chunk-Suche strukturell bevorzugen. Die korrekte Aussage lautet: *Auf lexikalisch verankerten Faktfragen ist Local nicht besser als Basic.*
-
-### B6 – Grad des Ähnlichkeitsgraphen (geprüft, verworfen)
-
-*Lücke (2026-08-06 aufgefallen, nachträglich aufgenommen):* Der Ähnlichkeitsgraph verbindet jedes Paper über *mutual top-k* mit höchstens `DEFAULT_K = 8` Nachbarn – ein Wert aus der Zeit mit 145 Papern. Bei 341 Papern haben **85 Paper (24,9 %) keinen einzigen Nachbarn** und damit keinen Fan-out.
-
-*Akzeptanz (vorab fixiert):* Das kleinste k, das (1) auf **beiden** Gold-Sets keine Kennzahl verschlechtert, (2) die isolierten Paper mindestens halbiert und (3) die größte Community unter 20 % des Korpus hält. Erfüllt kein Kandidat alle drei, wird der Punkt verworfen und der Befund dokumentiert.
-
-> **Status: geprüft und verworfen** (2026-08-06, [ADR 0028](docs/adr/0028-similarity-graph-degree-phase11.md)). **Keine Code-Änderung**, kein Schema-Eingriff, kein Re-Ingest, keine neue Baseline.
->
-> **Die Ursache ist nicht die Schwelle:** 339 von 341 Papern (**99,4 %**) haben einen Nachbarn ≥ 0,10, der Median der besten Ähnlichkeit liegt bei **0,372**. Eine Schwellenänderung von 0,04 auf 0,15 bewegt die Kantenzahl nur von 442 auf 426. Isolation entsteht **allein** durch die Verdrängung im mutual top-k. Damit ist die Schwelle als Stellschraube erledigt.
->
-> **Gemessen wurde gegen Index-Kopien** (der Live-Index blieb unberührt), nachdem die Rekonstruktion mit `k = 8` den Live-Stand exakt reproduziert hatte (439 Kanten / 115 Communities / 85 Singletons):
->
-> | Ebene | k = 8 | k = 16 | k = 20 |
-> | --- | --- | --- | --- |
-> | basic / local | 0,824 / 0,736 | 0,824 / 0,736 | 0,824 / 0,736 |
-> | global | **0,559** / 0,412 | 0,529 / 0,476 | 0,529 / 0,462 |
-> | drift | 0,588 / 0,472 | 0,706 / 0,604 | 0,706 / 0,633 |
-> | **Lift der Community-Auswahl** | **5,80** | 3,29 | **2,96** |
-> | `no_community` · `fallback` | 2 · 2 | 8 · 8 | 9 · 9 |
->
-> **Bedingung 1 ist bei beiden Kandidaten verletzt** – Global verliert Hit@5. Drei Beobachtungen zeigen, dass das kein Rauschen ist: Der **Lift halbiert sich** (die Auswahl wird größer, nicht besser – die Coverage steigt, die Selektivität stärker); der **DRIFT-Gewinn ist erkauft**, weil `fallback` von 2 auf 9 steigt und DRIFT damit häufiger nur das Basic-Ergebnis liefert; und **`no_community` steigt trotz mehr Kanten** von 2 auf 9, weil weniger und größere Communities unschärfere Community-Dokumente ergeben. Der dichtere Graph schadet also genau der Ebene, die von ihm lebt.
->
-> **Das ist zugleich ein Argument für [V4](#v4--global-community-ranking-über-die-mitglieds-chunks-erst-messen-dann-entscheiden):** Wäre das Community-Dokument nicht nur zehn Keywords plus Auszug, könnte ein dichterer Graph seine Wirkung überhaupt erst entfalten.
->
-> **Bewusst getragene Grenze:** 85 Paper bleiben ohne Fan-out. Wer zu einem solchen Paper verwandte Arbeiten sucht, nutzt `get_citations` und die Chunk-Suche.
-
----
-
-Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötigen Wheels/Modelle/Runtimes offline verfügbar werden ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)); sie sind aktuell **empirisch nicht beschaffbar**.
-
-- **Domain-/Zitationsgraph mit Kuzu (embedded) + Text2Cypher** für deterministische Cypher-Graphfragen und Multi-Hop-Netze (baut auf dem Intra-Korpus-Graphen aus [ADR 0011](docs/adr/0011-intra-corpus-citation-graph-phase7.md) auf).
-- **GROBID** für präzises Parsing **externer** Referenzen und Zitationskontexte (benötigt Docker/Java).
-- **Microsoft GraphRAG / Docling / LanceDB** als vollwertiges Zielbild (LLM-gestützte Entitäts-/Community-Reports, Bounding-Box-Provenienz). Damit käme auch der **Domain Graph** in Reichweite: Von den in der [README](README.md) skizzierten Kantentypen ist bislang nur `CITES` umgesetzt; `USES_METHOD`, `EVALUATES_ON` und `SUPPORTED_BY` brauchen Entitätsextraktion.
-- **Hybrid-Suche mit dedizierten Vektor-/Suchmaschinen** und **Skalierung Richtung Qdrant/Weaviate/Neo4j**, falls der Bestand deutlich über die ~500-Paper-Auslegung hinauswächst.
-
----
-
-## Literaturübersicht & Arbeitsteilung
-
-- **Rollen-Trennung:** [`Übersicht.md`](Übersicht.md) = *welche* Quellen es gibt und wie relevant sie sind; der GraphRAG-Index = *was* inhaltlich darin steht.
-- **Laufende Pflege:** Die Ingestion erzeugt Entwurfszeilen; die wertenden Spalten (`Relevanz fuer Expose`, `SRQ-Zuordnung`) bleiben menschlich kuratiert. Der `Themenfokus` kann an den GraphRAG-Communities ausgerichtet werden.
-- **Ab Phase 8** schreibt der Intake die Entwurfszeilen direkt in die Übersicht (append-only, wertende Spalten leer) – umgesetzt, siehe [ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md). `data/overview_drafts.md` ist damit abgelöst; auch `scripts/update_overview.py` schreibt jetzt in die Übersicht.
-
----
-
-## Querschnittsthemen: Risiken & Gegenmaßnahmen
-
-| Risiko                                                                        | Gegenmaßnahme                                                                                                                                                                                                                                        |
-| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| PDF-Extraktionsrauschen (Layout, Formeln, Scans)                              | Qualitäts-Gates, Provenienz zum Original, Stichproben; Textnormalisierung ([ADR 0015](docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md)); Docling/Marker als späterer Ausbau ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)). |
-| **Datenverlust durch den Intake** (hartes Löschen)                     | `--dry-run`, Bericht mit Hash je gelöschter Datei, Sicherungsweg aus [B1](#b1--sicherung-des-korpus).                                                                                                                                               |
-| **Unkuratierte PDFs aus dem Netz** (Scans, Fehlerseiten, Schadinhalte)  | Lizenz-Whitelist, Content-Type-/Größenprüfung, selbst erzeugte Dateinamen, Robustheits-Flag für chunk-lose Dokumente.                                                                                                                             |
-| **Verwässerung des kuratierten Korpus** durch automatische Vorschläge | Vorschläge landen im Bericht, nie automatisch im Korpus; Zielgröße ist Präzision, nicht Menge.                                                                                                                                                    |
-| **Abstract-Stubs verdrängen Volltext-Evidenz** (BM25-Längennormalisierung)    | `document_kind` als Pflichtfeld in jedem Beleg, Ausschluss aus der Gold-Ableitung, Verdrängung vorab an einer Index-Kopie gemessen, Nachrangigkeit **nur** bei belegter Regression – **R0 hat sie belegt** (13 qid-Regressionen, alle in den Multi-Hop-Ebenen), die Guardrail ist damit gesetzt ([Phase 13](#phase-13--referenz-einträge-ohne-volltext)).       |
-| Entity Resolution (Synonyme, gleichnamige Autoren)                            | leichte Alias-/Synonym-Kuratierung; bei kleinem Korpus manuell handhabbar.                                                                                                                                                                            |
-| Scheinsicherheit durch Summaries                                              | Antworten immer mit Quellenankern/Original-TextUnits; für Fakten Basic/Local bevorzugen.                                                                                                                                                             |
-| Inkonsistenz bei inkrementellen Updates                                       | Standard bleibt der volle Re-Index; inkrementell nur mit Identitäts-Nachweis ([B2](#b2--inkrementelles-update-statt-vollem-re-index)).                                                                                                                |
-| Kosten/Datenschutz eines Index-LLM                                            | entschärft durch Option B:**kein** Index-LLM (offline, TF-IDF/BM25); ein LLM kommt nur zur Abfragezeit über die Bridge ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).                                                             |
+> **Reihenfolge: nach Phase 15 und Phase 14** ([Begründung](#der-aktive-plan--bearbeitungsreihenfolge)). V4 misst die Community-Ebene – und die verändern beide vorangehenden Phasen: Phase 15 durch den gewachsenen Bestand, Phase 14 durch hunderte einchunkige Referenz-Einträge. Eine Messung davor wäre danach Makulatur. **Ausnahme:** Verfehlt [G0.4](#g04--trägt-die-community-struktur-den-gewachsenen-bestand) seine Schwelle, ist V4 keine Kür mehr, sondern Voraussetzung – dann rückt der Punkt vor Phase 14, und das wird dort vermerkt statt umgangen.
 
 ---
 
@@ -446,7 +362,7 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 
 > **Status: R0 beantwortet, R1 und R2 umgesetzt** (Messung vom 2026-08-09, bewusst **ohne ADR** –
 > R0 baut nichts und entscheidet keine Architektur; dieselbe Handhabung wie bei [S0](#s0--recherche--machbarkeit-zwingend-zuerst-mit-abbruchkriterium)
-> und [B6](#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen)). Gemessen wurde gegen den
+> und [B6](docs/roadmap-historie.md#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen)). Gemessen wurde gegen den
 > Korpusstand **373 Paper / 26 003 Chunks / 118 Communities / 1481 `CITES`-Kanten**. Kein
 > Produktivcode, kein Schema-Eingriff, kein Re-Ingest; die Wegwerf-Skripte sind gelöscht, die
 > Rohantworten liegen unter `data/online_probe/` (nicht versioniert). Die Umsetzungen stehen in
@@ -534,7 +450,7 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 > eingefrorenen Stände gehalten (Fingerprint-Guard bewusst umgangen) ergibt **12 + 15 = 27**
 > Regressionen allein aus dem Korpuswachstum – **doppelt so viele wie der Stub-Effekt**. Ein
 > `--check` der Stub-Kopie gegen die alte Baseline hätte die 13 aussagekräftigen Abweichungen in
-> 27 nichtssagenden ertränkt. *Folgepunkt für [B5](#b5--messgrundlage-nachführbar-halten)/R3:* Der
+> 27 nichtssagenden ertränkt. *Folgepunkt für [B5](docs/roadmap-historie.md#b5--messgrundlage-nachführbar-halten)/R3:* Der
 > quantitative Regressionsschutz ist derzeit außer Betrieb; das Neu-Einfrieren gehört an den
 > Anfang von R3, nicht in diese Messung.
 >
@@ -643,7 +559,7 @@ Wie in S0, V1–V3 und B6 beginnt die Phase mit einer Wegwerf-Messung, nicht mit
 > Netz endet der Lauf mit `dependency_error` statt in einem Stacktrace; die Liste ist danach
 > **byte-identisch**. `--dry-run` erzeugt nicht einmal einen Client. Vorgezogen aus R3 ist die
 > Sicherung: `new_papers/referenzen.txt` und `data/references_log.md` stehen im Umfang aus
-> [B1](#b1--sicherung-des-korpus) (Nachtrag in [ADR 0027](docs/adr/0027-corpus-backup-phase11.md)).
+> [B1](docs/roadmap-historie.md#b1--sicherung-des-korpus) (Nachtrag in [ADR 0027](docs/adr/0027-corpus-backup-phase11.md)).
 >
 > **Ehrlich dazu:** Bis R2 sind die erzeugten `.refjson`-Dateien **wirkungslos** – der Intake
 > liest weiterhin nur `*.pdf`. Das ist der Preis des inkrementellen Schnitts und in der Anleitung
@@ -821,14 +737,14 @@ Wie in S0, V1–V3 und B6 beginnt die Phase mit einer Wegwerf-Messung, nicht mit
 - **Der Contract wird bewusst gebrochen.** `document_kind` wird als **Pflichtfeld** bis in `Citation`, `PaperRef` und `EvidenceItem` durchgereicht, die betroffenen Tool-Specs steigen in der Version. Die Begründung ist dieselbe wie bei `LocalSearchResult.seeds` und `DriftSearchResult.communities` in [V1](#v1--local-mehrere-seeds-statt-eines)/[V2](#v2--drift-community-auswahl-statt-top-1-mit-rückfallebene): Ein stiller Zustand wäre eine **falsche Provenienz-Behauptung**. Ein optionales Feld würde jede konsumierende Stelle zwingen, die Abwesenheit richtig zu deuten – und irgendwann zitiert `answer_question` einen Abstract, als stamme er aus dem Volltext.
 - **Der Zitier-Contract nennt die Unvollständigkeit.** Ein Beleg aus einem Referenz-Eintrag ist im Antworttext als solcher erkennbar; die Literaturangabe selbst bleibt vollständig (Harvard/APA, [ADR 0025](docs/adr/0025-citable-paper-metadata.md)) – zitiert wird schließlich das Paper, nicht der Abstract.
 - **Referenz-Einträge werden von der Label-Ableitung ausgeschlossen.** `--write-gold` leitet die mechanischen Labels aus dem Chunk-Text ab; ein Stub würde sonst **still zum Gold-Ziel** und die Messung damit selbstbezüglich. Der Ausschluss ist Voraussetzung dafür, dass die Kennzahlen vor und nach dieser Phase überhaupt vergleichbar bleiben.
-- **Beide Baselines werden neu eingefroren** – zweistufig wie in V1/V2: erst der qid-genaue Nachweis mit unverändertem Fingerprint, danach das Einfrieren. Der Werkzeugweg dafür existiert seit [B5](#b5--messgrundlage-nachführbar-halten); genau deshalb ist der Zeitpunkt für diese Phase günstig.
+- **Beide Baselines werden neu eingefroren** – zweistufig wie in V1/V2: erst der qid-genaue Nachweis mit unverändertem Fingerprint, danach das Einfrieren. Der Werkzeugweg dafür existiert seit [B5](docs/roadmap-historie.md#b5--messgrundlage-nachführbar-halten); genau deshalb ist der Zeitpunkt für diese Phase günstig.
 - **Guardrail nur, falls R0 sie erzwingt.** Zeigt die Verdrängungsmessung Regressionen, werden Referenz-Einträge in der Chunk-Suche **nachrangig** behandelt (sie erscheinen, wenn Volltext-Treffer fehlen oder hinter diesen). Diese Mechanik wird **nicht auf Verdacht** gebaut – das wäre genau der Fehler, den A3 („die Seitengrenze ist schuld"), A5 („das Rauschen sitzt im Vektorraum") und B6 („die Schwelle ist zu hoch") jeweils vorgeführt haben.
   > **R0-Ergebnis: die Bedingung ist eingetreten** – 13 qid-Regressionen mit **echten** Abstracts,
   > alle in den Multi-Hop-Ebenen, zwei davon als vollständiger Verlust aus den Top 5. Die
   > Guardrail wird also gebaut. Sie muss **nachrangig** wirken, nicht ausschließend: Die Handprobe
   > findet ihre zehn Fragen ausgerechnet deshalb auf Rang 1, weil ein Stub kurz ist – Nutzen und
   > Schaden teilen sich die Ursache.
-- **Sicherung.** `new_papers/referenzen.txt` wird in den Sicherungsumfang aus [B1](#b1--sicherung-des-korpus) aufgenommen: Die Liste ist kuratiert und aus keiner Quelle rekonstruierbar. Die Stub-Dateien selbst liegen in `papers/` und sind damit bereits erfasst.
+- **Sicherung.** `new_papers/referenzen.txt` wird in den Sicherungsumfang aus [B1](docs/roadmap-historie.md#b1--sicherung-des-korpus) aufgenommen: Die Liste ist kuratiert und aus keiner Quelle rekonstruierbar. Die Stub-Dateien selbst liegen in `papers/` und sind damit bereits erfasst.
 - *Akzeptanz:* Jede Ausgabe, die einen Referenz-Eintrag enthält, weist ihn aus – CLI, MCP-Werkzeuge und `answer_question`; `--check` meldet nach dem Neu-Einfrieren 0 Abweichungen; die Handprobe aus R0 findet die Abstracts.
 
 ### Bewusst ausgeschlossen
@@ -838,11 +754,917 @@ Kein Volltext-Download (das bleibt [S2](#s2--volltext-holen-opt-in-lizenz-whitel
 ### Definition of Done
 
 - DOI/arXiv-Liste in `new_papers/referenzen.txt` → **ein** Befehl → Stub-Dateien liegen im Eingang → `python -m scripts.intake` → die Paper sind auffindbar, zitierfähig, im Graphen verknüpft und **überall als unvollständig ausgewiesen**.
-- R0 ist beantwortet und dokumentiert – auch ein „lohnt sich nicht" ist ein gültiges Ergebnis, wie bei [B6](#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen).
+- R0 ist beantwortet und dokumentiert – auch ein „lohnt sich nicht" ist ein gültiges Ergebnis, wie bei [B6](docs/roadmap-historie.md#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen).
 - Ein zweiter Lauf des Auflösungsskripts stellt keine Abfrage und erzeugt keine Datei; `--dry-run` verändert nachweislich nichts.
 - Ein später eintreffendes Volltext-PDF ersetzt seinen Referenz-Eintrag, statt in der Quarantäne zu landen.
 - **Anleitung in der [README](README.md)** inklusive des manuellen Abstract-Wegs und des Upgrade-Pfads; **ADR** bei der Umsetzung (Dateiformat, `document_kind`, Contract-Bruch, Upgrade-Regel).
 - Tests: Auflösung mit/ohne Abstract, Idempotenz gegen alle drei Zustände, Intake eines Stubs, Stub-Duplikat, Volltext schlägt Stub, typabhängige Qualitäts-Flags, Ausweisung in allen Ausgaben, Gold-Ableitung ohne Stubs.
+
+---
+
+## Phase 15 – Skalierung: den wachsenden Bestand tragen
+
+> **Status: geplant.** Diese Phase ist noch **nicht** gemessen und **nicht** entschieden. Sie
+> beginnt zwingend mit [G0](#g0--alles-hinterfragen-und-messen-zwingend-zuerst), und G0 hat
+> ausdrücklich das Recht, die Phase zu **verkleinern oder zu streichen** – wie
+> [S0](#s0--recherche--machbarkeit-zwingend-zuerst-mit-abbruchkriterium),
+> [B6](docs/roadmap-historie.md#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen) und
+> [R0](#r0--ausbeute-nutzen-und-verdrängung-messen-zwingend-zuerst-mit-abbruchkriterium) das
+> vorgeführt haben. Kein Produktivcode vor G0.
+>
+> **Sie steht vor [Phase 14](#phase-14--referenz-ernte-externe-verweise-aus-dem-eigenen-bestand)**,
+> und das ist keine Vorliebe, sondern folgt aus der Kostenverteilung: Ein Referenz-Eintrag kostet
+> auf der **Chunk-Achse fast nichts** (ein Chunk) und auf der **quadratischen Graph-Achse voll**
+> (ein Knoten, ein Titel im Zitations-Matching, ein Vektor im Ähnlichkeitsgraphen). Die Ernte
+> drückt also genau auf die Achse, die heute quadratisch ist. Würde Phase 14 zuerst laufen, wären
+> ihre Messungen [E0.2](#e02--skaliert-die-guardrail-das-schärfste-abbruchkriterium),
+> [E0.3](#e03--was-macht-der-ähnlichkeitsgraph-mit-vielen-einchunkigen-papern) und
+> [E0.6](#e06--kontingent-laufzeit-und-der-weg-dorthin) an einem System erhoben, dessen
+> Laufzeitverhalten sich unmittelbar danach ändert.
+
+**Ziel:** Der Bestand soll wachsen können, ohne dass Antwortzeit, Aufnahmedauer, Speicherbedarf
+oder Retrieval-Güte kippen – und ohne das Speichermodell zu wechseln. Die Auslegung „≤ 500 Paper"
+stammt aus der Zeit mit 145 Papern und ist praktisch erreicht; sie wird in dieser Phase
+**gemessen ersetzt**, nicht stillschweigend überschritten.
+
+### Der Ist-Stand, der diese Phase auslöst (gemessen am 2026-08-28)
+
+| Kennzahl | Wert |
+| --- | --- |
+| Paper | **468** (449 Volltexte à **67,7** Chunks, 19 Referenz-Einträge) |
+| Chunks · Index-Datei | 30 399 · 42,3 MB |
+| Communities · `CITES`-Kanten | 138 · 1772 |
+| **Index laden je Anfrage** | **3,65 s** – davon SQLite lesen 0,41 s, `CountVectorizer`-Fit **2,74 s (75 %)**, Rest ≈ 0,50 s |
+| eigentliche Suche danach | **0,094 s** |
+| Arbeitsspeicher eines Laufs | 339,5 MB |
+| Vokabular · Nicht-Null-Werte · Chunk-Text | 129 460 · 3 076 338 · 31,0 MB |
+
+Daraus folgen drei Beobachtungen, die den Zuschnitt tragen:
+
+1. **97 % der Antwortzeit sind Wiederaufbau, nicht Retrieval.** Jeder Einstiegspunkt lädt den
+   Index pro Aufruf neu (`retrieval/basic.py`, `local.py`, `drift.py`, `provenance.py`) und fittet
+   dabei den Vektorraum über **alle** Chunk-Texte neu. Das ist die gewollte On-Read-Frische aus
+   [ADR 0010](docs/adr/0010-drop-in-workflow-and-qa-phase6.md) in Kombination mit dem Grundsatz
+   „nichts wird als Modell serialisiert" aus
+   [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md) – beides je für sich richtig, zusammen
+   der teuerste Pfad des Systems.
+2. **Zwei Stellen im Aufnahmepfad sind quadratisch in der Paperzahl.**
+   `indexing/citation_graph.py` prüft je Quellpaper **alle** DOIs, **alle** arXiv-IDs und **alle**
+   Titel des Korpus als Substring im Referenztext; `indexing/graph_index.py` kopiert die volle
+   n×n-Ähnlichkeitsmatrix aus NumPy in eine **Python-Liste von Listen**.
+3. **Der geplante Zufluss ist endlich, aber einseitig.** Grobzählung über alle 468
+   Canonical-Dateien: **4118** externe DOI-/arXiv-Kennungen, davon **904** von ≥ 2, **477** von
+   ≥ 3, **205** von ≥ 5 und **67** von ≥ 10 Korpus-Papern zitiert. Weil ein Referenz-Eintrag
+   selbst **keinen** Referenzabschnitt hat, erzeugt er **keine** weitere Runde – der Zufluss
+   verstärkt sich nur über **Volltexte**, und die werden bewusst von Hand beschafft
+   ([S2](#s2--volltext-holen-opt-in-lizenz-whitelist) bleibt zurückgestellt).
+
+*Diese Zahlen sind ein Anlass, kein Beweis.* Die Hochrechnungen unten sind **linear** extrapoliert
+und damit genau die Art Annahme, die in A3, A5, A7, V1–V3, B6 und R0 jedes Mal korrigiert wurde.
+Sie zu prüfen ist Aufgabe von [G0.1](#g01--wo-genau-liegt-die-wand).
+
+### Sechs Festlegungen, die vorab getroffen sind
+
+| Festlegung | Begründung |
+| --- | --- |
+| **Strikt Bordmittel** | Keine neue Abhängigkeit. Verfügbar und bislang ungenutzt ist **SQLite FTS5** (geprüft: SQLite 3.50.4 im venv, `bm25()` eingebaut) – ein vollwertiger Hebel ohne Beschaffung. Semantische Embeddings bleiben außen vor: Sie sind offline nicht beschaffbar ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)) und wären eine andere Phase. |
+| **Kein Wechsel des Speichermodells** | Kein Qdrant, kein Neo4j, kein LanceDB. Die belegten Wände sind **Implementierungsdetails im eigenen Code**, keine Grenzen von SQLite; für einen vierstelligen Bestand wäre ein fremdes Backend überzogen und offline ohnehin nicht beschaffbar. SQLite bleibt Source of Truth, abgeleitete Artefakte bleiben reproduzierbar. |
+| **Messgrundlage vor Bequemlichkeit** | Jede Beschleunigung liefert entweder **bit-identische** Ergebnisse – qid-genau über alle zehn Ebenen belegt – oder sie weist ihren Bruch aus, begründet ihn und friert **beide** Baselines neu ein. Ein „ist schneller und misst zufällig anders" ist kein zulässiges Ergebnis. |
+| **Gemessen wird an Kopien** | Index- und Korpus-Kopien wie in B6, R0 und R3; der Live-Index bleibt nachweislich unberührt. Synthetische Skalierungsstände werden **erzeugt**, nicht der Produktivbestand aufgebläht. |
+| **Kein neues MCP-Werkzeug** | Diese Phase ändert, wie schnell und wie sparsam die bestehenden neun Werkzeuge antworten – nicht **was** sie können. Der Server bleibt bei **neun**. |
+| **Kein Netz** | Alles hier ist offline und deterministisch. Die einzige Berührung mit dem Netz bleibt in den bestehenden, separat startbaren Läufen. |
+
+---
+
+### G0 – Alles hinterfragen und messen (zwingend zuerst)
+
+Zuerst werden die Vorgaben dieser Phase selbst geprüft (G0.0), danach folgen sieben Messfragen mit
+**vorab fixierten** Schwellen. Es entsteht **kein Produktivcode** – nur Wegwerf-Skripte, deren
+Ergebnisse als Statusblock hier eingetragen werden. Kein ADR (G0 baut nichts und entscheidet keine
+Architektur; dieselbe Handhabung wie S0, R0 und B6).
+
+> **Pflicht vor allem anderen – der Validitätsanker** (Muster seit [V1](#v1--local-mehrere-seeds-statt-eines)):
+> Ein synthetisch erzeugter Skalierungskorpus muss, auf den heutigen Umfang zurückgestutzt, den
+> Live-Index **exakt** reproduzieren – gleiche Chunkzahl, gleiche Kanten, gleiche Communities,
+> gleiche `CITES`-Kanten – **und** jede Abweichung muss erklärt sein. Ohne bestandenen Anker endet
+> G0 hier: Zahlen aus einem Korpus, der die Wirklichkeit nicht trifft, sind schlimmer als keine.
+
+#### G0.0 – Die Vorgaben dieser Phase auf den Prüfstand stellen
+
+Bevor gemessen wird, wird **diese Roadmap-Seite selbst** gegen den Code geprüft. Zu beantworten
+sind mindestens:
+
+1. **Ist die lineare Hochrechnung überhaupt zulässig?** Der `CountVectorizer`-Fit hängt an der
+   Tokenmenge, das Vokabular wächst aber **sublinear** (Heaps' Law), die Nicht-Null-Werte linear,
+   der Speicher durch die im RAM gehaltenen **Chunk-Texte** ebenfalls linear. Drei verschiedene
+   Wachstumsgesetze in einer Zahl zusammenzufassen ist bequem und vermutlich falsch. *Erwartung,
+   die zu widerlegen ist:* Die Ladezeit wächst linear, der Speicher schneller als erwartet.
+2. **Stimmt die Behauptung „97 % sind Wiederaufbau" für alle Modi?** Gemessen ist sie an
+   `search_basic`. Global und DRIFT laden zusätzlich den Provenienz-Assembler und den Graphen;
+   `answer_question` im Auto-Modus kann mehrfach laden. Zu zählen ist, **wie oft** ein einzelner
+   Werkzeugaufruf den Index tatsächlich lädt – die Antwort könnte den Nutzen von
+   [G2](#g2--antwortzeit-den-vektorraum-nicht-bei-jeder-frage-neu-bauen) vervielfachen oder
+   relativieren.
+3. **Ist die Paperzahl das richtige Maß?** Die Chunk-Achse hängt an Volltexten, die quadratische
+   Achse an **allen** Einträgen. Eine einzige Zahl „2500" verdeckt das. Zu prüfen ist, ob die
+   Phase konsequent nach **zwei** Größen messen muss – und ob die Auslegung künftig als Paar
+   ausgewiesen wird statt als eine Zahl.
+4. **Wo stecken weitere implizite Größenannahmen?** Zu belegen an `pipeline.load_corpus` (lädt
+   **alle** Canonical-Dateien in den Speicher), `intake.load_corpus`, `backup.py` (sha256 über
+   den gesamten Bestand je Lauf), `evaluation/runner.py` und `scripts/status.py`. *Erwartung, die
+   zu widerlegen ist:* Der Aufnahmepfad hat mehr als die zwei bekannten Engstellen.
+5. **Gibt es einen billigeren Weg zum selben Ergebnis?** Etwa: ein Prozess-Cache im MCP-Server
+   mit Invalidierung über Datei-Zeitstempel – ohne Schema-Eingriff, ohne Contract, ohne
+   Baseline-Risiko. Er hülfe **nur** dem langlebigen Server, nicht der CLI und nicht den
+   Messläufen. Ob das genügt, ist eine Nutzungsfrage und **vorab** zu beantworten, nicht
+   nachträglich zu bedauern. *Dieser Punkt ist ernst gemeint und ein zulässiges Ergebnis der
+   ganzen Phase.*
+6. **Bricht die Phase eine bestehende Festlegung?** Ja, mindestens eine: „Nichts wird als Modell
+   serialisiert" ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)). Zu klären ist, ob
+   das Persistieren von **Vokabular und Zählmatrix** – reine Zahlen, kein `pickle`, keine
+   Bindung an eine `scikit-learn`-Version – diesen Grundsatz wahrt oder aufweicht. Die Antwort
+   gehört ins ADR von [G2](#g2--antwortzeit-den-vektorraum-nicht-bei-jeder-frage-neu-bauen), nicht
+   in einen Kommentar im Code.
+7. **Ist „schneller" hier überhaupt das Problem?** Ein persönliches Werkzeug, das dreimal am Tag
+   befragt wird, verträgt 4 Sekunden. Der eigentliche Schaden wäre eine Messung, die man wegen
+   ihrer Dauer nicht mehr startet – genau die Begründung, mit der B3 aufgenommen wurde. Zu
+   beziffern ist deshalb die Dauer eines vollständigen `--modi`- plus `--zitationen`-Laufs, nicht
+   nur die Einzelanfrage.
+
+*Ergebnis von G0.0 ist eine schriftliche Antwort je Punkt im Statusblock* – auch dann (und gerade
+dann), wenn sie den Zuschnitt unten verkleinert.
+
+#### G0.1 – Wo genau liegt die Wand?
+
+*Zu messen* an synthetischen Ständen, gestaffelt **500 / 1000 / 2500 / 5000 Einträge**, jeweils in
+zwei Mischungen (überwiegend Volltext und die erwartete Mischung aus Volltexten und
+Referenz-Einträgen): Ladezeit je Anfrage, Speicherhöchststand, Dauer eines vollen `ingest`,
+Dauer beider Messläufe, Größe der Index-Datei.
+
+*Schwelle:* Ausgewiesen wird der Stand, ab dem eine Einzelanfrage **5 s** überschreitet oder ein
+Lauf mehr als **2 GB** belegt. Genau dieser Stand ist die heutige, faktische Auslegungsgrenze –
+und die Zahl, die [G5](#g5--auslegung-neu-festschreiben) ersetzen muss.
+
+#### G0.2 – Was kostet ein Referenz-Eintrag wirklich?
+
+Die beiden Achsen werden **getrennt** beziffert, sonst mittelt die Messung genau den Effekt weg,
+um den es geht: Ein Stub bringt 1 Chunk (linear, vernachlässigbar) und einen vollen Knoten
+(quadratisch, teuer).
+
+*Zu messen:* Laufzeitanteil von `build_citation_graph`, `build_graph` und `build_index` je
+Staffelung, getrennt nach Volltexten und Referenz-Einträgen.
+*Konsequenz statt Schwelle:* Das Ergebnis ist die Grundlage der Kontingent-Empfehlung in
+[E2](#e2--kuratierte-übernahme-in-referenzentxt) – und es entscheidet, ob
+[G1](#g1--aufnahmepfad-begradigen-die-quadratischen-stellen) vor Phase 14 zwingend nötig ist oder
+nur wünschenswert.
+
+#### G0.3 – Bleibt die Retrieval-Güte bei fünffacher Chunkmenge?
+
+Mehr Chunks heißt mehr Konkurrenz um dieselben fünf Plätze. Ob BM25 und TF-IDF ihre Trennschärfe
+behalten, ist **unbelegt** – und es wäre der teuerste blinde Fleck dieser Phase, weil eine
+schleichende Verschlechterung von keiner Laufzeitmessung sichtbar wird.
+
+*Zu messen* je Staffelung: Hit@5 und MRR@5 über alle zehn Ebenen beider Gold-Sets, mit
+**neu abgeleiteten** Labels (`--write-gold`, Werkzeugweg aus B5) und ausgewiesener Selektivität –
+denn bei wachsendem Korpus wächst die Zielmenge mit, und eine stabile Kennzahl kann auch ein
+Artefakt breiterer Labels sein (genau der Effekt, den B5 mit Faktor 2,52 gegen Korpusfaktor 2,35
+beziffert hat).
+*Schwelle:* Kein Rückgang von Hit@5 um mehr als **0,05** gegenüber dem heutigen Stand bei
+gleichbleibender oder sinkender Selektivität. Darunter ist die Skalierung ein **Qualitäts**problem
+und nicht länger ein Laufzeitproblem – der Zuschnitt der Phase ändert sich dann grundlegend.
+
+#### G0.4 – Trägt die Community-Struktur den gewachsenen Bestand?
+
+[B6](docs/roadmap-historie.md#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen) hat belegt, dass
+der Graph auf Dichteänderungen empfindlich reagiert und dass die naheliegende Stellschraube
+(größeres `k`) **schadet**. Bei 2500 Papern ändert sich die Dichte ohne jedes Zutun.
+
+*Zu messen* je Staffelung: Kantenzahl, Singletons, Zahl und Größenverteilung der Communities,
+größte Community als Anteil am Korpus, Global-Lift gegen **beide** Trivial-Baselines,
+`no_community`/`fallback` der DRIFT-Ebene.
+*Schwelle:* Der Lift der Community-Auswahl fällt **nicht unter 3,0** (Bezug: 5,80 im
+eingefrorenen Stand), und die größte Community bleibt unter **20 %** des Korpus. Wird die
+Schwelle verfehlt, ist das kein Nebenbefund, sondern der Beleg dafür, dass
+[V4](#v4--global-community-ranking-über-die-mitglieds-chunks-erst-messen-dann-entscheiden) zur
+**Voraussetzung** wird – dann wird die Reihenfolge hier vermerkt und geändert, nicht umgangen.
+
+#### G0.5 – Erübrigt sich das inkrementelle Update?
+
+Der frühere Punkt B2 wurde 2026-08 mit „wächst linear mit dem Bestand" begründet. Ist der
+quadratische Anteil aus [G1](#g1--aufnahmepfad-begradigen-die-quadratischen-stellen) erst entfernt,
+könnte der volle Re-Index wieder billig genug sein – und dann wäre inkrementelles Indizieren
+gebaute Komplexität ohne Gegenwert, samt dem Konsistenzrisiko, das die Risiko-Tabelle seit Phase 0
+ausweist.
+
+*Zu messen:* Dauer eines vollen `ingest` je Staffelung **vor und nach** der Begradigung, aufgeteilt
+nach Extraktion (bereits zwischengespeichert), Chunk-Index, Ähnlichkeitsgraph und Zitationsgraph.
+*Vorab fixierte Entscheidungsregel:* Bleibt der volle Re-Index beim Auslegungsstand aus G0.1 unter
+**der Dauer, die er heute hat**, wird B2 **verworfen und der Befund dokumentiert** – wie B6. Nur
+darüber wird er als [G1](#g1--aufnahmepfad-begradigen-die-quadratischen-stellen)-Bestandteil
+gebaut, und dann mit dem Identitätsnachweis, den B2 immer schon verlangt hat.
+
+#### G0.6 – Was kostet Bit-Identität?
+
+Zwei Wege stehen zur Wahl, und sie unterscheiden sich nicht in der Geschwindigkeit, sondern in
+dem, was sie mit der Messgrundlage machen:
+
+| Weg | Wirkung | Preis |
+| --- | --- | --- |
+| **A – Zählmatrix und Vokabular persistieren** | Der teuerste Anteil (2,74 s Tokenisierung) entfällt; Wertung, Ranking und Tie-Breaks bleiben **unverändert** | Index-Schema steigt, ein Grundsatz aus ADR 0005 ist zu präzisieren |
+| **B – FTS5 als Kandidatenfilter** | Kein In-Memory-Aufbau mehr; die exakte Wertung läuft nur noch auf den Top-*N* der FTS5-Vorauswahl | **Ergebnisse sind nicht mehr bit-identisch** – andere Tokenisierung, anderes BM25; beide Baselines müssen neu, die `--check`-Historie bricht |
+
+*Zu messen:* Ladezeit und Speicher beider Wege je Staffelung; für Weg B zusätzlich qid-genau, wie
+viele Ränge sich gegenüber Weg A verschieben, und ab welchem *N* die Vorauswahl die exakte
+Trefferliste nicht mehr beschneidet.
+*Vorab fixierte Entscheidungsregel:* Erreicht **Weg A** beim Auslegungsstand aus G0.1 die
+5-Sekunden-Marke, wird **Weg A** gebaut – Bit-Identität schlägt zusätzliche Geschwindigkeit.
+Nur wenn Weg A sie verfehlt, wird Weg B gebaut, und dann **mit** ausgewiesenem Bruch und neu
+eingefrorenen Baselines. Eine Mischung „A für die Wertung, B für die Auswahl" ist zulässig, muss
+aber dieselbe qid-Prüfung bestehen.
+
+#### G0.7 – Handprobe: bleibt das Werkzeug im Alltag brauchbar?
+
+Kennzahlen sind kein Selbstzweck. Wie in R0 und E0 werden **zehn** reale Fragen – je zwei aus
+jedem Fragetyp des README-Contracts – gegen den Auslegungsstand gestellt und mit dem heutigen
+Ergebnis verglichen: gleiche Antwortqualität, gefühlte Wartezeit, und ob die Belege noch dieselben
+sind.
+*Schwelle:* Mindestens **8 von 10** liefern eine gleichwertige oder bessere belegte Antwort.
+Darunter ist die Skalierung nicht erreicht, sondern nur die Laufzeit repariert.
+
+#### Gesamtes Abbruchkriterium
+
+Die Phase entfällt, wenn G0.0 Punkt 5 einen billigeren gleichwertigen Weg findet **oder** G0.1 die
+Wand erst jenseits des Auslegungspunkts findet (dann genügt [G5](#g5--auslegung-neu-festschreiben)
+allein). Sie **ändert ihren Zuschnitt**, wenn G0.3 eine Qualitätsverschlechterung zeigt oder G0.4
+die Community-Schwelle verfehlt. Ein „lohnt sich nicht" ist ein vollwertiges Ergebnis und wird wie
+bei [B6](docs/roadmap-historie.md#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen) als
+Statusblock festgehalten.
+
+*Akzeptanz G0:* G0.0 ist schriftlich je Punkt beantwortet, G0.1 bis G0.7 sind **mit Zahlen**
+beantwortet, und beides steht als Statusblock am Anfang dieser Phase; der Validitätsanker ist
+bestanden; die Wegwerf-Skripte sind gelöscht, die Rohdaten liegen unter `data/online_probe/`
+(nicht versioniert); der Live-Index ist nachweislich unberührt.
+
+---
+
+### G1 – Aufnahmepfad begradigen (die quadratischen Stellen)
+
+> Erst umsetzen, wenn G0 die Phase bestätigt **und** ihren Zuschnitt festgelegt hat.
+
+**Aufgabe:** Die beiden quadratischen Stellen des Aufnahmepfads verschwinden – bei **nachweislich
+identischem Ergebnis**.
+
+| Stelle | Heute | Ziel |
+| --- | --- | --- |
+| `indexing/citation_graph.py` | je Quellpaper eine Schleife über alle DOIs, alle arXiv-IDs und alle Titel des Korpus | Kennungen und Titelkandidaten **einmal** je Referenztext gewinnen, danach Nachschlagen statt Suchen |
+| `indexing/graph_index.py` | volle n×n-Matrix als Python-Liste von Listen, danach Kandidatensuche in reinem Python | Nachbarschaft direkt über NumPy; die *mutual top-k*-Regel und ihre Tie-Breaks bleiben wörtlich erhalten |
+
+**Der Nachweis ist die eigentliche Arbeit, nicht die Optimierung.** Belegt wird byte-genau gegen
+den heutigen Stand: dieselben `CITES`-Kanten (heute 1772), dieselben Ähnlichkeitskanten,
+dieselben Communities in derselben Nummerierung, dieselben Keywords und Repräsentanten. Ein
+Unterschied ist kein Rundungsfehler, sondern ein Fehler.
+
+**B2 lebt hier weiter – als Frage, nicht als Auftrag.** Ergibt
+[G0.5](#g05--erübrigt-sich-das-inkrementelle-update), dass der volle Re-Index nach der Begradigung
+wieder billig genug ist, wird das inkrementelle Update **verworfen und der Befund dokumentiert**.
+Andernfalls wird es hier gebaut, mit der ursprünglichen Auflage: Nur neue oder geänderte Paper
+werden extrahiert und indiziert, der Graph danach vollständig neu – und das Ergebnis ist
+**nachweislich identisch** zum vollen Re-Index. Der volle Re-Index bleibt in jedem Fall Standard.
+
+*Akzeptanz G1:* Alle abgeleiteten Artefakte sind byte-identisch zum heutigen Stand; beide
+`--check`-Läufe melden 0 Abweichungen; die gemessene Ingest-Dauer je Staffelung ist dokumentiert;
+kein Schema-Eingriff, kein Contract berührt.
+
+---
+
+### G2 – Antwortzeit: den Vektorraum nicht bei jeder Frage neu bauen
+
+**Aufgabe:** Den in G0.6 gewählten Weg umsetzen – und **nur** ihn.
+
+- **Der gewählte Weg steht vor der Umsetzung fest**, samt Begründung, warum der andere nicht
+  gewählt wurde. Das ist dieselbe Disziplin, mit der R3 die harte Nachrangigkeit verworfen hat,
+  obwohl sie besser klang.
+- **Die On-Read-Frische bleibt.** Ein neu gebauter Index wirkt weiterhin ohne Server-Neustart;
+  jede Form von Zwischenspeicher wird über den **Zustand der Index-Datei** ungültig, nicht über
+  eine Zeitspanne. Ein Zwischenspeicher, der einen veralteten Index ausliefert, wäre schlimmer
+  als jede Wartezeit.
+- **Die Chunk-Texte gehören nicht vollständig in den Speicher.** Für die Wertung genügen
+  Kennungen und Gewichte; der Text wird für die Top-*k* nachgeladen. Das ist unabhängig vom
+  gewählten Weg und adressiert den Speicheranteil, den G0.0 Punkt 1 als unterschätzt vermutet.
+- **Ein ADR ist hier fällig:** gewählter Weg, verworfene Alternative mit Zahlen, Präzisierung des
+  Grundsatzes aus [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md), Schema-Anhebung und –
+  falls Weg B – der ausgewiesene Bruch der Vergleichbarkeit.
+
+*Akzeptanz G2:* Eine Einzelanfrage bleibt am Auslegungsstand unter **5 s**; die Ergebnisse sind
+entweder qid-genau unverändert oder ihr Bruch ist beziffert und beide Baselines sind neu
+eingefroren; ein nach dem Laden ausgetauschter Index wird beim nächsten Aufruf **erkannt**
+(Regressionstest); Determinismus und alle Tool-Contracts unverändert.
+
+---
+
+### G3 – Messung ohne Wartezeit
+
+**Aufgabe (früher B3):** Ein `--modi`- oder `--zitationen`-Lauf lädt den Index **einmal** und
+reicht ihn durch, statt ihn je Ebene neu aufzubauen.
+
+*Warum das hier steht und nicht mehr in Phase 11:* Nach G2 ist der Einzelaufwand kleiner, die Zahl
+der Ebenen aber gewachsen (zehn) und der Korpus größer. Eine Messung, die man ungern startet, wird
+seltener gestartet – und genau diese Messungen haben in A3 bis A7, V1–V3 und R0–R3 wiederholt die
+Annahmen korrigiert. Ergibt [G0.0](#g00--die-vorgaben-dieser-phase-auf-den-prüfstand-stellen)
+Punkt 7, dass die Messdauer das eigentliche Problem ist, wird dieser Punkt **vorgezogen**.
+
+*Akzeptanz G3:* Index einmal laden und durchreichen, **ohne** Eingriff in einen Contract; die
+Ergebnisse sind bit-identisch zur eingefrorenen Baseline (`--check` ist der Beweis); die
+Messdauer ist vorher und nachher dokumentiert.
+
+---
+
+### G4 – Zuflussregel und Ablösung der Übersicht
+
+**Aufgabe:** Zwei Dinge, die zusammengehören, weil sie dieselbe Frage beantworten – *was ist
+dieser Korpus eigentlich, wenn er wächst?*
+
+**1. Die Übersicht wird abgelöst – das Format, nicht die Aussage.** Gemessen am 2026-08-28 stehen
+in [`Übersicht.md`](Übersicht.md) **482** Tabellenzeilen, davon **131 kuratiert** und **351**
+unbearbeitete `Z`-Entwurfszeilen (72,8 %). Als Landkarte ist die Tabelle damit bereits entwertet;
+der geplante Zufluss macht es schlimmer, nicht besser. Ersatzlos löschen wäre allerdings der
+falsche Schluss: Die 131 Zeilen tragen das **einzige menschliche Relevanzurteil** im ganzen Repo
+(`Relevanz fuer Expose`, `SRQ-Zuordnung`, `Themenfokus`), es ist aus **keiner** Quelle
+reproduzierbar – deshalb sichert B1 die Datei ausdrücklich als nicht rekonstruierbar.
+
+Die Reihenfolge ist damit vorgegeben und nicht verhandelbar:
+
+1. Die kuratierten Wertungen werden **maschinenlesbar** überführt (naheliegend: `metadata/`, wo
+   die Herkunft `manual` bereits existiert und bereits gesichert wird).
+2. Erst danach hört der Intake auf, `Z`-Zeilen zu schreiben, und die Datei geht außer Dienst.
+3. Betroffen sind `intake.py`, `overview/`, `scripts/update_overview.py`, `backup.py`, die
+   [README](README.md) sowie [ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md) und
+   [ADR 0030](docs/adr/0030-reference-entries-in-corpus-phase13.md) – letztere brauchen einen
+   Nachtrag, keine stille Umgehung.
+
+*Nebeneffekt, der kein Zufall ist:* Ein maschinenlesbares Relevanzurteil ist genau die Alternative
+zum reinen Popularitätsmaß, nach der [E0.0](#e00--die-vorgaben-dieser-phase-auf-den-prüfstand-stellen)
+Punkt 3 fragt („zitiert von den Papern mit hoher `Relevanz fuer Expose`"). Diese Phase liefert
+also die Voraussetzung für eine bessere Auswahlregel in Phase 14.
+
+**2. Der Zufluss bekommt eine Stoppregel.** Der geplante Weg – Referenzen ernten, aufnehmen, aus
+den neuen Volltexten wieder ernten – hat keinen eingebauten Endpunkt. Er ist zwar durch die
+manuelle Volltextbeschaffung gedeckelt (ein Referenz-Eintrag hat selbst keinen Referenzabschnitt
+und erzeugt deshalb **keine** weitere Runde), aber „gedeckelt durch Erschöpfung" ist keine Regel.
+Festzulegen ist deshalb, **wann aufgehört wird**: eine Obergrenze je Runde, eine Nutzenschwelle,
+und ein ausgewiesener Zustand „der Bestand ist vollständig genug für seine Fragestellung".
+
+- **Ein ADR ist hier fällig:** Überführungsformat der Wertungen, Außerdienststellung der
+  Übersicht, Stoppregel des Zuflusses, Nachträge an ADR 0019, ADR 0027 und ADR 0030.
+
+*Akzeptanz G4:* Kein kuratierter Wert geht verloren (Abgleich Zeile für Zeile, belegt); nach der
+Umstellung erzeugt ein Intake-Lauf **keine** `Z`-Zeile mehr und die Sicherung deckt die neue
+Ablage ab; die Stoppregel steht schriftlich und mit Zahlen, bevor Phase 14 den ersten Kandidaten
+übernimmt.
+
+---
+
+### G5 – Auslegung neu festschreiben
+
+**Aufgabe:** Die Zahl „≤ 500 Paper" steht in den [Leitprinzipien](#leitprinzipien), in der
+[README](README.md) und im [Zielbild](#zielbild--erst-bei-belegter-beschaffbarkeit). Sie stammt aus
+der Zeit mit 145 Papern und ist bei 468 faktisch erreicht. Sie wird durch die in G0.1 **gemessene**
+Grenze ersetzt – und zwar als **Paar** (Volltexte und Gesamteinträge), falls
+[G0.0](#g00--die-vorgaben-dieser-phase-auf-den-prüfstand-stellen) Punkt 3 das bestätigt.
+
+- Beide Gold-Sets werden neu abgeleitet und **beide Baselines neu eingefroren** – zweistufig wie
+  in V1/V2/R3: erst der qid-genaue Nachweis, dann das Einfrieren.
+- Die neue Auslegung wird an **allen** Stellen nachgezogen, an denen die alte steht, und mit dem
+  Datum ihrer Messung versehen. Eine Zahl ohne Messdatum ist genau das, was diese Phase
+  ausgelöst hat.
+
+*Akzeptanz G5:* Beide `--check`-Läufe melden nach dem Neu-Einfrieren 0 Abweichungen; die neue
+Auslegung steht mit Messdatum in Leitprinzipien, README und Zielbild; `python -m scripts.status`
+weist den Stand aus, gegen den gemessen wurde.
+
+---
+
+### Bewusst ausgeschlossen
+
+- **Kein Wechsel des Speichermodells** – kein Qdrant, kein Weaviate, kein Neo4j, kein LanceDB.
+  Sie bleiben im [Zielbild](#zielbild--erst-bei-belegter-beschaffbarkeit) und sind offline nicht
+  beschaffbar ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).
+- **Keine semantischen Embeddings.** Sie wären der naheliegende Griff gegen sinkende
+  Trennschärfe, brauchen aber ein Modell und damit eine Beschaffung; sollte
+  [G0.3](#g03--bleibt-die-retrieval-güte-bei-fünffacher-chunkmenge) ein Qualitätsproblem zeigen,
+  ist das eine **eigene** Phase mit eigener Messung.
+- **Kein Volltext-Download.** [S2](#s2--volltext-holen-opt-in-lizenz-whitelist) bleibt
+  zurückgestellt; Volltexte kommen weiterhin von Hand in den Eingangsordner.
+- **Kein Auto-Watcher** (B4 gilt unverändert) und **kein neues MCP-Werkzeug**.
+- **Kein Tuning** von `k`, `DEFAULT_SEEDS`, Fusionsparametern oder der Guardrail an den Fragen
+  dieser Phase ([ADR 0014](docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)). Diese Phase
+  ändert die **Kosten** des Retrievals, nicht seine **Politik**.
+- **Keine Migration alter Index-Dateien.** Ein Schema-Wechsel wird wie bisher durch einen vollen
+  Re-Index eingelöst.
+
+### Definition of Done
+
+- **G0 ist beantwortet und als Statusblock eingetragen** – einschließlich G0.0 und einschließlich
+  eines möglichen „lohnt sich nicht"; der Validitätsanker ist bestanden.
+- Der Aufnahmepfad hat keine in der Paperzahl quadratische Stelle mehr, und alle abgeleiteten
+  Artefakte sind byte-identisch zum heutigen Stand.
+- Eine Einzelanfrage bleibt am neuen Auslegungsstand unter **5 s**; ein vollständiger Messlauf ist
+  in dokumentierter Dauer durchführbar.
+- Die kuratierten Wertungen der Übersicht sind maschinenlesbar überführt, die Datei ist außer
+  Dienst, die Stoppregel des Zuflusses steht schriftlich.
+- Beide Gold-Sets sind neu abgeleitet, beide Baselines neu eingefroren, beide `--check`-Läufe
+  melden 0 Abweichungen; die neue Auslegung ist mit Messdatum festgeschrieben.
+- **ADRs:** je einer für die Antwortzeit-Entscheidung (G2, voraussichtlich
+  [ADR 0033](docs/adr/README.md)) und für die Ablösung der Übersicht samt Stoppregel (G4);
+  Nachträge an ADR 0005, ADR 0010, ADR 0019, ADR 0027 und ADR 0030, wo deren Aussagen berührt
+  sind.
+- **Doku nach [CONTRIBUTING](CONTRIBUTING.md):** Modul-Doku der berührten Pakete, Aktualisierung
+  von [docs/funktionsweise.md](docs/funktionsweise.md) (Abschnitt 1 behauptet heute „der Index
+  wird pro Anfrage frisch geladen"), [docs/features.md](docs/features.md),
+  [docs/repository-structure.md](docs/repository-structure.md) und der [README](README.md).
+- **Qualitäts-Gates:** `ruff check .`, `ruff format --check .`, `mypy src`, `pytest tests -q`
+  grün; Zeilenabdeckung der berührten Module als Richtwert ≥ 80 %
+  (`python -m scripts.coverage_offline`).
+- **Tests:** Identitätsnachweis der begradigten Graphen, Invalidierung eines Zwischenspeichers bei
+  ausgetauschtem Index, Determinismus bei wiederholtem Laden, Überführung der kuratierten
+  Wertungen ohne Verlust, Intake ohne `Z`-Zeile.
+
+---
+
+## Phase 14 – Referenz-Ernte: externe Verweise aus dem eigenen Bestand
+
+> **Status: geplant.** Diese Phase ist noch **nicht** gemessen und **nicht** entschieden. Sie
+> beginnt zwingend mit [E0](#e0--alles-hinterfragen-und-messen-zwingend-zuerst), und E0 hat
+> ausdrücklich das Recht, die Phase zu **verkleinern oder zu streichen** – wie [S0](#s0--recherche--machbarkeit-zwingend-zuerst-mit-abbruchkriterium),
+> [B6](docs/roadmap-historie.md#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen) und
+> [R0](#r0--ausbeute-nutzen-und-verdrängung-messen-zwingend-zuerst-mit-abbruchkriterium) das
+> vorgeführt haben. Kein Produktivcode vor E0.
+>
+> **Sie läuft nach [Phase 15](#phase-15--skalierung-den-wachsenden-bestand-tragen)**
+> ([Begründung](#der-aktive-plan--bearbeitungsreihenfolge)). Drei Voraussetzungen kommen von
+> dort: die bezifferte Laufzeit des Aufnahmepfads (sonst misst E0.6 einen Zustand, der sich
+> gleich danach ändert), die Entscheidung über
+> [`Übersicht.md`](Übersicht.md) (sonst beantwortet [E0.5](#e05--verträgt-die-kuratierte-übersicht-den-zufluss)
+> eine Frage, die bereits anders entschieden ist) und das **maschinenlesbare Relevanzurteil**
+> aus [G4](#g4--zuflussregel-und-ablösung-der-übersicht), ohne das die Auswahlregel dieser Phase
+> ein reines Popularitätsmaß bliebe – genau der Verdacht aus
+> [E0.0](#e00--die-vorgaben-dieser-phase-auf-den-prüfstand-stellen) Punkt 3.
+
+**Ziel:** Was [Phase 13](#phase-13--referenz-einträge-ohne-volltext) mit einer **von Hand
+gepflegten** Kennungsliste leistet, entsteht hier **aus dem eigenen Bestand**: Die
+Referenzabschnitte der Korpus-Paper werden geerntet, die Verweise auf Paper **außerhalb** des
+Korpus nach belegtem Nutzen sortiert und – nach menschlicher Sichtung – über den **bestehenden**
+Weg zu Referenz-Einträgen. Ein später eintreffendes Volltext-PDF ersetzt seinen Stub; diese Regel
+ist gebaut ([ADR 0030](docs/adr/0030-reference-entries-in-corpus-phase13.md)), aber bislang nur
+**im Kleinen** belegt.
+
+### Der Zuschnitt in einem Satz – und was er ausdrücklich nicht ist
+
+Phase 14 baut **keinen zweiten Weg in den Korpus**. Sie erzeugt eine **Vorschlagsliste** und
+befüllt daraus – auf ausdrückliche Anweisung – `new_papers/referenzen.txt`. Alles danach ist
+bereits vorhanden und bleibt unverändert:
+
+```mermaid
+flowchart LR
+    A["papers/*.pdf<br/>Referenzabschnitte"] --> B["E1 · Ernte<br/>scripts.harvest_references"]
+    B --> C["data/reference_candidates.md<br/>Vorschläge, nach Nutzen sortiert"]
+    C --> D["E2 · Kuration<br/>--uebernehmen"]
+    D --> E["new_papers/referenzen.txt"]
+    E --> F["R1 · scripts.resolve_references<br/>unverändert"]
+    F --> G["new_papers/*.refjson"]
+    G --> H["R2/R3 · scripts.intake<br/>unverändert"]
+    H --> I["Korpus-Eintrag<br/>document_kind = reference"]
+    J["später: echtes PDF"] --> H
+    H --> K["Volltext schlägt<br/>Referenz-Eintrag"]
+```
+
+Die entscheidende Beobachtung steckt in der rechten Hälfte: `resolve_references`, `intake` und
+die Regel „Volltext schlägt Referenz-Eintrag" **existieren bereits** und werden nicht angefasst.
+Neu sind ausschließlich **Ernte**, **Vorschlagsbericht** und **Kuration** – plus der Nachweis,
+dass die bestehende Kette auch im **Maßstab** hält.
+
+### Warum das nötig ist (und was heute fehlt)
+
+1. **Der Befund verfällt bei jedem Ingest.** `citation_graph` verwirft jeden Verweis, dessen Ziel
+   nicht im Korpus liegt – ohne Spur. Die in [R0](#r0--ausbeute-nutzen-und-verdrängung-messen-zwingend-zuerst-mit-abbruchkriterium)
+   gezählten **3371** toten Verweise sind **nirgends persistiert**; sie stammen aus einer
+   Wegwerf-Messung, deren Skript gelöscht ist. Wer sie heute sehen will, muss sie neu zählen.
+2. **Die Kennungsliste ist Handarbeit an der falschen Stelle.** `referenzen.txt` will genau die
+   Kennungen, die in den eigenen PDFs bereits stehen. Sie von Hand herauszusuchen heißt, eine
+   Maschinenaufgabe zu erledigen – und dabei genau die Priorisierung zu verlieren, die R0 als
+   entscheidend ausgewiesen hat (der Nutzen konzentriert sich stark: zehn Einträge bringen 307
+   Kanten, danach fällt der Ertrag je Eintrag auf 1,6).
+3. **Der Upgrade-Pfad ist an *einem* Stub belegt, nicht an Hunderten.** R2 hat ihn an
+   Miniatur-Korpora nachgewiesen; die Waise im Datenbestand fiel erst bei der Umsetzung auf. Ein
+   Massenlauf ist eine andere Belastungsprobe.
+
+### Fünf Festlegungen, die vorab getroffen sind
+
+| Festlegung | Begründung |
+| --- | --- |
+| **Genau ein Weg in den Korpus** | Die Ernte endet in einer **Berichts**datei, nie in `papers/`, nie direkt in einer `.refjson`. Die Übernahme läuft über `referenzen.txt` und damit durch R1/R2/R3 mit ihrer dreistufigen Duplikatprüfung. Dieselbe Auflage wie in [S2](#s2--volltext-holen-opt-in-lizenz-whitelist) und [R1](#r1--auflösung--stub-erzeugung-kein-volltext-download). |
+| **Der Mensch entscheidet, was aufgenommen wird** | Ein Automat, der 3371 Kennungen in den Korpus schiebt, verwässert genau das, was [`Übersicht.md`](Übersicht.md) und der kuratierte Bestand ausmachen – und er verschiebt die Arbeit von der Suche zur Sichtung, ohne sie zu verringern. Die Ernte **sortiert und begründet**, sie übernimmt nicht. |
+| **Kein GROBID, kein tiefes Referenz-Parsing** | Bleibt Zielbild (Gruppe B, [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md), Docker/Java offline nicht beschaffbar). Geerntet wird ausschließlich, was heute schon mechanisch belegbar ist: **DOI und arXiv-ID im Referenztext**. Titel- und Autoren-Extraktion aus Bibliografiezeilen ist ausdrücklich **nicht** Teil dieser Phase. |
+| **Kein MCP-Werkzeug** | Die Ernte ist ein Wartungsvorgang und schreibt Dateien; die Übernahme verändert den kuratierten Bestand. Beides gehört nicht in Agent-Reichweite (gleiche Begründung wie bei `scripts.intake`, `scripts.discover` und `scripts.resolve_references`). Der Server bleibt bei **neun** Werkzeugen. |
+| **Kein Netz in E1** | Die Ernte arbeitet **ausschließlich** auf `data/canonical/` bzw. `data/index/index.sqlite` und ist damit offline, deterministisch und ohne Kontingentverbrauch wiederholbar. Netz berührt erst der bestehende R1-Lauf. |
+
+---
+
+### E0 – Alles hinterfragen und messen (zwingend zuerst)
+
+Dieser Schritt ist der **wichtigste der Phase**, und er hat zwei Teile: Zuerst werden die
+Vorgaben dieser Phase selbst geprüft (E0.0), danach folgen sieben Messfragen mit **vorab
+fixierten** Schwellen. Es entsteht **kein Produktivcode** – nur Wegwerf-Skripte, deren Ergebnisse
+als Statusblock hier eingetragen werden. Kein ADR (E0 baut nichts und entscheidet keine
+Architektur; dieselbe Handhabung wie S0, R0 und B6).
+
+> **Pflicht vor allem anderen – der Validitätsanker** (Muster seit [V1](#v1--local-mehrere-seeds-statt-eines)):
+> Die Ernte muss den heutigen Index **exakt** reproduzieren, bevor irgendeine daraus abgeleitete
+> Zahl zählt. Konkret: dieselben `CITES`-Kanten wie `citation_edges` (R0 erreichte 1481 von 1481)
+> **und** eine nachvollziehbare Erklärung für jede Abweichung. Ohne bestandenen Anker endet E0 an
+> dieser Stelle – die Messung wird nicht fortgesetzt, sondern die Abweichung geklärt.
+
+#### E0.0 – Die Vorgaben dieser Phase auf den Prüfstand stellen
+
+Bevor gemessen wird, wird **diese Roadmap-Seite selbst** gegen den Code geprüft. In A3, A5, A7,
+V1–V3, B6 und R0–R3 hat sich jede einzelne Vorgabe mindestens einmal als ungenau erwiesen; es
+wäre bemerkenswert, wenn ausgerechnet diese fehlerfrei wäre. Zu beantworten sind mindestens:
+
+1. **Stimmt die Behauptung, die bestehende Kette werde „nur wiederverwendet"?** Nachzuweisen an
+   `online/references.py`, `intake.py` und `extraction/refstub.py` – und zwar mit der Frage,
+   welche **Annahme über die Größenordnung** dort implizit steckt (Beispiele:
+   `DEFAULT_LIMIT = 25` je Lauf, das Laden **aller** Canonical-Dateien in `load_corpus`, der
+   volle Re-Index je Intake-Lauf).
+2. **Ist „Nutzen = Zahl neuer `CITES`-Kanten" überhaupt das richtige Maß?** R0 hat Kanten
+   gezählt, nicht beantwortete Fragen. Eine Kante auf ein Paper, dessen Abstract nichts Neues
+   sagt, ist Buchhaltung. Gegenprobe: Wie viele der Top-Kandidaten sind **thematisch** überhaupt
+   im Interesse des Korpus, und wie viele sind Methodik-Klassiker, die ohnehin jeder zitiert
+   (`Attention Is All You Need`, `BERT`, METIS …)?
+3. **Ist die Auswahlregel „von *n* Papern zitiert" nicht in Wahrheit ein Popularitätsmaß?**
+   Sie bevorzugt systematisch, was ein Fachgebiet ohnehin kennt, und übergeht die spezifische
+   Arbeit, die genau eine Sub-Forschungsfrage trifft. Zu prüfen ist mindestens eine Alternative
+   (z. B. „von Papern zitiert, die derselben Community angehören" oder „zitiert von den Papern
+   mit hoher `Relevanz fuer Expose`").
+4. **Was ist mit Verweisen ohne DOI und ohne arXiv-ID?** Die ursprüngliche Idee sprach von
+   „externen Links". Zu zählen ist, **wie viele** Referenzeinträge im Korpus **nur** eine URL
+   oder gar keinen Identifikator tragen – und ob daraus ohne Referenz-Parser überhaupt etwas
+   Auflösbares wird. *Erwartung, die zu widerlegen ist:* nein, und der Punkt bleibt zurückgestellt.
+5. **Bricht die Phase eine bestehende Festlegung?** Insbesondere die Betriebsregel aus
+   [R3](#r3--wirkung-sichern-contract-baselines-guardrail) („der Produktivkorpus bleibt vorerst
+   bewusst stubfrei, damit die neu eingefrorenen Baselines einen sauberen Referenzzustand
+   beschreiben"). Phase 14 beendet diesen Zustand – bewusst, oder gar nicht.
+6. **Gibt es einen billigeren Weg zum selben Ergebnis?** Etwa: die zehn bis fünfzig
+   meistzitierten Kennungen **einmalig** von Hand aus einem Wegwerf-Skript in `referenzen.txt`
+   kopieren und die Phase auf E0 beenden. R0 zeigt, dass **zehn** Einträge bereits 307 Kanten
+   stiften – gemessen an diesem Ertrag muss ein gebautes Werkzeug seinen eigenen Aufwand erst
+   rechtfertigen. *Dieser Punkt ist ernst gemeint und ein zulässiges Ergebnis der ganzen Phase.*
+
+*Ergebnis von E0.0 ist eine schriftliche Antwort je Punkt im Statusblock* – auch dann (und
+gerade dann), wenn sie den Zuschnitt unten verkleinert.
+
+#### E0.1 – Präzision der geernteten Kennungen
+
+R0 hat 40 Treffer von Hand geprüft: arXiv **10/10**, DOI **27/30**; die drei Fehler waren
+Abschneide- und Anklebefehler am Zeilenumbruch (`10.3390/electronics14112102vol`), dazu **95**
+am Umbruch abgeschnittene DOIs, deren Rümpfe (`10.18653/v1/`) auf viele Einträge passen und in
+der Häufigkeitsliste **nach oben** gespült werden.
+
+*Zu messen:* Wie viele der Kandidaten sind **mechanisch** als defekt erkennbar (Länge, bekanntes
+Präfix ohne Suffix, angeklebtes Wort, DataCite-Dublette), ohne zu raten?
+*Schwelle:* **≥ 95 %** der vorgeschlagenen Kennungen sind entweder auflösbar oder vorab als
+defekt markiert. Darunter wird nicht die Ernte verbessert, sondern die Phase auf die
+**arXiv-Kennungen** beschränkt (dort war die Präzision 10/10).
+
+#### E0.2 – Skaliert die Guardrail? (das schärfste Abbruchkriterium)
+
+[R3](#r3--wirkung-sichern-contract-baselines-guardrail) hat `demote_references` an **52** Stubs
+gemessen: 13 qid-Regressionen sinken auf **3 ohne Totalverlust**. Diese Zahl sagt **nichts** über
+350 Stubs. Die Guardrail sortiert innerhalb der Top-*k* um – je mehr Stubs gleichzeitig in einer
+Trefferliste stehen, desto mehr Volltext-Treffer verdrängen sie **vor** der Umsortierung, weil
+die Auswahl unangetastet bleibt.
+
+*Zu messen* an Index-Kopien (Methodik wie B6/R0/R3, Live-Index bleibt unberührt), gestaffelt mit
+echten Abstracts: **50 / 150 / 350** Referenz-Einträge, qid-genau über **alle zehn Ebenen**
+beider Gold-Sets, jeweils mit und ohne Guardrail.
+*Vorab fixierte Entscheidungsregel:* Ausgewiesen wird die **größte** Menge, die **0
+Totalverluste** aus den Top 5 erzeugt und die Handprobe aus R0 (10 Fragen) vollständig hält.
+Genau diese Zahl wird zur **Kontingent-Empfehlung** von [E2](#e2--kuratierte-übernahme-in-referenzentxt).
+*Abbruchkriterium:* Erzeugt bereits die kleinste Stufe (50) einen Totalverlust, wird die Phase
+auf eine **feste Obergrenze** unterhalb dieser Stufe gestutzt – oder gestrichen.
+
+#### E0.3 – Was macht der Ähnlichkeitsgraph mit vielen einchunkigen Papern?
+
+Ein Referenz-Eintrag hat **genau einen** kurzen Chunk. [B6](docs/roadmap-historie.md#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen)
+hat gezeigt, dass der Graph empfindlich auf Dichteänderungen reagiert – und zwar an der Ebene,
+die von ihm lebt (Global verlor Hit@5, der Lift halbierte sich). Hunderte dünner Vektoren können
+eigene „Stub-Communities" bilden, die `list_topics` und die Global Search verrauschen.
+
+*Zu messen* je Staffelung aus E0.2: Kantenzahl, Singletons, größte Community (Anteil am Korpus),
+**Anteil Referenz-Einträge je Community**, Global-Lift gegen beide Trivial-Baselines,
+`no_community`/`fallback` der DRIFT-Ebene.
+*Schwelle:* Der Lift der Community-Auswahl fällt **nicht unter 3,0** (Bezug: 5,80 im
+eingefrorenen Stand), und keine Community besteht zu über **50 %** aus Referenz-Einträgen.
+Andernfalls braucht die Phase eine Zusatzentscheidung (Referenz-Einträge aus dem
+Ähnlichkeitsgraphen heraushalten und nur als Zitationsziele führen) – die dann **eigenes** ADR
+und eigene Messung bekommt, statt nebenbei zu passieren.
+
+#### E0.4 – Die Zirkularitätsfalle der Multi-Hop-Messung
+
+Das Multi-Hop-Gold wählt Anker mit **≥ 3 zitierenden** Korpus-Papern
+([ADR 0023](docs/adr/0023-multihop-citation-evaluation-phase10.md), `min_citing`). **Genau nach
+diesem Kriterium** würde E2 die Kandidaten auswählen. Die neuen Stubs würden also massenhaft zu
+**Gold-Ankern** – und zwar zu besonders leichten: Ihr Titel steht per Konstruktion in den
+Bibliografien der zitierenden Paper, also greift der in ADR 0023 beschriebene `:ref`-Kurzschluss.
+Die Multi-Hop-Kennzahl stiege, **ohne dass das Retrieval besser würde**.
+
+*Zu messen:* Wie viele der neu aufgenommenen Referenz-Einträge werden bei einer Neuableitung zu
+Ankern, und wie verschiebt sich der Anteil `:ref`-Treffer gegenüber `:body`?
+*Konsequenz statt Schwelle:* Ist der Anteil erheblich, muss [E4](#e4--wirkung-messen-baselines-und-guardrail-nachziehen)
+die Ankerwahl auf `document_kind = 'full'` einschränken – analog zum Ausschluss der Stubs aus der
+**lexikalischen** Gold-Ableitung in R3. Das wäre eine **Korrektur an ADR 0023**, dessen Punkt 3
+Stubs als Multi-Hop-Ziele ausdrücklich zulässt: Ziel bleiben sie, **Anker** dürfen sie nicht
+werden. Diese Unterscheidung ist vorab zu belegen, nicht zu behaupten.
+
+#### E0.5 – Verträgt die kuratierte Übersicht den Zufluss?
+
+Jeder Intake-Lauf hängt je neuem Paper eine `Z`-Entwurfszeile an
+[`Übersicht.md`](Übersicht.md) ([ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md),
+[ADR 0030](docs/adr/0030-reference-entries-in-corpus-phase13.md)). Bei dreistelligen
+Stub-Zahlen wäre die kuratierte Tabelle danach überwiegend **nicht kuratiert** – und damit als
+Landkarte entwertet.
+
+*Zu entscheiden* (mit gezähltem Ist-Stand als Grundlage): eigener Abschnitt/eigene Tabelle für
+Referenz-Einträge, gar keine Zeile für sie, oder unverändert weiter. Jede Option berührt eine
+bestehende Festlegung und braucht daher eine Begründung im ADR von [E2](#e2--kuratierte-übernahme-in-referenzentxt).
+*Erwartung, die zu prüfen ist:* Die Zeile ist für einen Referenz-Eintrag wertvoll (er ist
+zitierfähig und soll sichtbar sein), die **Menge** ist das Problem – nicht die Zeile.
+
+#### E0.6 – Kontingent, Laufzeit und der Weg dorthin
+
+Drei harte Betriebsgrenzen sind zu beziffern, bevor irgendetwas läuft:
+
+| Grenze | Bekannt aus | Zu klären |
+| --- | --- | --- |
+| **OpenAlex-Kontingent** | S0: 1000 Einheiten/Tag, 10 je Anfrage ⇒ ≈ 100 Abfragen/Tag; R1: `DEFAULT_LIMIT = 25` | Wie viele Läufe über wie viele Tage sind für die in E0.2 ermittelte Menge nötig – und hält die Idempotenz über diese Strecke? |
+| **Ingest-Laufzeit** | voller Re-Index je Intake-Lauf ([ADR 0010](docs/adr/0010-drop-in-workflow-and-qa-phase6.md)) | In [Phase 15 / G0.2](#g02--was-kostet-ein-referenz-eintrag-wirklich) bereits je Staffelung beziffert – hier nur noch gegen die tatsächlich übernommene Menge zu prüfen. |
+| **Messdauer** | `--modi`/`--zitationen` laden den Index je Ebene neu | Durch [Phase 15 / G3](#g3--messung-ohne-wartezeit) vorab erledigt oder als bewusst getragene Dauer ausgewiesen. |
+
+*Konsequenz:* Ergibt sich, dass B2 oder B3 zwingend vorher nötig sind, wird das hier vermerkt und
+die Reihenfolge geändert – nicht umgangen.
+
+#### E0.7 – Handprobe: wird eine echte Frage besser beantwortet?
+
+Kanten sind kein Selbstzweck. Wie in R0 werden **zehn Fragen** formuliert, die sich auf die
+Kandidaten der Ernte beziehen (Multi-Hop: „welche Paper meines Korpus stützen sich auf X?" sowie
+Fakt-Fragen, deren Antwort nur im Abstract von X steht), und vor/nach der Aufnahme gestellt.
+*Schwelle:* Mindestens **7 von 10** werden nach der Aufnahme belegt beantwortet, vorher keine.
+Darunter ist der Nutzen nicht belegt, und die Phase endet mit einem dokumentierten Befund.
+
+#### Gesamtes Abbruchkriterium
+
+Die Phase entfällt, wenn E0.0 einen billigeren gleichwertigen Weg findet **oder** E0.2 schon bei
+50 Einträgen einen Totalverlust zeigt **oder** E0.7 unter der Schwelle bleibt. Ein „lohnt sich
+nicht" ist ein vollwertiges Ergebnis und wird wie bei
+[B6](docs/roadmap-historie.md#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen) als Statusblock festgehalten.
+
+*Akzeptanz E0:* E0.0 ist schriftlich je Punkt beantwortet, E0.1 bis E0.7 sind **mit Zahlen**
+beantwortet, und beides steht als Statusblock am Anfang dieser Phase; der Validitätsanker ist
+bestanden; die Wegwerf-Skripte sind gelöscht, die Rohdaten liegen unter `data/online_probe/`
+(nicht versioniert); der Live-Index ist nachweislich unberührt.
+
+---
+
+### E1 – Ernte: tote Verweise sichtbar und sortierbar machen
+
+> Erst umsetzen, wenn E0 die Phase bestätigt **und** ihren Zuschnitt festgelegt hat.
+
+**Aufgabe:** Ein offline, read-only laufender Befehl liest die Referenzabschnitte des Korpus,
+sammelt alle DOI-/arXiv-Kennungen, die auf **kein** Korpus-Paper zeigen, bereinigt sie und
+schreibt einen nach Nutzen sortierten Bericht.
+
+**Verortung (Repo-Konvention: Logik im Paket, Skript dünn):**
+
+| Artefakt | Zweck |
+| --- | --- |
+| `src/research_graphrag/harvest.py` | Top-Level-Modul wie `intake.py` und `backup.py` – Ernte, Bereinigung, Bewertung, Bericht |
+| `src/research_graphrag/doc/harvest.md` | Modul-Doku (Pflicht nach [ADR 0018](docs/adr/0018-code-documentation-architecture.md)) |
+| `scripts/harvest_references.py` | dünner CLI-Aufsatz, `python -m scripts.harvest_references` |
+| `data/reference_candidates.md` | append-only Bericht (Muster: `data/online_candidates.md`) |
+
+**Wiederverwendung statt Neubau – verbindlich:**
+
+- Die Referenzabschnitte kommen über `citation_graph._reference_text` bzw. dessen öffentlich zu
+  machende Entsprechung. **Keine zweite Definition davon, was ein Referenzabschnitt ist.**
+- „Liegt das schon im Korpus?" beantwortet `intake.load_corpus` / `CorpusView` – dieselbe
+  gehärtete Grundlage wie in [S1](#s1--kandidaten-finden-metadaten-kein-download) und
+  [R1](#r1--auflösung--stub-erzeugung-kein-volltext-download). Zwei Wahrheiten darüber wären eine
+  Fehlerquelle.
+- Die Kennungs-Deutung inklusive DataCite-Normalisierung (`10.48550/arXiv.X` → `X`) leistet
+  `online.references.normalize_identifier`. Sie wird **importiert**, nicht nachgebaut.
+
+**Die drei Korrekturen aus R0 sind Pflichtbestandteil**, nicht Kür – ohne sie liegt die Rohzahl
+rund 7 % zu hoch (**3634** gegen bereinigt **3371**), und schlimmer: Die Sortierung ist genau an
+der Spitze falsch, wo die Kuration hinschaut:
+
+1. **Abgeschnittene DOIs verwerfen** (Zeilenumbruch-Artefakte wie `10.18653/v1/`): Ein Präfix
+   ohne Suffix passt auf viele Einträge und wird dadurch nach oben gespült.
+2. **DataCite-Dubletten zusammenführen** (`10.48550/arXiv.X` und `X` sind dasselbe Werk).
+3. **Frontmatter-Guard-Aussetzer erkennen:** R0 fand 42 Kennungen, die sehr wohl ein
+   Korpus-Paper treffen, dessen Identifikator nur den Guard aus
+   [ADR 0011](docs/adr/0011-intra-corpus-citation-graph-phase7.md) nicht passiert hat. Sie sind
+   **keine** Kandidaten und werden als eigene Kategorie ausgewiesen – sie sind zugleich ein
+   Befund über den Guard.
+
+**Der Bericht muss die Übernahme vorbereiten, nicht nur informieren.** Je Kandidat:
+
+- Kennung, Art, Häufigkeit (Zahl zitierender Korpus-Paper), die zitierenden `paper_id`s,
+- die **Community**, aus der die Zitierenden überwiegend stammen (Priorisierung nach Thema statt
+  nur nach Popularität – siehe E0.0 Punkt 3),
+- ein Referenzkontext-Auszug als Beleg (**entschärft**: fremder Text aus PDFs ist keine
+  vertrauenswürdige Eingabe – Muster `online.report.safe_url` bzw. `_clean`),
+- eine **kopierfertige Zeile** im Format von `referenzen.txt`
+  (`10.1145/1376616.1376629  # 7 zitierende, Community 12`).
+
+*Akzeptanz E1:* Der Lauf ist **read-only** (kein Schreibzugriff außer auf den Bericht),
+deterministisch (zwei Läufe ⇒ byte-identischer Abschnitt), offline, und die Summe seiner
+Kategorien geht auf: `gesamt = im Korpus + defekt + DataCite-Dublette + Guard-Aussetzer +
+Kandidaten`. Die Kandidatenzahl reproduziert den E0-Anker.
+
+---
+
+### E2 – Kuratierte Übernahme in `referenzen.txt`
+
+**Aufgabe:** Aus dem Bericht wird auf ausdrückliche Anweisung eine begrenzte Auswahl an
+`new_papers/referenzen.txt` angehängt – append-only, byte-erhaltend, atomar.
+
+- **Opt-in-Schalter**, nie Standard: `--uebernehmen` zusätzlich zu `--dry-run`.
+- **Zwei Filter, beide mit Vorgabewert aus E0:** `--min-zitierende N` (Nutzenschwelle) und
+  `--limit N` (Kontingent, Obergrenze aus [E0.2](#e02--skaliert-die-guardrail-das-schärfste-abbruchkriterium)).
+  Der Vorgabewert von `--limit` ist **die gemessene Zahl**, nicht eine runde.
+- **Schreibweise wie ein Mensch sie schriebe:** eine Kennung je Zeile mit Kommentar
+  (`# 7 zitierende, Community 12, geerntet 2026-08-28`). Die Liste bleibt ein **kuratiertes
+  Dokument**; kuratierte Zeilen und Kommentare bleiben byte-identisch.
+- **Idempotenz gegen vier Zustände** – die drei aus R1 (Korpus, Eingang, Quarantäne) **plus die
+  Liste selbst**. Ein zweiter Lauf hängt **nichts** an. Das ist die Stelle, an der Phase 12 / K2
+  gestolpert ist (Zielauswahl las den Index, der Lauf schrieb eine Datei).
+- **Ein ADR** ist hier fällig: Auswahlregel, Vorgabewerte, Umgang mit
+  [`Übersicht.md`](Übersicht.md) aus [E0.5](#e05--verträgt-die-kuratierte-übersicht-den-zufluss)
+  und das bewusste Beenden der stubfreien Betriebsregel aus R3.
+
+*Akzeptanz E2:* `--dry-run` verändert nachweislich nichts (Hash-Abbild des Baums identisch); ein
+Lauf hängt genau die ausgewählten Kennungen an; ein zweiter Lauf hängt **nichts** an; die Datei
+ist danach – abgesehen von den neuen Zeilen – byte-identisch; kein Lauf berührt `papers/`.
+
+---
+
+### E3 – Der Massenlauf: Auflösung, Intake und Upgrade im Maßstab
+
+**Aufgabe:** Nachweisen, dass die bestehende Kette R1 → R2 → R3 die in E0.2 ermittelte Menge
+trägt – und die Stellen härten, an denen sie es nicht tut. **Erwartet wird, dass mindestens eine
+solche Stelle auftaucht**; in R2 waren es der Frontmatter-Guard und die Waise.
+
+Vier Belastungspunkte, jeder mit einem Regressionstest zu belegen:
+
+1. **Auflösung über mehrere Läufe.** `resolve_references --limit` über die nötige Zahl von
+   Durchgängen; jeder Folgelauf stellt für bereits erledigte Kennungen **keine** Abfrage. Nicht
+   auflösbare Kennungen bleiben Befunde und blockieren den Lauf nicht.
+2. **Intake in Chargen.** Viele `.refjson` in **einem** Lauf: Namenskollisionen (zwei Werke mit
+   sehr ähnlichem Titel), Titel-Verdachtsstufe gegen den gewachsenen Bestand, Laufzeit des
+   vollen Re-Index.
+3. **Upgrade im Maßstab.** Mehrere Volltext-PDFs treffen in **einem** Lauf auf vorhandene Stubs:
+   Für jeden muss `forget_source` greifen (keine Waise), die Übersichtszeile umgebogen und
+   **nicht** dupliziert werden, und je Ablösung steht eine Protokollzeile mit sha256 in
+   `data/intake_log.md`. Der umgekehrte Fall bleibt Quarantäne.
+4. **Abbruch mittendrin.** Ein Fehler in Charge *n* lässt den bisherigen Index intakt (atomarer
+   Swap) und hinterlässt **keinen** halben Zustand im Eingang.
+
+*Akzeptanz E3:* Der Nachweis läuft auf einer **Korpus-Kopie** (Muster aus
+[ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md) und R2), nicht auf dem
+Produktivbestand; jede gefundene Schwachstelle ist behoben **und** durch einen Test festgehalten;
+`python -m scripts.status` meldet danach einen konsistenten Stand
+(`papers/ ↔ manifest ↔ canonical`).
+
+---
+
+### E4 – Wirkung messen, Baselines und Guardrail nachziehen
+
+**Aufgabe:** Die Aufnahme sichtbar und der Regressionsschutz wieder scharf machen. Reihenfolge
+wie in R3 – **Messung zuerst**, dann Code, dann Neu-Einfrieren, zuletzt `--check`.
+
+- **Der qid-genaue Nachweis kommt vor dem Einfrieren.** Ein `--check` gegen die *alten*
+  Baselines nach einem Korpuswachstum ertränkt den Effekt im Rauschen; R0 hat das beziffert
+  (27 Regressionen allein aus dem Wachstum gegen 13 aus dem Stub-Effekt).
+- **Die Ankerwahl der Multi-Hop-Messung wird gemäß [E0.4](#e04--die-zirkularitätsfalle-der-multi-hop-messung)
+  entschieden** – Referenz-Einträge bleiben **Ziele**, werden aber vermutlich als **Anker**
+  ausgeschlossen. Fällt die Entscheidung so, ist sie ein Eingriff in
+  [ADR 0023](docs/adr/0023-multihop-citation-evaluation-phase10.md) und braucht dessen Nachtrag.
+- **Beide Gold-Sets werden neu abgeleitet** (`--write-gold`, `--zitationen --write-gold`) und
+  **beide Baselines neu eingefroren**; `--verify-labels` muss vollständig reproduzieren.
+- **Die Guardrail wird gegen die reale Menge nachgemessen.** Bestätigt sich die E0.2-Prognose
+  nicht, wird `demote_references` **nicht** heimlich um einen Parameter erweitert, sondern die
+  aufgenommene Menge reduziert. Die Regel ist heute parameterfrei – das bleibt sie.
+- **Kennzahlen, die diese Phase ausweisen muss:** Zahl der Referenz-Einträge, neue `CITES`-Kanten
+  absolut und relativ, Anteil der Paper mit mindestens einer neuen ausgehenden Kante, Global-Lift
+  und Community-Zusammensetzung aus [E0.3](#e03--was-macht-der-ähnlichkeitsgraph-mit-vielen-einchunkigen-papern),
+  qid-Bilanz über alle zehn Ebenen, Handprobe aus [E0.7](#e07--handprobe-wird-eine-echte-frage-besser-beantwortet).
+
+*Akzeptanz E4:* Beide `--check`-Läufe melden nach dem Neu-Einfrieren **0 Abweichungen**; die
+qid-Bilanz vor dem Einfrieren ist dokumentiert und enthält **keinen** Totalverlust aus den Top 5;
+jede Ausgabe weist Referenz-Einträge weiterhin als unvollständig aus (Contract aus
+[ADR 0031](docs/adr/0031-reference-contract-and-guardrail-phase13.md) unverändert gültig).
+
+---
+
+### Bewusst ausgeschlossen
+
+- **Kein Volltext-Download.** Das bleibt [S2](#s2--volltext-holen-opt-in-lizenz-whitelist) und
+  damit zurückgestellt; Phase 14 lädt keine PDFs.
+- **Keine Titel-/Autoren-Extraktion aus Bibliografiezeilen.** Das ist Referenz-Parsing und
+  braucht GROBID (Zielbild, Gruppe B). Ohne Identifikator kein Kandidat.
+- **Keine URL-Auflösung ohne DOI/arXiv-ID** – zurückgestellt bis [E0.0](#e00--die-vorgaben-dieser-phase-auf-den-prüfstand-stellen)
+  Punkt 4 das Gegenteil belegt.
+- **Keine automatische Übernahme ohne Sichtung**, kein Dauerbetrieb, kein Watcher
+  ([B4](docs/roadmap-historie.md#b4--auto-watcher-bewusst-gestrichen) gilt unverändert).
+- **Kein MCP-Werkzeug** und **keine zweite Duplikatlogik** neben der aus Phase 8.
+- **Keine LLM-gestützte Anreicherung** eines Abstracts – Scheinsicherheit in Reinform, wie in
+  Phase 13 festgehalten.
+- **Kein Tuning** von `k`, `min_citing` oder Guardrail-Parametern an den Fragen dieser Phase
+  ([ADR 0014](docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)).
+
+### Definition of Done
+
+- **E0 ist beantwortet und als Statusblock eingetragen** – einschließlich E0.0 und
+  einschließlich eines möglichen „lohnt sich nicht".
+- Ein Befehl erntet die toten Verweise offline und read-only; ein zweiter Befehl (bzw. Schalter)
+  übernimmt eine **begrenzte, begründete** Auswahl nach `referenzen.txt`; beide sind mit
+  `--dry-run` nachweislich wirkungslos.
+- Die Kette `referenzen.txt` → `resolve_references` → `intake` läuft im Maßstab durch; ein
+  später eintreffendes Volltext-PDF ersetzt seinen Stub **auch im Batch**, ohne Waise und ohne
+  doppelte Übersichtszeile.
+- Beide Gold-Sets sind neu abgeleitet, beide Baselines neu eingefroren, beide `--check`-Läufe
+  melden 0 Abweichungen; die Zirkularitätsfrage aus E0.4 ist entschieden und begründet.
+- **ADRs:** je einer für die Ernte samt Auswahlregel (E1/E2) und – falls E0.3/E0.4 es erzwingen –
+  einer für die Graph-/Ankerwahl-Anpassung; die Nummern ergeben sich fortlaufend **nach** denen
+  aus [Phase 15](#phase-15--skalierung-den-wachsenden-bestand-tragen), weil diese zuerst läuft
+  (Stand heute: nächste freie Nummer ist [0033](docs/adr/README.md)). Nachträge an ADR 0023 und
+  ADR 0031, wo deren Aussagen berührt sind.
+- **Doku nach [CONTRIBUTING](CONTRIBUTING.md):** Modul-Doku `doc/harvest.md`, Eintrag in
+  [docs/features.md](docs/features.md), Ablauf in [docs/funktionsweise.md](docs/funktionsweise.md),
+  Bedienung in [scripts/README.md](scripts/README.md), Artefaktbeschreibung in `data/README.md`,
+  Workflow-Ergänzung in der [README](README.md). In
+  [docs/online-recherche.md](docs/online-recherche.md) (Abschnitt 9) genügt ein **Querverweis**:
+  Die Ernte ist offline und gehört dort nur als Zulieferer von `referenzen.txt` erwähnt.
+- **Qualitäts-Gates:** `ruff check .`, `ruff format --check .`, `mypy src`, `pytest tests -q`
+  grün; Zeilenabdeckung des neuen Moduls als Richtwert ≥ 80 %
+  (`python -m scripts.coverage_offline`).
+- **Sicherung:** `data/reference_candidates.md` ist append-only und aus keiner Quelle
+  rekonstruierbar – es gehört in den Umfang aus [B1](docs/roadmap-historie.md#b1--sicherung-des-korpus)
+  ([ADR 0027](docs/adr/0027-corpus-backup-phase11.md) nachziehen).
+- **Tests:** Ernte gegen einen Miniatur-Korpus (Treffer, Defekt-Kategorien, DataCite-Dublette,
+  Guard-Aussetzer, Selbstzitat), Determinismus, Idempotenz der Übernahme gegen alle vier
+  Zustände, `--dry-run` wirkungslos, Batch-Upgrade ohne Waise, Gold-Ableitung mit der
+  entschiedenen Ankerregel.
+
+---
+
+## Zielbild – erst bei belegter Beschaffbarkeit
+
+Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötigen Wheels/Modelle/Runtimes offline verfügbar werden ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)); sie sind aktuell **empirisch nicht beschaffbar**.
+
+- **Domain-/Zitationsgraph mit Kuzu (embedded) + Text2Cypher** für deterministische Cypher-Graphfragen und Multi-Hop-Netze (baut auf dem Intra-Korpus-Graphen aus [ADR 0011](docs/adr/0011-intra-corpus-citation-graph-phase7.md) auf).
+- **GROBID** für präzises Parsing **externer** Referenzen und Zitationskontexte (benötigt Docker/Java).
+- **Microsoft GraphRAG / Docling / LanceDB** als vollwertiges Zielbild (LLM-gestützte Entitäts-/Community-Reports, Bounding-Box-Provenienz). Damit käme auch der **Domain Graph** in Reichweite: Von den in der [README](README.md) skizzierten Kantentypen ist bislang nur `CITES` umgesetzt; `USES_METHOD`, `EVALUATES_ON` und `SUPPORTED_BY` brauchen Entitätsextraktion.
+- **Hybrid-Suche mit dedizierten Vektor-/Suchmaschinen** und **Skalierung Richtung Qdrant/Weaviate/Neo4j**. *Dieser Punkt ist seit [Phase 15](#phase-15--skalierung-den-wachsenden-bestand-tragen) nicht mehr die Antwort auf Wachstum:* Die dort bezifferten Wände sind Implementierungsdetails im eigenen Code, keine Grenzen des Speichermodells – ein fremdes Backend bliebe für einen vierstelligen Bestand überzogen und ist offline ohnehin nicht beschaffbar. Der Punkt bleibt stehen, aber erst jenseits der in [G5](#g5--auslegung-neu-festschreiben) neu festgeschriebenen Auslegung.
+
+---
+
+## Literaturübersicht & Arbeitsteilung
+
+- **Rollen-Trennung:** [`Übersicht.md`](Übersicht.md) = *welche* Quellen es gibt und wie relevant sie sind; der GraphRAG-Index = *was* inhaltlich darin steht.
+- **Laufende Pflege:** Die Ingestion erzeugt Entwurfszeilen; die wertenden Spalten (`Relevanz fuer Expose`, `SRQ-Zuordnung`) bleiben menschlich kuratiert. Der `Themenfokus` kann an den GraphRAG-Communities ausgerichtet werden.
+- **Ab Phase 8** schreibt der Intake die Entwurfszeilen direkt in die Übersicht (append-only, wertende Spalten leer) – umgesetzt, siehe [ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md). `data/overview_drafts.md` ist damit abgelöst; auch `scripts/update_overview.py` schreibt jetzt in die Übersicht.
+- **Diese Arbeitsteilung endet mit [G4](#g4--zuflussregel-und-ablösung-der-übersicht).** Gemessen am 2026-08-28 sind von 482 Tabellenzeilen nur noch **131 kuratiert**; 351 sind unbearbeitete `Z`-Entwurfszeilen. Als Landkarte ist die Tabelle damit bereits heute entwertet, und der geplante Zufluss macht es schlimmer. Abgelöst wird das **Format**, nicht die **Aussage**: Die 131 Wertungen sind aus keiner Quelle reproduzierbar und werden maschinenlesbar gerettet, bevor die Datei außer Dienst geht.
+
+---
+
+## Querschnittsthemen: Risiken & Gegenmaßnahmen
+
+| Risiko                                                                        | Gegenmaßnahme                                                                                                                                                                                                                                        |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PDF-Extraktionsrauschen (Layout, Formeln, Scans)                              | Qualitäts-Gates, Provenienz zum Original, Stichproben; Textnormalisierung ([ADR 0015](docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md)); Docling/Marker als späterer Ausbau ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)). |
+| **Datenverlust durch den Intake** (hartes Löschen)                     | `--dry-run`, Bericht mit Hash je gelöschter Datei, Sicherungsweg aus [B1](docs/roadmap-historie.md#b1--sicherung-des-korpus).                                                                                                                                               |
+| **Unkuratierte PDFs aus dem Netz** (Scans, Fehlerseiten, Schadinhalte)  | Lizenz-Whitelist, Content-Type-/Größenprüfung, selbst erzeugte Dateinamen, Robustheits-Flag für chunk-lose Dokumente.                                                                                                                             |
+| **Verwässerung des kuratierten Korpus** durch automatische Vorschläge | Vorschläge landen im Bericht, nie automatisch im Korpus; Zielgröße ist Präzision, nicht Menge.                                                                                                                                                    |
+| **Abstract-Stubs verdrängen Volltext-Evidenz** (BM25-Längennormalisierung)    | `document_kind` als Pflichtfeld in jedem Beleg, Ausschluss aus der Gold-Ableitung, Verdrängung vorab an einer Index-Kopie gemessen, Nachrangigkeit **nur** bei belegter Regression – **R0 hat sie belegt** (13 qid-Regressionen, alle in den Multi-Hop-Ebenen), die Guardrail ist damit gesetzt ([Phase 13](#phase-13--referenz-einträge-ohne-volltext)).       |
+| Entity Resolution (Synonyme, gleichnamige Autoren)                            | leichte Alias-/Synonym-Kuratierung; bei kleinem Korpus manuell handhabbar.                                                                                                                                                                            |
+| Scheinsicherheit durch Summaries                                              | Antworten immer mit Quellenankern/Original-TextUnits; für Fakten Basic/Local bevorzugen.                                                                                                                                                             |
+| Inkonsistenz bei inkrementellen Updates                                       | Standard bleibt der volle Re-Index; inkrementell nur mit Identitäts-Nachweis ([G1](#g1--aufnahmepfad-begradigen-die-quadratischen-stellen)).                                                                                                                |
+| Kosten/Datenschutz eines Index-LLM                                            | entschärft durch Option B:**kein** Index-LLM (offline, TF-IDF/BM25); ein LLM kommt nur zur Abfragezeit über die Bridge ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).                                                             |
+| **Der Bestand wächst über die Auslegung hinaus** – Antwortzeit, Speicher und Aufnahmedauer laufen weg | Beziffert statt vermutet ([G0](#g0--alles-hinterfragen-und-messen-zwingend-zuerst)), begradigt an den drei belegten Stellen ([G1](#g1--aufnahmepfad-begradigen-die-quadratischen-stellen), [G2](#g2--antwortzeit-den-vektorraum-nicht-bei-jeder-frage-neu-bauen)), und die Auslegung wird danach **schriftlich neu festgeschrieben** ([G5](#g5--auslegung-neu-festschreiben)) statt still zu veralten. |
+| **Beschleunigung zerstört still die Messgrundlage** – ein anderes Ranking wirkt wie eine Verbesserung | Jede Maßnahme in [G2](#g2--antwortzeit-den-vektorraum-nicht-bei-jeder-frage-neu-bauen) liefert entweder **bit-identische** Ergebnisse (qid-genau belegt) oder weist ihren Bruch aus und friert beide Baselines neu ein; die Entscheidungsregel dafür steht **vor** der Messung fest ([G0.6](#g06--was-kostet-bit-identität)). |
+| **Das kuratierte Relevanzurteil geht beim Abschalten der Übersicht verloren** | Es ist aus keiner Quelle reproduzierbar und wird deshalb **zuerst** maschinenlesbar überführt, erst danach wird das Format abgelöst ([G4](#g4--zuflussregel-und-ablösung-der-übersicht)); der Sicherungsumfang aus [B1](docs/roadmap-historie.md#b1--sicherung-des-korpus) wird entsprechend nachgezogen. |
+| **Massenzufluss von Referenz-Einträgen** (Phase 14) verwässert Korpus, Übersicht und Community-Struktur | Ernte **schlägt vor**, sie übernimmt nicht; harte Obergrenze aus einer gestaffelten Vorabmessung ([E0.2](#e02--skaliert-die-guardrail-das-schärfste-abbruchkriterium)); Wirkung auf Ähnlichkeitsgraph und Übersicht vorab beziffert ([E0.3](#e03--was-macht-der-ähnlichkeitsgraph-mit-vielen-einchunkigen-papern), [E0.5](#e05--verträgt-die-kuratierte-übersicht-den-zufluss)). |
+| **Selbstbezügliche Messung** – geerntete Stubs werden zu Multi-Hop-Gold-Ankern und heben die Kennzahl ohne echten Gewinn | Ankerwahl auf `document_kind = 'full'` beschränken; Referenz-Einträge bleiben **Ziele**, werden aber keine **Anker** – vorab zu belegen ([E0.4](#e04--die-zirkularitätsfalle-der-multi-hop-messung)), analog zum lexikalischen Ausschluss aus [ADR 0031](docs/adr/0031-reference-contract-and-guardrail-phase13.md). |
 
 ---
 
@@ -858,3 +1680,5 @@ Kein Volltext-Download (das bleibt [S2](#s2--volltext-holen-opt-in-lizenz-whitel
 - **M7 – Local schlägt Basic:** ✅ erreicht – der für Detailfragen vorgesehene Modus ist nicht länger schwächer als seine Rückfallebene (Hit 0,618 → **0,912**, MRR 0,532 → **0,654** gegen Basic 0,882 / 0,650). **Ehrlich dazu:** Der Zugewinn ist teilweise definitorisch, weil Locals Bündel mit fünf Seeds die Top-5 der Chunk-Suche enthält; belastbar sind die **13 qid-genauen Verbesserungen ohne Regression** (Phase 10 / V1).
 - **M8 – Aus dem Fund wird eine Quelle:** ✅ erreicht – jeder Beleg trägt einen extern auflösbaren Identifikator, und aus einem Suchtreffer entsteht ohne Handarbeit eine korrekte Literaturangabe in Harvard und APA. **336 von 341** Papern sind vollständig zitierfähig (vorher **0**). **Ehrlich dazu:** 66 Datensätze beruhen auf einem nicht eindeutigen Beleg und sind als `weak` markiert; 5 Paper bleiben ohne Auflösung (Phase 12).
 - **M9 – Auch das Unerreichbare zählt:** ✅ erreicht – ein Paper, von dem nur der Abstract öffentlich ist, ist über seine DOI auffindbar, zitierfähig und als Ziel von `CITES`-Kanten verknüpft – und in **jeder** Ausgabe als unvollständig ausgewiesen (Phase 13). **Ehrlich dazu:** Der Produktivkorpus ist bewusst noch stubfrei; der Nachweis lief auf Index-Kopien mit **52 echten** Abstracts, deren Handprobe **10/10** trifft. Die Nachrangigkeits-Guardrail senkt die in R0 belegten 13 qid-Regressionen auf **3 ohne Totalverlust** – gemessen, nicht geschätzt, und gegen zwei besser klingende Varianten verteidigt.
+- **M10 – Der Korpus kennt seine eigenen Ränder:** ⏳ offen – die Verweise, die heute folgenlos ins Leere zeigen, werden **aus dem eigenen Bestand** geerntet, nach belegtem Nutzen sortiert und in begrenzter, gesichteter Menge zu Referenz-Einträgen; ein später eintreffendes Volltext-PDF löst seinen Stub auch **im Batch** ab (Phase 14). *Erreicht ist der Meilenstein erst, wenn beide `--check`-Läufe nach dem Neu-Einfrieren 0 Abweichungen melden und die Handprobe den Zugewinn belegt – ein durch [E0](#e0--alles-hinterfragen-und-messen-zwingend-zuerst) begründetes „lohnt sich nicht" ist ebenfalls ein gültiger Abschluss.*
+- **M11 – Der Bestand darf wachsen:** ⏳ offen – und er wird **vor M10** erreicht (die Nummern sind Kennungen, nicht die [Reihenfolge](#der-aktive-plan--bearbeitungsreihenfolge)). Der Aufnahmepfad hat keine in der Paperzahl quadratische Stelle mehr, eine Einzelanfrage bleibt am neuen Auslegungsstand unter **5 s**, die kuratierten Wertungen sind maschinenlesbar gerettet und die Auslegung ist mit **Messdatum** festgeschrieben statt aus der Zeit mit 145 Papern fortgeschrieben (Phase 15). *Erreicht ist der Meilenstein erst, wenn beide `--check`-Läufe 0 Abweichungen melden und die Handprobe aus [G0.7](#g07--handprobe-bleibt-das-werkzeug-im-alltag-brauchbar) mindestens 8 von 10 hält – ein durch [G0](#g0--alles-hinterfragen-und-messen-zwingend-zuerst) begründetes „lohnt sich nicht" ist ebenfalls ein gültiger Abschluss.*

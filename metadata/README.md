@@ -11,9 +11,9 @@ deshalb wird er versioniert ([ADR 0025](../docs/adr/0025-citable-paper-metadata.
 
 ## Inhalt
 
-| Datei | Inhalt |
-| --- | --- |
-| `paper_metadata.json` | Metadaten-Datensätze der Herkünfte `resolved` (Online-Auflösung) und `manual` (von Hand gepflegt) |
+| Datei                   | Inhalt                                                                                                  |
+| ----------------------- | ------------------------------------------------------------------------------------------------------- |
+| `paper_metadata.json` | Metadaten-Datensätze der Herkünfte`resolved` (Online-Auflösung) und `manual` (von Hand gepflegt) |
 
 Die Herkünfte `extracted` (Regex auf dem PDF) und `curated` (Spalte
 `Externer Link/Indetifikator` der [Übersicht](../Übersicht.md)) werden bei **jedem** Index-Bau

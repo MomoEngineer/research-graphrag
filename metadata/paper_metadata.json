@@ -1,5 +1,43 @@
 {
   "papers": {
+    "004e2514a3d59eb9": [
+      {
+        "arxiv_id": "2402.04515",
+        "authors": [
+          "Akshita Abrol",
+          "P. Mohan",
+          "Tram Truong-Huu"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2402.04515",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2402.04515",
+        "origin": "resolved",
+        "title": "A Deep Reinforcement Learning Approach for Adaptive Traffic Routing in Next-gen Networks",
+        "url": "https://arxiv.org/pdf/2402.04515",
+        "venue": "arXiv (Cornell University)",
+        "year": 2024
+      }
+    ],
+    "00caa91992705863": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Jens Meinicke",
+          "Chu-Pan Wong",
+          "Christian Kästner",
+          "Thomas Thüm",
+          "Gunter Saake"
+        ],
+        "confidence": "strong",
+        "doi": "10.1145/2970276.2970322",
+        "evidence": "OpenAlex über doi:10.1145/2970276.2970322",
+        "origin": "resolved",
+        "title": "On essential configuration complexity: measuring interactions in highly-configurable systems",
+        "url": "https://dl.acm.org/doi/pdf/10.1145/2970276.2970322",
+        "venue": "",
+        "year": 2016
+      }
+    ],
     "00ccfabad90793af": [
       {
         "arxiv_id": "2507.13290",
@@ -102,6 +140,26 @@
         "year": 2025
       }
     ],
+    "0183f29ea5acde0a": [
+      {
+        "arxiv_id": "2507.14230",
+        "authors": [
+          "Fransiscus Asisi Bimo",
+          "Maria Amparo Canaveras Galdon",
+          "Lai, Chun-Kai",
+          "Ray‐Guang Cheng",
+          "Edwin K. P. Chong"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2507.14230",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2507.14230",
+        "origin": "resolved",
+        "title": "Intent-Based Network for RAN Management with Large Language Models",
+        "url": "https://arxiv.org/pdf/2507.14230",
+        "venue": "arXiv (Cornell University)",
+        "year": 2025
+      }
+    ],
     "024719fb26819826": [
       {
         "arxiv_id": "2508.00083",
@@ -139,6 +197,24 @@
         "url": "https://arxiv.org/pdf/2505.14394",
         "venue": "",
         "year": 2025
+      }
+    ],
+    "0380710d55874196": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Kausik Subramanian",
+          "Loris D’Antoni",
+          "Aditya Akella"
+        ],
+        "confidence": "strong",
+        "doi": "10.1145/3009837.3009845",
+        "evidence": "OpenAlex über doi:10.1145/3009837.3009845",
+        "origin": "resolved",
+        "title": "Genesis: synthesizing forwarding tables in multi-tenant networks",
+        "url": "https://openalex.org/W2561068234",
+        "venue": "",
+        "year": 2016
       }
     ],
     "043371209bedfea9": [
@@ -198,6 +274,25 @@
         "url": "https://dl.acm.org/doi/pdf/10.1145/3616855.3635752",
         "venue": "",
         "year": 2024
+      }
+    ],
+    "054ee57addaaa72d": [
+      {
+        "arxiv_id": "2606.28348",
+        "authors": [
+          "Jean Martins",
+          "Leonid Mokrushin",
+          "Marin Orlić",
+          "A Garc a"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2606.28348",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2606.28348",
+        "origin": "resolved",
+        "title": "Intent-Driven 6G Service Orchestration: Grounded Translation, Validation, and Decomposition",
+        "url": "https://doi.org/10.48550/arxiv.2606.28348",
+        "venue": "arXiv (Cornell University)",
+        "year": 2026
       }
     ],
     "05df36f027cfe850": [
@@ -323,6 +418,22 @@
         "year": 2024
       }
     ],
+    "09d075795ef35b79": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Terence Parr"
+        ],
+        "confidence": "weak",
+        "doi": "10.1145/988672.988703",
+        "evidence": "OpenAlex über Titel-Ähnlichkeit 1.00",
+        "origin": "resolved",
+        "title": "Enforcing strict model-view separation in template engines",
+        "url": "https://openalex.org/W2143183078",
+        "venue": "Journal of Physics Condensed Matter",
+        "year": 2004
+      }
+    ],
     "0a95024d22126c36": [
       {
         "arxiv_id": "2512.10789",
@@ -337,6 +448,30 @@
         "title": "Natural Language Interface for Firewall Configuration",
         "url": "https://arxiv.org/pdf/2512.10789",
         "venue": "arXiv (Cornell University)",
+        "year": 2025
+      }
+    ],
+    "0aacfb34b63644e6": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Rundi Zhai",
+          "Jianmin Liu",
+          "Yukai Miao",
+          "Li Chen",
+          "Dan Li",
+          "Baojiang Cui",
+          "Peng Zhang",
+          "Ennan Zhai",
+          "Zishuo Ding"
+        ],
+        "confidence": "strong",
+        "doi": "10.1145/3750022.3750459",
+        "evidence": "OpenAlex über doi:10.1145/3750022.3750459",
+        "origin": "resolved",
+        "title": "ConfSum: Towards Automatic Summarization of Network-scale Operational Intents from Device Configurations",
+        "url": "https://openalex.org/W4413311730",
+        "venue": "",
         "year": 2025
       }
     ],
@@ -407,6 +542,27 @@
         "year": 2023
       }
     ],
+    "0c7576162b27d4a2": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Hetvi Shastri",
+          "Walid A. Hanafy",
+          "Wu Li",
+          "David Irwin",
+          "Mani Srivastava",
+          "Prashant Shenoy"
+        ],
+        "confidence": "weak",
+        "doi": "",
+        "evidence": "OpenAlex über Titel-Ähnlichkeit 1.00",
+        "origin": "resolved",
+        "title": "LLM-Driven Auto Configuration for Transient IoT Device Collaboration",
+        "url": "https://arxiv.org/pdf/2507.03064",
+        "venue": "arXiv (Cornell University)",
+        "year": 2025
+      }
+    ],
     "0d14009d8b28062d": [
       {
         "arxiv_id": "2401.08406",
@@ -475,6 +631,27 @@
         "year": 2025
       }
     ],
+    "0f8c9670662e274d": [
+      {
+        "arxiv_id": "2607.16269",
+        "authors": [
+          "Lijie Zheng",
+          "Xudong Zhong",
+          "Baoquan Ren",
+          "X Z Gong",
+          "Xi Zhu",
+          "Ji He"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2607.16269",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2607.16269",
+        "origin": "resolved",
+        "title": "From Intent to Infrastructure: LLM-Driven Agent Compilers for ISAC Networks",
+        "url": "https://doi.org/10.48550/arxiv.2607.16269",
+        "venue": "arXiv (Cornell University)",
+        "year": 2026
+      }
+    ],
     "1116891832a6e868": [
       {
         "arxiv_id": "2106.05707",
@@ -533,6 +710,71 @@
         "url": "https://arxiv.org/pdf/2411.14283",
         "venue": "arXiv (Cornell University)",
         "year": 2024
+      }
+    ],
+    "12345dcf4ea1ad1c": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Rajdeep Mondal",
+          "Nikolaj Bjørner",
+          "Todd Millstein",
+          "Alan Tang",
+          "George Varghese"
+        ],
+        "confidence": "strong",
+        "doi": "10.1145/3772356.3772402",
+        "evidence": "OpenAlex über doi:10.1145/3772356.3772402",
+        "origin": "resolved",
+        "title": "Tackling Ambiguity in User Intent for LLM-based Network Configuration Synthesis",
+        "url": "https://doi.org/10.1145/3772356.3772402",
+        "venue": "",
+        "year": 2025
+      }
+    ],
+    "1274ca95a24bd5c2": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Lingqi Guo",
+          "Lei Zhang",
+          "Jingyu Wang",
+          "Jianyu Wu",
+          "Yuhang Yan",
+          "Haifeng Sun",
+          "Bo He",
+          "Qi Qi",
+          "Jianxin Liao"
+        ],
+        "confidence": "strong",
+        "doi": "10.1109/tase.2025.3610906",
+        "evidence": "OpenAlex über doi:10.1109/tase.2025.3610906",
+        "origin": "resolved",
+        "title": "Intent-Based Autonomous Network Framework Guided by Large Language Model",
+        "url": "https://openalex.org/W4414270191",
+        "venue": "IEEE Transactions on Automation Science and Engineering",
+        "year": 2025
+      }
+    ],
+    "1279c2c07097366c": [
+      {
+        "arxiv_id": "2604.06209",
+        "authors": [
+          "Lina Bariah",
+          "Brahim Mefgouda",
+          "Farbod Tavakkoli",
+          "Enrique Molero",
+          "Louis Powell",
+          "Merouane Debbah"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2604.06209",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2604.06209",
+        "origin": "resolved",
+        "title": "TelcoAgent-Bench: A Multilingual Benchmark for Telecom AI Agents",
+        "url": "https://doi.org/10.48550/arxiv.2604.06209",
+        "venue": "arXiv (Cornell University)",
+        "year": 2026
       }
     ],
     "128cb4d5bdfcb7c5": [
@@ -599,6 +841,23 @@
         "year": 2026
       }
     ],
+    "14974329e90f23cb": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Abdelkader Mekrache",
+          "Adlen Ksentini"
+        ],
+        "confidence": "strong",
+        "doi": "10.1109/netsoft60951.2024.10588881",
+        "evidence": "OpenAlex über doi:10.1109/netsoft60951.2024.10588881",
+        "origin": "resolved",
+        "title": "LLM-enabled Intent-driven Service Configuration for Next Generation Networks",
+        "url": "https://hal.science/hal-05045280/document",
+        "venue": "",
+        "year": 2024
+      }
+    ],
     "14dc54365a59476f": [
       {
         "arxiv_id": "",
@@ -657,6 +916,53 @@
         "year": 2021
       }
     ],
+    "15565d11fc3b5cb6": [
+      {
+        "arxiv_id": "2411.00473",
+        "authors": [
+          "Yuchen Song",
+          "Yao Zhang",
+          "Zhou, Anni",
+          "Yan Shi",
+          "Shikui Shen",
+          "Xiongyan Tang",
+          "Jin Li",
+          "Min Zhang",
+          "Danshi Wang"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2411.00473",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2411.00473",
+        "origin": "resolved",
+        "title": "Synergistic Interplay of Large Language Model and Digital Twin for Autonomous Optical Networks: Field Demonstrations",
+        "url": "https://arxiv.org/pdf/2411.00473",
+        "venue": "arXiv (Cornell University)",
+        "year": 2024
+      }
+    ],
+    "15901883662a322e": [
+      {
+        "arxiv_id": "2508.09197",
+        "authors": [
+          "Chatzistefanidis, Ilias",
+          "Leone, Andrea",
+          "Yaghoubian, Ali",
+          "Irazabal, Mikel",
+          "Nassim, Sehad",
+          "Bariah, Lina",
+          "Debbah, Merouane",
+          "Nikaein, Navid"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2508.09197",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2508.09197",
+        "origin": "resolved",
+        "title": "MX-AI: Agentic Observability and Control Platform for Open and AI-RAN",
+        "url": "https://doi.org/10.48550/arxiv.2508.09197",
+        "venue": "arXiv (Cornell University)",
+        "year": 2025
+      }
+    ],
     "1675c2dcd5ecaef4": [
       {
         "arxiv_id": "",
@@ -674,6 +980,81 @@
         "url": "https://dl.acm.org/doi/pdf/10.1145/3715754",
         "venue": "Proceedings of the ACM on software engineering.",
         "year": 2025
+      }
+    ],
+    "179485c95d3fb0ad": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Sathiya Kumaran Mani",
+          "Yajie Zhou",
+          "Kevin Hsieh",
+          "Santiago Segarra",
+          "Trevor Eberl",
+          "Eliran Azulai",
+          "Ido Frizler",
+          "Ranveer Chandra",
+          "Srikanth Kandula"
+        ],
+        "confidence": "strong",
+        "doi": "10.1145/3626111.3628183",
+        "evidence": "OpenAlex über doi:10.1145/3626111.3628183",
+        "origin": "resolved",
+        "title": "Enhancing Network Management Using Code Generated by Large Language Models",
+        "url": "https://dl.acm.org/doi/pdf/10.1145/3626111.3628183",
+        "venue": "",
+        "year": 2023
+      }
+    ],
+    "17a65a59aeec525f": [
+      {
+        "arxiv_id": "2604.06882",
+        "authors": [
+          "Hang Zou",
+          "Yuzhi Yang",
+          "Lina Bariah",
+          "Yu Tian",
+          "Yuhuan Lu",
+          "Bohao Wang",
+          "Anis Bara",
+          "Brahim Mefgouda",
+          "Hao Liu",
+          "Yiwei Tao",
+          "Sergy Petrov",
+          "Salma Cheour",
+          "Nassim Sehad",
+          "Sumudu Samarakoon",
+          "Chongwen Huang",
+          "Samson Lasaulce",
+          "Mehdi Bennis",
+          "Merouane Debbah"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2604.06882",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2604.06882",
+        "origin": "resolved",
+        "title": "Telecom World Models: Unifying Digital Twins, Foundation Models, and Predictive Planning for 6G",
+        "url": "https://doi.org/10.48550/arxiv.2604.06882",
+        "venue": "arXiv (Cornell University)",
+        "year": 2026
+      }
+    ],
+    "17b07b8eb3d9fe25": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Babajide Ogunyomi",
+          "Louis M. Rose",
+          "Dimitrios S. Kolovos"
+        ],
+        "confidence": "strong",
+        "doi": "10.1007/s10270-018-0666-5",
+        "evidence": "OpenAlex über doi:10.1007/s10270-018-0666-5",
+        "origin": "resolved",
+        "title": "Incremental execution of model-to-text transformations using property access traces",
+        "url": "https://eprints.whiterose.ac.uk/id/eprint/133819/1/pat_sosym.pdf",
+        "venue": "Software & Systems Modeling",
+        "year": 2018
       }
     ],
     "18249b6f921995d8": [
@@ -750,6 +1131,43 @@
         "origin": "resolved",
         "title": "Evaluating Agentic Configuration Repair for Computer Networks",
         "url": "https://doi.org/10.48550/arxiv.2606.06212",
+        "venue": "arXiv (Cornell University)",
+        "year": 2026
+      }
+    ],
+    "1b28c97b6cfaae50": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Haoxian Chen"
+        ],
+        "confidence": "strong",
+        "doi": "10.1145/3672199.3673889",
+        "evidence": "OpenAlex über doi:10.1145/3672199.3673889",
+        "origin": "resolved",
+        "title": "Interpretable Network Synthesis via Localized Specifications",
+        "url": "https://doi.org/10.1145/3672199.3673889",
+        "venue": "",
+        "year": 2024
+      }
+    ],
+    "1b653e29f39c9ca6": [
+      {
+        "arxiv_id": "2606.20574",
+        "authors": [
+          "Y H Dong",
+          "Maria Amparo Canaveras Galdon",
+          "Ari Uskudar",
+          "Kuntal Chowdhury",
+          "Edwin K. P. Chong",
+          "Ray‐Guang Cheng"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2606.20574",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2606.20574",
+        "origin": "resolved",
+        "title": "LLM-assisted gNB Parameter Configuration for Radio Access Network",
+        "url": "https://doi.org/10.48550/arxiv.2606.20574",
         "venue": "arXiv (Cornell University)",
         "year": 2026
       }
@@ -916,6 +1334,25 @@
         "year": 2024
       }
     ],
+    "1f784a029156daa5": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Kristina Dzeparoska",
+          "Jieyu Lin",
+          "Ali Tizghadam",
+          "Alberto Leon‐Garcia"
+        ],
+        "confidence": "strong",
+        "doi": "10.23919/cnsm59352.2023.10327837",
+        "evidence": "OpenAlex über doi:10.23919/cnsm59352.2023.10327837",
+        "origin": "resolved",
+        "title": "LLM-Based Policy Generation for Intent-Based Management of Applications",
+        "url": "https://arxiv.org/pdf/2402.10067",
+        "venue": "",
+        "year": 2023
+      }
+    ],
     "1fc76b9c277d865a": [
       {
         "arxiv_id": "2410.18415",
@@ -959,6 +1396,44 @@
         "year": 2025
       }
     ],
+    "2264d092c9ffd905": [
+      {
+        "arxiv_id": "2403.13721",
+        "authors": [
+          "Abdulhalim Dandoush",
+          "Viswanath Kumarskandpriya",
+          "Mueen Uddin",
+          "Usman Khalil"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2403.13721",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2403.13721",
+        "origin": "resolved",
+        "title": "Large Language Models meet Network Slicing Management and Orchestration",
+        "url": "https://arxiv.org/pdf/2403.13721",
+        "venue": "arXiv (Cornell University)",
+        "year": 2024
+      }
+    ],
+    "2422982b5e7bf345": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Luca Beurer-Kellner",
+          "Martin Vechev",
+          "Laurent Vanbever",
+          "Petar Veličković"
+        ],
+        "confidence": "strong",
+        "doi": "10.52202/068431-0053",
+        "evidence": "OpenAlex über doi:10.52202/068431-0053",
+        "origin": "resolved",
+        "title": "Learning to Configure Computer Networks with Neural Algorithmic Reasoning",
+        "url": "https://openalex.org/W7133227593",
+        "venue": "",
+        "year": 2022
+      }
+    ],
     "245b5c608ef8efca": [
       {
         "arxiv_id": "",
@@ -995,6 +1470,46 @@
         "year": 2024
       }
     ],
+    "2528ea7a3bce5986": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Pu Wang",
+          "Tong Li",
+          "Chungang Yang",
+          "Fuqiang Li",
+          "Yao Wang",
+          "Qiao Li",
+          "Zheng Chang",
+          "Bodong Shang",
+          "Dusit Niyato"
+        ],
+        "confidence": "strong",
+        "doi": "10.1109/mcom.001.2500533",
+        "evidence": "OpenAlex über doi:10.1109/mcom.001.2500533",
+        "origin": "resolved",
+        "title": "LIMO: Large Language Model-Empowered Intent-Driven Network Management and Orchestration",
+        "url": "https://openalex.org/W7148998030",
+        "venue": "IEEE Communications Magazine",
+        "year": 2026
+      }
+    ],
+    "258aedbdcb8841bd": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Ali Kheradmand"
+        ],
+        "confidence": "strong",
+        "doi": "10.1145/3373360.3380831",
+        "evidence": "OpenAlex über doi:10.1145/3373360.3380831",
+        "origin": "resolved",
+        "title": "Automatic Inference of High-Level Network Intents by Mining Forwarding Patterns",
+        "url": "https://dl.acm.org/doi/pdf/10.1145/3373360.3380831",
+        "venue": "",
+        "year": 2020
+      }
+    ],
     "2613d4fa00d684e3": [
       {
         "arxiv_id": "2512.16381",
@@ -1014,6 +1529,25 @@
         "url": "https://arxiv.org/pdf/2512.16381",
         "venue": "arXiv (Cornell University)",
         "year": 2025
+      }
+    ],
+    "280fbd6c09e37214": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Francesco Minna",
+          "Agathe Blaise",
+          "Fabio Massacci",
+          "Katja Tuma"
+        ],
+        "confidence": "strong",
+        "doi": "10.1145/3639478.3643534",
+        "evidence": "OpenAlex über doi:10.1145/3639478.3643534",
+        "origin": "resolved",
+        "title": "Automated Security Repair for Helm Charts",
+        "url": "https://dl.acm.org/doi/pdf/10.1145/3639478.3643534",
+        "venue": "",
+        "year": 2024
       }
     ],
     "28296441e7a995a6": [
@@ -1051,6 +1585,42 @@
         "url": "https://arxiv.org/pdf/2212.08037",
         "venue": "arXiv (Cornell University)",
         "year": 2022
+      }
+    ],
+    "2833be190b3abbf7": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Kimberly A. Neuendorf"
+        ],
+        "confidence": "weak",
+        "doi": "",
+        "evidence": "OpenAlex über Titel-Ähnlichkeit 1.00",
+        "origin": "resolved",
+        "title": "Unit Testing of Model to Text Transformations.",
+        "url": "",
+        "venue": "CINECA IRIS Institutial Research Information System (University of Genoa)",
+        "year": 2014
+      }
+    ],
+    "291089c9dadb3101": [
+      {
+        "arxiv_id": "2606.01222",
+        "authors": [
+          "İrşat Emin Sarıdaş",
+          "Onur Salan",
+          "Ali Görçin",
+          "Ibrahim Hokelek",
+          "Hakan Ali Çırpan"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2606.01222",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2606.01222",
+        "origin": "resolved",
+        "title": "RAG-driven Multi-Agent LLM Framework with Task Decomposition for Beyond 5G Auto-Configuration",
+        "url": "https://doi.org/10.48550/arxiv.2606.01222",
+        "venue": "arXiv (Cornell University)",
+        "year": 2026
       }
     ],
     "297905bc4c69aec2": [
@@ -1120,6 +1690,22 @@
         "year": 2023
       }
     ],
+    "2aa0f0099c571bc5": [
+      {
+        "arxiv_id": "2604.07264",
+        "authors": [
+          "Yuanhang Li"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2604.07264",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2604.07264",
+        "origin": "resolved",
+        "title": "Validated Intent Compilation for Constrained Routing in LEO Mega-Constellations",
+        "url": "https://doi.org/10.48550/arxiv.2604.07264",
+        "venue": "arXiv (Cornell University)",
+        "year": 2026
+      }
+    ],
     "2af36ee28c4db2da": [
       {
         "arxiv_id": "2604.27692",
@@ -1156,6 +1742,28 @@
         "url": "https://arxiv.org/pdf/1909.09436",
         "venue": "arXiv (Cornell University)",
         "year": 2019
+      }
+    ],
+    "2bfcb40e67768eb9": [
+      {
+        "arxiv_id": "2504.11233",
+        "authors": [
+          "Stefano Maxenti",
+          "Ravis Shirkhani",
+          "Maxime Elkael",
+          "Leonardo Bonati",
+          "Salvatore D’Oro",
+          "Tommaso Melodia",
+          "Michele Polese"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2504.11233",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2504.11233",
+        "origin": "resolved",
+        "title": "AutoRAN: Automated and Zero-Touch Open RAN Systems",
+        "url": "https://arxiv.org/pdf/2504.11233",
+        "venue": "arXiv (Cornell University)",
+        "year": 2025
       }
     ],
     "2c5bf5b0221c8cbc": [
@@ -1246,6 +1854,24 @@
         "year": 2024
       }
     ],
+    "308ec6e61e8dab33": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Ala’ A. AlSamarneh",
+          "Ahmad Al‐Hammouri",
+          "Omar Y. Al-Jarrah"
+        ],
+        "confidence": "strong",
+        "doi": "10.1007/s00521-025-11193-7",
+        "evidence": "OpenAlex über doi:10.1007/s00521-025-11193-7",
+        "origin": "resolved",
+        "title": "Navigating intent-based networking: from user descriptions to deployable configurations",
+        "url": "https://openalex.org/W4410325844",
+        "venue": "Neural Computing and Applications",
+        "year": 2025
+      }
+    ],
     "30fa6d709d044f07": [
       {
         "arxiv_id": "",
@@ -1283,6 +1909,27 @@
         "year": 2025
       }
     ],
+    "318944fd8ad9959d": [
+      {
+        "arxiv_id": "2406.12602",
+        "authors": [
+          "Annalisa Navarro",
+          "Nataliia Koneva",
+          "Alfonso Sánchez‐Macián",
+          "José Alberto Hernández",
+          "Óscar González de Dios",
+          "José Manuel Rivas-Moscoso"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2406.12602",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2406.12602",
+        "origin": "resolved",
+        "title": "Reinforcement-Learning based routing for packet-optical networks with hybrid telemetry",
+        "url": "https://arxiv.org/pdf/2406.12602",
+        "venue": "arXiv (Cornell University)",
+        "year": 2024
+      }
+    ],
     "32015300a65ade88": [
       {
         "arxiv_id": "2211.12588",
@@ -1302,6 +1949,43 @@
         "year": 2022
       }
     ],
+    "3208f0228edd5805": [
+      {
+        "arxiv_id": "2403.02238",
+        "authors": [
+          "Dimitrios Michael Manias",
+          "Ali Chouman",
+          "Abdallah Shami"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2403.02238",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2403.02238",
+        "origin": "resolved",
+        "title": "Towards Intent-Based Network Management: Large Language Models for Intent Extraction in 5G Core Networks",
+        "url": "https://arxiv.org/pdf/2403.02238",
+        "venue": "arXiv (Cornell University)",
+        "year": 2024
+      }
+    ],
+    "32bee93f7f9dd072": [
+      {
+        "arxiv_id": "2509.22834",
+        "authors": [
+          "Bekri, Anis",
+          "Abane, Amar",
+          "Battou, Abdella",
+          "Bensalem, Saddek"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2509.22834",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2509.22834",
+        "origin": "resolved",
+        "title": "Bridging Language Models and Formal Methods for Intent-Driven Optical Network Design",
+        "url": "https://doi.org/10.48550/arxiv.2509.22834",
+        "venue": "arXiv (Cornell University)",
+        "year": 2025
+      }
+    ],
     "335234d4d7846879": [
       {
         "arxiv_id": "2404.08189",
@@ -1316,6 +2000,24 @@
         "title": "Reducing hallucination in structured outputs via Retrieval-Augmented Generation",
         "url": "https://arxiv.org/pdf/2404.08189",
         "venue": "arXiv (Cornell University)",
+        "year": 2024
+      }
+    ],
+    "34273fe5f4f70cf9": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Supratim Chakraborty",
+          "Nithin Chitta",
+          "Rajesh Sundaresan"
+        ],
+        "confidence": "strong",
+        "doi": "10.23919/cnsm62983.2024.10814407",
+        "evidence": "OpenAlex über doi:10.23919/cnsm62983.2024.10814407",
+        "origin": "resolved",
+        "title": "Automation of Network Configuration Generation using Large Language Models",
+        "url": "https://openalex.org/W4405935382",
+        "venue": "",
         "year": 2024
       }
     ],
@@ -1391,6 +2093,27 @@
         "year": 2024
       }
     ],
+    "350d8cdb26974ccf": [
+      {
+        "arxiv_id": "2503.11933",
+        "authors": [
+          "Tang, Yun",
+          "Srinivasan, Udhaya Chandhar",
+          "Scott, Benjamin James",
+          "Umealor, Obumneme",
+          "Kevogo, Dennis",
+          "Guo, Weisi"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2503.11933",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2503.11933",
+        "origin": "resolved",
+        "title": "End-to-End Edge AI Service Provisioning Framework in 6G ORAN",
+        "url": "https://doi.org/10.48550/arxiv.2503.11933",
+        "venue": "arXiv (Cornell University)",
+        "year": 2025
+      }
+    ],
     "3530a80cd370ebf8": [
       {
         "arxiv_id": "2505.13994",
@@ -1434,6 +2157,29 @@
         "url": "https://arxiv.org/pdf/2508.06105",
         "venue": "arXiv (Cornell University)",
         "year": 2025
+      }
+    ],
+    "353dc115ef35ef4c": [
+      {
+        "arxiv_id": "2608.01538",
+        "authors": [
+          "Tianzhu Zhang",
+          "Changgang Zheng",
+          "Shanshan Wang",
+          "Yarui Zhang",
+          "Lina Shi",
+          "Yue Jin",
+          "Xiaofei Wang",
+          "Meikang Qiu"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2608.01538",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2608.01538",
+        "origin": "resolved",
+        "title": "From Network Automation to Trustworthy Autonomous Networking in the LLM Era: A Network Control Intelligence Perspective",
+        "url": "https://doi.org/10.48550/arxiv.2608.01538",
+        "venue": "arXiv (Cornell University)",
+        "year": 2026
       }
     ],
     "35e6b19498b0086b": [
@@ -1509,6 +2255,25 @@
         "year": 2025
       }
     ],
+    "3ad435778afc4afa": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Sanjai Narain",
+          "Gary Levin",
+          "Sharad Malik",
+          "Vikram Kaul"
+        ],
+        "confidence": "strong",
+        "doi": "10.1007/s10922-008-9108-y",
+        "evidence": "OpenAlex über doi:10.1007/s10922-008-9108-y",
+        "origin": "resolved",
+        "title": "Declarative Infrastructure Configuration Synthesis and Debugging",
+        "url": "https://openalex.org/W2133496820",
+        "venue": "Journal of Network and Systems Management",
+        "year": 2008
+      }
+    ],
     "3be6522001ac7820": [
       {
         "arxiv_id": "2606.11976",
@@ -1549,6 +2314,28 @@
         "year": 2026
       }
     ],
+    "40434642bd32a197": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Chenhua Shi",
+          "Bhavika Jalli",
+          "Gregor Macdonald",
+          "John Zou",
+          "Wanlu Lei",
+          "M Jain",
+          "Joji Philip"
+        ],
+        "confidence": "weak",
+        "doi": "10.1109/iccworkshops63917.2026.11586230",
+        "evidence": "OpenAlex über Titel-Ähnlichkeit 1.00",
+        "origin": "resolved",
+        "title": "Leveraging Multi-Agent System (MAS) and Fine-Tuned Small Language Models (SLMs) for Automated Telecom Network Troubleshooting",
+        "url": "https://arxiv.org/pdf/2511.00651",
+        "venue": "arXiv (Cornell University)",
+        "year": 2026
+      }
+    ],
     "4055a3ef2041a3c7": [
       {
         "arxiv_id": "2509.22009",
@@ -1571,6 +2358,24 @@
         "url": "https://doi.org/10.48550/arxiv.2509.22009",
         "venue": "arXiv (Cornell University)",
         "year": 2025
+      }
+    ],
+    "40dc81f22d37c40b": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Shan Huang",
+          "David Zook",
+          "Yannis Smaragdakis"
+        ],
+        "confidence": "strong",
+        "doi": "10.1016/j.scico.2008.09.007",
+        "evidence": "OpenAlex über doi:10.1016/j.scico.2008.09.007",
+        "origin": "resolved",
+        "title": "Statically safe program generation with SafeGen",
+        "url": "https://www.sciencedirect.com/science/article/pii/S0167642308001111/pdf",
+        "venue": "Science of Computer Programming",
+        "year": 2008
       }
     ],
     "40f8d44665637af5": [
@@ -1656,6 +2461,26 @@
         "year": 2021
       }
     ],
+    "43faf5edcc9d0ce9": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Alexander von Rhein",
+          "Jörg Liebig",
+          "Andreas Janker",
+          "Christian Kästner",
+          "Sven Apel"
+        ],
+        "confidence": "strong",
+        "doi": "10.1145/3280986",
+        "evidence": "OpenAlex über doi:10.1145/3280986",
+        "origin": "resolved",
+        "title": "Variability-Aware Static Analysis at Scale",
+        "url": "https://dl.acm.org/doi/pdf/10.1145/3280986",
+        "venue": "ACM Transactions on Software Engineering and Methodology",
+        "year": 2018
+      }
+    ],
     "4436219a91566cbc": [
       {
         "arxiv_id": "2407.10805",
@@ -1738,6 +2563,24 @@
         "url": "https://arxiv.org/pdf/2410.22353",
         "venue": "arXiv (Cornell University)",
         "year": 2024
+      }
+    ],
+    "45f051c04d14fb0c": [
+      {
+        "arxiv_id": "2608.06789",
+        "authors": [
+          "Lingyan Bao",
+          "Jemin Lee",
+          "Tony Q. S. Quek"
+        ],
+        "confidence": "strong",
+        "doi": "",
+        "evidence": "arXiv-Feed über arxiv:2608.06789",
+        "origin": "resolved",
+        "title": "EvoRIC: Reinforcement Learning Fine-Tuned LLM-empowered RAN Intelligent Control Toward Autonomous O-RAN",
+        "url": "",
+        "venue": "",
+        "year": 2026
       }
     ],
     "46d2f97b867c4e87": [
@@ -1881,6 +2724,23 @@
         "year": 2025
       }
     ],
+    "4a26ad1b37f99026": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Will Crichton",
+          "Shriram Krishnamurthi"
+        ],
+        "confidence": "strong",
+        "doi": "10.1145/3632865",
+        "evidence": "OpenAlex über doi:10.1145/3632865",
+        "origin": "resolved",
+        "title": "A Core Calculus for Documents: Or, Lambda: The Ultimate Document",
+        "url": "https://dl.acm.org/doi/pdf/10.1145/3632865",
+        "venue": "Proceedings of the ACM on Programming Languages",
+        "year": 2024
+      }
+    ],
     "4a3b5991bf11e674": [
       {
         "arxiv_id": "2503.13804",
@@ -1900,6 +2760,46 @@
         "url": "https://doi.org/10.48550/arxiv.2503.13804",
         "venue": "arXiv (Cornell University)",
         "year": 2025
+      }
+    ],
+    "4ab51209a1ad842f": [
+      {
+        "arxiv_id": "2305.10403",
+        "authors": [
+          "Rohan Anil",
+          "Andrew M. Dai",
+          "Orhan Fırat",
+          "Melvin Johnson",
+          "Dmitry Lepikhin",
+          "A. M. A. dos Passos",
+          "Siamak Shakeri",
+          "Emanuel Taropa",
+          "Paige Bailey",
+          "Zhifeng Chen",
+          "Eric Chu",
+          "Jonathan H. Clark",
+          "Laurent El Shafey",
+          "Yanping Huang",
+          "Meier-Hellstern, Kathy",
+          "Gaurav Mishra",
+          "Érica Rodrigues Moreira",
+          "Mark Omernick",
+          "Kevin Robinson",
+          "Sebastian Ruder",
+          "Yi Tay",
+          "Kefan Xiao",
+          "Yuanzhong Xu",
+          "Yujing Zhang",
+          "Gustavo Hernández Ábrego"
+        ],
+        "confidence": "weak",
+        "doi": "10.48550/arxiv.2305.10403",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2305.10403 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "PaLM 2 Technical Report",
+        "url": "https://arxiv.org/pdf/2305.10403",
+        "venue": "arXiv (Cornell University)",
+        "year": 2023
       }
     ],
     "4adfd35def371f15": [
@@ -2032,6 +2932,27 @@
         "year": 2021
       }
     ],
+    "4ca045e8421e1722": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Christian Kästner",
+          "Paolo G. Giarrusso",
+          "Tillmann Rendel",
+          "Sebastian Erdweg",
+          "Klaus Ostermann",
+          "Thorsten Berger"
+        ],
+        "confidence": "weak",
+        "doi": "10.1145/2076021.2048128",
+        "evidence": "OpenAlex über Titel-Ähnlichkeit 1.00",
+        "origin": "resolved",
+        "title": "Variability-aware parsing in the presence of lexical macros and conditional compilation",
+        "url": "https://openalex.org/W4230619493",
+        "venue": "ACM SIGPLAN Notices",
+        "year": 2011
+      }
+    ],
     "4d59fa09443cd621": [
       {
         "arxiv_id": "",
@@ -2073,6 +2994,46 @@
         "title": "LightPROF: A Lightweight Reasoning Framework for Large Language Model on Knowledge Graph",
         "url": "https://arxiv.org/pdf/2504.03137",
         "venue": "arXiv (Cornell University)",
+        "year": 2025
+      }
+    ],
+    "4d8d2a96e35c1e10": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Yao Wang",
+          "Chungang Yang",
+          "Qiao Li",
+          "P Wang",
+          "Sai Zou",
+          "Bodong Shang",
+          "Shoufeng Wang"
+        ],
+        "confidence": "strong",
+        "doi": "10.1109/tccn.2026.3658750",
+        "evidence": "OpenAlex über doi:10.1109/tccn.2026.3658750",
+        "origin": "resolved",
+        "title": "LAMIO-6G: Large AI Model-Empowered Cross-Layer Intent Management and Multi-Domain Policy Orchestration in 6G Terrestrial Networks",
+        "url": "https://openalex.org/W7125911412",
+        "venue": "IEEE Transactions on Cognitive Communications and Networking",
+        "year": 2026
+      }
+    ],
+    "4e631c678ae1966b": [
+      {
+        "arxiv_id": "2512.02861",
+        "authors": [
+          "Oscar G. Lira",
+          "Oscar M. Caicedo",
+          "Nelson L. S. Da Fonseca"
+        ],
+        "confidence": "strong",
+        "doi": "",
+        "evidence": "arXiv-Feed über arxiv:2512.02861",
+        "origin": "resolved",
+        "title": "Network Self-Configuration based on Fine-Tuned Small Language Models",
+        "url": "",
+        "venue": "",
         "year": 2025
       }
     ],
@@ -2179,6 +3140,24 @@
         "url": "https://arxiv.org/pdf/2404.17723",
         "venue": "",
         "year": 2024
+      }
+    ],
+    "5213ae41ee9a7671": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Ahmed Zerouali",
+          "Ruben Opdebeeck",
+          "Coen De Roover"
+        ],
+        "confidence": "strong",
+        "doi": "10.1109/msr59073.2023.00078",
+        "evidence": "OpenAlex über doi:10.1109/msr59073.2023.00078",
+        "origin": "resolved",
+        "title": "Helm Charts for Kubernetes Applications: Evolution, Outdatedness and Security Risks",
+        "url": "https://soft.vub.ac.be/Publications/2023/vub-tr-soft-23-08.pdf",
+        "venue": "",
+        "year": 2023
       }
     ],
     "521f48d34daf4747": [
@@ -4244,27 +5223,22 @@
       {
         "arxiv_id": "",
         "authors": [
-          "A Capiluppi",
-          "N Ajienka",
-          "N Ali",
-          "M Arzoky",
-          "S Counsell",
-          "G Destefanis",
-          "A Miron",
-          "B Nagaria",
-          "R Neykova",
-          "M Shepperd",
-          "S Swift",
-          "A Tucker"
+          "Aïna Linn Georges",
+          "Armaël Guéneau",
+          "Thomas Van Strydonck",
+          "Amin Timany",
+          "Alix Trieu",
+          "Dominique Devriese",
+          "Lars Birkedal"
         ],
-        "confidence": "weak",
-        "doi": "10.1145/nnnnnnn.nnnnnnn",
-        "evidence": "OpenAlex über doi:10.1145/nnnnnnn.nnnnnnn (Identifikator lokal nicht belegt)",
+        "confidence": "strong",
+        "doi": "10.1145/3623510",
+        "evidence": "DBLP/Digital Library cross-checked with DOI 10.1145/3623510",
         "origin": "resolved",
         "title": "Cerise: Program Verification on a Capability Machine in the Presence of Untrusted Code",
-        "url": "https://hal.science/hal-05598986",
-        "venue": "HAL (Le Centre pour la Communication Scientifique Directe)",
-        "year": 2021
+        "url": "https://doi.org/10.1145/3623510",
+        "venue": "Journal of the ACM",
+        "year": 2024
       }
     ],
     "8ff7edb9f0655e22": [
@@ -5789,27 +6763,22 @@
       {
         "arxiv_id": "",
         "authors": [
-          "A Capiluppi",
-          "N Ajienka",
-          "N Ali",
-          "M Arzoky",
-          "S Counsell",
-          "G Destefanis",
-          "A Miron",
-          "B Nagaria",
-          "R Neykova",
-          "M Shepperd",
-          "S Swift",
-          "A Tucker"
+          "Aïna Linn Georges",
+          "Armaël Guéneau",
+          "Thomas Van Strydonck",
+          "Amin Timany",
+          "Alix Trieu",
+          "Dominique Devriese",
+          "Lars Birkedal"
         ],
-        "confidence": "weak",
-        "doi": "10.1145/nnnnnnn.nnnnnnn",
-        "evidence": "OpenAlex über doi:10.1145/nnnnnnn.nnnnnnn (Identifikator lokal nicht belegt)",
+        "confidence": "strong",
+        "doi": "10.1145/3623510",
+        "evidence": "DBLP/Digital Library cross-checked with DOI 10.1145/3623510",
         "origin": "resolved",
         "title": "Cerise: Program Verification on a Capability Machine in the Presence of Untrusted Code",
-        "url": "https://hal.science/hal-05598986",
-        "venue": "HAL (Le Centre pour la Communication Scientifique Directe)",
-        "year": 2021
+        "url": "https://doi.org/10.1145/3623510",
+        "venue": "Journal of the ACM",
+        "year": 2024
       }
     ],
     "cf572bc551416940": [
@@ -7198,6 +8167,22 @@
         "url": "https://doi.org/10.48550/arxiv.2605.18775",
         "venue": "arXiv (Cornell University)",
         "year": 2026
+      }
+    ],
+    "a345ad2fb3bdcb24": [
+      {
+        "arxiv_id": "1906.08369",
+        "authors": [
+          "René Haberland"
+        ],
+        "confidence": "strong",
+        "doi": "",
+        "evidence": "Autor aus PDF-Titelseite entnommen (arXiv:1906.08369v1, Saint Petersburg State University; urspr. Diplomarbeit TU Dresden 2007, empfohlen von Prof. Bratchikov I.L. am 7.4.2008), 2026-08-14",
+        "origin": "manual",
+        "title": "Unification of Template-Expansion and XML-Validation",
+        "url": "https://arxiv.org/abs/1906.08369",
+        "venue": "",
+        "year": 2019
       }
     ]
   },

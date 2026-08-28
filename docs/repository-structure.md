@@ -259,13 +259,15 @@ research-graphrag/
 > Schema-Eingriff, **kein Re-Ingest**, **kein** neues MCP-Werkzeug
 > ([ADR 0031](adr/0031-reference-contract-and-guardrail-phase13.md)).
 
-> **Geplant (Phasen 9–11 und 13, [Roadmap.md](../Roadmap.md)):** Aus **Phase 9** sind S0
-> (Machbarkeit) und S1 (Kandidatensuche) erledigt; **S2** (Volltext-Download) bleibt
-> zurückgestellt, weil die Lizenzangaben der Quellen keine belastbare Whitelist tragen. Aus
-> **Phase 10** sind **V1** (Local Multi-Seed), **V2** (DRIFT-Vereinigung + Fallback) und **V3**
-> (Multi-Hop-Evaluation) erledigt; offen bleibt **V4**. Aus **Phase 11** sind **B1** (Sicherung)
-> erledigt und **B6** geprüft und verworfen. Aus **Phase 13** sind **R1** und **R2** erledigt;
-> **R3** (Contract, Baselines, Guardrail) ist offen. Die abgeschlossenen Phasen 0–7 sind in der
+> **Geplant ([Roadmap.md](../Roadmap.md)):** Der aktive Plan besteht aus **Phase 15**
+> (Skalierung) und danach **Phase 14** (Referenz-Ernte) – beide führen neue Artefakte ein, die
+> hier noch nicht stehen. Aus **Phase 9** sind S0 (Machbarkeit) und S1 (Kandidatensuche)
+> erledigt; **S2** (Volltext-Download) bleibt zurückgestellt, weil die Lizenzangaben der Quellen
+> keine belastbare Whitelist tragen. Aus **Phase 10** sind **V1** (Local Multi-Seed), **V2**
+> (DRIFT-Vereinigung + Fallback) und **V3** (Multi-Hop-Evaluation) erledigt; offen und
+> **nachgelagert** bleibt **V4**. **Phase 11** ist aufgelöst: B1 und B5 erledigt, B6 geprüft und
+> verworfen, B4 gestrichen, B2/B3 in Phase 15 überführt. **Phase 13** ist vollständig erledigt
+> (R1–R3). Die abgeschlossenen Phasen 0–8, 11 und 12 sind in der
 > [Roadmap-Historie](roadmap-historie.md) archiviert.
 
 ### Zuordnung zu den Roadmap-Phasen
