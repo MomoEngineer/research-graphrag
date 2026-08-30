@@ -2764,6 +2764,30 @@
     ],
     "4ab51209a1ad842f": [
       {
+        "arxiv_id": "2401.06786",
+        "authors": [
+          "Yifei Xu",
+          "Yuning Chen",
+          "Xumiao Zhang",
+          "Xianshang Lin",
+          "Pan Hu",
+          "Yunfei Ma",
+          "Songwu Lu",
+          "Wan Du",
+          "Z. Morley Mao",
+          "Dennis Cai",
+          "Ennan Zhai"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2401.06786",
+        "evidence": "PDF-Titelseite (Autoren) + arXiv abs/2401.06786 geprüft 2026-08-30; ersetzt Fehlauflösung auf PaLM 2 Technical Report (2305.10403), siehe docs/adr/0025-citable-paper-metadata.md",
+        "origin": "manual",
+        "title": "CloudEval-YAML: A Practical Benchmark for Cloud Configuration Generation",
+        "url": "https://arxiv.org/abs/2401.06786",
+        "venue": "arXiv (Cornell University)",
+        "year": 2024
+      },
+      {
         "arxiv_id": "2305.10403",
         "authors": [
           "Rohan Anil",
@@ -5220,6 +5244,23 @@
       }
     ],
     "8e136f96c83b382b": [
+      {
+        "arxiv_id": "2406.03283",
+        "authors": [
+          "Zhiyuan Pan",
+          "Xing Hu",
+          "Xin Xia",
+          "Xiaohu Yang"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2406.03283",
+        "evidence": "arXiv abs/2406.03283v2 (eingereicht 21.11.2025, 26 Seiten) geprüft 2026-08-30; ersetzt Fehlauflösung auf Cerise (10.1145/3623510), siehe docs/adr/0025-citable-paper-metadata.md",
+        "origin": "manual",
+        "title": "CatCoder: Repository-Level Code Generation with Relevant Code and Type Context",
+        "url": "https://arxiv.org/abs/2406.03283",
+        "venue": "arXiv (Cornell University); angenommen für ACM Transactions on Software Engineering and Methodology (TOSEM)",
+        "year": 2025
+      },
       {
         "arxiv_id": "",
         "authors": [
