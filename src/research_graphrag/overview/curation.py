@@ -11,7 +11,7 @@ Anders als die kuratierten Identifikatoren aus
 dieses Urteil **kein** bibliografischer Datensatz und läuft deshalb nicht in die
 ``manual > curated > resolved > extracted``-Auflösung ein – es ist ein eigenständiges,
 themenfokus-/SRQ-bezogenes Artefakt für die Auswahl in
-[Phase 14](../../../Roadmap.md#phase-14--referenz-ernte-externe-verweise-aus-dem-eigenen-bestand).
+[Phase 14](../../../docs/roadmap-historie.md#phase-14--referenz-ernte-externe-verweise-aus-dem-eigenen-bestand).
 
 Das Format ist bewusst **verlustfrei**: Jede kuratierte Zelle wird als Freitext übernommen
 (``SRQ-Zuordnung`` zusätzlich als Liste einzelner SRQ-Kennungen), nicht auf eine Kategorie

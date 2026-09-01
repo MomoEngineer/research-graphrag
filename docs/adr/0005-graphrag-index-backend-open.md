@@ -48,6 +48,6 @@ Der Grundsatz „nichts wird als Modell serialisiert" ist in
 richtet sich gegen das Pickeln von Objekten, nicht gegen das Persistieren reiner Zahlen) und
 bleibt damit unverändert in Kraft. Die für Option B ursprünglich unterstellte Korpusgröße
 „≤ 500 Paper" ist durch die gemessene Auslegung aus
-[Roadmap.md, G5](../../Roadmap.md#g5--auslegung-neu-festschreiben) ersetzt: **≤ 750 Volltexte /
+[Roadmap.md, G5](../roadmap-historie.md#g5--auslegung-neu-festschreiben) ersetzt: **≤ 750 Volltexte /
 ≤ 1500 Gesamteinträge**. Die Entscheidung für Option B (TF-IDF/SQLite/Louvain statt Microsoft
 GraphRAG) ist davon unberührt – sie beruhte auf Beschaffbarkeit, nicht auf Korpusgröße.

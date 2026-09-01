@@ -15,7 +15,7 @@ getan.
 Gemessen am 2026-08-28 (Phase 15, G0) stehen in der Datei **482** Tabellenzeilen, davon **131
 kuratiert** und **351** unbearbeitete `Z`-Entwurfszeilen (72,8 %) – am 2026-09-01 sind es bereits
 **627** Zeilen bei unverändert **131** kuratierten. Als Landkarte ist die Tabelle damit bereits
-entwertet, und der in [Phase 14](../../Roadmap.md#phase-14--referenz-ernte-externe-verweise-aus-dem-eigenen-bestand)
+entwertet, und der in [Phase 14](../roadmap-historie.md#phase-14--referenz-ernte-externe-verweise-aus-dem-eigenen-bestand)
 geplante Referenz-Zufluss macht es schlimmer, nicht besser: Er würde die Zahl der `Z`-Zeilen um
 bis zu 3371 potenzielle Kandidaten erhöhen (siehe Phase 13 / R0).
 

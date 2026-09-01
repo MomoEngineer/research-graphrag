@@ -18,7 +18,7 @@ aus der Markdown-Tabelle und überführt sie nach `metadata/curation.json`, gesc
 `paper_id` statt über den Dateinamen.
 
 Bewusst **kein** Teil der Zitationskette (`bibliography/`): Dieses Urteil ist ein eigenständiges,
-themenfokus-/SRQ-bezogenes Artefakt für die Auswahl in [Phase 14](../../../../Roadmap.md#phase-14--referenz-ernte-externe-verweise-aus-dem-eigenen-bestand),
+themenfokus-/SRQ-bezogenes Artefakt für die Auswahl in [Phase 14](../../../../docs/roadmap-historie.md#phase-14--referenz-ernte-externe-verweise-aus-dem-eigenen-bestand),
 keine bibliografische Angabe.
 
 ## 2. Öffentliche Schnittstelle

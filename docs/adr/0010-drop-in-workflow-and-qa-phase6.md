@@ -99,7 +99,7 @@ Papern vertretbar" sind durch [ADR 0033](0033-response-latency-cache-and-persist
 (Weg C) plus einen persistierten TF-IDF-Zustand (Weg A) – die On-Read-Frische aus Punkt 1 bleibt
 dabei **wörtlich** erhalten (ein atomarer Swap invalidiert den Cache-Eintrag), nur der wiederholte
 Neubau des Vektorraums entfällt. Die Korpus-Auslegung „≤ 500 Paper" ist durch die gemessene
-Auslegung aus [Roadmap.md, G5](../../Roadmap.md#g5--auslegung-neu-festschreiben) ersetzt:
+Auslegung aus [Roadmap.md, G5](../roadmap-historie.md#g5--auslegung-neu-festschreiben) ersetzt:
 **≤ 750 Volltexte / ≤ 1500 Gesamteinträge (2026-09-01)**. Die Zahl ist niedriger als die aus G0.1
 hergeleitete erste Marke (1000), weil eine direkte Nachmessung am Auslegungsstand zeigte, dass
 Local (nicht Basic oder DRIFT) die 5-s-Marke schon zwischen 800 und 900 Papern reißt – siehe

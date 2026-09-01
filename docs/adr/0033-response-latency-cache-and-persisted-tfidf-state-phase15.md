@@ -5,7 +5,7 @@
 
 ## Kontext
 
-[G0.6](../../Roadmap.md#g0--alles-hinterfragen-und-messen-zwingend-zuerst) hat gemessen: Jeder
+[G0.6](../roadmap-historie.md#g0--alles-hinterfragen-und-messen-zwingend-zuerst) hat gemessen: Jeder
 Aufruf von `TfidfIndex.load()` fittet `CountVectorizer` und `TfidfTransformer` **neu** aus den in
 SQLite gespeicherten Chunk-Texten – bei jeder einzelnen Anfrage, unabhängig davon, ob sich der
 Index seit dem letzten Aufruf verändert hat. Bei 606 Papern/42.388 Chunks kostet allein dieser
@@ -22,7 +22,7 @@ nicht hält.
 Drei Stellen im heutigen Code widersprechen zusätzlich der Nutzervorgabe unabhängig vom Cache:
 
 1. **Jeder Chunk-Text liegt vollständig im Speicher** (`_ChunkRef.text`), obwohl für die Wertung
-   nur Kennungen und Gewichte gebraucht werden ([G0.0](../../Roadmap.md#g00) Punkt 1 vermutete
+   nur Kennungen und Gewichte gebraucht werden ([G0.0](../roadmap-historie.md#g00) Punkt 1 vermutete
    diesen Speicheranteil als unterschätzt).
 2. Ein Prozess-Cache darf die **On-Read-Frische** nicht brechen: Ein nach dem Laden neu gebauter
    Index (atomarer Swap via `os.replace`, [ADR 0010](0010-drop-in-workflow-and-qa-phase6.md))
@@ -108,7 +108,7 @@ zusätzlich abgesichert – der Aufwand stünde in keinem Verhältnis zum Risiko
 tatsächlich ausgewählten Top-*k*-Treffer in einer einzigen `IN (...)`-Abfrage nach – in
 `search()` und `neighbors_of_chunk()` jeweils nach der Rangbildung, vor dem Aufbau der
 `Hit`-Objekte. Das ist unabhängig vom gewählten Weg (A/B/C) und adressiert direkt den in
-[G0.0](../../Roadmap.md#g00) Punkt 1 vermuteten unterschätzten Speicheranteil: Bei Tausenden von
+[G0.0](../roadmap-historie.md#g00) Punkt 1 vermuteten unterschätzten Speicheranteil: Bei Tausenden von
 Chunks ist der Volltext der mit Abstand größte, aber für die Wertung ungenutzte Speicheranteil.
 
 ## Alternativen

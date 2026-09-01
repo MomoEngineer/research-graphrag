@@ -25,7 +25,7 @@ neu abgeleitet und deshalb hier **nicht** dupliziert – sonst gäbe es zwei Wah
 
 `curation.json` ist **kein** Teil dieser bibliografischen Auflösungskette – es ist ein
 eigenständiges, themenfokus-/SRQ-bezogenes Artefakt für die Auswahlregel der geplanten
-[Referenz-Ernte](../Roadmap.md#phase-14--referenz-ernte-externe-verweise-aus-dem-eigenen-bestand)
+[Referenz-Ernte](../docs/roadmap-historie.md#phase-14--referenz-ernte-externe-verweise-aus-dem-eigenen-bestand)
 und fließt nicht in `paper_metadata.origins` ein. Erzeugt und geprüft wird es über
 `python -m scripts.migrate_curation` (siehe
 [curation.md](../src/research_graphrag/overview/doc/curation.md)).
