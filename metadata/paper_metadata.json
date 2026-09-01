@@ -160,6 +160,42 @@
         "year": 2025
       }
     ],
+    "0208b92fe358754e": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Ege Erdil",
+          "Tamay Besiroglu",
+          "Anson T. Y. Ho"
+        ],
+        "confidence": "weak",
+        "doi": "10.2139/ssrn.4814445",
+        "evidence": "OpenAlex über doi:10.2139/ssrn.4814445 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "Estimating Idea Production: A Methodological Survey",
+        "url": "https://doi.org/10.2139/ssrn.4814445",
+        "venue": "SSRN Electronic Journal",
+        "year": 2024
+      }
+    ],
+    "022d3771fd643d3b": [
+      {
+        "arxiv_id": "2507.05257",
+        "authors": [
+          "Yannan Hu",
+          "Yu Wang",
+          "Julian McAuley"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2507.05257",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2507.05257",
+        "origin": "resolved",
+        "title": "Evaluating Memory in LLM Agents via Incremental Multi-Turn Interactions",
+        "url": "https://arxiv.org/pdf/2507.05257",
+        "venue": "arXiv (Cornell University)",
+        "year": 2025
+      }
+    ],
     "024719fb26819826": [
       {
         "arxiv_id": "2508.00083",
@@ -199,6 +235,32 @@
         "year": 2025
       }
     ],
+    "035f673b459aecad": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Kunlun Zhu",
+          "Hongyi Du",
+          "Zhaochen Hong",
+          "Xiaocheng Yang",
+          "Shu Qing Guo",
+          "Zhe Wang",
+          "Zhihua Wang",
+          "Cheng Qian",
+          "Robert Tang",
+          "Heng Ji",
+          "Jiaxuan You"
+        ],
+        "confidence": "weak",
+        "doi": "",
+        "evidence": "OpenAlex über Titel-Ähnlichkeit 1.00",
+        "origin": "resolved",
+        "title": "MultiAgentBench: Evaluating the Collaboration and Competition of LLM agents",
+        "url": "https://arxiv.org/pdf/2503.01935",
+        "venue": "arXiv (Cornell University)",
+        "year": 2025
+      }
+    ],
     "0380710d55874196": [
       {
         "arxiv_id": "",
@@ -232,6 +294,26 @@
         "origin": "resolved",
         "title": "ChatGPT vs SBST: A Comparative Assessment of Unit Test Suite Generation",
         "url": "https://arxiv.org/pdf/2307.00588",
+        "venue": "arXiv (Cornell University)",
+        "year": 2023
+      }
+    ],
+    "045d0bf2712448fc": [
+      {
+        "arxiv_id": "2310.11511",
+        "authors": [
+          "Asai, Akari",
+          "Zeqiu Wu",
+          "Wang, Yizhong",
+          "Sil, Avirup",
+          "Hannaneh Hajishirzi"
+        ],
+        "confidence": "weak",
+        "doi": "10.48550/arxiv.2310.11511",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2310.11511 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "CareerX: A Retrieval-Augmented Generation Framework for Personalized AI-Driven Career Guidance",
+        "url": "https://arxiv.org/pdf/2310.11511",
         "venue": "arXiv (Cornell University)",
         "year": 2023
       }
@@ -276,6 +358,49 @@
         "year": 2024
       }
     ],
+    "04c1e9cb00f38405": [
+      {
+        "arxiv_id": "2310.04406",
+        "authors": [
+          "Andy Zhou",
+          "Kai Yan",
+          "Michal Shlapentokh-Rothman",
+          "Haohan Wang",
+          "Yu-Xiong Wang"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2310.04406",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2310.04406",
+        "origin": "resolved",
+        "title": "Language Agent Tree Search Unifies Reasoning Acting and Planning in Language Models",
+        "url": "https://arxiv.org/pdf/2310.04406",
+        "venue": "arXiv (Cornell University)",
+        "year": 2023
+      }
+    ],
+    "051fda6c83a2cc2b": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "YanfangZhou YanfangZhou",
+          "Yuntao Liu",
+          "Xiaodong Li",
+          "Yongqiang Zhao",
+          "Xintong Wang",
+          "Jinlong Tian",
+          "Zhenyu Li",
+          "Xinhai Xu"
+        ],
+        "confidence": "weak",
+        "doi": "10.18653/v1/2025.findings-acl.1169",
+        "evidence": "OpenAlex über Titel-Ähnlichkeit 1.00",
+        "origin": "resolved",
+        "title": "Metagent-P: A Neuro-Symbolic Planning Agent with Metacognition for Open Worlds",
+        "url": "https://aclanthology.org/2025.findings-acl.1169.pdf",
+        "venue": "arXiv (Cornell University)",
+        "year": 2025
+      }
+    ],
     "054ee57addaaa72d": [
       {
         "arxiv_id": "2606.28348",
@@ -293,6 +418,27 @@
         "url": "https://doi.org/10.48550/arxiv.2606.28348",
         "venue": "arXiv (Cornell University)",
         "year": 2026
+      }
+    ],
+    "05c5d055201466a2": [
+      {
+        "arxiv_id": "2410.10813",
+        "authors": [
+          "Di Wu",
+          "Hongwei Wang",
+          "Wenhao Yu",
+          "Yuwei Zhang",
+          "Kai‐Wei Chang",
+          "Yu Dong"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2410.10813",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2410.10813",
+        "origin": "resolved",
+        "title": "LongMemEval: Benchmarking Chat Assistants on Long-Term Interactive Memory",
+        "url": "https://arxiv.org/pdf/2410.10813",
+        "venue": "arXiv (Cornell University)",
+        "year": 2024
       }
     ],
     "05df36f027cfe850": [
@@ -382,6 +528,28 @@
         "year": 2025
       }
     ],
+    "0732645580865442": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Yao Wang",
+          "Chungang Yang",
+          "Qiao Li",
+          "P Wang",
+          "Sai Zou",
+          "Bodong Shang",
+          "Shoufeng Wang"
+        ],
+        "confidence": "strong",
+        "doi": "10.1109/tccn.2026.3658750",
+        "evidence": "OpenAlex über doi:10.1109/tccn.2026.3658750",
+        "origin": "resolved",
+        "title": "LAMIO-6G: Large AI Model-Empowered Cross-Layer Intent Management and Multi-Domain Policy Orchestration in 6G Terrestrial Networks",
+        "url": "https://openalex.org/W7125911412",
+        "venue": "IEEE Transactions on Cognitive Communications and Networking",
+        "year": 2026
+      }
+    ],
     "080f62a9dbe447a0": [
       {
         "arxiv_id": "",
@@ -398,6 +566,26 @@
         "url": "https://dl.acm.org/doi/pdf/10.1145/3597503.3639133",
         "venue": "",
         "year": 2024
+      }
+    ],
+    "0817e3fd33915326": [
+      {
+        "arxiv_id": "2506.07982",
+        "authors": [
+          "Victor Barres",
+          "Dong, Honghua",
+          "Ray, Soham",
+          "Xiaolei Si",
+          "Karthik Narasimhan"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2506.07982",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2506.07982",
+        "origin": "resolved",
+        "title": "$τ^2$-Bench: Evaluating Conversational Agents in a Dual-Control Environment",
+        "url": "https://arxiv.org/pdf/2506.07982",
+        "venue": "arXiv (Cornell University)",
+        "year": 2025
       }
     ],
     "08f9596ffb7067ac": [
@@ -652,6 +840,24 @@
         "year": 2026
       }
     ],
+    "10c479cdc343b991": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Trevor Hastie",
+          "Robert Tibshirani",
+          "Jerome H. Friedman"
+        ],
+        "confidence": "weak",
+        "doi": "10.1007/978-0-387-84858-7",
+        "evidence": "OpenAlex über doi:10.1007/978-0-387-84858-7 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "The Elements of Statistical Learning: Data Mining, Inference, and Prediction",
+        "url": "https://openalex.org/W1554944419",
+        "venue": "",
+        "year": 2013
+      }
+    ],
     "1116891832a6e868": [
       {
         "arxiv_id": "2106.05707",
@@ -796,6 +1002,28 @@
         "url": "https://arxiv.org/pdf/2509.18790",
         "venue": "arXiv (Cornell University)",
         "year": 2025
+      }
+    ],
+    "131b19fdc93625b6": [
+      {
+        "arxiv_id": "2408.09955",
+        "authors": [
+          "Qian Wang",
+          "Tianyu Wang",
+          "Zhenheng Tang",
+          "Qinbin Li",
+          "Nuo Chen",
+          "J. Liang",
+          "Bingsheng He"
+        ],
+        "confidence": "weak",
+        "doi": "10.48550/arxiv.2408.09955",
+        "evidence": "OpenAlex über Titel-Ähnlichkeit 1.00",
+        "origin": "resolved",
+        "title": "MegaAgent: A Large-Scale Autonomous LLM-based Multi-Agent System Without Predefined SOPs",
+        "url": "https://arxiv.org/pdf/2408.09955",
+        "venue": "arXiv (Cornell University)",
+        "year": 2024
       }
     ],
     "14671c78fc7de99d": [
@@ -963,6 +1191,28 @@
         "year": 2025
       }
     ],
+    "15e1731e255ec6b2": [
+      {
+        "arxiv_id": "2310.01798",
+        "authors": [
+          "Jie Huang",
+          "Xinyun Chen",
+          "Swaroop Mishra",
+          "Huaixiu Zheng",
+          "Adams Wei Yu",
+          "Xinying Song",
+          "Denny Zhou"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2310.01798",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2310.01798",
+        "origin": "resolved",
+        "title": "Large Language Models Cannot Self-Correct Reasoning Yet",
+        "url": "https://arxiv.org/pdf/2310.01798",
+        "venue": "arXiv (Cornell University)",
+        "year": 2023
+      }
+    ],
     "1675c2dcd5ecaef4": [
       {
         "arxiv_id": "",
@@ -1039,6 +1289,23 @@
         "year": 2026
       }
     ],
+    "17affe7ea945bd1f": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Yan Feng",
+          "Xudong Pan"
+        ],
+        "confidence": "strong",
+        "doi": "10.1145/3774904.3792462",
+        "evidence": "OpenAlex über doi:10.1145/3774904.3792462",
+        "origin": "resolved",
+        "title": "SentinelNet: Safeguarding Multi-Agent Collaboration Through Credit-Based Dynamic Threat Detection",
+        "url": "https://doi.org/10.1145/3774904.3792462",
+        "venue": "",
+        "year": 2026
+      }
+    ],
     "17b07b8eb3d9fe25": [
       {
         "arxiv_id": "",
@@ -1055,6 +1322,26 @@
         "url": "https://eprints.whiterose.ac.uk/id/eprint/133819/1/pat_sosym.pdf",
         "venue": "Software & Systems Modeling",
         "year": 2018
+      }
+    ],
+    "1823df1e4236706d": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Kurt Bollacker",
+          "Colin Evans",
+          "Praveen Paritosh",
+          "Tim Sturge",
+          "Jamie Taylor"
+        ],
+        "confidence": "weak",
+        "doi": "10.1145/1376616.1376746",
+        "evidence": "OpenAlex über doi:10.1145/1376616.1376746 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "Freebase",
+        "url": "https://openalex.org/W2094728533",
+        "venue": "",
+        "year": 2008
       }
     ],
     "18249b6f921995d8": [
@@ -1078,6 +1365,46 @@
         "url": "https://aclanthology.org/2026.acl-long.1738.pdf",
         "venue": "",
         "year": 2026
+      }
+    ],
+    "1847bb42b9efb3a2": [
+      {
+        "arxiv_id": "2305.18323",
+        "authors": [
+          "Binfeng Xu",
+          "Zhiyuan Peng",
+          "Bowen Lei",
+          "Subhabrata Mukherjee",
+          "Yuchen Liu",
+          "Dongkuan Xu"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2305.18323",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2305.18323",
+        "origin": "resolved",
+        "title": "ReWOO: Decoupling Reasoning from Observations for Efficient Augmented Language Models",
+        "url": "https://arxiv.org/pdf/2305.18323",
+        "venue": "arXiv (Cornell University)",
+        "year": 2023
+      }
+    ],
+    "18920e8ebbf19848": [
+      {
+        "arxiv_id": "2508.07575",
+        "authors": [
+          "S. J. Fan",
+          "Xichen Ding",
+          "Zhang, Liang",
+          "Linjian Mo"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2508.07575",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2508.07575",
+        "origin": "resolved",
+        "title": "MCPToolBench++: A Large Scale AI Agent Model Context Protocol MCP Tool Use Benchmark",
+        "url": "https://arxiv.org/pdf/2508.07575",
+        "venue": "arXiv (Cornell University)",
+        "year": 2025
       }
     ],
     "1a0cb23795bea7f1": [
@@ -1116,6 +1443,87 @@
         "year": 2025
       }
     ],
+    "1a215c6d4192c1df": [
+      {
+        "arxiv_id": "2407.01502",
+        "authors": [
+          "Sayash Kapoor",
+          "Benedikt Stroebl",
+          "Zachary S. Siegel",
+          "Nitya Nadgir",
+          "Arvind Narayanan"
+        ],
+        "confidence": "weak",
+        "doi": "10.48550/arxiv.2407.01502",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2407.01502 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "AI Agents That Matter",
+        "url": "https://arxiv.org/pdf/2407.01502",
+        "venue": "arXiv (Cornell University)",
+        "year": 2024
+      }
+    ],
+    "1a2935f39b9cd99f": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Nobukazu Fukuda",
+          "Yuki Ito",
+          "Haruhisa Nozue"
+        ],
+        "confidence": "strong",
+        "doi": "10.1109/icc59461.2026.11587622",
+        "evidence": "OpenAlex über doi:10.1109/icc59461.2026.11587622",
+        "origin": "resolved",
+        "title": "LLM-Assisted PDDL Modeling for Reliable Network Configuration Synthesis",
+        "url": "https://openalex.org/W7168269046",
+        "venue": "",
+        "year": 2026
+      }
+    ],
+    "1a49ce0373afc89d": [
+      {
+        "arxiv_id": "2203.11171",
+        "authors": [
+          "Xuezhi Wang",
+          "Wei, Jason",
+          "Dale Schuurmans",
+          "Quoc V. Le",
+          "Ed H.",
+          "Narang, Sharan",
+          "Chowdhery, Aakanksha",
+          "Zhou, Denny"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2203.11171",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2203.11171",
+        "origin": "resolved",
+        "title": "Self-Consistency Improves Chain of Thought Reasoning in Language Models",
+        "url": "https://arxiv.org/pdf/2203.11171",
+        "venue": "arXiv (Cornell University)",
+        "year": 2022
+      }
+    ],
+    "1a9379f38473b549": [
+      {
+        "arxiv_id": "2002.08909",
+        "authors": [
+          "Kelvin Guu",
+          "Kenton Lee",
+          "Zora Tung",
+          "Panupong Pasupat",
+          "Ming‐Wei Chang"
+        ],
+        "confidence": "weak",
+        "doi": "10.48550/arxiv.2002.08909",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2002.08909 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "REALM: Retrieval-Augmented Language Model Pre-Training",
+        "url": "https://arxiv.org/pdf/2002.08909",
+        "venue": "arXiv (Cornell University)",
+        "year": 2020
+      }
+    ],
     "1adef27654cc2985": [
       {
         "arxiv_id": "2606.06212",
@@ -1133,6 +1541,45 @@
         "url": "https://doi.org/10.48550/arxiv.2606.06212",
         "venue": "arXiv (Cornell University)",
         "year": 2026
+      }
+    ],
+    "1aeae54095cdae3a": [
+      {
+        "arxiv_id": "2305.15334",
+        "authors": [
+          "Shishir G. Patil",
+          "Tianjun Zhang",
+          "Xin Wang",
+          "Joseph E. Gonzalez"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2305.15334",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2305.15334",
+        "origin": "resolved",
+        "title": "Gorilla: Large Language Model Connected with Massive APIs",
+        "url": "https://arxiv.org/pdf/2305.15334",
+        "venue": "arXiv (Cornell University)",
+        "year": 2023
+      }
+    ],
+    "1af80aae2854b5e3": [
+      {
+        "arxiv_id": "2307.16877",
+        "authors": [
+          "Vaibhav Adlakha",
+          "Parishad BehnamGhader",
+          "Xing Han Lù",
+          "Nicholas Meade",
+          "Siva Reddy"
+        ],
+        "confidence": "weak",
+        "doi": "10.48550/arxiv.2307.16877",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2307.16877 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "Evaluating Correctness and Faithfulness of Instruction-Following Models for Question Answering",
+        "url": "https://arxiv.org/pdf/2307.16877",
+        "venue": "arXiv (Cornell University)",
+        "year": 2023
       }
     ],
     "1b28c97b6cfaae50": [
@@ -1215,6 +1662,26 @@
         "year": 2024
       }
     ],
+    "1d1fbe8a3cf472fc": [
+      {
+        "arxiv_id": "2409.11363",
+        "authors": [
+          "Zachary S. Siegel",
+          "Sayash Kapoor",
+          "Nitya Nagdir",
+          "Benedikt Stroebl",
+          "Arvind Narayanan"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2409.11363",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2409.11363",
+        "origin": "resolved",
+        "title": "CORE-Bench: Fostering the Credibility of Published Research Through a Computational Reproducibility Agent Benchmark",
+        "url": "https://arxiv.org/pdf/2409.11363",
+        "venue": "arXiv (Cornell University)",
+        "year": 2024
+      }
+    ],
     "1d4985b4b9701674": [
       {
         "arxiv_id": "2412.15272",
@@ -1231,6 +1698,51 @@
         "origin": "resolved",
         "title": "SimGRAG: Leveraging Similar Subgraphs for Knowledge Graphs Driven Retrieval-Augmented Generation",
         "url": "https://arxiv.org/pdf/2412.15272",
+        "venue": "arXiv (Cornell University)",
+        "year": 2024
+      }
+    ],
+    "1d5260ce4210e590": [
+      {
+        "arxiv_id": "2605.27825",
+        "authors": [
+          "Kai Chen",
+          "Yan Pang",
+          "Tianhao Wang"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2605.27825",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2605.27825",
+        "origin": "resolved",
+        "title": "MRMMIA: Membership Inference Attacks on Memory in Chat Agents",
+        "url": "https://doi.org/10.48550/arxiv.2605.27825",
+        "venue": "arXiv (Cornell University)",
+        "year": 2026
+      }
+    ],
+    "1dab9a33edeab25e": [
+      {
+        "arxiv_id": "2410.07095",
+        "authors": [
+          "Chan, Jun Shern",
+          "Neil Chowdhury",
+          "Oliver Jaffe",
+          "James Aung",
+          "Dane Sherburn",
+          "Evan Mays",
+          "Giulio Starace",
+          "Kevin Liu",
+          "Leon Maksin",
+          "Tejal Patwardhan",
+          "Lilian Weng",
+          "Aleksander Mądry"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2410.07095",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2410.07095",
+        "origin": "resolved",
+        "title": "MLE-bench: Evaluating Machine Learning Agents on Machine Learning Engineering",
+        "url": "https://arxiv.org/pdf/2410.07095",
         "venue": "arXiv (Cornell University)",
         "year": 2024
       }
@@ -1274,6 +1786,46 @@
         "url": "https://arxiv.org/pdf/2405.19782",
         "venue": "arXiv (Cornell University)",
         "year": 2024
+      }
+    ],
+    "1e5abee712c5d855": [
+      {
+        "arxiv_id": "2305.10403",
+        "authors": [
+          "Rohan Anil",
+          "Andrew M. Dai",
+          "Orhan Fırat",
+          "Melvin Johnson",
+          "Dmitry Lepikhin",
+          "A. M. A. dos Passos",
+          "Siamak Shakeri",
+          "Emanuel Taropa",
+          "Paige Bailey",
+          "Zhifeng Chen",
+          "Eric Chu",
+          "Jonathan H. Clark",
+          "Laurent El Shafey",
+          "Yanping Huang",
+          "Meier-Hellstern, Kathy",
+          "Gaurav Mishra",
+          "Érica Rodrigues Moreira",
+          "Mark Omernick",
+          "Kevin Robinson",
+          "Sebastian Ruder",
+          "Yi Tay",
+          "Kefan Xiao",
+          "Yuanzhong Xu",
+          "Yujing Zhang",
+          "Gustavo Hernández Ábrego"
+        ],
+        "confidence": "weak",
+        "doi": "10.48550/arxiv.2305.10403",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2305.10403 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "PaLM 2 Technical Report",
+        "url": "https://arxiv.org/pdf/2305.10403",
+        "venue": "arXiv (Cornell University)",
+        "year": 2023
       }
     ],
     "1f21265563f64f39": [
@@ -1374,6 +1926,47 @@
         "year": 2024
       }
     ],
+    "202dc554e56775bf": [
+      {
+        "arxiv_id": "2307.11088",
+        "authors": [
+          "Chenxin An",
+          "Shansan Gong",
+          "Ming Zhong",
+          "Zhao, Xingjian",
+          "Mukai Li",
+          "Jun Zhang",
+          "Lingpeng Kong",
+          "Xipeng Qiu"
+        ],
+        "confidence": "weak",
+        "doi": "10.48550/arxiv.2307.11088",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2307.11088 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "L-Eval: Instituting Standardized Evaluation for Long Context Language Models",
+        "url": "https://arxiv.org/pdf/2307.11088",
+        "venue": "arXiv (Cornell University)",
+        "year": 2023
+      }
+    ],
+    "2107e6cbd57d3c0d": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Supratim Chakraborty",
+          "Nithin Chitta",
+          "Rajesh Sundaresan"
+        ],
+        "confidence": "strong",
+        "doi": "10.23919/cnsm62983.2024.10814407",
+        "evidence": "OpenAlex über doi:10.23919/cnsm62983.2024.10814407",
+        "origin": "resolved",
+        "title": "Automation of Network Configuration Generation using Large Language Models",
+        "url": "https://openalex.org/W4405935382",
+        "venue": "",
+        "year": 2024
+      }
+    ],
     "212f49b6fb7ddbdb": [
       {
         "arxiv_id": "",
@@ -1396,6 +1989,53 @@
         "year": 2025
       }
     ],
+    "2216cf32dca84ef8": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Noriki Nishida",
+          "Rumana Ferdous Munne",
+          "Shanshan Liu",
+          "Narumi Tokunaga",
+          "Yuki Yamagata",
+          "Fei Cheng",
+          "Kouji Kozaki",
+          "Yūji Matsumoto"
+        ],
+        "confidence": "strong",
+        "doi": "10.1162/tacl.a.615",
+        "evidence": "OpenAlex über doi:10.1162/TACL.a.615",
+        "origin": "resolved",
+        "title": "Dissecting GraphRAG: A Modular Analysis of Knowledge Structuring for Factoid Question Answering",
+        "url": "https://doi.org/10.1162/tacl.a.615",
+        "venue": "Transactions of the Association for Computational Linguistics",
+        "year": 2026
+      }
+    ],
+    "2240e08a747462c5": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Peter Anderson",
+          "Qi Wu",
+          "Damien Teney",
+          "Jake Bruce",
+          "Mark Johnson",
+          "Niko Sünderhauf",
+          "Ian Reid",
+          "Stephen Jay Gould",
+          "Anton van den Hengel"
+        ],
+        "confidence": "weak",
+        "doi": "10.1109/cvpr.2018.00387",
+        "evidence": "OpenAlex über doi:10.1109/CVPR.2018.00387 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "Vision-and-Language Navigation: Interpreting Visually-Grounded Navigation Instructions in Real Environments",
+        "url": "https://arxiv.org/pdf/1711.07280",
+        "venue": "",
+        "year": 2018
+      }
+    ],
     "2264d092c9ffd905": [
       {
         "arxiv_id": "2403.13721",
@@ -1413,6 +2053,26 @@
         "url": "https://arxiv.org/pdf/2403.13721",
         "venue": "arXiv (Cornell University)",
         "year": 2024
+      }
+    ],
+    "228ab36678b84808": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Ryan Beckett",
+          "Ratul Mahajan",
+          "Todd Millstein",
+          "Jitendra Padhye",
+          "David Walker"
+        ],
+        "confidence": "weak",
+        "doi": "10.1145/3140587.3062367",
+        "evidence": "OpenAlex über doi:10.1145/3140587.3062367 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "Network configuration synthesis with abstract topologies",
+        "url": "https://openalex.org/W4251246057",
+        "venue": "ACM SIGPLAN Notices",
+        "year": 2017
       }
     ],
     "2422982b5e7bf345": [
@@ -1531,6 +2191,46 @@
         "year": 2025
       }
     ],
+    "26fa6ba9267acfad": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Hongjin Qian",
+          "Zheng Liu",
+          "Peitian Zhang",
+          "Kelong Mao",
+          "Defu Lian",
+          "Zhicheng Dou",
+          "Tiejun Huang"
+        ],
+        "confidence": "strong",
+        "doi": "10.1145/3696410.3714805",
+        "evidence": "OpenAlex über doi:10.1145/3696410.3714805",
+        "origin": "resolved",
+        "title": "MemoRAG: Boosting Long Context Processing with Global Memory-Enhanced Retrieval Augmentation",
+        "url": "https://dl.acm.org/doi/pdf/10.1145/3696410.3714805",
+        "venue": "",
+        "year": 2025
+      }
+    ],
+    "2763e3e22af01965": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Weihang Guo",
+          "Zachary Kingston",
+          "Lydia E. Kavraki"
+        ],
+        "confidence": "strong",
+        "doi": "10.1109/icra55743.2025.11127555",
+        "evidence": "OpenAlex über doi:10.1109/icra55743.2025.11127555",
+        "origin": "resolved",
+        "title": "CaStL: Constraints as Specifications Through Llm Translation for Long-Horizon Task and Motion Planning",
+        "url": "https://openalex.org/W4413925878",
+        "venue": "",
+        "year": 2025
+      }
+    ],
     "280fbd6c09e37214": [
       {
         "arxiv_id": "",
@@ -1603,6 +2303,34 @@
         "year": 2014
       }
     ],
+    "289207890aa631dc": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Lei Wang",
+          "Chen Ma",
+          "Xueyang Feng",
+          "Zeyu Zhang",
+          "Hao Yang",
+          "Jingsen Zhang",
+          "Zhiyuan Chen",
+          "Jiakai Tang",
+          "Xu Chen",
+          "Yankai Lin",
+          "Wayne Xin Zhao",
+          "Zhewei Wei",
+          "Ji-Rong Wen"
+        ],
+        "confidence": "weak",
+        "doi": "10.1007/s11704-024-40231-1",
+        "evidence": "OpenAlex über doi:10.1007/s11704-024-40231-1 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "A survey on large language model based autonomous agents",
+        "url": "https://link.springer.com/content/pdf/10.1007/s11704-024-40231-1.pdf",
+        "venue": "Frontiers of Computer Science",
+        "year": 2024
+      }
+    ],
     "291089c9dadb3101": [
       {
         "arxiv_id": "2606.01222",
@@ -1621,6 +2349,40 @@
         "url": "https://doi.org/10.48550/arxiv.2606.01222",
         "venue": "arXiv (Cornell University)",
         "year": 2026
+      }
+    ],
+    "295299721d67b250": [
+      {
+        "arxiv_id": "2307.16789",
+        "authors": [
+          "Qin, Yujia",
+          "Shihao Liang",
+          "Yining Ye",
+          "Kunlun Zhu",
+          "Lan Yan",
+          "Yaxi Lu",
+          "Yankai Lin",
+          "Xin Cong",
+          "Xiangru Tang",
+          "Bill Qian",
+          "Sihan Zhao",
+          "Hong, Lauren",
+          "Runchu Tian",
+          "Ruobing Xie",
+          "Jie Zhou",
+          "Mark Gerstein",
+          "Dahai Li",
+          "Zhiyuan Liu",
+          "Maosong Sun"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2307.16789",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2307.16789",
+        "origin": "resolved",
+        "title": "Counterfactually Auditable Lifecycle Certification for Autonomous Agents",
+        "url": "https://arxiv.org/pdf/2307.16789",
+        "venue": "arXiv (Cornell University)",
+        "year": 2023
       }
     ],
     "297905bc4c69aec2": [
@@ -1662,6 +2424,30 @@
         "year": 2019
       }
     ],
+    "29bf7ddc3f321151": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Lingqi Guo",
+          "Lei Zhang",
+          "Jingyu Wang",
+          "Jianyu Wu",
+          "Yuhang Yan",
+          "Haifeng Sun",
+          "Bo He",
+          "Qi Qi",
+          "Jianxin Liao"
+        ],
+        "confidence": "strong",
+        "doi": "10.1109/tase.2025.3610906",
+        "evidence": "OpenAlex über doi:10.1109/tase.2025.3610906",
+        "origin": "resolved",
+        "title": "Intent-Based Autonomous Network Framework Guided by Large Language Model",
+        "url": "https://openalex.org/W4414270191",
+        "venue": "IEEE Transactions on Automation Science and Engineering",
+        "year": 2025
+      }
+    ],
     "29d8a065ed91c5d0": [
       {
         "arxiv_id": "2302.04023",
@@ -1688,6 +2474,29 @@
         "url": "https://arxiv.org/pdf/2302.04023",
         "venue": "arXiv (Cornell University)",
         "year": 2023
+      }
+    ],
+    "2a222cfca30d406f": [
+      {
+        "arxiv_id": "2602.03794",
+        "authors": [
+          "Yingxuan Yang",
+          "Chengrui Qu",
+          "Muning Wen",
+          "Laixi Shi",
+          "Ying Wen",
+          "Weinan Zhang",
+          "Adam Wierman",
+          "Shangding Gu"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2602.03794",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2602.03794",
+        "origin": "resolved",
+        "title": "Understanding Agent Scaling in LLM-Based Multi-Agent Systems via Diversity",
+        "url": "https://doi.org/10.48550/arxiv.2602.03794",
+        "venue": "arXiv (Cornell University)",
+        "year": 2026
       }
     ],
     "2aa0f0099c571bc5": [
@@ -1744,6 +2553,26 @@
         "year": 2019
       }
     ],
+    "2bd9487af0889a8c": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Guohao Li",
+          "Hasan Abed Al Kader Hammoud",
+          "Hani Itani",
+          "Dmitrii Khizbullin",
+          "Bernard Ghanem"
+        ],
+        "confidence": "strong",
+        "doi": "10.52202/075280-2264",
+        "evidence": "OpenAlex über doi:10.52202/075280-2264",
+        "origin": "resolved",
+        "title": "CAMEL: Communicative Agents for \"Mind\" Exploration of Large Language Model Society",
+        "url": "https://openalex.org/W7133220405",
+        "venue": "",
+        "year": 2023
+      }
+    ],
     "2bfcb40e67768eb9": [
       {
         "arxiv_id": "2504.11233",
@@ -1764,6 +2593,26 @@
         "url": "https://arxiv.org/pdf/2504.11233",
         "venue": "arXiv (Cornell University)",
         "year": 2025
+      }
+    ],
+    "2c3c80fff5735925": [
+      {
+        "arxiv_id": "2412.02883",
+        "authors": [
+          "Toufique Ahmed",
+          "Martin Hirzel",
+          "Rangeet Pan",
+          "Avraham Shinnar",
+          "Sinha, Saurabh"
+        ],
+        "confidence": "weak",
+        "doi": "10.48550/arxiv.2412.02883",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2412.02883 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "TDD-Bench Verified: Can LLMs Generate Tests for Issues Before They Get Resolved?",
+        "url": "https://arxiv.org/pdf/2412.02883",
+        "venue": "arXiv (Cornell University)",
+        "year": 2024
       }
     ],
     "2c5bf5b0221c8cbc": [
@@ -1832,6 +2681,79 @@
         "title": "LEGO-GraphRAG: Modularizing Graph-Based Retrieval-Augmented Generation for Design Space Exploration",
         "url": "https://openalex.org/W4413985424",
         "venue": "Proceedings of the VLDB Endowment",
+        "year": 2025
+      }
+    ],
+    "2e96786a177ae1bf": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Edoardo Debenedetti",
+          "Jie Zhang",
+          "Mislav Balunović",
+          "Luca Beurer-Kellner",
+          "M. Fischer",
+          "Florian Tramèr"
+        ],
+        "confidence": "strong",
+        "doi": "10.52202/079017-2636",
+        "evidence": "OpenAlex über doi:10.52202/079017-2636",
+        "origin": "resolved",
+        "title": "AgentDojo: A Dynamic Environment to Evaluate Prompt Injection Attacks and Defenses for LLM Agents",
+        "url": "https://openalex.org/W4415796822",
+        "venue": "",
+        "year": 2024
+      }
+    ],
+    "2fb69cb57e1ca689": [
+      {
+        "arxiv_id": "2501.17195",
+        "authors": [
+          "Andrei Alexandru",
+          "Antonia Calvi",
+          "Henry Broomfield",
+          "Jackson Golden",
+          "Kyle Dai",
+          "Mathias Leys",
+          "Maurice Burger",
+          "Max Bartolo",
+          "Roman Engeler",
+          "Sashank Pisupati",
+          "Toby Drane",
+          "Young Joo Park"
+        ],
+        "confidence": "weak",
+        "doi": "10.48550/arxiv.2501.17195",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2501.17195 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "Atla Selene Mini: A General Purpose Evaluation Model",
+        "url": "https://arxiv.org/pdf/2501.17195",
+        "venue": "arXiv (Cornell University)",
+        "year": 2025
+      }
+    ],
+    "2ff41c973a8f17b7": [
+      {
+        "arxiv_id": "2510.24563",
+        "authors": [
+          "Jia, Hongrui",
+          "Liao, Jitong",
+          "Zhang, Xi",
+          "Xu, Haiyang",
+          "Xie, Tianbao",
+          "Jiang, Chaoya",
+          "Yan, Ming",
+          "Liu, Si",
+          "Ye, Wei",
+          "Huang, Fei"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2510.24563",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2510.24563",
+        "origin": "resolved",
+        "title": "OSWorld-MCP: Benchmarking MCP Tool Invocation In Computer-Use Agents",
+        "url": "https://doi.org/10.48550/arxiv.2510.24563",
+        "venue": "arXiv (Cornell University)",
         "year": 2025
       }
     ],
@@ -2001,6 +2923,46 @@
         "url": "https://arxiv.org/pdf/2404.08189",
         "venue": "arXiv (Cornell University)",
         "year": 2024
+      }
+    ],
+    "3398dfee0ca02d53": [
+      {
+        "arxiv_id": "2005.14165",
+        "authors": [
+          "T. B. Brown",
+          "Benjamin Mann",
+          "Nick Ryder",
+          "Melanie Subbiah",
+          "Jared Kaplan",
+          "Prafulla Dhariwal",
+          "Arvind Neelakantan",
+          "Pranav Shyam",
+          "Girish Sastry",
+          "Amanda Askell",
+          "Sandhini Agarwal",
+          "Ariel Herbert-Voss",
+          "Gretchen Krueger",
+          "Tom Henighan",
+          "Rewon Child",
+          "Aditya Ramesh",
+          "Daniel M. Ziegler",
+          "Jeffrey Wu",
+          "Clemens Winter",
+          "Christopher Hesse",
+          "Mark Chen",
+          "Eric J. Sigler",
+          "Mateusz Litwin",
+          "Scott Gray",
+          "Benjamin Chess"
+        ],
+        "confidence": "weak",
+        "doi": "10.48550/arxiv.2005.14165",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2005.14165 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "Language Models are Few-Shot Learners",
+        "url": "https://arxiv.org/pdf/2005.14165",
+        "venue": "arXiv (Cornell University)",
+        "year": 2020
       }
     ],
     "34273fe5f4f70cf9": [
@@ -2203,6 +3165,46 @@
         "year": 2024
       }
     ],
+    "37fd6a52c2734d02": [
+      {
+        "arxiv_id": "2412.08905",
+        "authors": [
+          "Marah Abdin",
+          "Jyoti Aneja",
+          "Harkirat Singh Behl",
+          "Sébastien Bubeck",
+          "Ronen Eldan",
+          "Suriya Gunasekar",
+          "Michael R. Harrison",
+          "Russell J. Hewett",
+          "Mojan Javaheripi",
+          "Piero Kauffmann",
+          "James R. Lee",
+          "Yin Tat Lee",
+          "Yuanzhi Li",
+          "Weishung Liu",
+          "Caio César Teodoro Mendes",
+          "Anh Nguyen",
+          "Eric Price",
+          "Gustavo de Rosa",
+          "Olli Saarikivi",
+          "Adil Salim",
+          "Shital Shah",
+          "Xin Wang",
+          "Rachel Ward",
+          "Yue Wu",
+          "Dingli Yu"
+        ],
+        "confidence": "weak",
+        "doi": "10.48550/arxiv.2412.08905",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2412.08905 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "Phi-4 Technical Report",
+        "url": "https://arxiv.org/pdf/2412.08905",
+        "venue": "arXiv (Cornell University)",
+        "year": 2024
+      }
+    ],
     "3820a1e6e7ad5eca": [
       {
         "arxiv_id": "",
@@ -2220,6 +3222,105 @@
         "url": "https://openalex.org/W3010476191",
         "venue": "arXiv (Cornell University)",
         "year": 2020
+      }
+    ],
+    "38cc53e73119b291": [
+      {
+        "arxiv_id": "2303.08774",
+        "authors": [
+          "OpenAI",
+          "Josh Achiam",
+          "Steven Adler",
+          "Sandhini Agarwal",
+          "Lama Ahmad",
+          "Ilge Akkaya",
+          "Florencia Leoni Aleman",
+          "Diogo Almeida",
+          "Janko Altenschmidt",
+          "Sam Altman",
+          "Shyamal Anadkat",
+          "Red Avila",
+          "Igor Babuschkin",
+          "Suchir Balaji",
+          "Valerie Balcom",
+          "Paul Baltescu",
+          "Haiming Bao",
+          "Mohammad Bavarian",
+          "Jeff Belgum",
+          "Irwan Bello",
+          "Jake Berdine",
+          "Gabriel Bernadett-Shapiro",
+          "Christopher Berner",
+          "Lenny Bogdonoff",
+          "Oleg Boiko"
+        ],
+        "confidence": "weak",
+        "doi": "",
+        "evidence": "arXiv-Feed über arxiv:2303.08774",
+        "origin": "resolved",
+        "title": "GPT-4 Technical Report",
+        "url": "",
+        "venue": "",
+        "year": 2023
+      }
+    ],
+    "3946b0277ee5ab77": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Epure, Elena, Viorica",
+          "Benjamin Kille",
+          "Jon Espen Ingvaldsen",
+          "Marc Denecker",
+          "Camille Salinesi",
+          "Sahin Albayrak"
+        ],
+        "confidence": "weak",
+        "doi": "10.1145/nnnnnnn.nnnnnnn",
+        "evidence": "OpenAlex über doi:10.1145/nnnnnnn.nnnnnnn (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "Challenging common bolus advisor for self-monitoring type-I diabetes patients using Reinforcement Learning",
+        "url": "https://hal.science/hal-05598986",
+        "venue": "HAL (Le Centre pour la Communication Scientifique Directe)",
+        "year": 2017
+      }
+    ],
+    "39a82767353ada90": [
+      {
+        "arxiv_id": "2305.06599",
+        "authors": [
+          "Jia Li",
+          "Ge Li",
+          "Yongmin Li",
+          "Zhi Jin"
+        ],
+        "confidence": "weak",
+        "doi": "10.48550/arxiv.2305.06599",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2305.06599 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "Structured Chain-of-Thought Prompting for Code Generation",
+        "url": "https://arxiv.org/pdf/2305.06599",
+        "venue": "arXiv (Cornell University)",
+        "year": 2023
+      }
+    ],
+    "39cd4f8a8323bea8": [
+      {
+        "arxiv_id": "2606.00655",
+        "authors": [
+          "Jialing Li",
+          "Zhouhong Gu",
+          "Yin Cai",
+          "Hongwei Feng"
+        ],
+        "confidence": "strong",
+        "doi": "10.48550/arxiv.2606.00655",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2606.00655",
+        "origin": "resolved",
+        "title": "Scaling Behavior of Single LLM-Driven Multi-Agent Systems",
+        "url": "https://doi.org/10.48550/arxiv.2606.00655",
+        "venue": "arXiv (Cornell University)",
+        "year": 2026
       }
     ],
     "39dbc38bb6bfca7c": [
@@ -2291,6 +3392,26 @@
         "url": "https://doi.org/10.48550/arxiv.2606.11976",
         "venue": "arXiv (Cornell University)",
         "year": 2026
+      }
+    ],
+    "3e89ab42cec7df23": [
+      {
+        "arxiv_id": "2406.05720",
+        "authors": [
+          "Yubo Dong",
+          "Xukun Zhu",
+          "Zhengzhe Pan",
+          "Linchao Zhu",
+          "Yi Yang"
+        ],
+        "confidence": "weak",
+        "doi": "10.48550/arxiv.2406.05720",
+        "evidence": "OpenAlex über arxiv:10.48550/arXiv.2406.05720 (Identifikator lokal nicht belegt)",
+        "origin": "resolved",
+        "title": "VillagerAgent: A Graph-Based Multi-Agent Framework for Coordinating Complex Task Dependencies in Minecraft",
+        "url": "https://arxiv.org/pdf/2406.05720",
+        "venue": "arXiv (Cornell University)",
+        "year": 2024
       }
     ],
     "3fdcb376d961d11e": [
@@ -5801,6 +6922,22 @@
         "year": 2025
       }
     ],
+    "a345ad2fb3bdcb24": [
+      {
+        "arxiv_id": "1906.08369",
+        "authors": [
+          "René Haberland"
+        ],
+        "confidence": "strong",
+        "doi": "",
+        "evidence": "Autor aus PDF-Titelseite entnommen (arXiv:1906.08369v1, Saint Petersburg State University; urspr. Diplomarbeit TU Dresden 2007, empfohlen von Prof. Bratchikov I.L. am 7.4.2008), 2026-08-14",
+        "origin": "manual",
+        "title": "Unification of Template-Expansion and XML-Validation",
+        "url": "https://arxiv.org/abs/1906.08369",
+        "venue": "",
+        "year": 2019
+      }
+    ],
     "a37cd528615ff19b": [
       {
         "arxiv_id": "",
@@ -8208,22 +9345,6 @@
         "url": "https://doi.org/10.48550/arxiv.2605.18775",
         "venue": "arXiv (Cornell University)",
         "year": 2026
-      }
-    ],
-    "a345ad2fb3bdcb24": [
-      {
-        "arxiv_id": "1906.08369",
-        "authors": [
-          "René Haberland"
-        ],
-        "confidence": "strong",
-        "doi": "",
-        "evidence": "Autor aus PDF-Titelseite entnommen (arXiv:1906.08369v1, Saint Petersburg State University; urspr. Diplomarbeit TU Dresden 2007, empfohlen von Prof. Bratchikov I.L. am 7.4.2008), 2026-08-14",
-        "origin": "manual",
-        "title": "Unification of Template-Expansion and XML-Validation",
-        "url": "https://arxiv.org/abs/1906.08369",
-        "venue": "",
-        "year": 2019
       }
     ]
   },
