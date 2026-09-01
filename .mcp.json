@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "research-graphrag": {
+      "type": "stdio",
+      "command": "${CLAUDE_PROJECT_DIR}/.venv/Scripts/python.exe",
+      "args": ["-m", "research_graphrag.mcp_server"],
+      "env": {
+        "RESEARCH_GRAPHRAG_LOG_LEVEL": "INFO",
+        "RESEARCH_GRAPHRAG_INDEX": "${CLAUDE_PROJECT_DIR}/data/index/index.sqlite"
+      }
+    }
+  }
+}
