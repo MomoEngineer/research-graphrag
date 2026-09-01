@@ -10,8 +10,13 @@ import pytest
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
 from research_graphrag.indexing.graph_index import build_graph
-from research_graphrag.indexing.tfidf_index import build_index
-from research_graphrag.retrieval.global_search import GlobalSearchResult, search_global
+from research_graphrag.indexing.tfidf_index import DEFAULT_SCORING, TfidfIndex, build_index
+from research_graphrag.retrieval.global_search import (
+    MEMBER_TOP_K,
+    GlobalSearchResult,
+    rank_communities,
+    search_global,
+)
 
 _CLUSTER_TRANSFORMER = {
     "aaaa0001": ["transformer attention mechanism self attention", "multi head attention encoder"],
@@ -112,6 +117,68 @@ def test_global_missing_index_raises_not_found(tmp_path: Path) -> None:
     with pytest.raises(DomainError) as excinfo:
         search_global(tmp_path / "absent.sqlite", "transformer")
     assert excinfo.value.code is ErrorCode.NOT_FOUND
+
+
+_DEEP_TERM = "zzdeepmemberterm"
+"""Ein Begriff im **zweiten** Chunk eines isolierten Papers, außerhalb der Top-10-Keywords.
+
+Das erste Chunk füllt die zehn Keyword-Plätze mit eigenen, alphabetisch früheren Begriffen; der
+Begriff im zweiten Chunk landet dadurch nie in den Anzeige-Keywords oder der (aus dem ersten
+Chunk gezogenen) Zusammenfassung – dasselbe Konstruktionsmuster wie ``_ORPHAN_TERM`` in
+``tests/retrieval/test_drift.py``.
+"""
+
+
+def _paper_with_deep_term(paper_id: str) -> CanonicalPaper:
+    return _paper(
+        paper_id,
+        [
+            "alpha bravo charlie delta echo foxtrot golf hotel india juliett",
+            f"kilo lima mike november {_DEEP_TERM}",
+        ],
+    )
+
+
+def test_global_ranks_by_member_chunk_content_not_just_keywords(tmp_path: Path) -> None:
+    """Ein Begriff im zweiten (Nicht-Keyword-)Chunk eines Mitglieds findet trotzdem die Community.
+
+    Vor Phase 10 / V4 rankte Global über ein Dokument aus Top-10-Keywords + Zusammenfassung des
+    ersten Chunks; ein Begriff, der nur im zweiten Chunk steht, hätte dort nie gescort. Seit V4
+    aggregiert der Score aus den echten Mitglieds-Chunk-Scores (ADR 0036), daher findet die
+    Anfrage die Community trotzdem.
+    """
+    db = tmp_path / "index" / "index.sqlite"
+    papers = _two_cluster_papers() + [_paper_with_deep_term("dddd0001")]
+    build_index(papers, db)
+    build_graph(papers, db)
+
+    result = search_global(db, _DEEP_TERM, n=5)
+
+    assert result.communities
+    rep_ids = {ref.paper_id for match in result.communities for ref in match.representatives}
+    assert "dddd0001" in rep_ids
+    # Der Begriff darf nicht in den Anzeige-Keywords stehen - sonst waere das Beispiel entwertet.
+    assert all(_DEEP_TERM not in match.keywords for match in result.communities)
+
+
+def test_global_score_equals_mean_of_top_member_chunk_scores(tmp_path: Path) -> None:
+    """Der Community-Score ist exakt das Mittel der ``MEMBER_TOP_K`` höchsten Mitglieds-Scores."""
+    db = _build(tmp_path)
+    query = "transformer attention encoder"
+
+    ranked = rank_communities(db, query, n=5)
+    assert ranked
+
+    index = TfidfIndex.load(db)
+    scores_by_paper = index.score_chunks_by_paper(query, scoring=DEFAULT_SCORING)
+
+    for community, score in ranked:
+        member_scores = [
+            s for paper_id in community.members for s in scores_by_paper.get(paper_id, ())
+        ]
+        top = sorted(member_scores, reverse=True)[:MEMBER_TOP_K]
+        expected = sum(top) / len(top)
+        assert score == pytest.approx(expected)
 
 
 def test_global_to_dict_shape(tmp_path: Path) -> None:

@@ -64,7 +64,7 @@ Liefert dieser Pfad **keine** Belege, fällt das Werkzeug sichtbar auf die Chunk
 
 `document_kind` ist `full` (Volltext) oder `reference` (**Referenz-Eintrag ohne Volltext**). In den `citations` sind Referenz-Einträge **nachrangig** ([ADR 0031](../../../../docs/adr/0031-reference-contract-and-guardrail-phase13.md)); als Community-Vertreter treten sie nicht auf, weil sie keiner Community angehören.
 
-`communities[*].score` ist der TF-IDF-Score des Community-Rankings (unverändert); in den `citations` ist `score` dagegen der **Fusionswert** der Hybrid-Wertung mit den Rohwerten `score_tfidf`/`score_bm25` ([ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)). Die beiden Werte sind **nicht** miteinander vergleichbar.
+`communities[*].score` ist seit Phase 10 / V4 ([ADR 0036](../../../../docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md)) das Mittel der fünf höchsten Hybrid-Chunk-Scores der Mitgliederpaper (zuvor ein separater TF-IDF-Score über Keywords + Summary); in den `citations` ist `score` der **Fusionswert** derselben Hybrid-Wertung mit den Rohwerten `score_tfidf`/`score_bm25` ([ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)). Beide Werte entstehen jetzt aus derselben Quelle, sind aber durch die Aggregation weiterhin **nicht** direkt miteinander vergleichbar.
 
 Jeder Beleg – Community-Vertreter wie Chunk-Zitat – trägt zusätzlich `identifiers` und `citation_key` und ist damit **extern auflösbar**; beide stammen aus dem aufgelösten Metadatensatz des Papers und können leer sein ([ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md)).
 
@@ -76,7 +76,8 @@ Jeder Beleg – Community-Vertreter wie Chunk-Zitat – trägt zusätzlich `iden
 
 - Kein echtes iteratives DRIFT; nur **eine** Community-Auswahl plus lokale Verfeinerung.
 - Die Community-Rangfolge wirkt **nur über die Zugehörigkeit**: In der Vereinigung entscheidet allein die Chunk-Wertung, nicht der Rang der Community.
-- Der Fallback ist die **Basic-Suche**, keine DRIFT-Leistung – er verhindert eine leere Antwort, verbessert aber kein Retrieval.
+- Der Fallback ist die **Basic-Suche**, keine DRIFT-Leistung – er verhindert eine leere Antwort, verbessert aber kein Retrieval. Seit Phase 10 / V4 tritt der Fall „Community-Pfad ohne jeden Beleg trotz echtem Basic-Treffer" am realen Korpus nicht mehr auf, weil beide Pfade dieselbe Chunk-Wertung teilen; die Garantie bleibt als Auffangnetz bestehen ([ADR 0036](../../../../docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md)).
+- Die Kandidatenmenge der Vereinigung kann bei breit gestreuten Fragen groß werden und die lokale Verfeinerung verdünnen – seit V4 tendenziell öfter, weil mehr Communities positiv scoren (ADR 0036).
 - Keine LLM-Formulierung im Tool – nur strukturierte Evidenz + Provenienz.
 
 ## 6. Fehlerverhalten
@@ -98,4 +99,4 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 
 ## 9. Testabdeckung
 
-- `tests/retrieval/test_drift.py`: Community-Vereinigung + lokale Verfeinerung (auf Mitglieder beschränkt), Fallback bei fehlender Übereinstimmung (Belege identisch zur Basic-Suche), `communities`-Grenzen, Determinismus, Fehler-/Edge-Cases (`invalid_input`, `not_found`, `constraint_violation`), Output-Schema.
+- `tests/retrieval/test_drift.py`: Community-Vereinigung + lokale Verfeinerung (auf Mitglieder beschränkt), Fallback bei fehlender Übereinstimmung (Belege identisch zur Basic-Suche), die seit V4 geschlossene alte Fallback-Lücke (`test_drift_finds_the_orphans_own_community_instead_of_falling_back`), `communities`-Grenzen, Determinismus, Fehler-/Edge-Cases (`invalid_input`, `not_found`, `constraint_violation`), Output-Schema.

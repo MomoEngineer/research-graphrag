@@ -19,7 +19,7 @@
 
 ## 1. Zweck
 
-Beantwortet **Cross-Paper-/Themenfragen** als Offline-Analog zum GraphRAG-„Global"-Map-Reduce ([ADR 0008](../../../../docs/adr/0008-retrieval-and-query-router-phase4.md)): Jede Louvain-Community (Phase 3) wird über ihre aggregierten **Keywords + Summary** zu einem Dokument verdichtet, die Anfrage per TF-IDF dagegen gescort und die passendsten Communities mit **repräsentativer Paper-Provenienz** zurückgegeben.
+Beantwortet **Cross-Paper-/Themenfragen** als Offline-Analog zum GraphRAG-„Global"-Map-Reduce ([ADR 0008](../../../../docs/adr/0008-retrieval-and-query-router-phase4.md)): Jede Louvain-Community (Phase 3) wird über die **Hybrid-Chunk-Scores ihrer Mitgliederpaper** gescort – der Community-Score ist das Mittel der fünf höchsten Mitglieds-Chunk-Scores der Anfrage, dieselbe Wertung, die Basic/Local/DRIFT teilen ([ADR 0036](../../../../docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md), Phase 10 / V4). Keywords und Summary bleiben Teil der Ausgabe, tragen aber seit V4 nicht mehr das Ranking – die passendsten Communities werden mit **repräsentativer Paper-Provenienz** zurückgegeben.
 
 ## 2. Input-Schema
 
@@ -86,7 +86,7 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 
 ## 8. Reproduzierbarkeit
 
-- Deterministisch: Communities/Keywords aus Phase 3 (fixer Louvain-Seed); Query-Ranking über `TfidfVectorizer(stop_words="english")` mit Tie-Break über `community_id`. Die Keywords sind zusätzlich über die kuratierte **Keyword-Politik** gefiltert ([ADR 0015](../../../../docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md)).
+- Deterministisch: Communities/Keywords aus Phase 3 (fixer Louvain-Seed); Query-Ranking über den persistierten, tokenisierten Zustand des Chunk-Index (`TfidfIndex.score_chunks_by_paper`, Hybrid-Wertung aus BM25 + TF-IDF per Rang-Fusion) mit Tie-Break über `community_id` ([ADR 0036](../../../../docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md)). Die Keywords sind zusätzlich über die kuratierte **Keyword-Politik** gefiltert ([ADR 0015](../../../../docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md)).
 
 ## 9. Testabdeckung
 

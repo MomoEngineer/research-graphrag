@@ -30,11 +30,15 @@ _CLUSTER_CITATION = {
     ],
 }
 _ORPHAN_TERM = "zzfallbackterm"
-"""Term, der im Chunk-Text steht, aber **nicht** im Community-Dokument landet.
+"""Ein für den Testkorpus eindeutiger Begriff im zweiten Chunk des isolierten Papers.
 
-Die Community-Keywords sind auf die zehn bestbewerteten Terme begrenzt (Tie-Break alphabetisch),
-und die Summary ist der Auszug des **ersten** Chunks. Der Term steht deshalb im zweiten Chunk und
-sortiert hinter zehn gleichwertigen Begriffen – dadurch scort keine Community darauf.
+Vor Phase 10 / V4 (Keywords+Summary-Ranking) fand keine Community diesen Begriff, weil die
+Community-Keywords auf die zehn bestbewerteten Terme begrenzt waren und die Summary nur den
+**ersten** Chunk auszog – DRIFT fiel dann trotz eines echten Basic-Treffers auf die corpusweite
+Suche zurück (siehe Git-Historie dieser Datei). Seit V4 aggregiert der Community-Score direkt aus
+den Hybrid-Chunk-Scores der Mitglieder; die eigene (Singleton-)Community des isolierten Papers
+scort damit selbst, und der Fallback-Pfad wird für diesen Fall nicht mehr erreicht
+(siehe :func:`test_drift_finds_the_orphans_own_community_instead_of_falling_back`).
 """
 
 
@@ -143,14 +147,23 @@ def test_drift_with_one_community_stays_within_the_best_one(tmp_path: Path) -> N
     assert {citation.paper_id for citation in result.citations} <= set(best.members)
 
 
-def test_drift_falls_back_to_the_corpus_search(tmp_path: Path) -> None:
-    """Ohne passende Community liefert DRIFT die Belege der Basic-Suche – sichtbar."""
+def test_drift_finds_the_orphans_own_community_instead_of_falling_back(tmp_path: Path) -> None:
+    """V4 schließt die alte Fallback-Lücke: Ein Chunk-Treffer trägt jetzt immer seine Community.
+
+    Vor V4 fiel DRIFT hier auf die corpusweite Suche zurück (der Begriff lag nicht in den
+    Community-Keywords). Die Community-Auswahl teilt sich seit V4 dieselbe Chunk-Wertung wie
+    Basic, daher liefert jeder Basic-Treffer automatisch auch eine positiv scorende Community
+    (docs/adr/0036).
+    """
     db = _build(tmp_path, orphan=True)
 
     result = search_drift(db, _ORPHAN_TERM, k=4)
 
-    assert result.communities == ()
-    assert result.fallback is True
+    assert result.fallback is False
+    assert result.communities
+    assert {ref.paper_id for match in result.communities for ref in match.representatives} == {
+        "cccc0001"
+    }
     assert result.citations
     expected = search_basic(db, _ORPHAN_TERM, 4)
     assert [citation.chunk_id for citation in result.citations] == [

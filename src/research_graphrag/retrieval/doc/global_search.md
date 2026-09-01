@@ -5,20 +5,24 @@
 | **Modul** | `src/research_graphrag/retrieval/global_search.py` |
 | **Paket** | `retrieval` – Suchmodi und Provenienz |
 | **Phase** | 4 |
-| **Grundlagen** | [ADR 0008](../../../../docs/adr/0008-retrieval-and-query-router-phase4.md), [ADR 0007](../../../../docs/adr/0007-graphrag-index-phase3-option-b.md) |
+| **Grundlagen** | [ADR 0008](../../../../docs/adr/0008-retrieval-and-query-router-phase4.md), [ADR 0007](../../../../docs/adr/0007-graphrag-index-phase3-option-b.md), [ADR 0036](../../../../docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md) (Community-Ranking über Mitglieds-Chunks, Phase 10 / V4) |
 
 ---
 
 ## 1. Zweck
 
 Beantwortet **corpusweite** Fragen – „welche Forschungsrichtungen zeichnen sich ab?" – auf der
-Themen- statt auf der Passagen-Ebene. Statt Chunks zu durchsuchen, rankt der Modus die
+Themen- statt auf der Passagen-Ebene. Statt Chunks einzeln zurückzugeben, rankt der Modus die
 **Communities** des Ähnlichkeitsgraphen und liefert je Community ihre Keywords und
 repräsentativen Paper.
 
-Das ist das Offline-Gegenstück zum Map-Reduce über Community-Reports: Die Verdichtung existiert
-bereits im Index (Keywords und extraktive Zusammenfassung), sodass zur Abfragezeit kein Modell
-nötig ist.
+Das ist das Offline-Gegenstück zum Map-Reduce über Community-Reports. Seit Phase 10 / V4
+([ADR 0036](../../../../docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md))
+entsteht der Community-**Score** aus derselben Hybrid-Chunk-Wertung, die Basic/Local/DRIFT
+teilen – Keywords und Zusammenfassung bleiben als **Anzeige**-Verdichtung erhalten, tragen aber
+nicht mehr das Ranking. Grund: Zehn Keywords plus ein Satz sind zu dünn, um die Textmasse der
+Mitglieder zu vertreten (Befund aus [ADR 0016](../../../../docs/adr/0016-quantitative-retrieval-evaluation-phase7.md)
+und [ADR 0028](../../../../docs/adr/0028-similarity-graph-degree-phase11.md)).
 
 > **Namenshinweis:** Das Modul heißt `global_search.py`, weil `global` ein Python-Schlüsselwort
 > ist. Funktion und Werkzeug heißen `search_global`.
@@ -39,10 +43,11 @@ nötig ist.
 flowchart TD
     Q["Anfrage"] --> V["Eingaben prüfen: leer, n ≤ 0"]
     V --> LC["load_communities"]
-    LC --> D["je Community ein Dokument:<br/>Keywords + Zusammenfassung"]
-    D --> TV["frischer TfidfVectorizer<br/>mit englischen Stoppwörtern"]
-    TV --> SC["Kosinus zur Anfrage"]
-    SC --> OR["sortieren: Score absteigend,<br/>Tie-Break kleinere community_id"]
+    V --> TI["TfidfIndex.load"]
+    TI --> SCP["score_chunks_by_paper(query)<br/>Hybrid-Score je Chunk, gruppiert nach Paper"]
+    LC --> AGG
+    SCP --> AGG["je Community:<br/>Mittel der MEMBER_TOP_K höchsten<br/>Mitglieds-Chunk-Scores"]
+    AGG --> OR["sortieren: Score absteigend,<br/>Tie-Break kleinere community_id"]
     OR --> FI["nur Score > 0, höchstens n"]
     FI --> E{"etwas übrig?"}
     E -- nein --> EMPTY["leeres Ergebnis"]
@@ -51,14 +56,20 @@ flowchart TD
     BM --> R["GlobalSearchResult"]
 ```
 
-### Ein eigener Vektorraum – und warum
+### Aggregation aus den Mitglieds-Chunks (Phase 10 / V4)
 
-Das Ranking benutzt **nicht** den Chunk-Index, sondern baut einen kleinen, frischen Vektorraum
-über den Community-Dokumenten. Das ist angemessen, weil es hier nur wenige, kurze Dokumente gibt
-– und es hat einen praktischen Vorteil: Der teure Chunk-Vektorraum muss gar nicht geladen werden.
+Der Community-Score ist das **Mittel der `MEMBER_TOP_K` (= 5) höchsten Hybrid-Chunk-Scores**
+ihrer Mitgliederpaper – berechnet über `TfidfIndex.score_chunks_by_paper`, dieselbe Score-Quelle
+wie Basic/Local/DRIFT. Ein Top-*k*-Mittel statt einer Summe ist bewusst gewählt: Eine Summe
+bevorzugt strukturell große Communities (in der Wegwerf-Messung stieg die Selektivität dabei auf
+0,276 bei gesunkenem Lift 1,91, gegenüber 3,2–3,5 der Top-*k*-Mittel-Varianten). `MEMBER_TOP_K`
+folgt der bestehenden `k=5`-Konvention der übrigen Modi statt eines separat getunten Werts –
+*top_k* ∈ {3, 5, 10} erwies sich am 34-Fragen-Gold-Set als praktisch gleichwertig
+([ADR 0036](../../../../docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md)).
 
-Anders als im Chunk-Index werden hier **englische Stoppwörter entfernt**. Community-Dokumente
-bestehen aus Keywords und einem Textausschnitt; Füllwörter tragen dort nichts bei.
+Vor V4 baute das Ranking einen eigenen, frischen `TfidfVectorizer` über Keywords + Zusammenfassung
+je Community. Dieser Vektorraum entfällt vollständig – Keywords und Zusammenfassung bleiben nur
+noch als Anzeige-Felder in `CommunityMatch` erhalten.
 
 ### Was `rank_communities` zusätzlich leistet
 
@@ -92,6 +103,7 @@ flowchart LR
     DR["retrieval/drift"] --> RC
     DR --> BCM
     RC --> GI["graph_index.load_communities"]
+    RC --> TI["tfidf_index.TfidfIndex.score_chunks_by_paper"]
     BCM --> PA["provenance.ProvenanceAssembler"]
 ```
 
@@ -109,16 +121,23 @@ Community-Auswahl und ihre Darstellung existieren nur **einmal** im Code.
 
 ## 6. Determinismus
 
-Der Vektorraum entsteht aus den gespeicherten Community-Dokumenten und ist damit reproduzierbar.
-Bei gleichem Score entscheidet die kleinere Community-ID – nie die Speicherreihenfolge.
+Die Aggregation entsteht aus dem persistierten, tokenisierten Zustand des Chunk-Index
+(`TfidfIndex`) und ist damit reproduzierbar. Bei gleichem Score entscheidet die kleinere
+Community-ID – nie die Speicherreihenfolge.
 
 ## 7. Grenzen
 
 - **Keine Passagen-Provenienz** – konstruktionsbedingt.
-- **Extraktive Zusammenfassungen.** Die Community-Beschreibung ist ein Textausschnitt, kein
-  generierter Report.
+- **Extraktive Zusammenfassungen.** Die Community-Beschreibung (Anzeige, nicht mehr Ranking) ist
+  ein Textausschnitt, kein generierter Report.
 - **Die Auswahl ist selektiv, nicht erschöpfend.** Wie gut sie ist, zeigt erst der Lift gegen
   Trivial-Baselines; die nackte Trefferabdeckung würde in die Irre führen
-  ([ADR 0016](../../../../docs/adr/0016-quantitative-retrieval-evaluation-phase7.md)).
+  ([ADR 0016](../../../../docs/adr/0016-quantitative-retrieval-evaluation-phase7.md)). Seit V4
+  liegt die Selektivität bei `n=5` strukturell höher als vor V4 (0,163 statt 0,037) – der Lift
+  bleibt aber bei jeder gemessenen Community-Zahl klar über beiden Trivial-Baselines
+  ([ADR 0036](../../../../docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md)).
+- **Mitglieds-Chunks können Referenz-Einträge (Abstracts ohne Volltext) sein.** Ihre Chunk-Scores
+  gehen wie jeder andere Mitglieds-Chunk in die Aggregation ein; ein eigener Ausschluss ist (noch)
+  nicht gemessen.
 - **Abhängig von der Community-Qualität.** Eine schlecht geschnittene Community lässt sich hier
   nicht mehr reparieren.

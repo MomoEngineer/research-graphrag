@@ -141,6 +141,27 @@
 > Auflagen (Multi-Hop-Anker bleiben auf Volltext-Paper beschränkt; jeder Batch wird vorab mit
 > einer Guardrail-Regression geprüft) – Details im
 > [Statusblock](docs/roadmap-historie.md#e0--alles-hinterfragen-und-messen-zwingend-zuerst).
+>
+> **Nachtrag (2026-09-01): Phase 10 / V4 ist umgesetzt – damit hat die Roadmap aktuell keine
+> offene Phase mehr.** Global rankte Communities bislang über ein separates TF-IDF-Ranking auf
+> zehn Keywords plus einer extraktiven Zusammenfassung je Community – ein sehr dünner Text
+> gegenüber der eigentlichen Chunk-Masse der Mitglieder. Der Community-Score aggregiert jetzt
+> stattdessen das **Mittel der fünf höchsten Hybrid-Chunk-Scores** der Mitgliederpaper, über
+> dieselbe Wertung, die Basic/Local/DRIFT bereits teilen (neue Methode
+> `TfidfIndex.score_chunks_by_paper`). Auch hier korrigierte die Vorabmessung die Vorgabe: Das
+> vorab formulierte Kriterium „Lift **und** Coverage bei **gleicher** Selektivität" ließ sich beim
+> produktiven `n=5` nicht direkt prüfen, weil dort mit jeder getesteten Aggregation auch die
+> Selektivität mitwächst; erst das Herunterfahren von `n`, bis die Selektivität wieder der
+> Baseline entspricht, beantwortet die Frage wörtlich – Coverage **und** Lift steigen dort
+> deutlich (4,67 → 8,29). Eine **Summe** statt eines Mittels wurde gemessen und verworfen: Sie
+> bevorzugt große Communities strukturell (Lift bricht auf 1,91 ein). Ergebnis am realen Korpus
+> (606 Paper): Global-Hit@5 **0,529 → 1,000**, MRR **0,435 → 0,860**; DRIFT profitiert automatisch
+> mit (Hit 0,588 → 0,882), weil beide Modi dieselbe Auswahlfunktion teilen, und dessen alter
+> Fallback-Auslöser tritt am realen Korpus praktisch nicht mehr auf. Offen ausgewiesen bleibt eine
+> einzelne DRIFT-Regression bei einer breit gestreuten Frage – dieselbe, in
+> [ADR 0022](docs/adr/0022-drift-community-union-and-fallback-phase10.md) bereits benannte Grenze
+> der lokalen Verfeinerung bei großer Kandidatenmenge, jetzt ausgelöst statt nur beobachtet
+> ([ADR 0036](docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md)).
 
 ---
 

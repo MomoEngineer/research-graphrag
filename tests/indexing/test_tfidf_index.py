@@ -359,6 +359,65 @@ def test_unknown_scoring_raises_invalid_input(tmp_path: Path) -> None:
     assert excinfo.value.code is ErrorCode.INVALID_INPUT
 
 
+def test_score_chunks_by_paper_groups_all_positive_chunks(tmp_path: Path) -> None:
+    """Liefert jeden positiv bewerteten Chunk, gruppiert nach Paper (Phase 10 / V4)."""
+    index = TfidfIndex.load(_hybrid_corpus(tmp_path))
+
+    by_paper = index.score_chunks_by_paper("attention")
+
+    assert set(by_paper) == {"aaaa0001", "cccc0003"}
+    assert all(score > 0.0 for scores in by_paper.values() for score in scores)
+    # cccc0003 traegt den staerksten Einzeltreffer ("attention attention attention").
+    assert max(by_paper["cccc0003"]) > max(by_paper["aaaa0001"])
+
+
+def test_score_chunks_by_paper_matches_search_top_hit(tmp_path: Path) -> None:
+    """Der hoechste gruppierte Score stimmt mit dem Top-Treffer von ``search`` ueberein."""
+    index = TfidfIndex.load(_hybrid_corpus(tmp_path))
+
+    top_hit = index.search("attention mechanism", k=1)[0]
+    by_paper = index.score_chunks_by_paper("attention mechanism")
+
+    assert max(by_paper[top_hit.paper_id]) == pytest.approx(top_hit.score)
+
+
+def test_score_chunks_by_paper_no_match_returns_empty_mapping(tmp_path: Path) -> None:
+    """Ohne lexikalische Ueberschneidung bleibt die Abbildung leer."""
+    index = TfidfIndex.load(_hybrid_corpus(tmp_path))
+
+    assert index.score_chunks_by_paper("zzzqqqwww xxyyzzq") == {}
+
+
+def test_score_chunks_by_paper_empty_query_raises_invalid_input(tmp_path: Path) -> None:
+    """Leere Anfrage -> invalid_input, wie bei ``search``."""
+    index = TfidfIndex.load(_hybrid_corpus(tmp_path))
+    with pytest.raises(DomainError) as excinfo:
+        index.score_chunks_by_paper("   ")
+    assert excinfo.value.code is ErrorCode.INVALID_INPUT
+
+
+def test_score_chunks_by_paper_unknown_scoring_raises_invalid_input(tmp_path: Path) -> None:
+    """Unbekannte Wertung -> invalid_input, wie bei ``search``."""
+    index = TfidfIndex.load(_hybrid_corpus(tmp_path))
+    with pytest.raises(DomainError) as excinfo:
+        index.score_chunks_by_paper("attention", scoring="fuzzy")  # type: ignore[arg-type]
+    assert excinfo.value.code is ErrorCode.INVALID_INPUT
+
+
+def test_score_chunks_by_paper_respects_tfidf_and_bm25_scoring(tmp_path: Path) -> None:
+    """``scoring='tfidf'``/``'bm25'`` liefern die jeweiligen Rohwerte statt des Fusionswerts."""
+    index = TfidfIndex.load(_hybrid_corpus(tmp_path))
+
+    tfidf_top = index.search("attention", k=1, scoring="tfidf")[0]
+    bm25_top = index.search("attention", k=1, scoring="bm25")[0]
+
+    tfidf_scores = index.score_chunks_by_paper("attention", scoring="tfidf")
+    bm25_scores = index.score_chunks_by_paper("attention", scoring="bm25")
+
+    assert max(tfidf_scores[tfidf_top.paper_id]) == pytest.approx(tfidf_top.score)
+    assert max(bm25_scores[bm25_top.paper_id]) == pytest.approx(bm25_top.score)
+
+
 def test_search_is_deterministic_across_loads(tmp_path: Path) -> None:
     """Zwei unabhängige Ladevorgänge liefern identische Trefferlisten."""
     db = _hybrid_corpus(tmp_path)

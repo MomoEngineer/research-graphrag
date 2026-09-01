@@ -15,9 +15,16 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 > S2 ist jetzt ebenfalls umgesetzt** ([ADR 0035](docs/adr/0035-fulltext-download-phase9-s2.md)) –
 > die ursprüngliche Zurückstellung wurde nicht durch eine neue Messung aufgelöst, sondern durch
 > eine an die Datenlage angepasste Anforderung: Fehlt eine Lizenz aus der Whitelist, bleibt der
-> Kandidat ein Link statt eines Download-Versuchs, das ist der gewollte Regelfall. Offen bleibt nur
-> noch **ein** Restpunkt: [V4](#v4--global-community-ranking-über-die-mitglieds-chunks-erst-messen-dann-entscheiden)
-> (Phase 10, nachgelagert) – siehe die Tabelle unten.
+> Kandidat ein Link statt eines Download-Versuchs, das ist der gewollte Regelfall. **Mit
+> [V4](#v4--global-community-ranking-über-die-mitglieds-chunks-erst-messen-dann-entscheiden) ist
+> jetzt auch der letzte offene Restpunkt umgesetzt** ([ADR 0036](docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md)):
+> Der Community-Score aggregiert das Mittel der fünf höchsten Hybrid-Chunk-Scores der
+> Mitgliederpaper statt eines separaten TF-IDF-Rankings über Keywords + Summary – Global-Hit@5
+> steigt am 606-Paper-Korpus von 0,529 auf **1,000**, DRIFT profitiert automatisch mit (0,588 →
+> **0,882**), weil beide Modi dieselbe Auswahlfunktion teilen. **Damit hat Roadmap.md aktuell
+> keine offenen Phasen mehr** – jede hier geführte Phase (9, 10, 13) ist abgeschlossen; ein
+> künftiger Bedarf entsteht erst wieder aus neuen Befunden, nicht aus einer Restarbeit dieses
+> Dokuments.
 
 ---
 
@@ -54,7 +61,7 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 | **8** – Korpus-Zufluss & Intake      | dreistufige Dedup (`new_papers/` → `papers/`), Robustheits-Gate, atomarer Swap, append-only Übersicht (`Z`-IDs), `scripts.intake`; **M5** erreicht | [ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md)                                                                                    |
 | **12** – Zitierfähigkeit            | `metadata/paper_metadata.json`, feldweise Auflösung (`manual > curated > resolved > extracted`), `get_reference`, Literaturangaben Harvard/APA; **M8** erreicht | [ADR 0025](docs/adr/0025-citable-paper-metadata.md) · [ADR 0026](docs/adr/0026-online-metadata-resolution.md)                                    |
 | **9 / S0–S2** – Online-Kandidatensuche & Volltext-Download | arXiv + OpenAlex hinter injizierbarem Transport-Port, Dedup über die Intake-Logik, append-only Bericht; **M6** erreicht. **S2** (`--download`) lädt opt-in, nur bei Lizenz-Whitelist (CC0/CC-BY/CC-BY-SA, nur OpenAlex) und bestandenem Titel-Rückvergleich – alles andere bleibt ein Link | [ADR 0020](docs/adr/0020-online-candidate-search-phase9.md) · [ADR 0032](docs/adr/0032-system-proxy-autodetection.md) · [ADR 0035](docs/adr/0035-fulltext-download-phase9-s2.md) |
-| **10 / V1–V3** – Retrieval-Vertiefung | Local mit fünf Seeds, DRIFT über die Community-Vereinigung mit Fallback, Multi-Hop gegen den Zitationsgraphen messbar; **M7** erreicht. **Offen:** [V4](#v4--global-community-ranking-über-die-mitglieds-chunks-erst-messen-dann-entscheiden) – nachgelagert, siehe Reihenfolge | [ADR 0021](docs/adr/0021-local-multi-seed-phase10.md) · [ADR 0022](docs/adr/0022-drift-community-union-and-fallback-phase10.md) · [ADR 0023](docs/adr/0023-multihop-citation-evaluation-phase10.md) |
+| **10 / V1–V4** – Retrieval-Vertiefung | Local mit fünf Seeds, DRIFT über die Community-Vereinigung mit Fallback, Multi-Hop gegen den Zitationsgraphen messbar, Global-Community-Ranking über die Mitglieds-Chunks; **M7** erreicht, **alle vier Punkte umgesetzt** | [ADR 0021](docs/adr/0021-local-multi-seed-phase10.md) · [ADR 0022](docs/adr/0022-drift-community-union-and-fallback-phase10.md) · [ADR 0023](docs/adr/0023-multihop-citation-evaluation-phase10.md) · [ADR 0036](docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md) |
 | **11** – Betrieb & Datensicherheit | Sicherungsweg (B1), nachführbare Messgrundlage (B5), Graph-Grad geprüft und **verworfen** (B6), Auto-Watcher gestrichen (B4). **Aufgelöst:** B2/B3 sind in [Phase 15](docs/roadmap-historie.md#phase-15--skalierung-den-wachsenden-bestand-tragen) übergegangen – [Archiv](docs/roadmap-historie.md#phase-11--betrieb-robustheit--datensicherheit) | [ADR 0027](docs/adr/0027-corpus-backup-phase11.md) · [ADR 0028](docs/adr/0028-similarity-graph-degree-phase11.md) |
 | **13** – Referenz-Einträge ohne Volltext | `*.refjson`-Stubs aus DOI/arXiv, `document_kind` bis in jeden Beleg, Nachrangigkeits-Guardrail (13 → **3** Regressionen ohne Totalverlust); **M9** erreicht – [Details unten](#phase-13--referenz-einträge-ohne-volltext) | [ADR 0029](docs/adr/0029-reference-stub-resolution-phase13.md) · [ADR 0030](docs/adr/0030-reference-entries-in-corpus-phase13.md) · [ADR 0031](docs/adr/0031-reference-contract-and-guardrail-phase13.md) |
 | **15** – Skalierung (G0–G5) | Aho-Corasick statt O(Paper²), Prozess-Cache mit persistiertem TF-IDF-Zustand (warm < 1 s), `Übersicht.md` abgelöst durch `metadata/curation.json`, Auslegung neu festgeschrieben (≤ 750 Volltexte / ≤ 1500 Gesamteinträge); **M11** erreicht – [Archiv](docs/roadmap-historie.md#phase-15--skalierung-den-wachsenden-bestand-tragen) | [ADR 0033](docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md) · [ADR 0034](docs/adr/0034-decommission-uebersicht-and-inflow-stop-rule-phase15.md) |
@@ -68,14 +75,12 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 
 ## Offene Restpunkte (kein Reihenfolgekonflikt)
 
-Mit Phase 9 / S2, 14 und 15 abgeschlossen bleibt nur noch **ein** Restpunkt offen, bereits oben in
-der Stand-Tabelle vermerkt:
-
-- **[V4 – Global-Ranking über die Mitglieds-Chunks](#v4--global-community-ranking-über-die-mitglieds-chunks-erst-messen-dann-entscheiden)**
-  (Phase 10): nachgelagert. Die ursprüngliche Prämisse „ein Referenz-Zufluss flutet den Bestand
-  mit hunderten einchunkigen Einträgen, bevor V4 misst" entfällt mit Phase 14s Ergebnis (E1/E2
-  werden nicht gebaut); zieht [G0.4](docs/roadmap-historie.md#g04--trägt-die-community-struktur-den-gewachsenen-bestand)
-  die Schwelle, wird V4 unabhängig davon zur **Voraussetzung**.
+Mit Phase 9 / S2, 10 / V4, 14 und 15 abgeschlossen bleibt **kein** Restpunkt mehr offen. Der
+letzte – **[V4 – Global-Ranking über die Mitglieds-Chunks](#v4--global-community-ranking-über-die-mitglieds-chunks-erst-messen-dann-entscheiden)**
+(Phase 10) – war lange nachgelagert, weil die ursprüngliche Prämisse einen Referenz-Zufluss mit
+hunderten einchunkigen Einträgen befürchtete; Phase 14s Ergebnis (E1/E2 werden nicht gebaut) hat
+diese Prämisse entkräftet, und [ADR 0036](docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md)
+setzt den Punkt jetzt um.
 
 **Zur Anordnung dieses Dokuments:** Abgeschlossene Phasen werden nicht umsortiert, sondern beim
 Abschluss in die [Historie](docs/roadmap-historie.md) überführt – die Regel, nach der die Phasen
@@ -401,23 +406,46 @@ _Modell-Tipp: Claude Opus 5._
 ### V4 – Global: Community-Ranking über die Mitglieds-Chunks (erst messen, dann entscheiden)
 _Modell-Tipp: Claude Opus 5._
 
+> **Status (2026-09-01): umgesetzt** ([ADR 0036](docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md))
+> – die Vorgabe war korrekt, ihr Akzeptanzkriterium brauchte aber eine zusätzliche Messung.
+>
+> **Die vorab formulierte Frage („hebt die Aggregation Lift und Coverage bei gleicher
+> Selektivität?") lässt sich nicht direkt am Produktivwert `n=5` beantworten**, weil dort mit
+> jedem getesteten Kandidaten auch die Selektivität mitwächst (0,037 → 0,16–0,28) – eine
+> Nachbarschaft mit vielen positiv scorenden Chunks lässt sich nicht bei gleichzeitig
+> unveränderter Selektivität abfragen, wenn `n` fix bleibt. Erst das Herunterfahren von `n`, bis
+> die Selektivität wieder bei 0,037 liegt, beantwortet die Frage **wörtlich**: Bei `n=1`
+> (Selektivität 0,036 statt 0,037) steigen sowohl Coverage (0,173 → **0,301**) als auch Lift
+> (4,67 → **8,29**) deutlich. Der niedrigere Lift bei `n=5` (3,41) ist damit kein
+> Rankingrückschritt, sondern der Preis der breiteren, jetzt sinnvoll nutzbaren Auswahl.
+>
+> **Gewählt ist das Mittel der `MEMBER_TOP_K = 5` höchsten Hybrid-Chunk-Scores** je Community
+> (`TfidfIndex.score_chunks_by_paper`, neu) – eine **Summe** wurde gemessen und verworfen, weil
+> sie große Communities strukturell bevorzugt (Selektivität 0,276, Lift bricht auf 1,91 ein,
+> exakt die Falle, vor der A6 für die triviale „größte Communities"-Strategie bereits gewarnt
+> hatte). `MEMBER_TOP_K = 5` statt eines separat getunten Werts folgt der bestehenden
+> `k`-Konvention der übrigen Modi – die Kandidaten 3/5/10 unterscheiden sich am Gold-Set um
+> höchstens eine Frage.
+>
+> **Ergebnis am realen Korpus** (606 Paper, Gold-Set 1.5.0): Global Hit@5 **0,529 → 1,000**, MRR
+> **0,435 → 0,860**; DRIFT profitiert automatisch mit (Hit **0,588 → 0,882**), weil beide Modi
+> dieselbe Funktion `rank_communities` teilen. DRIFTs alter Fallback-Auslöser („Community-Pfad
+> leer trotz echtem Basic-Treffer", [ADR 0022](docs/adr/0022-drift-community-union-and-fallback-phase10.md))
+> tritt am realen Korpus praktisch nicht mehr auf (0 von 34 statt 12 von 34) – ein zugehöriger
+> Test musste deshalb umgebaut werden, weil sein bisheriges Szenario strukturell unerreichbar
+> wurde. **Eine Regression bleibt offen ausgewiesen:** DRIFT verliert Frage G15 (Rang 4 → kein
+> Treffer) – dieselbe, in ADR 0022 bereits benannte Schwäche der lokalen Verfeinerung bei
+> wachsender Kandidatenmenge, hier durch mehr positiv scorende Communities ausgelöst statt nur
+> beobachtet. `--check` bestätigt **0 Abweichungen** auf `primitive`/`basic`/`local`.
+>
+> Kein Schema-Eingriff, **kein Re-Ingest**, kein Contract-Bruch (`score` bleibt ein `float`, nur
+> seine Herkunft ändert sich). Beide Baselines sind neu eingefroren.
+
 *Befund:* Global erreicht **0,353 / 0,269** bei einem Lift von **3,55** gegen ≈ **1,0** bei beiden Trivial-Baselines – die Auswahl ist also klar besser als Zufall, die Coverage bleibt mit **0,248** aber niedrig. *Verdacht:* Das Ranking vergleicht die Frage gegen einen sehr **dünnen** Text – zehn Keywords plus eine extraktive Zusammenfassung je Community. Die eigentliche Textmasse der Mitglieder bleibt ungenutzt.
 
 *Vorschlag:* Den Community-Score aus den Chunk-Scores der Mitglieder aggregieren (die Hybrid-Wertung existiert bereits); Keywords und Zusammenfassung bleiben für die Darstellung.
 
 *Akzeptanz – bewusst als Frage formuliert:* Hebt die Aggregation Lift **und** Coverage bei gleicher Selektivität? Falls nein, wird der Punkt **verworfen und der Befund dokumentiert** – genau so, wie in A5 die naheliegende Variante „Stopwords in den Vektorraum" nach der Messung verworfen wurde, weil sie den Graphen ohne belegbaren Nutzen verschoben hätte.
-
-> **Status (2026-09-01): kein Reihenfolgekonflikt mehr.** Phase 15 und Phase 14 sind
-> abgeschlossen ([Archiv](docs/roadmap-historie.md#phase-15--skalierung-den-wachsenden-bestand-tragen),
-> [Archiv](docs/roadmap-historie.md#phase-14--referenz-ernte-externe-verweise-aus-dem-eigenen-bestand)).
-> Die ursprüngliche Prämisse – V4 misst die Community-Ebene, die durch Phase 15s gewachsenen
-> Bestand **und** Phase 14s hunderte einchunkige Referenz-Einträge verändert würde – trifft nur
-> noch zur Hälfte zu: Phase 15 hat den Bestand tatsächlich verändert (606 Paper), aber Phase 14
-> baut **kein** Ernte-/Kurationswerkzeug (E1/E2 entfallen); ein etwaiger künftiger manueller
-> Harvest bleibt mit ~20–50 Kandidaten deutlich unter der ursprünglich befürchteten Größenordnung.
-> V4 ist damit **nicht mehr blockiert**, bleibt aber nachgelagert. **Weiterhin gültig:** Verfehlt
-> [G0.4](docs/roadmap-historie.md#g04--trägt-die-community-struktur-den-gewachsenen-bestand) seine
-> Schwelle, ist V4 keine Kür mehr, sondern Voraussetzung.
 
 ---
 

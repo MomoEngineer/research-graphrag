@@ -532,6 +532,62 @@ class TfidfIndex:
         ).ravel()
         return tfidf_scores, bm25.score(self._bm25_weights, query_counts)
 
+    def _all_scores(self, query: str, scoring: Scoring) -> tuple[dict[int, float], Any, Any]:
+        """Berechnet Ranking und rohe Teil-Scores in einem Durchgang (ein Query-Vektor).
+
+        Gemeinsamer Kern von :meth:`search` und :meth:`score_chunks_by_paper`. Das
+        Ranking-Dict enthält den Wert der **gewählten** Wertung (Fusionswert bei ``hybrid``,
+        sonst der Rohwert); die rohen TF-IDF-/BM25-Arrays bleiben daneben erhalten, weil
+        ``search`` sie **unabhängig** von der gewählten Wertung für die Contract-Felder
+        ``score_tfidf``/``score_bm25`` jedes Treffers braucht (docs/adr/0014).
+
+        Raises:
+            DomainError: ``invalid_input`` bei leerer Anfrage oder unbekannter Wertung.
+        """
+        if not query.strip():
+            raise DomainError(ErrorCode.INVALID_INPUT, "Leere Suchanfrage.")
+        if scoring not in _SCORINGS:
+            raise DomainError(ErrorCode.INVALID_INPUT, f"Unbekannte Wertung: {scoring}")
+
+        tfidf_scores, bm25_scores = self._scores(query)
+        if scoring == "tfidf":
+            order = self._ranking(tfidf_scores)
+            ranked: dict[int, float] = {i: float(tfidf_scores[i]) for i in order}
+        elif scoring == "bm25":
+            order = self._ranking(bm25_scores)
+            ranked = {i: float(bm25_scores[i]) for i in order}
+        else:
+            ranked = fuse_rankings([self._ranking(tfidf_scores), self._ranking(bm25_scores)])
+        return ranked, tfidf_scores, bm25_scores
+
+    def score_chunks_by_paper(
+        self, query: str, *, scoring: Scoring = DEFAULT_SCORING
+    ) -> dict[str, list[float]]:
+        """Bewertet alle Chunks der Anfrage, gruppiert nach Paper – ohne Text-Fetch.
+
+        Liefert dieselben Scores wie :meth:`search`, aber für **jeden** positiv bewerteten
+        Chunk statt nur die Top-k, und ohne den Chunk-Text nachzuladen. Grundlage für
+        Aggregationen über Chunk-Mengen, z. B. das Community-Ranking aus den Mitglieds-Chunks
+        (``retrieval.global_search.rank_communities``, Phase 10 / V4).
+
+        Args:
+            query: Natürlichsprachige Anfrage (nicht leer).
+            scoring: ``hybrid`` (Default, Rang-Fusion aus BM25 und TF-IDF), ``tfidf``
+                (nur Kosinus) oder ``bm25`` (nur BM25).
+
+        Returns:
+            Abbildung Paper-ID → Liste der positiven Chunk-Scores dieses Papers (unsortiert).
+            Paper ohne einen einzigen positiv bewerteten Chunk fehlen im Ergebnis.
+
+        Raises:
+            DomainError: ``invalid_input`` bei leerer Anfrage oder unbekannter Wertung.
+        """
+        ranked, _tfidf_scores, _bm25_scores = self._all_scores(query, scoring)
+        by_paper: dict[str, list[float]] = {}
+        for row_index, score in ranked.items():
+            by_paper.setdefault(self._refs[row_index].paper_id, []).append(score)
+        return by_paper
+
     def search(
         self,
         query: str,
@@ -560,23 +616,11 @@ class TfidfIndex:
             DomainError: ``invalid_input`` bei leerer Anfrage, ``k <= 0`` oder unbekannter
                 Wertung.
         """
-        if not query.strip():
-            raise DomainError(ErrorCode.INVALID_INPUT, "Leere Suchanfrage.")
         if k <= 0:
             raise DomainError(ErrorCode.INVALID_INPUT, "k muss > 0 sein.")
-        if scoring not in _SCORINGS:
-            raise DomainError(ErrorCode.INVALID_INPUT, f"Unbekannte Wertung: {scoring}")
 
-        tfidf_scores, bm25_scores = self._scores(query)
-        if scoring == "tfidf":
-            order = self._ranking(tfidf_scores)
-            ranked: dict[int, float] = {i: float(tfidf_scores[i]) for i in order}
-        elif scoring == "bm25":
-            order = self._ranking(bm25_scores)
-            ranked = {i: float(bm25_scores[i]) for i in order}
-        else:
-            ranked = fuse_rankings([self._ranking(tfidf_scores), self._ranking(bm25_scores)])
-            order = sorted(ranked, key=lambda i: (-ranked[i], self._refs[i].chunk_id))
+        ranked, tfidf_scores, bm25_scores = self._all_scores(query, scoring)
+        order = sorted(ranked, key=lambda i: (-ranked[i], self._refs[i].chunk_id))
 
         selected: list[tuple[_ChunkRef, float, float, float]] = []
         for i in order:

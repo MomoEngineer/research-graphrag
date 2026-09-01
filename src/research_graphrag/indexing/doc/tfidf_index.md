@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/indexing/tfidf_index.py` |
 | **Paket** | `indexing` – Canonical JSON zum Offline-Hybrid-Index |
-| **Phase** | 0b (eingeführt), 4 + 5 + 7 / A3 + A4 (erweitert), 13 / R2 (Dokumentart), 15 / G2 (Cache + persistierter Zustand) |
-| **Grundlagen** | [ADR 0005](../../../../docs/adr/0005-graphrag-index-backend-open.md), [ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md), [ADR 0033](../../../../docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md) |
+| **Phase** | 0b (eingeführt), 4 + 5 + 7 / A3 + A4 (erweitert), 13 / R2 (Dokumentart), 15 / G2 (Cache + persistierter Zustand), 10 / V4 (`score_chunks_by_paper`) |
+| **Grundlagen** | [ADR 0005](../../../../docs/adr/0005-graphrag-index-backend-open.md), [ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md), [ADR 0033](../../../../docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md), [ADR 0036](../../../../docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md) |
 
 ---
 
@@ -30,7 +30,7 @@ On-Read-Frische bleibt dadurch wörtlich erhalten. Details und Zahlen:
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
 | `build_index` | Funktion | Papers → SQLite-Index (voller Re-Index) |
-| `TfidfIndex` | Klasse | Geladener Index mit `load()`, `search()`, `neighbors_of_chunk()`, `size` |
+| `TfidfIndex` | Klasse | Geladener Index mit `load()`, `search()`, `score_chunks_by_paper()`, `neighbors_of_chunk()`, `size` |
 | `Hit` | Dataclass | Ein Treffer mit Provenienz, Gesamt-Score, beiden Teil-Scores, `identifiers`, `citation_key` und `document_kind` |
 | `demote_references` | Funktion | Guardrail: sortiert Referenz-Einträge hinter die Volltext-Treffer |
 | `Scoring` | Typ-Alias | `hybrid` · `tfidf` · `bm25` |
@@ -138,7 +138,18 @@ eingefrorenen Baselines nicht bewegt ([ADR 0031](../../../../docs/adr/0031-refer
 G2) – nie für alle Chunks des Index. `_ChunkRef` selbst trägt keinen Text mehr; die Wertung
 braucht ihn nicht.
 
-### 3.4 Chunk-Nachbarschaft
+### 3.4 Chunk-Bewertung ohne Top-k-Grenze (`score_chunks_by_paper`)
+
+Seit Phase 10 / V4 ([ADR 0036](../../../../docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md))
+teilt sich `search` seinen Bewertungskern mit einer zweiten Methode: `score_chunks_by_paper`
+liefert **alle** positiv bewerteten Chunks einer Anfrage, gruppiert nach Paper – ohne
+Top-k-Grenze und ohne den Text nachzuladen. Beide Methoden rufen intern denselben privaten
+Baustein (`_all_scores`, ein Query-Vektor, eine Fusion) auf; `search` sortiert und begrenzt
+zusätzlich, `score_chunks_by_paper` gruppiert nur. Grundlage für Aggregationen über
+Chunk-**Mengen** statt über Einzeltreffer – bislang der einzige Aufrufer ist das
+Community-Ranking in `retrieval/global_search.py`.
+
+### 3.5 Chunk-Nachbarschaft
 
 `neighbors_of_chunk` bewertet einen **Chunk gegen alle anderen** und bleibt bewusst beim reinen
 Kosinus: BM25 ist ein Anfrage-Dokument-Modell und für Dokument-Dokument-Ähnlichkeit nicht
@@ -157,6 +168,7 @@ flowchart LR
     SE --> L["retrieval/local"]
     SE --> D["retrieval/drift"]
     LD --> NB["neighbors_of_chunk"] --> L
+    LD --> SCP["score_chunks_by_paper"] --> GS["retrieval/global_search"]
     IDX[("index.sqlite")] --- LD
     IDX --- PR["retrieval/provenance"]
     IDX --- PA["retrieval/paper"]
@@ -172,6 +184,7 @@ Andere Leser der Index-Datei – `provenance`, `paper`, `citations`, `graph_inde
 | --- | --- |
 | keine indexierbaren Chunks beim Aufbau | `invalid_input` |
 | leere Anfrage, `k <= 0`, unbekannte Wertung | `invalid_input` |
+| `score_chunks_by_paper`: leere Anfrage, unbekannte Wertung (kein `k`) | `invalid_input` |
 | Index-Datei fehlt | `not_found` |
 | Index vorhanden, aber ohne Chunks | `constraint_violation` |
 | Index vorhanden, aber ohne `tfidf_state` (Vor-G2-Schema) | `constraint_violation` |

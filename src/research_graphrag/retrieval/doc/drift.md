@@ -5,7 +5,7 @@
 | **Modul** | `src/research_graphrag/retrieval/drift.py` |
 | **Paket** | `retrieval` – Suchmodi und Provenienz |
 | **Phase** | 4 (Community-Vereinigung und Fallback: Phase 10 / V2) |
-| **Grundlagen** | [ADR 0008](../../../../docs/adr/0008-retrieval-and-query-router-phase4.md) · [ADR 0022](../../../../docs/adr/0022-drift-community-union-and-fallback-phase10.md) |
+| **Grundlagen** | [ADR 0008](../../../../docs/adr/0008-retrieval-and-query-router-phase4.md) · [ADR 0022](../../../../docs/adr/0022-drift-community-union-and-fallback-phase10.md) · [ADR 0036](../../../../docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md) (Community-Ranking über Mitglieds-Chunks, Phase 10 / V4 – DRIFT erbt die Auswahl von `rank_communities`) |
 
 ---
 
@@ -32,8 +32,8 @@ Passagen).
 ```mermaid
 flowchart TD
     Q["Anfrage"] --> KV["k ≤ 0 und communities ≤ 0 prüfen"]
-    KV --> R["rank_communities(query, n)<br/>validiert Anfrage und Graph"]
-    R --> IX["TfidfIndex.load"]
+    KV --> R["rank_communities(query, n)<br/>validiert Anfrage und Graph,<br/>scort Communities über Mitglieds-Chunks<br/>(lädt TfidfIndex selbst, Phase 10 / V4)"]
+    R --> IX["TfidfIndex.load<br/>(Prozess-Cache, i.d.R. bereits geladen)"]
     IX --> U{"Mitglieder vorhanden?"}
     U -- ja --> S["search(query, k,<br/>paper_ids = Vereinigung)"]
     U -- nein --> FB
@@ -75,8 +75,19 @@ Community kann damit vor einem aus der erstplatzierten stehen. Das ist gewollt: 
 ### Der Fallback ist eine Garantie, keine Verbesserung
 
 Liefert der Community-Pfad keine Belege, sucht der Modus im gesamten Korpus weiter – derselbe
-Pfad, den die Basic Search nutzt – und setzt `fallback`. Der Grund ist gemessen: Für **12 von 34**
-Gold-Fragen scort überhaupt keine Community über 0; dort antwortete DRIFT zuvor **leer**.
+Pfad, den die Basic Search nutzt – und setzt `fallback`. Der Grund war ursprünglich gemessen: Für
+**12 von 34** Gold-Fragen scorte überhaupt keine Community über 0; dort antwortete DRIFT zuvor
+**leer**.
+
+**Seit Phase 10 / V4 ([ADR 0036](../../../../docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md))
+ist dieser Fall am realen Korpus nicht mehr aufgetreten** (0 von 34 statt 12 von 34): Weil der
+Community-Score jetzt direkt aus denselben Chunk-Scores aggregiert, die auch Basic auswertet,
+trägt jeder Chunk, den Basic findet, automatisch die Community seines Papers mit einem positiven
+Score – der Fallback greift nur noch, wenn **auch** die corpusweite Suche nichts findet
+(`test_drift_without_any_match_returns_no_citations`). Die Garantie selbst bleibt trotzdem
+bestehen: Ein künftiger, dünnerer Graph oder ein Grenzfall (z. B. eine Community außerhalb der
+Top-*n*) kann den alten Zustand wieder herstellen, und der Fallback fängt ihn weiterhin sichtbar
+auf.
 
 Zwei Dinge sind dabei wichtig:
 
@@ -132,11 +143,16 @@ Tie-Break über die `chunk_id`.
 ## 7. Grenzen
 
 - **Kein Nachfassen.** Es gibt keine zweite Runde und keine Folgefragen.
-- **Erbt die Grenzen der Community-Bildung.** Für 12 von 34 Gold-Fragen scort keine Community über
-  0, für 7 weitere genau eine – die Vereinigung kann also nur bei einer Minderheit wirken. Der
-  Grund ist das dünne Community-Dokument; das ist Gegenstand von V4.
-- **Die Kandidatenmenge kann groß werden.** Im Mittel rund zehn Paper, im Einzelfall 33 – dort
-  scheitert die Verfeinerung erstmals trotz erreichter Deckelung.
+- **Erbt die Grenzen der Community-Bildung.** Vor V4 scorte für 12 von 34 Gold-Fragen keine
+  Community über 0; seit V4 ist das am realen Korpus nicht mehr aufgetreten (0 von 34). Die
+  Vereinigung kann jetzt bei praktisch jeder Frage wirken – die verbleibende Grenze ist nicht mehr
+  die Auswahl, sondern die Größe der Kandidatenmenge (nächster Punkt).
+- **Die Kandidatenmenge kann groß werden – und wächst durch V4 tendenziell weiter.** Weil jetzt
+  mehr Communities positiv scoren, wächst auch die Vereinigung ihrer Mitglieder. Für eine breite,
+  über viele Paper gestreute Frage (G15, 11 erwartete Paper) kippt das einen zuvor nur knapp
+  erreichten Treffer (Rang 4) in einen echten Fehlschlag – derselbe Mechanismus, den ADR 0022
+  bereits als Grenze benannt hatte, nur jetzt ausgelöst statt nur beobachtet
+  ([ADR 0036](../../../../docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md)).
 - **Kein Widerspruchs-Nachweis.** Der Modus liefert Belege aus einem gemeinsamen Rahmen; ob sie
   sich tatsächlich widersprechen, beurteilt der lesende Agent.
 - **`answer_question` weist den Fallback nicht aus.** Dort ist nur der Modus vermerkt; die Belege
