@@ -26,7 +26,7 @@ from research_graphrag.bibliography.model import (
     ORIGIN_CURATED,
     MetadataRecord,
 )
-from research_graphrag.overview.drafts import DRAFT_ID_PREFIX, link_column, split_row
+from research_graphrag.overview.drafts import DRAFT_ID_PREFIX, column_index, link_column, split_row
 
 EXTERNAL_COLUMN_LABEL = "externer link"
 """Kleingeschriebener Anfang der Kopfzelle der Identifikator-Spalte (Tippfehler im Original)."""
@@ -68,19 +68,6 @@ class CuratedEntry:
     def has_identifier(self) -> bool:
         """``True``, wenn mindestens ein extern auflösbarer Wert vorliegt."""
         return bool(self.doi or self.arxiv_id or self.url)
-
-
-def column_index(markdown: str, label: str) -> int | None:
-    """Ermittelt den 0-basierten Index einer Spalte anhand des Anfangs ihrer Kopfzelle."""
-    needle = label.strip().lower()
-    for raw in markdown.splitlines():
-        line = raw.strip()
-        if not line.startswith("|"):
-            continue
-        for index, cell in enumerate(split_row(line)):
-            if cell.strip().lower().startswith(needle):
-                return index
-    return None
 
 
 def _filename_from_cell(cell: str) -> str:

@@ -6,6 +6,7 @@ import sqlite3
 from collections.abc import Sequence
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from research_graphrag.errors import DomainError, ErrorCode
@@ -13,6 +14,7 @@ from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
 from research_graphrag.indexing.graph_index import (
     TOP_REPRESENTATIVES,
     CommunityView,
+    _mutual_topk_edges,
     build_graph,
     load_communities,
     load_neighbors,
@@ -189,6 +191,31 @@ def test_load_communities_without_graph_raises_constraint_violation(tmp_path: Pa
     assert excinfo.value.code is ErrorCode.CONSTRAINT_VIOLATION
 
 
+def test_load_communities_returns_cached_instance_when_file_unchanged(tmp_path: Path) -> None:
+    """Zwei Ladevorgänge über dieselbe unveränderte Datei liefern dasselbe Objekt (Cache-Hit)."""
+    db = tmp_path / "index.sqlite"
+    build_graph(_two_cluster_papers(), db)
+
+    first = load_communities(db)
+    second = load_communities(db)
+
+    assert first is second
+
+
+def test_load_communities_reloads_after_graph_rebuilt_at_same_path(tmp_path: Path) -> None:
+    """Ein neu gebauter Graph am selben Pfad wirkt beim nächsten Laden sofort (kein Cache-Leck)."""
+    db = tmp_path / "index.sqlite"
+    build_graph([_paper("aaaa0001", ["semantic parsing of natural language queries"])], db)
+    first = load_communities(db)
+    assert len(first) == 1
+
+    build_graph(_two_cluster_papers(), db)
+    second = load_communities(db)
+
+    assert second is not first
+    assert len(second) == 2
+
+
 def test_build_graph_preserves_existing_index_tables(tmp_path: Path) -> None:
     """Der Graph-Bau schreibt additiv und lässt papers/chunks unangetastet."""
     papers = _two_cluster_papers()
@@ -271,3 +298,63 @@ def test_community_view_to_dict_shape() -> None:
         "members": ["aaaa0001", "bbbb0002"],
         "representatives": ["aaaa0001"],
     }
+
+
+# ---------------------------------------------------------------------------
+# _mutual_topk_edges (Phase 15 / G1): NumPy-Vektorisierung statt Python-Liste-von-
+# Listen + Kandidatentupeln. Muss fuer JEDE Aehnlichkeitsmatrix dasselbe Ergebnis
+# wie die urspruengliche, rein-Python-basierte Fassung liefern (inkl. Tie-Break).
+# ---------------------------------------------------------------------------
+
+
+def _brute_force_mutual_topk_edges(
+    paper_ids: list[str], sims: list[list[float]], k: int, min_similarity: float
+) -> list[tuple[str, str, float]]:
+    """Referenzimplementierung (Stand vor G1): reines Python, ohne NumPy."""
+    n = len(paper_ids)
+    neighbors: list[set[int]] = []
+    for i in range(n):
+        candidates = [
+            (-sims[i][j], paper_ids[j], j)
+            for j in range(n)
+            if j != i and sims[i][j] >= min_similarity
+        ]
+        candidates.sort()
+        neighbors.append({index for _neg_sim, _paper_id, index in candidates[:k]})
+
+    edges: list[tuple[str, str, float]] = []
+    for i in range(n):
+        for j in neighbors[i]:
+            if i < j and i in neighbors[j]:
+                first, second = paper_ids[i], paper_ids[j]
+                source, target = (first, second) if first < second else (second, first)
+                edges.append((source, target, sims[i][j]))
+    return sorted(edges)
+
+
+@pytest.mark.parametrize("seed", range(30))
+def test_mutual_topk_edges_matches_brute_force_on_random_matrices(seed: int) -> None:
+    """Zufällige Ähnlichkeitsmatrizen (mit erzwungenen Gleichständen): kein Fall weicht ab."""
+    rng = np.random.default_rng(seed)
+    n = rng.integers(2, 12)
+    # Wenige Nachkommastellen erzwingen haeufige Gleichstaende - genau der Fall, den der
+    # Tie-Break (aufsteigende paper_id) eindeutig entscheiden muss.
+    raw = rng.integers(0, 4, size=(n, n)).astype(np.float64) / 3.0
+    sims = (raw + raw.T) / 2.0  # symmetrisch, wie eine Kosinus-Aehnlichkeitsmatrix
+    np.fill_diagonal(sims, 1.0)
+    paper_ids = [f"p{index:03d}" for index in rng.permutation(n)]
+    k = int(rng.integers(1, n + 2))
+    min_similarity = float(rng.choice([0.0, 0.1, 0.34, 0.5, 1.1]))
+
+    expected = _brute_force_mutual_topk_edges(paper_ids, sims.tolist(), k, min_similarity)
+    actual = _mutual_topk_edges(paper_ids, sims, k, min_similarity)
+
+    assert actual == expected
+
+
+def test_mutual_topk_edges_empty_neighborhood_when_all_below_threshold() -> None:
+    """Liegt keine Ähnlichkeit über der Schwelle, entstehen keine Kanten."""
+    paper_ids = ["a", "b", "c"]
+    sims = np.array([[1.0, 0.05, 0.02], [0.05, 1.0, 0.03], [0.02, 0.03, 1.0]])
+
+    assert _mutual_topk_edges(paper_ids, sims, k=8, min_similarity=0.1) == []

@@ -150,3 +150,29 @@ def test_assembler_missing_index_raises_not_found(tmp_path: Path) -> None:
     with pytest.raises(DomainError) as excinfo:
         ProvenanceAssembler.load(tmp_path / "absent.sqlite")
     assert excinfo.value.code is ErrorCode.NOT_FOUND
+
+
+def test_assembler_load_returns_cached_instance_when_file_unchanged(tmp_path: Path) -> None:
+    """Zwei Ladevorgänge über dieselbe unveränderte Datei liefern denselben Assembler."""
+    db = _build(tmp_path)
+
+    first = ProvenanceAssembler.load(db)
+    second = ProvenanceAssembler.load(db)
+
+    assert first is second
+
+
+def test_assembler_load_reloads_after_index_rebuilt_at_same_path(tmp_path: Path) -> None:
+    """Ein neu gebauter Index am selben Pfad wirkt beim nächsten Laden sofort (kein Cache-Leck)."""
+    db = tmp_path / "index.sqlite"
+    build_index([_paper("aaaa0001", ["alpha beta gamma content"])], db)
+    first = ProvenanceAssembler.load(db)
+    assert first.paper_ref("aaaa0001").source_uri == "file:///aaaa0001.pdf"
+
+    build_index([_paper("bbbb0002", ["delta epsilon zeta content"])], db)
+    second = ProvenanceAssembler.load(db)
+
+    assert second is not first
+    assert second.paper_ref("bbbb0002").source_uri == "file:///bbbb0002.pdf"
+    with pytest.raises(DomainError):
+        second.paper_ref("aaaa0001")

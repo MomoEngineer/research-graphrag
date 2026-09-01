@@ -110,10 +110,10 @@ def _tree_state(root: Path) -> dict[str, str]:
     }
 
 
-def test_new_paper_is_accepted_indexed_and_listed(
+def test_new_paper_is_accepted_and_indexed_without_a_new_overview_row(
     workspace: dict[str, Path], make_pdf: MakePdf
 ) -> None:
-    """Ein neues PDF wandert nach papers/, wird indiziert und bekommt eine Übersicht-Zeile."""
+    """Ein neues PDF wandert nach papers/ und wird indiziert - seit G4 ohne Übersicht-Zeile."""
     make_pdf(_pages("Ein völlig neues Paper", "arXiv:2402.22222v1"), "new_papers/Neu.pdf")
 
     report = _run(workspace)
@@ -122,10 +122,9 @@ def test_new_paper_is_accepted_indexed_and_listed(
     assert (workspace["papers"] / "Neu.pdf").is_file()
     assert not (workspace["inbox"] / "Neu.pdf").exists()
     assert report.ingest is not None and report.ingest.n_papers == 2
+    assert report.overview is None
     body = workspace["uebersicht"].read_text(encoding="utf-8")
-    assert "| Z1 |" in body
-    assert "papers/Neu.pdf" in body
-    assert body.startswith(_UEBERSICHT), "kuratierte Zeilen bleiben unverändert"
+    assert body == _UEBERSICHT, "die Übersicht bleibt außer Dienst unverändert"
 
 
 def test_identical_file_is_deleted_and_logged(

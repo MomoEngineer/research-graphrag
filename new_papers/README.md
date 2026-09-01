@@ -16,7 +16,7 @@ Der Intake prüft in drei Stufen mit fallender Sicherheit und handelt entspreche
 | 1 | **sha256** identisch zu einem Paper im Korpus | Datei wird **gelöscht** (byte-identische Kopie existiert nachweislich) |
 | 2 | **DOI/arXiv** identisch zu einem gehärteten Korpus-Schlüssel | Datei wandert nach `_duplikate/` (umkehrbar) |
 | 3 | **Titel-Ähnlichkeit** ≥ 0,85 | Datei **bleibt liegen**, Befund im Bericht |
-| – | kein Treffer | Datei wandert nach `papers/`, Index und Übersicht werden nachgezogen |
+| – | kein Treffer | Datei wandert nach `papers/`, der Index wird nachgezogen (`Übersicht.md` bekommt seit Phase 15 / G4 keine neue Zeile mehr) |
 
 > **Achtung:** Stufe 1 löscht **unwiderruflich**. Vor dem ersten Lauf immer `--dry-run` nutzen.
 > Eine **neuere Version** eines vorhandenen Papers gilt als Duplikat (gleiche Identifikator-Wurzel)

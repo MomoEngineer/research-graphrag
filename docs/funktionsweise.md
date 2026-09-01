@@ -26,7 +26,6 @@ flowchart LR
     subgraph K1["Aufnahme · manuell angestoßen"]
         NP["new_papers/*.pdf"] --> INT["scripts.intake"]
         INT -->|"kein Duplikat"| P["papers/*.pdf"]
-        INT -->|"Entwurfszeile"| UEB["Übersicht.md"]
         P --> ING["scripts.ingest"]
         INT --> ING
         ING --> CAN["data/canonical/*.json"]
@@ -49,12 +48,20 @@ Daraus folgen drei Eigenschaften, die den Rest der Architektur erklären:
 
 - **Der Index ist die einzige Quelle der Wahrheit zur Abfragezeit.** Kein Retrieval-Modus liest
   eine PDF-Datei oder ein Canonical JSON.
-- **Der Index wird pro Anfrage frisch geladen** („On-Read"). Neue Paper wirken deshalb ohne
-  Server-Neustart – der Preis ist Ladezeit je Aufruf
-  ([ADR 0010](adr/0010-drop-in-workflow-and-qa-phase6.md)).
-- **Nichts wird als Modell serialisiert.** Der Vektorraum wird beim Laden aus dem Chunk-Text
-  rekonstruiert; die SQLite-Datei enthält Text und Struktur, keine `pickle`-Artefakte
-  ([ADR 0005](adr/0005-graphrag-index-backend-open.md)).
+- **Der Index wirkt ohne Server-Neustart („On-Read“).** Ein Prozess-Cache erspart ab Phase
+  15 / G2 den erneuten Aufbau des Vektorraums, solange sich die Index-Datei nicht ändert –
+  ungültig gemacht über ihren **Zustand** (Größe + Änderungszeit), nie über eine Zeitspanne. Seit
+  Phase 15 / G3 gilt dasselbe für die Communities (``load_communities``) und die Paper-Provenienz
+  (``ProvenanceAssembler.load``): Ein vollständiger Mess- oder Modus-Lauf lädt jede Struktur
+  dadurch faktisch **einmal**, statt sie je Ebene oder je Frage neu aufzubauen. Neue Paper
+  (atomarer Swap) wirken dadurch weiterhin sofort
+  ([ADR 0010](adr/0010-drop-in-workflow-and-qa-phase6.md),
+  [ADR 0033](adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md)).
+- **Kein `scikit-learn`-Objekt wird `pickle`d.** Persistiert werden seit Phase 15 / G2 reine
+  Zahlen (Vokabular als JSON, Zähl-Matrix als Rohbytes fester Breite), aus denen der Vektorraum
+  beim Laden **rekonstruiert** wird – byte-genau zu einem frischen Fit aus dem Chunk-Text, aber
+  ohne die Tokenisierung zu wiederholen ([ADR 0005](adr/0005-graphrag-index-backend-open.md),
+  [ADR 0033](adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md)).
 
 ---
 
@@ -87,8 +94,8 @@ automatisch die Neu-Extraktion des gesamten Korpus, ohne dass jemand einen Cache
 so wurde etwa die Textnormalisierung ausgerollt
 ([ADR 0015](adr/0015-noise-reduction-keywords-and-sections-phase7.md)).
 
-**Der atomare Swap.** Weil der Server den Index pro Anfrage liest, dürfte ein Neuaufbau niemals
-einen halbfertigen Zustand sichtbar machen:
+**Der atomare Swap.** Weil ein langlebiger Prozess (MCP-Server) den Index über einen Prozess-Cache
+mehrfach liest, dürfte ein Neuaufbau niemals einen halbfertigen Zustand sichtbar machen:
 
 ```mermaid
 sequenceDiagram
@@ -120,7 +127,7 @@ flowchart LR
     S2 -- ja --> Q["Quarantäne<br/>new_papers/_duplikate/"]
     S2 -- nein --> S3{"Titel-Ähnlichkeit<br/>≥ 0,85?"}
     S3 -- ja --> K["liegen lassen<br/>Befund im Bericht"]
-    S3 -- nein --> M["nach papers/<br/>→ ingest → Übersicht-Zeile"]
+    S3 -- nein --> M["nach papers/<br/>→ ingest (Übersicht.md außer Dienst seit G4)"]
 ```
 
 Entscheidend ist, dass nur die **erste** Stufe löscht: Dort und nur dort ist bewiesen, dass kein
@@ -195,8 +202,9 @@ befragt, alles Weitere ist deterministisch. Und der Weg endet wieder im Eingang,
 > Prüfstufen, Benennung nach dem **Titel**, `document_kind` im Canonical- und Index-Schema. Ein
 > Referenz-Eintrag hat genau einen Chunk (Titel + Abstract) und **keine** Seitenangabe. Taucht
 > später das echte PDF auf, gilt **„Volltext schlägt Referenz-Eintrag"** – es wird übernommen,
-> der Stub abgelöst und seine Übersichtszeile umgebogen statt dupliziert
-> ([ADR 0030](adr/0030-reference-entries-in-corpus-phase13.md)).
+> der Stub abgelöst und eine dafür bestehende Übersichtszeile umgebogen statt dupliziert (seit
+> Phase 15 / G4 nur noch relevant für Zeilen aus der Zeit vor der Außerdienststellung –
+> [ADR 0030](adr/0030-reference-entries-in-corpus-phase13.md)).
 >
 > **Seit R3 ist die Unvollständigkeit sichtbar und folgenlos zugleich.** Sichtbar: `document_kind`
 > steht in jedem Zitat, jeder Paper-Referenz, jedem Beleg und in `get_paper`; ein Abstract-Beleg
@@ -600,7 +608,7 @@ dass ein Regressions-Check überhaupt etwas aussagt.
 | Schicht | Woher der Determinismus kommt |
 | --- | --- |
 | Extraktion | reine Textheuristik ohne Zufall; Paper-ID aus dem Datei-Hash |
-| Index | feste Zeilenreihenfolge; Vektorraum aus dem gespeicherten Text rekonstruiert |
+| Index | feste Zeilenreihenfolge; Vektorraum aus dem persistierten Vokabular-/Zähl-Zustand rekonstruiert |
 | Graph | fester Seed für Louvain; Tie-Breaks über die Paper-ID; Community-IDs nach fester Ordnung |
 | Retrieval | Sortierung nach Score mit Tie-Break über die Chunk-ID |
 | Evidenz | Nummerierung an genau einer Stelle |

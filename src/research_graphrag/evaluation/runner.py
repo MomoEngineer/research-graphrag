@@ -10,10 +10,14 @@ Gemessen werden zwei Ebenen:
    Auswahlfehler von Rankingfehlern trennen – der Local-Baustein-Beitrag und die
    DRIFT-/Global-Deckelung (docs/adr/0016-quantitative-retrieval-evaluation-phase7.md).
 
-Die Modus-Funktionen laden den Index bewusst selbst (On-Read,
-docs/adr/0010-drop-in-workflow-and-qa-phase6.md); der Retrieval-Contract bleibt unangetastet.
-Das macht einen vollständigen Lauf spürbar langsam – eine dokumentierte, bewusste Abwägung für
-ein selten laufendes Werkzeug.
+Die Modus-Funktionen laden den Index weiterhin selbst (On-Read,
+docs/adr/0010-drop-in-workflow-and-qa-phase6.md) – der Retrieval-Contract bleibt unangetastet.
+Seit Phase 15 / G2/G3 ist das aber kein Neuaufbau mehr: ``TfidfIndex.load``, ``load_communities``
+und ``ProvenanceAssembler.load`` cachen ihr Ergebnis pro Prozess, ungültig gemacht über den
+Zustand der Index-Datei statt über eine Zeitspanne. Ein vollständiger Lauf lädt jede Struktur
+dadurch faktisch **einmal** und reicht sie über den Cache durch, ohne dass ein Aufrufer sie
+explizit weiterreichen müsste
+(docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md).
 """
 
 from __future__ import annotations

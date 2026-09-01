@@ -4,12 +4,16 @@ Bündelt die von allen Retrieval-Modi (Basic/Local/Global/DRIFT) genutzten Prove
 :class:`Citation` (Chunk-Ebene inkl. ``section_title``) und :class:`PaperRef` (Paper-Ebene).
 Der :class:`ProvenanceAssembler` stellt Paper-Provenienz **direkt aus dem Index** zusammen
 (``source_uri`` + Leit-Snippet), ohne den TF-IDF-Raum zu rekonstruieren. Grundsatz:
-docs/adr/0008-retrieval-and-query-router-phase4.md.
+docs/adr/0008-retrieval-and-query-router-phase4.md. Seit Phase 15 / G3 cacht ``load`` das
+Ergebnis **pro Prozess**, ungültig gemacht über den Zustand der Index-Datei, nie über eine
+Zeitspanne (dasselbe Muster wie ``TfidfIndex.load``,
+docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md).
 """
 
 from __future__ import annotations
 
 import sqlite3
+import threading
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -179,6 +183,11 @@ class PaperRef:
         }
 
 
+_CACHE_LOCK = threading.Lock()
+_CACHE: dict[str, tuple[int, int, ProvenanceAssembler]] = {}
+"""Prozess-Cache: Pfad -> ((mtime_ns, Größe), Assembler), siehe ``ProvenanceAssembler.load``."""
+
+
 class ProvenanceAssembler:
     """Stellt Paper-Provenienz direkt aus der Index-Datei zusammen (ohne ``sklearn``).
 
@@ -201,7 +210,12 @@ class ProvenanceAssembler:
 
     @classmethod
     def load(cls, db_path: str | Path) -> ProvenanceAssembler:
-        """Lädt die Paper-Provenienz aus dem Index.
+        """Lädt die Paper-Provenienz, sofern nötig – sonst liefert der Prozess-Cache denselben
+        Assembler (Phase 15 / G3, dasselbe Muster wie ``TfidfIndex.load``).
+
+        Der Cache ist über den **Dateizustand** (Größe + Änderungszeit) ungültig gemacht, nie
+        über eine Zeitspanne – ein neu gebauter Index wirkt beim nächsten Aufruf sofort
+        (docs/adr/0010-drop-in-workflow-and-qa-phase6.md).
 
         Args:
             db_path: Pfad zur SQLite-Index-Datei.
@@ -216,6 +230,21 @@ class ProvenanceAssembler:
         if not path.is_file():
             raise DomainError(ErrorCode.NOT_FOUND, f"Index nicht gefunden: {path}")
 
+        resolved = str(path.resolve())
+        stat = path.stat()
+        with _CACHE_LOCK:
+            cached = _CACHE.get(resolved)
+            if cached is not None and cached[0] == stat.st_mtime_ns and cached[1] == stat.st_size:
+                return cached[2]
+
+        assembler = cls._build_from_db(path)
+        with _CACHE_LOCK:
+            _CACHE[resolved] = (stat.st_mtime_ns, stat.st_size, assembler)
+        return assembler
+
+    @classmethod
+    def _build_from_db(cls, path: Path) -> ProvenanceAssembler:
+        """Liest die Provenienz unbedingt frisch aus SQLite (interner Baustein von ``load``)."""
         connection = sqlite3.connect(str(path))
         try:
             uri_rows = connection.execute(

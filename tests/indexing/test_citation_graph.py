@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 import sqlite3
 from collections.abc import Sequence
 from pathlib import Path
@@ -14,6 +15,7 @@ from research_graphrag.extraction.model import SECTION_KIND_BODY, SECTION_KIND_R
 from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
 from research_graphrag.indexing.citation_graph import (
     CITATION_SCHEMA_VERSION,
+    _MultiPatternMatcher,
     build_citation_graph,
     load_citations,
 )
@@ -380,3 +382,56 @@ def test_load_citations_unknown_paper(tmp_path: Path) -> None:
         load_citations(db, "zzzz9999")
 
     assert excinfo.value.code is ErrorCode.NOT_FOUND
+
+
+# ---------------------------------------------------------------------------
+# _MultiPatternMatcher (Phase 15 / G1): Aho-Corasick statt N Einzelsuchen.
+# Muss fuer JEDEN Text und JEDE Musterliste dasselbe Ergebnis wie die brachiale
+# Substring-Suche liefern - das ist die Voraussetzung fuer die Byte-Identitaet
+# von build_citation_graph.
+# ---------------------------------------------------------------------------
+
+
+def _brute_force_search(patterns: Sequence[str], text: str) -> set[int]:
+    """Referenzimplementierung: ``pattern in text`` je Muster (die alte Semantik)."""
+    return {index for index, pattern in enumerate(patterns) if pattern and pattern in text}
+
+
+@pytest.mark.parametrize(
+    ("patterns", "text"),
+    [
+        ([], "beliebiger text"),
+        (["abc"], ""),
+        (["abc"], "xxxabcxxx"),
+        (["abc", "bcd"], "abcd"),  # überlappende Muster
+        (["ab", "abc", "abcd"], "xabcdx"),  # Muster sind Präfixe voneinander
+        (["10.1145/123", "10.1145/1234"], "ref 10.1145/1234 more"),
+        (["abc"], "abcabcabc"),  # mehrfaches Vorkommen desselben Musters
+        (["nichtvorhanden"], "abc def ghi"),
+        (["a", "b", "c"], "abcabc"),
+        (
+            ["match"],
+            "MATCH",
+        ),  # Groß-/Kleinschreibung wird NICHT normalisiert (Aufgabe des Aufrufers)
+    ],
+)
+def test_multi_pattern_matcher_matches_brute_force(patterns: Sequence[str], text: str) -> None:
+    """Der Automat findet exakt dieselben Muster wie eine Einzelsuche je Muster."""
+    matcher = _MultiPatternMatcher(patterns)
+    found = {patterns[index] for index in matcher.search(text)}
+    expected = {patterns[index] for index in _brute_force_search(patterns, text)}
+    assert found == expected
+
+
+def test_multi_pattern_matcher_random_agrees_with_brute_force() -> None:
+    """Zufällige Muster/Texte über einem kleinen Alphabet: kein Fall weicht ab."""
+    rng = random.Random(20260901)
+    alphabet = "ab10./"
+    for _ in range(200):
+        n_patterns = rng.randint(0, 6)
+        patterns = ["".join(rng.choices(alphabet, k=rng.randint(1, 5))) for _ in range(n_patterns)]
+        text = "".join(rng.choices(alphabet, k=rng.randint(0, 40)))
+        matcher = _MultiPatternMatcher(patterns)
+        found = {patterns[index] for index in matcher.search(text)}
+        expected = {patterns[index] for index in _brute_force_search(patterns, text)}
+        assert found == expected, f"patterns={patterns!r} text={text!r}"

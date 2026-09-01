@@ -43,6 +43,7 @@ SOURCE_DIRECTORIES: tuple[str, ...] = ("papers",)
 SOURCE_FILES: tuple[str, ...] = (
     "Übersicht.md",
     "metadata/paper_metadata.json",
+    "metadata/curation.json",
     "new_papers/referenzen.txt",
     "data/manifest.json",
     "data/intake_log.md",
@@ -54,7 +55,10 @@ SOURCE_FILES: tuple[str, ...] = (
 
 ``new_papers/referenzen.txt`` ist die kuratierte Kennungsliste der Referenz-Einträge und aus
 keiner Quelle rekonstruierbar; ``data/references_log.md`` ist – wie die übrigen Protokolle –
-append-only (docs/adr/0029-reference-stub-resolution-phase13.md).
+append-only (docs/adr/0029-reference-stub-resolution-phase13.md). ``metadata/curation.json``
+trägt seit Phase 15 / G4 das einzige menschliche Relevanzurteil (vormals in ``Übersicht.md``);
+``Übersicht.md`` selbst bleibt gesichert, weil sie als historischer Stand weiterhin Kontext trägt
+(docs/adr/0034-decommission-uebersicht-and-inflow-stop-rule-phase15.md).
 """
 
 REQUIRED_DIRECTORY = "papers"

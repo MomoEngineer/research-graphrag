@@ -183,3 +183,10 @@ Seitentext, Sections und Chunk-Größen, wovon für einen Stub nichts zutrifft.
 - **Folgeentscheidungen:** R3 reicht `document_kind` in den Contract durch, schließt
   Referenz-Einträge aus der Gold-Ableitung aus, friert beide Baselines neu ein und baut die
   Nachrangigkeits-Guardrail (belegt durch die 13 qid-Regressionen aus R0).
+
+> **Nachtrag (2026-09-01, Phase 15 / G4):** Ein neu aufgenommener Referenz-Eintrag bekommt seither
+> **keine** Entwurfszeile mehr in `Übersicht.md` – der Intake schreibt nicht mehr in die Datei
+> ([ADR 0034](0034-decommission-uebersicht-and-inflow-stop-rule-phase15.md)). Der
+> Upgrade-Pfad („Volltext schlägt Referenz-Eintrag") bleibt unverändert; das Umbiegen einer
+> **bereits bestehenden** Zeile (`retarget_overview_row`) wirkt nur noch dann, wenn diese Zeile
+> aus der Zeit vor G4 stammt – für danach aufgenommene Stubs bleibt es ein folgenloser No-Op.

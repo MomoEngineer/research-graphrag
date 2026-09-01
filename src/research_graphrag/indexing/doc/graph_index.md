@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/indexing/graph_index.py` |
 | **Paket** | `indexing` – Canonical JSON zum Offline-Hybrid-Index |
-| **Phase** | 3 (eingeführt), 7 / A5 (Keyword-Nachfilter) |
-| **Grundlagen** | [ADR 0007](../../../../docs/adr/0007-graphrag-index-phase3-option-b.md), [ADR 0015](../../../../docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md) |
+| **Phase** | 3 (eingeführt), 7 / A5 (Keyword-Nachfilter), 15 / G3 (Prozess-Cache) |
+| **Grundlagen** | [ADR 0007](../../../../docs/adr/0007-graphrag-index-phase3-option-b.md), [ADR 0015](../../../../docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md), [ADR 0033](../../../../docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md) |
 
 ---
 
@@ -24,7 +24,7 @@ Community-Detection darin findet.
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
 | `build_graph` | Funktion | Papers → Knoten, Kanten, Communities; persistiert additiv |
-| `load_communities` | Funktion | Communities aus dem Index laden |
+| `load_communities` | Funktion | Communities aus dem Index laden (Prozess-Cache seit Phase 15 / G3) |
 | `load_neighbors` | Funktion | Nachbarpaper eines Papers über beide Kantenrichtungen |
 | `CommunityView` | Dataclass | Community mit Keywords, Summary, Mitgliedern, Vertretern und `to_dict()` |
 | `GraphBuildReport` | Dataclass | Zählwerte eines Baulaufs |
@@ -59,6 +59,17 @@ Hubs: Ein thematisch breites Übersichtspaper würde sonst mit fast allen andere
 Die Konsequenz ist wichtig für die Wartung: Die Kantenbildung ist eine **Schwellenoperation**.
 Schon eine minimale Verschiebung der Ähnlichkeiten kann Nachbarschaften kippen – deshalb wurde
 der Keyword-Filter bewusst als Nachfilter gebaut und **nicht** in den Vektorraum gelegt.
+
+**Seit Phase 15 / G1** ermittelt `_mutual_topk_edges` die Nachbarschaft **direkt über NumPy**
+statt über eine Python-Liste-von-Listen der vollen Ähnlichkeitsmatrix und eine Kandidatenliste
+je Zeile: Die Spalten werden einmalig aufsteigend nach `paper_id` sortiert, ein **stabiler**
+zeilenweiser `np.argsort` über die ganze Matrix liefert je Zeile die Nachbarn absteigend nach
+Ähnlichkeit – Gleichstände bleiben dank der vorsortierten Spalten automatisch in aufsteigender
+`paper_id`-Reihenfolge, bit-genau dieselbe Tie-Break-Regel wie zuvor. Die *mutual top-k*-Regel
+selbst ist unverändert; ein Neuaufbau aus denselben Canonical JSONs liefert weiterhin
+byte-identische Kanten (Nachweis: `tests/indexing/test_graph_index.py`, 30 zufällige
+Ähnlichkeitsmatrizen gegen die frühere reine Python-Fassung). Isoliert gemessen (606 Paper, ohne
+den unveränderten TF-IDF-Fit als Störgröße): Median 0,138 s → 0,069 s.
 
 ### Die Community-Ordnung
 
@@ -114,7 +125,11 @@ Der Bau schreibt **additiv**: Die Graph-Tabellen werden verworfen und neu angele
 | Paper ohne jede Kante | kein Fehler – Ein-Element-Community |
 
 `load_communities` prüft die Existenz der Tabelle explizit, damit ein Index ohne Graph eine
-verständliche Meldung liefert statt eines Datenbankfehlers.
+verständliche Meldung liefert statt eines Datenbankfehlers. Seit Phase 15 / G3 cacht es sein
+Ergebnis zusätzlich **pro Prozess** (dasselbe Muster wie `TfidfIndex.load`), geschlüsselt über
+Größe und Änderungszeit der Index-Datei – wiederholte Aufrufe (z. B. je Gold-Frage in der
+Evaluation) lesen die Tabellen dadurch nur noch beim ersten Mal wirklich neu ein
+([ADR 0033](../../../../docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md)).
 
 ## 6. Determinismus
 

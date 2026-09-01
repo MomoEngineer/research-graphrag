@@ -99,6 +99,24 @@ def link_column(markdown: str) -> int | None:
     return None
 
 
+def column_index(markdown: str, label: str) -> int | None:
+    """Ermittelt den 0-basierten Index einer Spalte anhand des Anfangs ihrer Kopfzelle.
+
+    Öffentlich, weil sowohl das Bibliografie-Paket (``bibliography.curated``) als auch die
+    Kurations-Übernahme (``overview.curation``) dieselbe Kopfzellen-Suche brauchen und eine
+    zweite Implementierung eine Fehlerquelle wäre (docs/adr/0025-citable-paper-metadata.md).
+    """
+    needle = label.strip().lower()
+    for raw in markdown.splitlines():
+        line = raw.strip()
+        if not line.startswith("|"):
+            continue
+        for index, cell in enumerate(split_row(line)):
+            if cell.strip().lower().startswith(needle):
+                return index
+    return None
+
+
 def parse_internal_links(markdown: str) -> set[str]:
     """Sammelt die (dekodierten) ``papers/``-Dateinamen aus der ``Interner Link``-Spalte.
 

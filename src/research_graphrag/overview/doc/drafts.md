@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/overview/drafts.py` |
 | **Paket** | `overview` – Entwürfe für die kuratierte Literaturübersicht |
-| **Phase** | 2 (eingeführt), 7 / A5 (Keyword-Politik), 8 (Übersicht als einzige Senke), 13 / R2 (Referenz-Einträge) |
-| **Grundlagen** | [ADR 0006](../../../../docs/adr/0006-canonical-model-phase2-scope.md), [ADR 0015](../../../../docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md), [ADR 0019](../../../../docs/adr/0019-corpus-intake-new-papers-phase8.md), [ADR 0030](../../../../docs/adr/0030-reference-entries-in-corpus-phase13.md) |
+| **Phase** | 2 (eingeführt), 7 / A5 (Keyword-Politik), 8 (Übersicht als einzige Senke), 13 / R2 (Referenz-Einträge), 15 / G4 (außer Dienst gesetzt) |
+| **Grundlagen** | [ADR 0006](../../../../docs/adr/0006-canonical-model-phase2-scope.md), [ADR 0015](../../../../docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md), [ADR 0019](../../../../docs/adr/0019-corpus-intake-new-papers-phase8.md), [ADR 0030](../../../../docs/adr/0030-reference-entries-in-corpus-phase13.md), [ADR 0034](../../../../docs/adr/0034-decommission-uebersicht-and-inflow-stop-rule-phase15.md) |
 
 ---
 
@@ -19,11 +19,18 @@ Die Leitidee ist eine strikte Arbeitsteilung: Die Maschine füllt, was sich **be
 Mensch füllt, was **bewertet** werden muss (Relevanz, Themenfokus, Zuordnung zu
 Forschungsfragen).
 
+> **Seit Phase 15 / G4 außer Dienst als aktiver Schreibpfad.** Der Korpus-Intake ruft
+> `append_overview_rows` nicht mehr auf; `scripts/update_overview.py` verweigert den Lauf ohne
+> das ausdrückliche `--force`. Die Funktion selbst bleibt als Notfall-Werkzeug erhalten – das
+> einzige menschliche Relevanzurteil (`Themenfokus`, `Relevanz fuer Expose`, `SRQ-Zuordnung`)
+> liegt seither maschinenlesbar in `metadata/curation.json`
+> ([curation.md](curation.md), [ADR 0034](../../../../docs/adr/0034-decommission-uebersicht-and-inflow-stop-rule-phase15.md)).
+
 ## 2. Öffentliche Schnittstelle
 
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
-| `append_overview_rows` | Funktion | Hängt fehlende Entwurfszeilen an die kuratierte Übersicht an |
+| `append_overview_rows` | Funktion | Hängt fehlende Entwurfszeilen an die kuratierte Übersicht an (Notfall-Werkzeug seit G4) |
 | `ensure_overview_target` | Funktion | Prüft die Zieldatei vorab (Existenz + Spaltenlayout) |
 | `retarget_overview_row` | Funktion | Biegt **eine** Zeile auf eine andere Datei um (Upgrade Stub → Volltext) |
 | `display_name` | Funktion | Anzeigename eines Korpus-Eintrags (Dateiname ohne bekannte Endung) |
@@ -33,6 +40,7 @@ Forschungsfragen).
 | `extractive_summary` | Funktion | Kurztext aus Abstract oder erstem Fließtext |
 | `parse_internal_links` | Funktion | Liest die verlinkten Dateinamen einer Markdown-Tabelle |
 | `link_column` | Funktion | Spaltenindex von `Interner Link` (Layout-Prüfung) |
+| `column_index` | Funktion | Spaltenindex einer beliebigen Kopfzelle (auch von `bibliography.curated` und `overview.curation` genutzt) |
 | `split_row` | Funktion | Zellen einer Markdown-Tabellenzeile (auch vom Bibliografie-Paket genutzt) |
 | `OverviewReport` | Dataclass | Zählwerte eines Laufs samt vergebener IDs |
 | `DRAFT_ID_PREFIX`, `INTERNAL_LINK_COLUMN` | Konstanten | Präfix der ID-Reihe (`Z`) und erwarteter Spaltenindex des internen Links |

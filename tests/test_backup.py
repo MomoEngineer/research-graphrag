@@ -60,6 +60,7 @@ def workspace(tmp_path: Path) -> Path:
 
     (root / "metadata").mkdir()
     (root / "metadata" / "paper_metadata.json").write_bytes(b'{"papers": {}}')
+    (root / "metadata" / "curation.json").write_bytes(b'{"papers": {}}')
 
     (root / "new_papers").mkdir()
     (root / "new_papers" / "referenzen.txt").write_bytes(b"# Kennungen\n10.1145/x\n")

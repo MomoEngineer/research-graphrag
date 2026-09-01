@@ -87,6 +87,23 @@ streng wie zuvor.
 Findet mehr als ein Kriterium dasselbe Ziel, gewinnt das präziseste – jede Kante trägt genau
 **eine** Methode.
 
+### Ein Durchlauf statt vieler Einzelsuchen (Phase 15 / G1)
+
+Bis zur Begradigung prüfte `build_citation_graph` je Quellpaper **jeden** bekannten Korpus-DOI,
+jede arXiv-ID und jeden Titel einzeln gegen den Referenztext (`wert in ref_lower`) – O(Paper²).
+Seit G1 übernimmt das der interne `_MultiPatternMatcher` (ein Aho-Corasick-Automat): Er wird
+**einmal** je Baulauf aus allen bekannten DOI-/arXiv-Mustern (gegen `ref_lower` geprüft) bzw.
+Titel-Mustern (gegen `ref_norm` geprüft) errichtet und findet dann je Quellpaper **alle**
+Treffer in **einem** linearen Durchlauf über den Referenztext – „Kennungen und Titelkandidaten
+einmal je Referenztext gewinnen, danach Nachschlagen statt Suchen". Das Ergebnis ist **identisch**
+zur Einzelsuche: Jedes Muster, das irgendwo als Teilstring vorkommt (auch als Teil eines
+längeren Treffers oder überlappend mit einem anderen Muster), wird gefunden; welches Ziel und
+welche Methode ein Treffer trägt, entscheidet weiterhin ausschließlich `_consider` (Präzedenz
+DOI > arXiv > Titel), unabhängig von der Reihenfolge, in der der Matcher die Treffer liefert.
+Nachweis: `tests/indexing/test_citation_graph.py` (Aho-Corasick gegen Brute-Force-Suche, u. a.
+mit überlappenden und präfixgleichen Mustern) sowie ein byte-genauer Vergleich gegen die
+vorherige Fassung auf dem realen Korpus (606 Paper, alle Tabellen identisch).
+
 ### Der Titel und seine Normalisierung
 
 Der Titel wird aus dem **Dateinamen** der Quell-URI abgeleitet (URL-dekodiert, ohne Endung); ein

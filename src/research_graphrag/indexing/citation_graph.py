@@ -8,13 +8,19 @@ Präzedenz **DOI > arXiv > Titel**; Selbstzitate werden ausgeschlossen. Persisti
 **additiv** in die bestehende SQLite-Index-Datei (Tabelle ``citation_edges`` + versioniertes
 Teilschema). Grundsatz und Grenzen (kein tiefes Referenz-Parsing, Präzision vor Recall):
 docs/adr/0011-intra-corpus-citation-graph-phase7.md.
+
+Der Abgleich lief bis Phase 15 / G1 über **eine Substring-Suche je Korpus-Identifikator und
+Quellpaper** (O(Paper² )) – begradigt über :class:`_MultiPatternMatcher` (Aho-Corasick), der
+alle bekannten Muster in **einem** Durchlauf je Referenztext findet (siehe docs/roadmap-historie.md,
+Phase 15 / G1).
 """
 
 from __future__ import annotations
 
 import re
 import sqlite3
-from collections.abc import Sequence
+from collections import deque
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -194,6 +200,104 @@ def _consider(matches: dict[str, str], target: str, method: str) -> None:
         matches[target] = method
 
 
+class _MultiPatternMatcher:
+    """Aho-Corasick-Automat: findet alle Vorkommen mehrerer Muster in einem Text – in einem
+    einzigen linearen Durchlauf statt einer Substring-Suche je Muster.
+
+    Ersetzt die O(Korpusgröße² )-Kosten von ``build_citation_graph`` (bisher: für **jedes**
+    Quellpaper eine Schleife über **alle** bekannten DOIs/arXiv-IDs/Titel, je mit einer eigenen
+    ``pattern in text``-Suche): Statt ``N`` einzelner Suchen über denselben Text liefert ein
+    einziger Durchlauf **alle** Treffer gleichzeitig. Das Ergebnis ist **identisch** zur
+    Einzelsuche – jedes Muster, das irgendwo als Teilstring vorkommt (auch überlappend oder als
+    Teilstring eines längeren Treffers), wird gefunden, unabhängig von Reihenfolge oder
+    Präfix-/Suffix-Beziehungen zwischen den Mustern. Deterministisch (keine Zufallskomponente).
+
+    Siehe docs/roadmap-historie.md, Phase 15 / G1 (Begradigung der quadratischen Aufnahme-Kosten).
+    """
+
+    def __init__(self, patterns: Sequence[str]) -> None:
+        # Trie: goto[zustand][zeichen] -> folgezustand; je Knoten Fail-Link + Ausgabe-Indizes.
+        self._goto: list[dict[str, int]] = [{}]
+        self._fail: list[int] = [0]
+        self._output: list[list[int]] = [[]]
+        for pattern_index, pattern in enumerate(patterns):
+            self._insert(pattern, pattern_index)
+        self._build_failure_links()
+
+    def _insert(self, pattern: str, pattern_index: int) -> None:
+        state = 0
+        for char in pattern:
+            next_state = self._goto[state].get(char)
+            if next_state is None:
+                self._goto.append({})
+                self._fail.append(0)
+                self._output.append([])
+                next_state = len(self._goto) - 1
+                self._goto[state][char] = next_state
+            state = next_state
+        self._output[state].append(pattern_index)
+
+    def _build_failure_links(self) -> None:
+        """Baut die Fail-Links per Breitensuche (Standard-Aho-Corasick-Konstruktion)."""
+        queue: deque[int] = deque()
+        for _char, state in self._goto[0].items():
+            self._fail[state] = 0
+            queue.append(state)
+        while queue:
+            current = queue.popleft()
+            for char, next_state in self._goto[current].items():
+                queue.append(next_state)
+                fallback = self._fail[current]
+                while fallback != 0 and char not in self._goto[fallback]:
+                    fallback = self._fail[fallback]
+                candidate = self._goto[fallback].get(char, 0)
+                self._fail[next_state] = candidate if candidate != next_state else 0
+                self._output[next_state] = (
+                    self._output[next_state] + self._output[self._fail[next_state]]
+                )
+
+    def search(self, text: str) -> set[int]:
+        """Liefert die Indizes aller Muster, die irgendwo in ``text`` als Teilstring vorkommen."""
+        state = 0
+        found: set[int] = set()
+        for char in text:
+            while state != 0 and char not in self._goto[state]:
+                state = self._fail[state]
+            state = self._goto[state].get(char, 0)
+            if self._output[state]:
+                found.update(self._output[state])
+        return found
+
+
+def _build_identifier_matcher(
+    doi_to_pid: Mapping[str, str], arxiv_to_pid: Mapping[str, str]
+) -> tuple[_MultiPatternMatcher, list[tuple[str, str]]]:
+    """Baut EINEN Matcher für DOI- und arXiv-Muster (gegen ``ref_lower`` geprüft).
+
+    Returns:
+        Den Matcher sowie je Musterindex ``(target_paper_id, method)`` – die Präzedenz
+        (DOI vor arXiv) entscheidet weiterhin :func:`_consider`, nicht die Verarbeitungsreihenfolge.
+    """
+    lookup: list[tuple[str, str]] = []
+    patterns: list[str] = []
+    for doi, target in doi_to_pid.items():
+        patterns.append(doi)
+        lookup.append((target, "doi"))
+    for arxiv, target in arxiv_to_pid.items():
+        patterns.append(arxiv)
+        lookup.append((target, "arxiv"))
+    return _MultiPatternMatcher(patterns), lookup
+
+
+def _build_title_matcher(
+    title_to_pid: Mapping[str, str],
+) -> tuple[_MultiPatternMatcher, list[str]]:
+    """Baut den Matcher für Titel-Muster (gegen ``ref_norm`` geprüft)."""
+    patterns = list(title_to_pid)
+    targets = [title_to_pid[pattern] for pattern in patterns]
+    return _MultiPatternMatcher(patterns), targets
+
+
 def _build_target_maps(
     papers: Sequence[CanonicalPaper],
 ) -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
@@ -236,6 +340,8 @@ def build_citation_graph(
     """
     unique = _unique(papers)
     doi_to_pid, arxiv_to_pid, title_to_pid = _build_target_maps(unique)
+    id_matcher, id_lookup = _build_identifier_matcher(doi_to_pid, arxiv_to_pid)
+    title_matcher, title_targets = _build_title_matcher(title_to_pid)
 
     edges: dict[tuple[str, str], str] = {}
     n_with_refs = 0
@@ -248,14 +354,13 @@ def build_citation_graph(
         ref_norm = normalize_title(reference_text)
 
         matches: dict[str, str] = {}
-        for doi, target in doi_to_pid.items():
-            if target != source.paper_id and doi in ref_lower:
-                _consider(matches, target, "doi")
-        for arxiv, target in arxiv_to_pid.items():
-            if target != source.paper_id and arxiv in ref_lower:
-                _consider(matches, target, "arxiv")
-        for title_norm, target in title_to_pid.items():
-            if target != source.paper_id and title_norm in ref_norm:
+        for pattern_index in id_matcher.search(ref_lower):
+            target, method = id_lookup[pattern_index]
+            if target != source.paper_id:
+                _consider(matches, target, method)
+        for pattern_index in title_matcher.search(ref_norm):
+            target = title_targets[pattern_index]
+            if target != source.paper_id:
                 _consider(matches, target, "title")
 
         for target, method in matches.items():

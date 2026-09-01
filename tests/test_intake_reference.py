@@ -35,7 +35,6 @@ from research_graphrag.intake import (
     run_intake,
     safe_stub_name,
 )
-from research_graphrag.overview.drafts import REFERENCE_DRAFT_PREFIX
 from research_graphrag.pipeline import ingest
 
 MakePdf = Callable[..., Path]
@@ -126,6 +125,16 @@ def _run(workspace: dict[str, Path], *, dry_run: bool = False) -> IntakeReport:
     )
 
 
+def _seed_legacy_overview_row(workspace: dict[str, Path], row_id: str, filename: str) -> None:
+    """Hängt eine Zeile an, wie sie vor G4 automatisch entstanden wäre (Retarget-Grundlage)."""
+    row = (
+        f"| {row_id} | ENTWURF | x | k | s "
+        f"| [Quelle](papers/{filename.replace(' ', '%20')}) | (manuell) | (manuell) | |\n"
+    )
+    with workspace["uebersicht"].open("a", encoding="utf-8", newline="\n") as handle:
+        handle.write(row)
+
+
 def _tree_digest(root: Path) -> dict[str, str]:
     """Hash-Abbild eines Verzeichnisbaums – erkennt jede Änderung an Inhalt oder Bestand."""
     return {
@@ -158,17 +167,19 @@ def test_a_stub_passes_the_intake_and_is_named_after_its_title(
     assert not (workspace["inbox"] / "ref-x.refjson").exists()
 
 
-def test_the_stub_reaches_index_and_overview(workspace: dict[str, Path]) -> None:
-    """Der Eintrag ist danach auffindbar und in der Übersicht als solcher gekennzeichnet."""
+def test_the_stub_reaches_the_index_without_a_new_overview_row(workspace: dict[str, Path]) -> None:
+    """Der Eintrag ist danach auffindbar - die Übersicht bekommt seit G4 aber keine neue Zeile mehr
+    (Phase 15 / G4, docs/adr/0034-decommission-uebersicht-and-inflow-stop-rule-phase15.md)."""
+    overview_before = workspace["uebersicht"].read_text(encoding="utf-8")
     _drop_stub(workspace)
 
     report = _run(workspace)
 
     assert report.ingest is not None
     assert report.ingest.n_papers == 2
-    overview = workspace["uebersicht"].read_text(encoding="utf-8")
-    assert _STUB_TITLE in overview
-    assert REFERENCE_DRAFT_PREFIX in overview
+    assert report.overview is None
+    overview_after = workspace["uebersicht"].read_text(encoding="utf-8")
+    assert overview_after == overview_before
 
 
 def test_a_stub_without_abstract_is_flagged(workspace: dict[str, Path]) -> None:
@@ -339,8 +350,14 @@ def test_the_replacement_is_logged_with_its_own_hash(
 def test_the_overview_row_is_retargeted_not_duplicated(
     workspace: dict[str, Path], make_pdf: MakePdf
 ) -> None:
-    """Eine zweite Zeile wäre eine Dublette, keine Zeile ein toter Link."""
+    """Eine zweite Zeile wäre eine Dublette, keine Zeile ein toter Link.
+
+    Seit G4 legt der Intake keine neue Zeile mehr an; das Umbiegen bleibt aber für eine bereits
+    **vor** G4 bestehende Zeile gültig – hier von Hand gesät.
+    """
     _drop_stub(workspace, doi="", arxiv_id=_STUB_ARXIV)
+    stub_filename = f"{_STUB_TITLE}{STUB_SUFFIX}"
+    _seed_legacy_overview_row(workspace, "Z1", stub_filename)
     _run(workspace)
     rows_before = workspace["uebersicht"].read_text(encoding="utf-8").count("\n|")
 
@@ -373,6 +390,8 @@ def test_the_curated_columns_survive_the_upgrade(
 ) -> None:
     """Nur ``Name`` und ``Interner Link`` werden angefasst – Kuratierung bleibt erhalten."""
     _drop_stub(workspace, doi="", arxiv_id=_STUB_ARXIV)
+    stub_filename = f"{_STUB_TITLE}{STUB_SUFFIX}"
+    _seed_legacy_overview_row(workspace, "Z1", stub_filename)
     _run(workspace)
     text = workspace["uebersicht"].read_text(encoding="utf-8")
     curated = text.replace("| (manuell) | (manuell) |", "| sehr hoch | SRQ2 |")

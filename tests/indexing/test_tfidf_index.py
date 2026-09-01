@@ -271,8 +271,15 @@ def _hybrid_corpus(tmp_path: Path) -> Path:
 
 def test_tfidf_space_matches_the_previous_vectorizer(tmp_path: Path) -> None:
     """Regressionsbeweis: CountVectorizer + TfidfTransformer == früherer TfidfVectorizer."""
+    texts = [
+        "transformer attention mechanism",
+        "graph neural message passing",
+        "retrieval augmented generation with faiss",
+        "evaluation protocol",
+        "knowledge graph construction",
+        "attention attention attention",
+    ]
     index = TfidfIndex.load(_hybrid_corpus(tmp_path))
-    texts = [ref.text for ref in index._refs]
 
     reference = TfidfVectorizer()
     expected = reference.fit_transform(texts)
@@ -369,3 +376,96 @@ def test_neighbors_of_chunk_stays_tfidf_only(tmp_path: Path) -> None:
     assert neighbors
     assert all(hit.score_bm25 == 0.0 for hit in neighbors)
     assert all(hit.score == hit.score_tfidf for hit in neighbors)
+
+
+# --------------------------------------------------------------------------------------
+# Prozess-Cache (Weg C) und persistierter Vokabular-/Zähl-Zustand (Weg A), Phase 15 / G2.
+# --------------------------------------------------------------------------------------
+
+
+def test_load_returns_cached_instance_when_file_unchanged(tmp_path: Path) -> None:
+    """Zwei Ladevorgänge über dieselbe unveränderte Datei liefern dasselbe Objekt (Cache-Hit)."""
+    db = _hybrid_corpus(tmp_path)
+
+    first = TfidfIndex.load(db)
+    second = TfidfIndex.load(db)
+
+    assert first is second
+
+
+def test_load_reloads_after_index_rebuilt_at_same_path(tmp_path: Path) -> None:
+    """Ein neu gebauter Index am selben Pfad wirkt beim nächsten Laden sofort (kein Cache-Leck)."""
+    db = tmp_path / "index.sqlite"
+    build_index([_paper("aaaa0001", ["alpha beta gamma content"])], db)
+    first = TfidfIndex.load(db)
+    assert first is not None
+
+    build_index([_paper("bbbb0002", ["zylophon distinctive singular token"])], db)
+    second = TfidfIndex.load(db)
+
+    assert second is not first
+    hits = second.search("zylophon distinctive", k=5)
+    assert hits
+    assert hits[0].paper_id == "bbbb0002"
+
+
+def test_load_uses_persisted_vocabulary_without_refitting_from_text(tmp_path: Path) -> None:
+    """Suchergebnisse hängen nur an der persistierten Vokabular-/Zähl-Matrix, nicht am Text."""
+    db = tmp_path / "index.sqlite"
+    paper = _paper("cccc0003", ["neural retrieval augmented generation", "graph clustering"])
+    build_index([paper], db)
+
+    # Chunk-Text in der DB manipulieren (simuliert eine abweichende Quelle) – der bereits
+    # persistierte Vokabular-/Zähl-Zustand bleibt davon unberührt, nur der SNIPPET ändert sich.
+    connection = sqlite3.connect(str(db))
+    try:
+        connection.execute(
+            "UPDATE chunks SET text = ? WHERE chunk_id = ?",
+            ("manipulierter anzeige-text", "cccc0003-p1"),
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    hits = TfidfIndex.load(db).search("neural retrieval augmented generation", k=1)
+
+    assert hits[0].chunk_id == "cccc0003-p1"
+    assert hits[0].snippet == "manipulierter anzeige-text"
+    assert hits[0].score > 0.0
+
+
+def test_load_missing_tfidf_state_raises_constraint_violation(tmp_path: Path) -> None:
+    """Ein Index ohne persistierten Vokabular-Zustand (z. B. Vor-G2-Schema) -> constraint_violation."""
+    db = tmp_path / "index.sqlite"
+    connection = sqlite3.connect(str(db))
+    try:
+        connection.executescript(
+            """
+            CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+            CREATE TABLE papers (
+                paper_id TEXT PRIMARY KEY, source_uri TEXT NOT NULL, source_sha256 TEXT NOT NULL,
+                n_pages INTEGER NOT NULL, identifiers TEXT NOT NULL DEFAULT '{}',
+                document_kind TEXT NOT NULL DEFAULT 'full'
+            );
+            CREATE TABLE chunks (
+                chunk_id TEXT PRIMARY KEY, paper_id TEXT NOT NULL, page_number INTEGER NOT NULL,
+                page_end INTEGER NOT NULL DEFAULT 0, text TEXT NOT NULL, char_count INTEGER NOT NULL,
+                section_title TEXT NOT NULL DEFAULT '', row_index INTEGER NOT NULL
+            );
+            """
+        )
+        connection.execute(
+            "INSERT INTO papers (paper_id, source_uri, source_sha256, n_pages) "
+            "VALUES ('dddd0004', 'file:///d.pdf', '0', 1)"
+        )
+        connection.execute(
+            "INSERT INTO chunks (chunk_id, paper_id, page_number, text, char_count, row_index) "
+            "VALUES ('dddd0004-p1', 'dddd0004', 1, 'legacy content', 15, 0)"
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    with pytest.raises(DomainError) as excinfo:
+        TfidfIndex.load(db)
+    assert excinfo.value.code is ErrorCode.CONSTRAINT_VIOLATION

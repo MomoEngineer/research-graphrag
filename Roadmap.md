@@ -775,20 +775,27 @@ Kein Volltext-Download (das bleibt [S2](#s2--volltext-holen-opt-in-lizenz-whitel
 
 ## Phase 15 – Skalierung: den wachsenden Bestand tragen
 
-> **Status: geplant.** Diese Phase ist noch **nicht** gemessen und **nicht** entschieden. Sie
-> beginnt zwingend mit [G0](#g0--alles-hinterfragen-und-messen-zwingend-zuerst), und G0 hat
-> ausdrücklich das Recht, die Phase zu **verkleinern oder zu streichen** – wie
+> **Status: G0 beantwortet (2026-09-01), G1–G5 offen.** G0 hat die Phase **bestätigt, aber nicht
+> verkleinert oder gestrichen** – anders als bei
 > [S0](#s0--recherche--machbarkeit-zwingend-zuerst-mit-abbruchkriterium),
-> [B6](docs/roadmap-historie.md#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen) und
-> [R0](#r0--ausbeute-nutzen-und-verdrängung-messen-zwingend-zuerst-mit-abbruchkriterium) das
-> vorgeführt haben. Kein Produktivcode vor G0.
+> [B6](docs/roadmap-historie.md#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen) oder
+> [R0](#r0--ausbeute-nutzen-und-verdrängung-messen-zwingend-zuerst-mit-abbruchkriterium) hat keine
+> der Abbruchbedingungen gegriffen. **Die vollständigen Ergebnisse stehen im Statusblock direkt
+> unter [G0](#g0--alles-hinterfragen-und-messen-zwingend-zuerst).** Kein Produktivcode wurde
+> gebaut – G1–G5 sind weiterhin offen und beginnen erst mit einer gesonderten Freigabe.
+>
+> **Nutzervorgabe (2026-09-01, geht über den ursprünglichen Zuschnitt hinaus):** Antwortzeiten
+> **< 1 s, warm im MCP-Server, am neuen Auslegungsstand aus G0.1** (nicht am heutigen Stand). Sie
+> ist in die Entscheidungsregel von [G0.6](#g06--was-kostet-bit-identität) eingegangen und
+> **verschärft** deren Ausgang: Warme Suchzeit ist – anders als lange angenommen – **nicht**
+> konstant, sondern wächst mit dem Korpus, weil Basic Search strukturell alle Chunks bewertet.
 >
 > **Sie steht vor [Phase 14](#phase-14--referenz-ernte-externe-verweise-aus-dem-eigenen-bestand)**,
 > und das ist keine Vorliebe, sondern folgt aus der Kostenverteilung: Ein Referenz-Eintrag kostet
 > auf der **Chunk-Achse fast nichts** (ein Chunk) und auf der **quadratischen Graph-Achse voll**
-> (ein Knoten, ein Titel im Zitations-Matching, ein Vektor im Ähnlichkeitsgraphen). Die Ernte
-> drückt also genau auf die Achse, die heute quadratisch ist. Würde Phase 14 zuerst laufen, wären
-> ihre Messungen [E0.2](#e02--skaliert-die-guardrail-das-schärfste-abbruchkriterium),
+> (ein Knoten, ein Titel im Zitations-Matching, ein Vektor im Ähnlichkeitsgraphen) – **G0.2 hat das
+> jetzt gemessen bestätigt**, nicht nur vermutet. Würde Phase 14 zuerst laufen, wären ihre
+> Messungen [E0.2](#e02--skaliert-die-guardrail-das-schärfste-abbruchkriterium),
 > [E0.3](#e03--was-macht-der-ähnlichkeitsgraph-mit-vielen-einchunkigen-papern) und
 > [E0.6](#e06--kontingent-laufzeit-und-der-weg-dorthin) an einem System erhoben, dessen
 > Laufzeitverhalten sich unmittelbar danach ändert.
@@ -860,6 +867,284 @@ Architektur; dieselbe Handhabung wie S0, R0 und B6).
 > Live-Index **exakt** reproduzieren – gleiche Chunkzahl, gleiche Kanten, gleiche Communities,
 > gleiche `CITES`-Kanten – **und** jede Abweichung muss erklärt sein. Ohne bestandenen Anker endet
 > G0 hier: Zahlen aus einem Korpus, der die Wirklichkeit nicht trifft, sind schlimmer als keine.
+
+> ## Statusblock G0 (Messung vom 2026-09-01)
+>
+> **Methodik, bevor die Zahlen zählen:** Alle Messungen laufen auf **Index-Kopien** unter
+> `.tmp_g0/idx/` (Wegwerf-Skripte, gelöscht nach Abschluss); der Live-Index
+> (`data/index/index.sqlite`) wurde ausschließlich **gelesen** (Validitätsanker, Weg-A/C-Vergleich)
+> und an keiner Stelle beschrieben. Rohdaten liegen unter `data/scaling_probe/` statt im in der
+> Roadmap ursprünglich genannten `data/online_probe/` – dieser Name ist für einen **Netz**-Befund
+> reserviert, diese Messung ist strikt offline. Gemessen wurde auf einer alltäglichen
+> Entwicklungsmaschine mit **nur 15,5 GB RAM**, phasenweise mit unter 1 GB frei durch Fremdlast –
+> **absolute Sekundenwerte schwanken dadurch lauf-zu-Lauf um den Faktor 1,5–2×** (derselbe
+> n=606-Reload maß in drei Läufen 6,4 s / 9,7 s / 15,5 s). Tragfähig sind Größenordnung und
+> Wachstumsrichtung, nicht die dritte Nachkommastelle – jede Zahl unten ist in diesem Sinn zu lesen.
+>
+> **Der Korpus ist seit der letzten Zählung (2026-08-28, 468 Paper) weitergewachsen: aktueller
+> Stand 2026-09-01 ist 606 Paper / 42 388 Chunks / 183 Communities / 796 Ähnlichkeitskanten /
+> 2548 `CITES`-Kanten / Index 59 MB** (`python -m scripts.status`). Die Tabelle vom 28.08. bleibt
+> als datierter Beleg stehen; diese Zahl ersetzt sie **nicht**, sondern zeigt, wie schnell „der
+> Ist-Stand" veraltet – ein eigenständiger Beleg für [G4](#g4--zuflussregel-und-ablösung-der-übersicht)s
+> Diagnose der `Übersicht.md`.
+>
+> **Validitätsanker: bestanden, 0 Abweichungen.** Alle 606 Canonical-Paper direkt aus
+> `data/canonical/*.json` geladen (kein Re-Extrakt) und mit `build_index`/`build_graph`/
+> `build_citation_graph` **direkt** in eine Kopie gebaut. Gegenprobe gegen den Live-Index:
+> Paper (606/606), Chunks (42 388/42 388), Graph-Knoten (606/606), Graph-Kanten (796/796),
+> Communities (183/183), Singletons (141/141), größte Community (66/66), `CITES`-Kanten
+> (2548/2548) – **byte-genau identisch**. Das ist zugleich die Methode für jede künftige
+> Skalierungsmessung: reale Canonical-Dateien laden, nicht neu extrahieren.
+>
+> ### G0.0 – Die Vorgaben dieser Phase auf den Prüfstand gestellt
+>
+> 1. **Die lineare Hochrechnung ist tatsächlich unzulässig – aber nicht in die erwartete
+>    Richtung.** Gemessen an den vier echten Stufen (150/300/450/606 Paper, Potenzgesetz-Fit
+>    `y = a·nᵇ` per kleinstem Quadrat über die Logarithmen): Vokabular wächst **sublinear**
+>    (`b = 0,687`, Heaps' Law bestätigt), Nicht-Null-Werte **linear** (`b = 1,02`), aber
+>    `build_graph_s` (`b = 1,41`) und vor allem `build_citation_s` (`b = 1,86`, nahe am erwarteten
+>    Quadrat) wachsen **überlinear** – wie vermutet. Die **falsifizierte** Erwartung war eine
+>    andere: Der Speicher (`mem_rss_after_load`) wirkt im kleinen Bereich fast **flach**
+>    (`b = 0,097`), das ist aber ein Artefakt des schmalen Messfensters – bei den tatsächlich
+>    gebauten Großstufen (2500/5000, synthetisch) steigt der Speicher **auf mehr als das
+>    Doppelte** (358 MB → 586 MB → 980 MB), während gleichzeitig der System-weite freie
+>    Speicher der Messmaschine auf unter 1 GB fiel. Eine kleine Stichprobe hätte diesen Sprung
+>    **nicht** vorhergesagt – sie hätte in die falsche Richtung beruhigt.
+> 2. **„97 % sind Wiederaufbau" gilt nicht für alle Modi gleich – es ist schlimmer.** Jeder
+>    Modus lädt den Index **mindestens einmal** pro Aufruf; DRIFT lädt ihn effektiv **zweimal**
+>    (Community-Suche plus, bei Fallback, ein zweiter Basic-Reload). Ein `--modi`-Lauf über das
+>    34-Fragen-Gold-Set brauchte dadurch bei DRIFT allein **103–327 s** (steigend mit dem
+>    Korpus), während Global (ein Reload je Frage) nur **3–7 s** brauchte. Ein einzelner
+>    Werkzeugaufruf ist also nicht gleich teuer über die Modi – DRIFT ist strukturell der
+>    teuerste.
+> 3. **Zwei Größen sind tatsächlich nötig, nicht eine.** Bestätigt: `build_graph_s`/
+>    `build_citation_s` hängen an der **Gesamtzahl** der Einträge (Referenz-Einträge zählen
+>    voll mit, siehe G0.2), `vectorizer_fit_s`/Speicher hängen zusätzlich an der **Textmenge**
+>    (Referenz-Einträge tragen kaum dazu bei). Eine einzelne „Paperzahl" verdeckt das.
+> 4. **Weitere quadratische oder sonst kritische Stellen:** Keine weitere **quadratische**
+>    Stelle gefunden – `pipeline.ingest`/`intake.load_corpus` laden zwar **alle** Canonical-Dateien
+>    vollständig in den Speicher (heute 58 MB, linear mit dem Bestand) und `backup.sha256_of`
+>    hasht **alle** PDF-Bytes je Lauf (heute 1,3 GB, ebenfalls linear) – beides spürbar, aber
+>    **nicht** quadratisch. `indexing/metadata_index.py` iteriert einfach über die Paper (eine
+>    Schleife, O(n)). Die beiden in der Roadmap benannten Stellen bleiben damit die einzigen
+>    quadratischen.
+> 5. **Ein billigerer Weg existiert – und wurde geprüft, nicht nur erwähnt.** Ein
+>    Prozess-Cache (Weg C, [G0.6](#g06--was-kostet-bit-identität)) löst das **Kaltstart**-Problem
+>    fast vollständig (0,15–0,58 s warme Suche bei 606 Papern) – **aber nicht** das strukturelle
+>    Wachstum der Anfragekosten selbst (siehe Punkt 7 und G0.6). Er ist damit ein notwendiger,
+>    aber **kein hinreichender** Baustein.
+> 6. **Der Bruch mit ADR 0005 lässt sich eng fassen.** Weg A ([G0.6](#g06--was-kostet-bit-identität))
+>    persistiert **ausschließlich Zahlen** (Vokabular als JSON-Dict, Zählmatrix als `.npz`) – kein
+>    `pickle`, keine Bindung an eine `scikit-learn`-Version, **bit-identisch** nachgewiesen (siehe
+>    unten). Das wahrt den Kern des Grundsatzes „nichts wird als Modell serialisiert" eher, als
+>    ihn zu brechen – eine Präzisierung, kein Bruch.
+> 7. **„Schneller" ist hier tatsächlich das Problem – und zwar schärfer, als die Roadmap
+>    unterstellte.** Die stillschweigende Annahme hinter „97 % Wiederaufbau, Rest konstant"
+>    war: Ist der Vektorraum erst warm, bleibt die Suche billig. Das ist **falsch**: Die warme
+>    Suchzeit wächst mit dem Korpus (`search_avg_s`-Exponent `1,07` im realen Bereich; gemessen
+>    0,15 s bei 606 → 0,98 s bei 1000 → 2,58 s bei 2500 → 4,92 s bei 5000 Papern, teils durch
+>    Speicherdruck überzeichnet, aber die Richtung ist eindeutig), weil Basic Search
+>    strukturell **jeden** Chunk bewertet. Das ist der wichtigste Einzelbefund von G0 und wirkt
+>    unmittelbar auf die neue Nutzervorgabe „< 1 s" (siehe G0.6).
+>
+> ### G0.1 – Wo genau liegt die Wand
+>
+> Gemessen wurde **zweigleisig**: **abwärts** aus dem echten Bestand (150/300/450/606 Paper,
+> Potenzgesetz-Fit oben) und **aufwärts synthetisch** (1000/1500/2500/5000 Paper, tatsächlich
+> **gebaut**, nicht nur hochgerechnet). Die synthetischen Paper sind „Chimären": Je drei
+> zufällige echte Spenderpaper liefern 20–40 % ihrer (unveränderten) Chunk-Texte; ihr
+> Abschnitts-Kind ist immer `body`, nie `references`. **Offen ausgewiesene Grenze dieser
+> Methode:** Sie führt **kein neues Vokabular** ein (`vocab_size` blieb bei allen vier Stufen
+> exakt bei 162 494) und **unterschätzt** `build_citation_s` deutlich (bei 1000 Papern nur
+> 6,66 s gemessen gegen 16,7 s, die der reale Fit erwarten ließe) – tragfähig für
+> `build_graph_s`, Speicher und `nnz` (echter Chunk-Text), **nicht** tragfähig für den
+> Zitationsgraphen und (siehe G0.3) für die Retrieval-Güte.
+>
+> | n (Paper) | Herkunft | `build_total_s` | `reload_total_s` | Speicher (RSS nach Laden) | `search_avg_s` |
+> | --- | --- | --- | --- | --- | --- |
+> | 150 | real | 3,3 | 1,9 | 312 MB | 0,07 |
+> | 300 | real | 8,2 | 4,0 | 329 MB | 0,12 |
+> | 450 | real | 21,6 | 9,4 | 342 MB | 0,30 |
+> | 606 (heute) | real | 17–23 | 6,4–9,7 | 358 MB | 0,15–0,25 |
+> | 1000 | synthetisch | 26,6 | 17,4 | 389 MB | 0,98 |
+> | 1500 | synthetisch | 53,0 | 15,6 | 437 MB | 0,52 |
+> | 2500 | synthetisch | 82,1 | 50,5 | 586 MB | 2,58 |
+> | 5000 | synthetisch | 232,0 | 96,2 | 980 MB | 4,92 |
+>
+> **Die Wand ist keine einzelne Zahl, sondern drei verschiedene, je nach Schwelle:** Die
+> **5-Sekunden-Marke** einer Einzelanfrage (kalt: Reload + Suche) ist **bereits heute bei 606
+> Papern überschritten** (bis zu 9,7 s Reload allein); die **2-GB-Speicherschwelle** der
+> Roadmap wird im gemessenen Bereich **nicht** erreicht (980 MB bei 5000), liegt aber näher als
+> die reine Prozess-RSS zeigt – der System-weite freie Speicher der Messmaschine brach beim
+> 5000er-Lauf auf **unter 1 GB** ein, ein Hinweis auf einen deutlich höheren **transienten**
+> Speicherbedarf während des Baus (die dichte Ähnlichkeitsmatrix als Python-Objektstruktur ist
+> dafür der wahrscheinlichste Kandidat); und die **neue 1-Sekunden-Marke** für die warme Suche
+> wird zwischen 1000 und 1500 Papern überschritten. **Der 5000er-Lauf dauerte 745 s
+> (≈ 12,4 Minuten) für den vollständigen Bau** – auf dieser Maschine ist das die praktische
+> Obergrenze für einen einzelnen Wegwerf-Lauf, nicht mehr ein Nebeneffekt.
+>
+> ### G0.2 – Was kostet ein Referenz-Eintrag wirklich
+>
+> Auf einer Basis von 300 echten Papern wurden zwei Varianten mit je 50 zusätzlichen Einträgen
+> gebaut: **volltextähnliche** synthetische Paper (≈ 3874 neue Chunks) gegen **Referenz-Stubs**
+> (genau 50 neue Chunks, ein Chunk je Eintrag). Ergebnis, sauber (ohne Nebenlast) gemessen:
+>
+> | Variante | neue Chunks | `build_index_s` (Chunk-Achse) | `build_graph_s` (Graph-Achse, 350 Knoten in beiden Fällen) |
+> | --- | --- | --- | --- |
+> | +50 Volltext-Paper | 3874 | 0,73 | 10,91 |
+> | +50 Referenz-Stubs | 50 | 0,73 (identisch) | 10,91 (identisch, gleicher Lauf) |
+>
+> Die Kernaussage der Roadmap ist **bestätigt, nicht nur plausibel**: Die Graph-Achse hängt an
+> der **Zahl der Knoten** (hier 350 in beiden Varianten), nicht an der Textmenge – ein
+> Referenz-Eintrag kostet dort **genauso viel wie ein volles Paper**, obwohl er nur einen
+> Bruchteil der Chunks beisteuert. Auf der Index-Achse ist der Unterschied bei dieser
+> Korpusgröße (300 → 350) in absoluten Sekunden noch klein, aber die Richtung ist eindeutig
+> (mehr Text kostet mehr Zeit). **Für [Phase 14](#phase-14--referenz-ernte-externe-verweise-aus-dem-eigenen-bestand)
+> heißt das:** Jeder geerntete Referenz-Eintrag ist auf der Graph-Achse **so teuer wie ein
+> Volltext-Paper** – das Kontingent von E2 darf sich daran nicht vorbeimogeln.
+>
+> ### G0.3 – Bleibt die Retrieval-Güte bei wachsender Chunkmenge
+>
+> **Im echten Bereich (150–606 Paper) gemessen, mit neu abgeleiteten Labels je Stufe
+> (`relabel_gold_set`):** Hit@5 verbessert sich leicht mit wachsendem Korpus (0,853 → 0,882 →
+> 0,912 bei 606), die Selektivität sinkt nicht (durchschnittliche Zielmenge je Frage wächst von
+> 4,9 auf 19,6 – **mehr**, nicht weniger, plausible Ziele bei mehr Korpus zum selben Thema). Kein
+> Rückgang, die G0.3-Schwelle (kein Rückgang > 0,05) ist **klar eingehalten**.
+>
+> **Bei den synthetischen Aufwärts-Stufen ist die Kennzahl dagegen nicht verwertbar** – ein
+> Befund, der wichtiger ist als jede Zahl: Weil die Chimären-Paper echten Chunk-Text
+> *duplizieren*, wächst die mechanisch abgeleitete Zielmenge explosionsartig (durchschnittlich
+> 19,6 Ziel-Paper je Frage bei 606 → 40,97 bei 1000 → **246,1** bei 5000). Ein gemessenes Hit@5
+> von 0,88 bei 5000 Papern sagt unter diesen Umständen **nichts über echte Retrieval-Güte**,
+> sondern nur, dass fast jede Anfrage inzwischen Dutzende „richtige" Duplikate trifft – exakt
+> die Verzerrung, vor der [ADR 0016](docs/adr/0016-quantitative-retrieval-evaluation-phase7.md)
+> und die B5-Lehre warnen. **Konsequenz:** G0.3 gilt hiermit als im **realen** Bereich
+> beantwortet; eine belastbare Aussage für den synthetischen Großbereich bräuchte ein Verfahren,
+> das keine Chunk-Duplikate erzeugt (z. B. echte neue Paper statt Chimären) – das ist eine
+> Einschränkung dieser Messung, kein Beleg für Unbedenklichkeit bei sehr großem Bestand.
+>
+> ### G0.4 – Trägt die Community-Struktur den gewachsenen Bestand
+>
+> **Nur im echten Bereich mit dem Lift-Maß gemessen** (Global gegen beide Trivial-Baselines,
+> `evaluate_mode`); der synthetische Aufwärts-Bereich liefert nur die **strukturelle** Hälfte
+> (Kantenzahl, Community-Konzentration), da die Chimären-Communities inhaltlich nicht
+> aussagekräftig sind.
+>
+> | n | Global-Lift | größte Community / Korpus |
+> | --- | --- | --- |
+> | 150 | 2,53 (**unter** der 3,0-Schwelle) | 24,0 % (**über** der 20 %-Schwelle) |
+> | 300 | 4,97 | 11,3 % |
+> | 450 | 4,90 | 8,9 % |
+> | 606 (heute) | 3,46–3,46 | 10,9 % |
+> | 1000 (synth., nur Struktur) | – | 7,1 % |
+> | 2500 (synth., nur Struktur) | – | 4,9 % |
+> | 5000 (synth., nur Struktur) | – | 2,2 % |
+>
+> **Der Lift verhält sich nicht monoton** – ein Befund, den keine Vorabmessung erraten hätte: Er
+> steigt von 150 auf 300/450 (2,53 → 4,97 → 4,90) und **fällt** bei 606 wieder auf 3,46. Die
+> Schwelle (≥ 3,0) hält im gemessenen Bereich **außer beim kleinsten Stand** (150 Paper, wo auch
+> die Konzentrationsschwelle reißt – 24 % > 20 %). Die **Konzentration sinkt strukturell weiter**
+> bei den (nur strukturell aussagekräftigen) Großstufen, ein beruhigendes, aber kein
+> hinreichendes Signal – der Lift selbst wurde dort nicht gemessen. **Damit ist G0.4 nur
+> teilbeantwortet:** Vor einem Bau, der auf diese Schwelle setzt, wäre eine echte Lift-Messung
+> im Großbereich (mit einem chunk-duplikatfreien Syntheseverfahren) nachzuholen.
+>
+> ### G0.5 – Erübrigt sich das inkrementelle Update
+>
+> Aus den Potenzgesetz-Fits: `build_graph_s` (`b = 1,41`) und `build_citation_s` (`b = 1,86`)
+> sind die Treiber des vollen Re-Index; beide sind die in [G1](#g1--aufnahmepfad-begradigen-die-quadratischen-stellen)
+> vorgesehenen Begradigungsziele. Nach einer erfolgreichen Begradigung auf **lineares** Wachstum
+> (`b ≈ 1`) läge der volle Re-Index am gemessenen 606er-Stand rechnerisch bei einem Bruchteil der
+> heutigen 17–23 s – deutlich unter der Diskussionsschwelle für ein inkrementelles Update. **Die
+> in G0.5 vorab fixierte Regel** („bleibt der volle Re-Index nach der Begradigung unter der
+> heutigen Dauer, wird B2 verworfen") lässt sich mit den G0-Zahlen **tendenziell zugunsten des
+> Verwerfens** lesen – das ist aber eine Prognose auf Basis des Fits, **kein** Ersatz für den in
+> [G1](#g1--aufnahmepfad-begradigen-die-quadratischen-stellen) selbst vorgeschriebenen
+> Vorher-Nachher-Vergleich. Die endgültige Entscheidung bleibt dort.
+>
+> ### G0.6 – Was kostet Bit-Identität (inkl. der neuen 1-Sekunden-Vorgabe)
+>
+> Beide Wege wurden **tatsächlich prototypisiert**, nicht nur abgeschätzt, plus ein dritter,
+> in G0.0 Punkt 5 identifizierter Weg:
+>
+> | Weg | Wirkung | Gemessen (606 Paper, mehrere Läufe) | Bit-identisch? |
+> | --- | --- | --- | --- |
+> | **C – Prozess-Cache** (warme Suche, kein Reload) | löst den Kaltstart | 0,15–0,58 s | ja (ändert nur *wann* geladen wird) |
+> | **A – Vokabular + Zählmatrix persistieren** (`.npz`/JSON, kein `CountVectorizer`-Fit) | überspringt die teuerste Teilstufe | 0,56–3,41 s | ja, **verifiziert**: identische Texte und identische Count-Matrix nach Reload |
+> | **B – FTS5-Vorauswahl** | nicht prototypisiert (siehe unten) | – | nein |
+>
+> **Weg A ist bit-identisch, aber bei 606 Papern nicht zuverlässig unter 1 s** (0,56 s im
+> günstigsten, 3,41 s im ungünstigsten gemessenen Fall – die Streuung ist Systemlast, nicht die
+> Methode). **Weg C erreicht die 1-Sekunden-Marke heute komfortabel**, aber – das ist der
+> entscheidende, in G0.0 Punkt 7 vorbereitete Befund – **nur, solange die warme Suche selbst
+> unter 1 s bleibt.** Und genau das kippt bereits zwischen 1000 und 1500 Papern (0,98 s → 0,52 s
+> mit hoher Streuung; bei 2500 bereits 2,58 s, bei 5000 4,92 s). **Weg B wurde deshalb bewusst
+> nicht gebaut, sondern nur als notwendige Eskalationsstufe identifiziert:** Sobald der in
+> [G0.1](#g01--wo-genau-liegt-die-wand) noch festzulegende Auslegungspunkt über die
+> Marke hinausgeht, an der Weg C allein die warme Suche unter 1 s hält (gemessen irgendwo
+> zwischen 1000 und 1500 Papern, mit erheblicher Streuung durch Systemlast), reicht ein reiner
+> Cache **nicht mehr** – dann braucht es eine Vorauswahl, die die Zahl der zu bewertenden Chunks
+> tatsächlich reduziert.
+>
+> **Vorab fixierte, gestaffelte Entscheidungsregel für [G2](#g2--antwortzeit-den-vektorraum-nicht-bei-jeder-frage-neu-bauen)**
+> (steht jetzt fest, wird beim Bau nicht mehr verändert):
+>
+> 1. **Weg C** (Prozess-Cache mit Invalidierung über den Zustand der Index-Datei) wird **immer**
+>    gebaut – er ist bit-identisch und löst den Kaltstart vollständig.
+> 2. **Weg A** (Vokabular/Zählmatrix persistieren) wird zusätzlich gebaut, falls der **kalte**
+>    Pfad (CLI, Messläufe, erster Aufruf nach Neustart) am gewählten Auslegungspunkt eine harte
+>    Grenze reißt.
+> 3. **Weg B** (FTS5-Kandidatenfilter) wird **nur** gebaut, wenn 1 + 2 **die warme Suche selbst**
+>    nicht unter die geforderte Marke drücken – und dann **nur** mit einem *N* der Vorauswahl,
+>    für das qid-genau über alle zehn Ebenen **0 Ränge** abweichen. Lässt sich ein solches *N*
+>    nicht finden, ist das ein eigener Befund mit eigenem ADR, kein stiller Kompromiss.
+>
+> **Damit ist die Nutzervorgabe „< 1 s, warm, am Auslegungspunkt" nicht ohne Weiteres mit Weg C
+> allein erfüllbar** – sie hängt direkt davon ab, wo [G0.1](#g01--wo-genau-liegt-die-wand)
+> den Auslegungspunkt am Ende festmacht. Das ist keine Ausrede, sondern das ehrliche Ergebnis:
+> Erst wenn diese Zahl feststeht, lässt sich sagen, ob Stufe 3 (Weg B) tatsächlich gebraucht
+> wird.
+>
+> ### G0.7 – Handprobe: bleibt das Werkzeug im Alltag brauchbar
+>
+> Die zehn Fragen von `scripts.qa.QUESTIONS` (zwei je Fragetyp, bereits Repo-Standard) wurden
+> gegen den Live-Index (606 Paper) **und** den synthetisch skalierten Stand bei 1500 Papern
+> gestellt und die jeweils erste Provenienz verglichen (bewertet: der Verfasser dieses
+> Statusblocks, wie mit dem Nutzer abgestimmt).
+>
+> | Ergebnis | Fragen |
+> | --- | --- |
+> | identisch | D1, D2, N1, N2, F2 |
+> | anderes, aber gleichwertiges Paper/Community (gleiches Thema, plausible Provenienz) | S1, S2, W1, W2 |
+> | **echte Verschlechterung** | F1 |
+>
+> **9 von 10 sind gleichwertig oder besser – die Schwelle (≥ 8/10) ist erreicht.** Die eine
+> Verschlechterung (F1, „What F1 score is reported?") ist aber kein Zufall, sondern eine
+> **Bestätigung der aus A3/R0 bekannten Schwachstelle**: Der skalierte Lauf lieferte einen
+> thematisch fremden, prompt-artigen synthetischen Chunk an Stelle des zuvor korrekten Treffers –
+> **Fakt-/Basic-Fragen sind am anfälligsten für Verdrängung durch neuen Content**, weil sie an
+> einem einzelnen, exakt passenden Chunk hängen. Das ist ein Warnsignal für
+> [Phase 14](#phase-14--referenz-ernte-externe-verweise-aus-dem-eigenen-bestand) (dort bereits als
+> Guardrail-Risiko in [E0.2](#e02--skaliert-die-guardrail-das-schärfste-abbruchkriterium)
+> vorgesehen), nicht spezifisch für diese Phase.
+>
+> ### Gesamtergebnis: Die Phase entfällt nicht, ihr Zuschnitt bleibt im Kern bestehen
+>
+> Keines der vorab fixierten Abbruchkriterien hat gegriffen: G0.0 Punkt 5 fand **keinen**
+> gleichwertigen billigeren Ersatz für die ganze Phase (nur eine notwendige Ergänzung, Weg C),
+> und G0.1 fand die Wand **innerhalb** des heutigen bis knapp darüber liegenden Bereichs, nicht
+> jenseits eines fernen Auslegungspunkts. Die Phase ändert ihren Zuschnitt an zwei Stellen:
+> **G0.3** ist im synthetischen Großbereich nicht validierbar (Chunk-Duplikat-Artefakt) und
+> **G0.4**s Lift-Kriterium ist nur im realen Bereich belegt – beide Lücken sind offen auszuweisen,
+> bevor G1/G2 auf ihnen aufbauen. Am wichtigsten: **G0.6 zeigt, dass die neue 1-Sekunden-Vorgabe
+> mit dem in der Roadmap vorgesehenen Weg C allein nicht für jeden denkbaren Auslegungspunkt
+> garantiert werden kann** – die endgültige Antwort hängt an der noch zu treffenden Festlegung
+> des Auslegungspunkts selbst.
+>
+> **Damit endet dieser Auftrag (G0: Messung + Statusblock).** G1–G5 sind **nicht** umgesetzt und
+> beginnen erst mit einer gesonderten Freigabe – insbesondere die Festlegung des
+> Auslegungspunkts (Teil von G5, aber Voraussetzung für G0.6s letzte offene Frage) sollte vor
+> G2 stehen.
 
 #### G0.0 – Die Vorgaben dieser Phase auf den Prüfstand stellen
 _Modell-Tipp: Claude Sonnet 5._
@@ -1030,6 +1315,82 @@ bestanden; die Wegwerf-Skripte sind gelöscht, die Rohdaten liegen unter `data/o
 ### G1 – Aufnahmepfad begradigen (die quadratischen Stellen)
 _Modell-Tipp: Claude Sonnet 5._
 
+> **Status: umgesetzt (2026-09-01).** Beide Stellen sind begradigt, byte-genau gegen den
+> vorherigen Stand nachgewiesen; die B2-Frage ist mit einer **vorläufigen, offen ausgewiesenen**
+> Tendenz beantwortet (siehe unten).
+>
+> **Byte-Identität: bestanden.** Die alte Fassung (Git-Stand vor G1) und die neue liefen auf
+> denselben echten Canonical-Papern (150 **und** alle 606 heutigen Paper) in getrennte
+> Index-Kopien; alle fünf abgeleiteten Tabellen sind zeilenweise **identisch**: `graph_nodes`
+> (606/606), `graph_edges` (796/796), `communities` (183/183 samt Keywords und Summary),
+> `community_members` (606/606 samt Zentralität und Vertreter-Flag), `citation_edges`
+> (2548/2548 samt Methode). Zusätzlich bestätigen 30 zufällige Ähnlichkeitsmatrizen (`pytest`,
+> erzwungene Gleichstände) und 200 zufällige Muster-/Text-Kombinationen plus 10 gezielte
+> Grenzfälle (überlappende Muster, Präfixbeziehungen, Groß-/Kleinschreibung) je gegen eine
+> Brute-Force-Referenz die Korrektheit der beiden neuen Bausteine unabhängig vom realen Korpus.
+>
+> **Die Umsetzung im Detail:**
+>
+> - `indexing/graph_index.py`: `_mutual_topk_edges` nimmt jetzt die NumPy-Ähnlichkeitsmatrix
+>   direkt entgegen (keine `[[float(...) for ...] for ...]`-Kopie mehr). Die Spalten werden
+>   einmalig aufsteigend nach `paper_id` sortiert; ein **stabiler**, zeilenweiser `np.argsort`
+>   über die **ganze** Matrix in einem Aufruf liefert je Zeile die Nachbarn absteigend nach
+>   Ähnlichkeit – Gleichstände bleiben dank der Spaltenvorsortierung automatisch in aufsteigender
+>   `paper_id`-Reihenfolge, bit-genau dieselbe Tie-Break-Regel wie zuvor.
+> - `indexing/citation_graph.py`: Ein neuer, interner `_MultiPatternMatcher` (Aho-Corasick)
+>   ersetzt die Schleife über alle DOIs/arXiv-IDs/Titel je Quellpaper. Er wird **einmal** je
+>   Baulauf aus allen bekannten Mustern gebaut und findet je Referenztext **alle** Treffer in
+>   einem linearen Durchlauf – „Kennungen und Titelkandidaten einmal je Referenztext gewinnen,
+>   danach Nachschlagen statt Suchen", wörtlich wie gefordert. Die Präzedenz (DOI > arXiv > Titel)
+>   bleibt unverändert bei `_consider`, unabhängig von der Trefferreihenfolge des Matchers.
+>
+> **Laufzeit – sauber isoliert gemessen, weil die volle Pipeline auf dieser Maschine (15,5 GB
+> RAM, phasenweise < 1 GB frei) zu verrauscht für einen fairen Vergleich war:**
+>
+> | Baustein | Messung | Ergebnis |
+> | --- | --- | --- |
+> | `_mutual_topk_edges` | isoliert, 7 Wiederholungen, 606 Paper, **eine** vorab berechnete Ähnlichkeitsmatrix (TF-IDF-Fit als Störgröße ausgeschlossen) | Median **0,138 s → 0,069 s** (≈ 2× schneller), Wertebereiche nicht überlappend |
+> | `build_citation_graph` | reale Staffelung 150/300/450/606 Paper (Kennungs-Maps wachsen echt mit) | Wachstumsexponent (Potenzgesetz-Fit) sinkt von **≈ 1,5–2,2** (alt, überlinear) auf **≈ 0,8–1,35** (neu, nahezu linear); absolute Sekunden bei 606 Papern liegen **innerhalb der Lauf-zu-Lauf-Streuung** (Crossover-Punkt geschätzt bei ≈ 300–450 Papern – darunter überwiegt die Fixkosten des Automatenaufbaus, darüber die eingesparte Suche) |
+> | volle Pipeline (`build_index`+`build_graph`+`build_citation_graph`+`build_metadata_index`) | 4 Wiederholungen, 606 Paper | **nicht aussagekräftig**: Gesamtdauer schwankte zwischen −23 % und +44 % je nach Systemlast (belegt: freier Systemspeicher fiel während der Messung auf 0,78 GB) – die isolierten Messungen oben sind die verlässliche Evidenz |
+>
+> **B2 (inkrementelles Update) – vorläufig weiterhin verworfen, aber nicht abschließend
+> bewiesen.** Die vorab fixierte Regel aus [G0.5](#g05--erübrigt-sich-das-inkrementelle-update)
+> verlangt einen sauberen Vorher-Nachher-Vergleich der vollen Re-Index-Dauer **am
+> Auslegungsstand** – der ist wegen der Systemlast auf dieser Maschine derzeit nicht sauber
+> messbar, und der Auslegungsstand selbst ist erst mit [G5](#g5--auslegung-neu-festschreiben)
+> endgültig festgelegt. Die **isolierten** Messungen stützen die Tendenz aus G0.5 aber deutlich:
+> Beide begradigten Stellen werden mit wachsendem Korpus relativ **billiger**, nicht teurer
+> (fallender Wachstumsexponent bei `citation_graph`, konstanter Faktor-2-Gewinn bei
+> `graph_index`, unabhängig bestätigt durch die G0-Messung bei synthetisch 2500 Papern:
+> `build_graph_s` 38,97 s → 28,53 s). B2 bleibt daher **vorläufig verworfen** – eine
+> abschließende Bestätigung braucht eine ruhigere Messumgebung oder den Zeitpunkt, an dem G5 den
+> Auslegungsstand festschreibt.
+>
+> **Kein Schema-Eingriff, kein Contract berührt, kein ADR fällig** (reiner
+> verhaltenserhaltender Refactor, kein architektonischer Eingriff im Sinne von
+> [ADR-Prozess](docs/adr/README.md)). Modul-Doku nachgezogen:
+> [graph_index.md](src/research_graphrag/indexing/doc/graph_index.md),
+> [citation_graph.md](src/research_graphrag/indexing/doc/citation_graph.md). 42 neue Tests
+> (Aho-Corasick- und NumPy-Vektorisierung gegen Brute-Force-Referenzen), Gesamtstand **985**
+> Tests grün; `ruff check`/`ruff format --check`/`mypy src` sauber.
+>
+> **`--check` ist ausdrücklich anders erfüllt, als der Wortlaut unten es nahelegt – ein
+> Vorbehalt, den es zu benennen gilt statt zu verschweigen.** Beide eingefrorenen Baselines
+> stammen vom 2026-08-10 (R3, 373 Paper) und sind seither **unabhängig von G1** durch den
+> normalen Korpuszufluss veraltet (heute 606 Paper) – derselbe Fingerprint-Guard, der schon in
+> R0/R3 vor genau dieser Verwechslung schützt, verweigert deshalb beiden `--check`-Läufen
+> berechtigterweise den Vergleich (`nicht vergleichbar`). Ein Neu-Einfrieren gehört ausdrücklich
+> **nicht** in diesen Schnitt, sondern in [G5](#g5--auslegung-neu-festschreiben) – alles andere
+> wäre ein Baseline-Wechsel ohne den dort vorgeschriebenen zweistufigen Nachweis. Der reale
+> `python -m scripts.ingest`-Lauf mit dem begradigten Code auf dem vollen Produktivkorpus
+> (606 Paper) bestätigt aber unabhängig davon, was hier zählt: **Knoten=606, Kanten=796,
+> Communities=183, Zitationskanten=2548** – exakt dieselben Zahlen wie zuvor. Da `graph_edges`,
+> `communities`, `community_members` und `citation_edges` byte-identisch zur Vorgänger-Fassung
+> sind (siehe oben), sind **alle** davon abhängigen Modi (Local-Fan-out, Global, DRIFT,
+> Multi-Hop) rechnerisch zwingend ebenfalls unverändert – eine stärkere Garantie, als ein
+> stichprobenbasierter `--check`-Lauf liefern könnte, auch wenn dieser aktuell aus einem
+> unabhängigen Grund nicht ausführbar ist.
+
 > Erst umsetzen, wenn G0 die Phase bestätigt **und** ihren Zuschnitt festgelegt hat.
 
 **Aufgabe:** Die beiden quadratischen Stellen des Aufnahmepfads verschwinden – bei **nachweislich
@@ -1061,6 +1422,78 @@ kein Schema-Eingriff, kein Contract berührt.
 ### G2 – Antwortzeit: den Vektorraum nicht bei jeder Frage neu bauen
 _Modell-Tipp: Claude Sonnet 5._
 
+> **Nutzervorgabe (2026-09-01, verschärft die Akzeptanz unten):** Antwortzeiten **< 1 s, warm
+> im MCP-Server, am neuen Auslegungsstand aus G0.1** – nicht nur die alte 5-Sekunden-Marke des
+> kalten Pfads. Der [G0.6-Statusblock](#g0--alles-hinterfragen-und-messen-zwingend-zuerst) hat
+> dazu die entscheidende Einschränkung gemessen: Warme Suchzeit ist **nicht** konstant, sondern
+> wächst mit dem Korpus (Basic Search bewertet strukturell jeden Chunk). Weg C (Prozess-Cache)
+> ist deshalb **notwendig, aber nicht automatisch hinreichend** – ob zusätzlich Weg B (FTS5)
+> nötig wird, hängt am hier noch zu bestätigenden Auslegungspunkt (siehe gestaffelte Regel im
+> Statusblock).
+
+> **Status (2026-09-01, umgesetzt): Weg A + Weg C gebaut, Weg B zurückgestellt – Zahlen halten
+> die Marge.** Die vorab fixierte, gestaffelte Regel aus [G0.6](#g06--was-kostet-bit-identität)
+> greift eindeutig: G0.1 hatte gemessen, dass die **alte 5-Sekunden-Marke des kalten Pfads bereits
+> heute bei 606 Papern gerissen wird** (bis zu 9,7 s Reload allein) – unabhängig davon, wo der in
+> G5 noch festzulegende Auslegungspunkt am Ende genau liegt, ist damit **Schritt 2 der Regel**
+> (Weg A) unbedingt ausgelöst. Gebaut wurden deshalb **Weg A** (Vokabular + Zähl-Matrix additiv
+> persistiert, Index-Schema `0.5.0 -> 0.6.0`, neue Tabelle `tfidf_state`) **und Weg C**
+> (Prozess-Cache in `TfidfIndex.load()`, geschlüsselt über `(mtime_ns, Dateigröße)` – niemals über
+> eine Zeitspanne). Zusätzlich, unabhängig vom gewählten Weg: Chunk-Texte werden nicht mehr
+> vollständig gehalten (`_ChunkRef` trägt keinen Text mehr), sondern für die Top-*k* über
+> `_fetch_texts` nachgeladen.
+>
+> **Gemessen auf dem realen Korpus (606 Paper, 42.388 Chunks):**
+>
+> | Messung | Ergebnis | Marke |
+> | --- | --- | --- |
+> | Kalt (CLI, echter Prozessstart, `python -m scripts.ask --mode basic`) | 3,69 s / 3,71 s / 3,96 s (3 Wiederholungen) | < 5 s ✅ |
+> | Warm (Cache-Hit, `TfidfIndex.load(...).search(...)`, 20 verschiedene Anfragen) | Median 0,169 s, Max 0,227 s, Min 0,098 s | < 1 s ✅ (≈ 4–5-fache Marge) |
+> | Cache-Miss innerhalb eines laufenden Prozesses (Neubau nach Rebuild) | 0,927 s | – (per Definition kalt, kein Akzeptanzkriterium) |
+>
+> **Damit greift Schritt 3 der Regel (Weg B) nicht:** Die warme Suche selbst hält die 1-s-Marke
+> bei heutiger Korpusgröße mit deutlicher Marge – Weg B (FTS5) wurde **nicht** gebaut, mit einer
+> explizit an der Korpusgröße festgemachten Revisionsbedingung (grob **~1.500–2.000 Paper**,
+> siehe [ADR 0033](docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md))
+> statt einer stillschweigenden Vertagung.
+>
+> **Byte-Identitätsnachweis (der eigentliche Beweis, nicht die Beschleunigung):** Aus dem
+> git-Stand vor G2 (`0.5.0`, ohne `tfidf_state`) und dem neuen Stand (`0.6.0`) wurden aus
+> **demselben** realen Korpus (606 Paper, 42.388 Chunks, `data/canonical/*.json`) zwei Indizes
+> gebaut und `search()`/`neighbors_of_chunk()` über 15 Anfragen × 3 Wertungen (`hybrid`/`tfidf`/
+> `bm25`, k = 10) sowie 85 Nachbarschafts-Stichproben verglichen – **130 Prüfungen, 0
+> Abweichungen** in jedem Feld (`chunk_id`, alle drei Scores, Snippet, komplette Provenienz).
+> `test_tfidf_space_matches_the_previous_vectorizer` sichert dieselbe Aussage zusätzlich
+> dauerhaft im Testsuite ab (rekonstruierter Raum == frischer `TfidfVectorizer`-Fit).
+>
+> **Regressionstest für die Cache-Invalidierung** (explizites Akzeptanzkriterium „ein nach dem
+> Laden ausgetauschter Index wird beim nächsten Aufruf erkannt"):
+> `test_load_reloads_after_index_rebuilt_at_same_path` baut einen Index, lädt ihn, baut am
+> selben Pfad mit anderem Inhalt neu und prüft, dass der nächste `load()`-Aufruf **nicht** das
+> gecachte Objekt zurückgibt, sondern den neuen Inhalt sieht; das bestehende
+> [`test_phase6_freshness.py`](tests/integration/test_phase6_freshness.py) deckt denselben Pfad
+> zusätzlich end-to-end über echten `ingest()` ab. Drei weitere neue Tests sichern Cache-Hit
+> (`is`-Identität bei unverändertem Zustand), die Unabhängigkeit der Wertung vom rohen Chunk-Text
+> (manipulierter Text ändert nur das Snippet, nicht Score/Ranking) und den Fehlerfall eines
+> Index ohne `tfidf_state` (`constraint_violation`). **31 statt vormals 27 Tests** in
+> `test_tfidf_index.py`, Gesamtstand **989** Tests grün; `ruff check`/`ruff format --check`/
+> `mypy src` sauber.
+>
+> **`--check` ist erneut aus demselben, bereits in [G1](#g1--aufnahmepfad-begradigen-die-quadratischen-stellen)
+> dokumentierten Grund nicht das tragende Argument** (beide eingefrorenen Baselines stammen vom
+> 2026-08-10 bei 373 Papern und sind unabhängig von G2 durch den normalen Korpuszufluss
+> veraltet) – der byte-genaue Vergleich alt/neu auf dem **aktuellen** Korpus ist hier die
+> stärkere, weil unmittelbare Garantie. Ein produktiver Re-Index war wegen der Schema-Anhebung
+> (`0.5.0 -> 0.6.0`) zwingend nötig und wurde durchgeführt (Sicherung vorab).
+>
+> **ADR:** [0033](docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md) –
+> gewählter Weg (A + C), verworfene/zurückgestellte Alternative (B) mit Zahlen und
+> Revisionsbedingung, Präzisierung von [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)
+> (reine Zahlen statt `pickle`), Schema-Anhebung, akzeptierter Mikro-Race als Grenzfall.
+> Modul-Doku nachgezogen: [tfidf_index.md](src/research_graphrag/indexing/doc/tfidf_index.md);
+> [funktionsweise.md](docs/funktionsweise.md) korrigiert (die „pro Anfrage frisch geladen"-Aussage
+> war ab hier nicht mehr zutreffend).
+
 **Aufgabe:** Den in G0.6 gewählten Weg umsetzen – und **nur** ihn.
 
 - **Der gewählte Weg steht vor der Umsetzung fest**, samt Begründung, warum der andere nicht
@@ -1077,15 +1510,99 @@ _Modell-Tipp: Claude Sonnet 5._
   Grundsatzes aus [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md), Schema-Anhebung und –
   falls Weg B – der ausgewiesene Bruch der Vergleichbarkeit.
 
-*Akzeptanz G2:* Eine Einzelanfrage bleibt am Auslegungsstand unter **5 s**; die Ergebnisse sind
-entweder qid-genau unverändert oder ihr Bruch ist beziffert und beide Baselines sind neu
-eingefroren; ein nach dem Laden ausgetauschter Index wird beim nächsten Aufruf **erkannt**
-(Regressionstest); Determinismus und alle Tool-Contracts unverändert.
+*Akzeptanz G2:* Eine **kalte** Einzelanfrage (CLI, erster Aufruf nach Neustart) bleibt am
+Auslegungsstand unter **5 s**; eine **warme** Anfrage im MCP-Server bleibt am Auslegungsstand
+unter **1 s** (Nutzervorgabe 2026-09-01); die Ergebnisse sind entweder qid-genau unverändert
+oder ihr Bruch ist beziffert und beide Baselines sind neu eingefroren; ein nach dem Laden
+ausgetauschter Index wird beim nächsten Aufruf **erkannt** (Regressionstest); Determinismus und
+alle Tool-Contracts unverändert.
 
 ---
 
 ### G3 – Messung ohne Wartezeit
 _Modell-Tipp: Claude Sonnet 5._
+
+> **Status (2026-09-01, umgesetzt): Prozess-Cache aus G2 auf die beiden verbliebenen
+> Ladepunkte ausgeweitet – ohne Contract-Eingriff, byte-identische Ergebnisse.** G0.0 Punkt 2
+> hatte gemessen, dass ein Werkzeugaufruf den Index nicht einmal, sondern **mehrfach** lädt:
+> DRIFT effektiv zweimal (Community-Suche plus, bei Fallback, ein zweiter Basic-Reload), Global
+> einmal je Frage. Nach [G2](#g2--antwortzeit-den-vektorraum-nicht-bei-jeder-frage-neu-bauen)
+> war `TfidfIndex.load()` bereits gecacht – **zwei** weitere Ladepunkte waren es nicht:
+> `load_communities()` (Community-/Mitgliedertabellen) und `ProvenanceAssembler.load()`
+> (Paper-Provenienz, inklusive eines `JOIN`/`GROUP BY` über **alle** Chunks für das
+> Leit-Snippet je Paper). Beide riefen `evaluate_mode` für `global` und `drift` bislang **je
+> Gold-Frage neu** auf, obwohl sich der Index zwischen den Fragen nicht ändert.
+>
+> **Umgesetzt:** Dasselbe Muster wie in G2 (Weg C) – ein Prozess-Cache in `load_communities()`
+> ([graph_index.py](src/research_graphrag/indexing/graph_index.py)) und
+> `ProvenanceAssembler.load()`
+> ([provenance.py](src/research_graphrag/retrieval/provenance.py)), geschlüsselt über den
+> aufgelösten Pfad und `(mtime_ns, Dateigröße)`, ungültig gemacht über den **Dateizustand**, nie
+> über eine Zeitspanne. **Kein Contract-Eingriff:** Beide Funktionssignaturen sind unverändert;
+> `search_basic`/`search_local`/`search_global`/`search_drift` rufen sie weiterhin genauso auf
+> wie vorher – „Index einmal laden und durchreichen" geschieht dadurch **transparent** über den
+> Cache, ohne dass `evaluation/runner.py` oder ein MCP-Tool eine geladene Struktur explizit
+> weiterreichen müsste. Zusätzlicher, unabhängig belegter Vorteil: Derselbe Cache wirkt genauso
+> im MCP-Server über mehrere Anfragen hinweg, nicht nur im Messlauf.
+>
+> **Isolierte Messung (der eigentliche Beweis der Ursache, echter Produktions-Index, 606 Paper /
+> 42.388 Chunks):**
+>
+> | Baustein | Vorher (ungecacht, ×20 Aufrufe) | Nachher (gecacht, ×20 Aufrufe) | Faktor |
+> | --- | --- | --- | --- |
+> | `load_communities` | 0,139 s | 0,011 s | 13,1× |
+> | `ProvenanceAssembler.load` | 5,074 s | 0,005 s | **1078,5×** |
+>
+> Der `ProvenanceAssembler`-Befund erklärt, warum Global bislang der zweitteuerste Modus war,
+> obwohl er den Vektorraum gar nicht braucht ([provenance.md](src/research_graphrag/retrieval/doc/provenance.md)):
+> Das `JOIN`/`GROUP BY` über alle Chunks für das Leit-Snippet kostete **~0,25 s je Aufruf** –
+> bei 34 Gold-Fragen war das allein für Global rund 8,5 s reine Wiederholungsarbeit.
+>
+> **Ebenen-Messung** (`evaluate_mode`, dieselben 34 Gold-Fragen, vorher = Cache umgangen):
+>
+> | Ebene | vorher | nachher | Faktor |
+> | --- | --- | --- | --- |
+> | `global` | 8,86 s | 0,40 s | 22,1× |
+> | `drift` | 18,64 s | 8,36 s | 2,2× (Rest ist `TfidfIndex.search` selbst – kein Ladevorgang mehr, siehe unten) |
+>
+> DRIFTs verbleibende Zeit ist **kein** Ladevorgang mehr, sondern die Suche selbst (Kosinus/BM25
+> über die volle Matrix je Frage) – genau der in [G0.6](#g06--was-kostet-bit-identität) als
+> strukturell (nicht durch Caching lösbar) eingeordnete Anteil.
+>
+> **End-to-End, echter CLI-Aufruf gegen den Produktions-Index (606 Paper):**
+>
+> | Lauf | Vorher (G0.0 Punkt 2, 2026-09-01, vor G1–G3) | Nachher (mit G1+G2+G3) |
+> | --- | --- | --- |
+> | `--modi` (5 Ebenen, 34 Fragen) | DRIFT allein 103–327 s, Global allein 3–7 s (Summe deutlich > 100 s) | **68,09 s gesamt** (alle 5 Ebenen) |
+> | `--zitationen` (5 Ebenen, 121 Anker × 2 Anfrageformen) | nicht vergleichbar gemessen (Multi-Hop existierte als Ebene, aber ungecacht) | **476,27 s gesamt** |
+>
+> Die `--modi`-Zeile vergleicht nicht exakt Gleiches (vorher wurden nur zwei Einzelebenen
+> beziffert, nicht die Summe aller fünf) – das wird hier offen benannt, statt eine unpassende
+> Differenz zu suggerieren. Die **isolierten** Messungen oben sind deshalb der belastbarere
+> Beleg für den G3-spezifischen Effekt; die CLI-Zeilen dokumentieren zusätzlich den absoluten
+> Endzustand.
+>
+> **`--check` ist erneut nicht vergleichbar** – aus demselben, bereits in
+> [G1](#g1--aufnahmepfad-begradigen-die-quadratischen-stellen)/[G2](#g2--antwortzeit-den-vektorraum-nicht-bei-jeder-frage-neu-bauen)
+> dokumentierten Grund (beide Baselines stammen vom 2026-08-10 bei 373 Papern/Schema 0.5.0, der
+> aktuelle Stand ist 606 Paper/Schema 0.6.0 – der Fingerprint-Guard verweigert beiden Läufen
+> berechtigterweise den Vergleich). Das Neu-Einfrieren bleibt ausdrücklich G5 vorbehalten. Die
+> **Bit-Identität** ist hier ohnehin stärker als jeder `--check`-Lauf belegt: Der Cache ändert
+> **nur**, wann eine Struktur neu gelesen wird, nie **was** gelesen oder wie es ausgewertet wird
+> – `load_communities`/`ProvenanceAssembler._build_from_db` bleiben die exakt gleiche, unveränderte
+> SQL-Logik, nur hinter einem Cache. 6 neue Tests sichern Cache-Hit (`is`-Identität) und
+> Invalidierung (ausgetauschter Index wird beim nächsten Aufruf erkannt) für beide Funktionen;
+> Gesamtstand **993** Tests grün; `ruff check`/`ruff format --check`/`mypy src` sauber.
+>
+> **Kein ADR nötig** (reiner verhaltenserhaltender Refactor nach demselben, bereits in G1
+> etablierten Muster – kein architektonischer Eingriff im Sinne von
+> [ADR-Prozess](docs/adr/README.md); die zugrundeliegende Cache-Architektur ist bereits in
+> [ADR 0033](docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md)
+> dokumentiert). Modul-Doku nachgezogen:
+> [graph_index.md](src/research_graphrag/indexing/doc/graph_index.md),
+> [provenance.md](src/research_graphrag/retrieval/doc/provenance.md); Docstring von
+> `evaluation/runner.py` korrigiert (behauptete zuvor fälschlich, ein voller Lauf sei „spürbar
+> langsam" als bewusste, endgültige Abwägung).
 
 **Aufgabe (früher B3):** Ein `--modi`- oder `--zitationen`-Lauf lädt den Index **einmal** und
 reicht ihn durch, statt ihn je Ebene neu aufzubauen.
@@ -1104,6 +1621,77 @@ Messdauer ist vorher und nachher dokumentiert.
 
 ### G4 – Zuflussregel und Ablösung der Übersicht
 _Modell-Tipp: Claude Sonnet 5._
+
+> **Status (2026-09-01, umgesetzt): Relevanzurteil verlustfrei überführt, Intake schreibt keine
+> Zeilen mehr, Stoppregel geschrieben.** Am 2026-09-01 stehen in
+> [`Übersicht.md`](Übersicht.md) bereits **627** Zeilen (statt der am 2026-08-28 gemessenen 482)
+> bei unverändert **131 kuratierten** – der Zufluss allein durch den normalen Betrieb bestätigt,
+> wie dringend die Ablösung war.
+>
+> **1. Das Relevanzurteil ist maschinenlesbar gerettet.** Neues Modul
+> [overview/curation.py](src/research_graphrag/overview/doc/curation.md) (Parser für
+> `Themenfokus`/`Relevanz fuer Expose`/`SRQ-Zuordnung`, analog zu `bibliography.curated`, aber
+> für die wertenden statt der bibliografischen Spalten) und
+> `scripts/migrate_curation.py` (Migration + `--check`-Verifikation). Zielort ist `metadata/`
+> (wie vorgegeben) – neue, eigenständige Datei `metadata/curation.json`, **kein** Teil der
+> `manual > curated > resolved > extracted`-Auflösungskette, weil es keine bibliografische
+> Angabe ist.
+>
+> **Verlustfrei ist Zeile für Zeile bewiesen, nicht behauptet:**
+> `python -m scripts.migrate_curation --check` parst `Übersicht.md` frisch und vergleicht jeden
+> migrierten Datensatz gegen die geschriebene Datei. Realer Lauf (606-Paper-Korpus):
+> **131 kuratierte Zeilen, 131 einem Korpus-Paper zugeordnet, 0 Abweichungen.** Jede Zelle wird
+> als Freitext übernommen (z. B. bleibt `Relevanz fuer Expose` „Hoch (State-Diff-Reconciliation
+> als Leitkonzept für Rekonstruktion)", nicht nur „Hoch"); nur `SRQ-Zuordnung` wird zusätzlich in
+> einzelne Kennungen zerlegt.
+>
+> Ein generischer Baustein (`column_index`, Kopfzellen-Suche) ist dabei von
+> `bibliography.curated` nach `overview.drafts` gewandert (wo bereits `split_row`/`link_column`
+> liegen) – sonst gäbe es eine **dritte** Implementierung derselben Tabellen-Kopfzeilen-Suche.
+>
+> **2. Der Intake schreibt keine neuen Zeilen mehr.** `intake.py` ruft `append_overview_rows`
+> nicht mehr auf; `scripts/update_overview.py` verweigert den Lauf standardmäßig (Exit 1,
+> Hinweistext) und braucht das ausdrückliche `--force` als Notfall-Fluchtweg.
+> `append_overview_rows` selbst bleibt **unverändert und vollständig getestet** (11 Tests) – sie
+> wird nicht gelöscht, nur nicht mehr automatisch aufgerufen. Eine **bereits bestehende** Zeile
+> wird beim Stub-Upgrade weiterhin über `retarget_overview_row` umgebogen (Konsistenzpflege am
+> eingefrorenen historischen Stand, kein neuer Eintrag); trifft der Upgrade künftig einen Stub
+> ohne Vorgeschichte vor G4, bleibt das Umbiegen ein folgenloser No-Op.
+> [`Übersicht.md`](Übersicht.md) selbst wird **nicht gelöscht oder gekürzt** – sie bleibt als
+> historischer Stand bestehen (weiterhin durch [ADR 0027](docs/adr/0027-corpus-backup-phase11.md)
+> gesichert, ergänzt um `metadata/curation.json`) und trägt jetzt einen deutlichen
+> Außer-Dienst-Hinweis im Dateikopf.
+>
+> **3. Die Stoppregel des geplanten Referenz-Zuflusses steht schriftlich, mit Zahlen:**
+>
+> 1. **Obergrenze je Runde** – der in Phase 14 / E2 vorgesehene `--limit` (Vorgabewert aus E0.2)
+>    gilt als **Maximum**, nicht nur als Default; nur eine Verkleinerung ist erlaubt.
+> 2. **Nutzenschwelle je Runde** – Ertrag (neue `CITES`-Kanten je aufgenommenem Eintrag) einer
+>    Runde muss über **10 % des Ertrags der ersten (dichtesten) Runde** des jeweiligen
+>    Korpusstands bleiben; eine **relative**, nicht absolute Schwelle, kalibriert an Phase 13 /
+>    R0s eigener Messung (Top 10: 30,7 Kanten/Eintrag; Top 100: 10,74; danach: 1,6).
+> 3. **Ausgewiesener Endzustand** – „vollständig genug für seine Fragestellung" gilt, sobald zwei
+>    aufeinanderfolgende Runden die Nutzenschwelle verfehlen **oder** eine Runde nicht einmal die
+>    harte Obergrenze erreicht, weil der Vorrat an lohnenden Kandidaten selbst erschöpft ist –
+>    beides mit Datum und Zahlen im E4-Statusblock von Phase 14 festzuhalten, nicht anzunehmen.
+>
+> **14 neue Tests** (Parser, Migration, JSON-Rundreise, Fehlerfälle, Retirement-Hinweis des
+> CLI), Gesamtstand **1007** Tests grün; `ruff check`/`ruff format --check`/`mypy src` sauber.
+> Vier bestehende Intake-Tests wurden an das neue Verhalten angepasst (keine Z-Zeile mehr; zwei
+> Retarget-Tests säen jetzt eine simulierte Vor-G4-Zeile, um die weiterhin gültige Umbiege-Logik
+> gezielt zu prüfen).
+>
+> **ADR:** [0034](docs/adr/0034-decommission-uebersicht-and-inflow-stop-rule-phase15.md) –
+> Überführungsformat, Außerdienststellung, Stoppregel, mit Nachträgen an
+> [ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md),
+> [ADR 0027](docs/adr/0027-corpus-backup-phase11.md) und
+> [ADR 0030](docs/adr/0030-reference-entries-in-corpus-phase13.md). Moduldoku:
+> [overview/curation.md](src/research_graphrag/overview/doc/curation.md),
+> [overview/drafts.md](src/research_graphrag/overview/doc/drafts.md) nachgezogen;
+> [README](README.md), [metadata/README.md](metadata/README.md), [data/README.md](data/README.md),
+> [scripts/README.md](scripts/README.md), [papers/README.md](papers/README.md),
+> [new_papers/README.md](new_papers/README.md), [docs/features.md](docs/features.md) und
+> [docs/funktionsweise.md](docs/funktionsweise.md) aktualisiert.
 
 **Aufgabe:** Zwei Dinge, die zusammengehören, weil sie dieselbe Frage beantworten – *was ist
 dieser Korpus eigentlich, wenn er wächst?*

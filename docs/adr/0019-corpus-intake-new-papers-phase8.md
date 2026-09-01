@@ -192,6 +192,13 @@ beobachtet** werden, nicht beiläufig geschehen.
   `new_papers/` – es bleibt bei **einem** Weg in den Korpus. Der Sicherungsweg (B1) und das
   inkrementelle Update (B2) bleiben eigenständige Betriebspunkte.
 
+> **Nachtrag (2026-09-01, Phase 15 / G4):** „`Übersicht.md` als einzige Senke" gilt seither nur
+> noch für den **historischen** Bestand. Der Intake ruft `append_overview_rows` nicht mehr auf –
+> die Datei bekommt keine neuen Entwurfszeilen mehr, nur eine bereits bestehende Zeile wird beim
+> Stub-Upgrade weiterhin umgebogen. Das einzige menschliche Relevanzurteil der 131 kuratierten
+> Zeilen liegt seither maschinenlesbar in `metadata/curation.json`
+> ([ADR 0034](0034-decommission-uebersicht-and-inflow-stop-rule-phase15.md)).
+
 ---
 
 ## Nachweis am realen Korpus (2026-08-02)

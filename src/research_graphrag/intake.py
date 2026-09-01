@@ -14,8 +14,13 @@ nicht am Verdacht (docs/adr/0019-corpus-intake-new-papers-phase8.md):
    erscheint im Bericht. Verdacht ist kein Beweis.
 
 Ohne Treffer wandert die Datei nach ``papers/``; danach läuft **ein** regulärer
-:func:`research_graphrag.pipeline.ingest` (voller Re-Index mit atomarem Swap) und die kuratierte
-Übersicht bekommt je neuem Paper eine Entwurfszeile. ``dry_run`` verändert **nichts**.
+:func:`research_graphrag.pipeline.ingest` (voller Re-Index mit atomarem Swap). Seit Phase 15 / G4
+bekommt die kuratierte Übersicht dabei **keine** Entwurfszeile mehr – sie ist außer Dienst
+gesetzt, das einzige menschliche Relevanzurteil (Themenfokus, Relevanz, SRQ-Zuordnung) liegt
+maschinenlesbar in ``metadata/curation.json``
+(docs/adr/0034-decommission-uebersicht-and-inflow-stop-rule-phase15.md). Nur eine bereits
+bestehende Zeile wird beim Stub-Upgrade weiterhin **umgebogen** (nicht neu angelegt), damit sie
+nicht auf eine gelöschte Datei zeigt. ``dry_run`` verändert **nichts**.
 
 Seit Phase 13 / R2 nimmt der Eingang **zwei Dokumenttypen** an: ``*.pdf`` und ``*.refjson``
 (Referenz-Einträge ohne Volltext). Die drei Prüfstufen gelten unverändert für beide – nur die
@@ -62,7 +67,6 @@ from research_graphrag.indexing.citation_graph import (
 )
 from research_graphrag.overview.drafts import (
     OverviewReport,
-    append_overview_rows,
     ensure_overview_target,
     retarget_overview_row,
 )
@@ -674,15 +678,18 @@ def run_intake(
             Quarantäne bleibt damit außen vor.
         papers_dir: Zielordner des Korpus (``papers/``).
         data_dir: Datenordner mit ``canonical/``, ``manifest.json`` und ``index/``.
-        uebersicht_path: Kuratierte ``Übersicht.md`` (wird append-only ergänzt).
-        dry_run: Wenn ``True``, wird **nichts** verändert – weder Dateien noch Index, Übersicht
-            oder Protokoll.
+        uebersicht_path: Außer Dienst gestellte ``Übersicht.md`` (Phase 15 / G4) – bekommt
+            **keine** neuen Zeilen mehr; eine bereits bestehende Zeile wird beim Stub-Upgrade
+            weiterhin umgebogen, damit sie nicht auf eine gelöschte Datei zeigt.
+        dry_run: Wenn ``True``, wird **nichts** verändert – weder Dateien noch Index oder
+            Protokoll.
         delete_identifier_duplicates: Löscht Identifikator-Duplikate hart, statt sie in die
             Quarantäne zu verschieben (ausdrückliches Opt-in, ADR 0019).
 
     Returns:
-        Ein :class:`IntakeReport` mit einer Entscheidung je Datei sowie den Berichten von Ingest
-        und Übersicht-Anhang (``None`` bei ``dry_run`` oder wenn nichts übernommen wurde).
+        Ein :class:`IntakeReport` mit einer Entscheidung je Datei sowie dem Ingest-Bericht.
+        ``overview`` ist seit G4 immer ``None`` – das Feld bleibt aus Kompatibilitätsgründen
+        bestehen, wird aber nicht mehr befüllt.
 
     Raises:
         DomainError: ``not_found`` wenn Eingangs- oder ``papers``-Ordner oder die Übersicht
@@ -739,8 +746,8 @@ def run_intake(
         if item.action == ACTION_ACCEPTED and item.replaces:
             forget_source(data_path, item.replaces)
     ingest_report = ingest(papers_path, data_path)
-    # Erst die Zeile des abgelösten Referenz-Eintrags umbiegen, **dann** die Entwurfszeilen:
-    # Sonst gilt der neue Dateiname als unbekannt und bekäme eine zweite Zeile.
+    # Umbiegen statt Neuanlage: Die Übersicht ist außer Dienst (G4), eine bestehende Zeile darf
+    # aber nicht auf eine gelöschte Datei zeigen.
     for item in decisions:
         if item.action == ACTION_ACCEPTED and item.replaces:
             retarget_overview_row(
@@ -749,15 +756,10 @@ def run_intake(
                 new_filename=item.corpus_name,
                 new_name=title_from_uri(item.corpus_name),
             )
-    overview_report = append_overview_rows(data_dir=data_path, target_path=uebersicht_path)
-    _logger.info(
-        "Intake: %d Paper übernommen, %d Übersicht-Zeile(n) ergänzt.",
-        n_accepted,
-        overview_report.written,
-    )
+    _logger.info("Intake: %d Paper übernommen.", n_accepted)
     return IntakeReport(
         decisions=tuple(_attach_flags(decisions, data_path)),
         dry_run=False,
         ingest=ingest_report,
-        overview=overview_report,
+        overview=None,
     )

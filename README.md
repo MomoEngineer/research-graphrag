@@ -93,20 +93,25 @@
 > **umsortiert, nicht aussortiert** (13 Regressionen → **3 ohne Totalverlust**, Handprobe
 > **10/10**).
 >
-> **Als Nächstes: Phase 15 – Skalierung, und zwar vor Phase 14.** Der Bestand steht bei **468**
-> Papern; die Auslegung „max. ~500" stammt aus der Zeit mit 145 und ist damit erreicht. Drei
-> Stellen sind gemessen und beziffert: Eine Anfrage kostet **3,65 s**, wovon **97 %** auf den
-> Wiederaufbau des Vektorraums entfallen und nur 0,094 s auf die eigentliche Suche; im
-> Aufnahmepfad sind der Zitationsgraph und der Ähnlichkeitsgraph **quadratisch** in der
-> Paperzahl. Genau auf diese quadratische Achse drückt Phase 14: Ein Referenz-Eintrag bringt
-> **einen** Chunk (linear, vernachlässigbar), aber einen vollen Knoten im Graphen. Deshalb steht
-> die Skalierung zuerst – wer zuerst zuführt und danach misst, misst ein anderes System. Die
-> Phase beginnt wie S0, R0 und E0 mit einer **Wegwerf-Messung samt Abbruchkriterium**, hält sich
-> strikt an Bordmittel (kein Qdrant, kein Neo4j, keine Embeddings – aber **SQLite FTS5** ist
-> vorhanden und bislang ungenutzt) und schreibt am Ende eine Auslegung **mit Messdatum** fest.
-> Mit ihr endet auch [`Übersicht.md`](Übersicht.md) als Format: Von 482 Zeilen sind nur noch
-> **131 kuratiert**; die 131 Wertungen werden maschinenlesbar gerettet, bevor die Datei außer
-> Dienst geht ([Roadmap](Roadmap.md#phase-15--skalierung-den-wachsenden-bestand-tragen)).
+> **Phase 15 (Skalierung) läuft, G0–G4 sind umgesetzt.** Der Bestand steht bei **606** Papern
+> (Stand 2026-09-01); die Auslegung „max. ~500" stammt aus der Zeit mit 145 und ist damit klar
+> überschritten – die endgültige, gemessene Auslegung steht noch aus (G5). Vier Stufen sind
+> abgeschlossen: **G0** hat den Zuschnitt bestätigt und die kalte Wand bei 606 Papern schon
+> gerissen gefunden (bis zu 9,7 s Reload); **G1** hat die beiden quadratischen Stellen im
+> Aufnahmepfad begradigt (Aho-Corasick, NumPy-Vektorisierung), byte-identisch nachgewiesen; **G2**
+> hat einen Prozess-Cache samt persistiertem TF-IDF-Zustand gebaut – warme Anfragen liegen jetzt
+> bei Median **0,169 s** (Marke < 1 s) statt bei jeder Frage neu zu tokenisieren; **G3** hat
+> denselben Cache auf `load_communities`/`ProvenanceAssembler.load` ausgeweitet (bis zu **1078×**
+> schneller) und damit den letzten wiederholten Ladevorgang beseitigt. **G4 ist ebenfalls
+> abgeschlossen:** [`Übersicht.md`](Übersicht.md) ist außer Dienst gesetzt – ihr einziges
+> menschliches Relevanzurteil (131 kuratierte Zeilen: `Themenfokus`, `Relevanz fuer Expose`,
+> `SRQ-Zuordnung`) ist **verlustfrei**, Zeile für Zeile nachgewiesen (0 Abweichungen), nach
+> [`metadata/curation.json`](metadata/curation.json) überführt; der Intake schreibt seither keine
+> neuen Zeilen mehr, und der geplante Referenz-Zufluss aus Phase 14 hat jetzt eine geschriebene
+> Stoppregel statt „bis es sich erschöpft"
+> ([ADR 0034](docs/adr/0034-decommission-uebersicht-and-inflow-stop-rule-phase15.md)).
+> Offen bleiben **G5** (Auslegung mit Messdatum neu festschreiben) und danach **Phase 14**
+> ([Roadmap](Roadmap.md#phase-15--skalierung-den-wachsenden-bestand-tragen)).
 
 ---
 
@@ -134,15 +139,15 @@ Dieses Projekt baut ein **GraphRAG-System** über einer lokalen Sammlung wissens
 
 Die Paper stammen aus der Literaturrecherche zur Masterarbeit. Dieses Repo wird der **zentrale Ort** dafür und löst den bisherigen `Recherche`-Ordner ab: die PDFs liegen in `papers/`. Die zugehörige Recherche (Prompts, Zusammenfassungen, Forschungslücken) ist für `recherche/` vorgesehen, in Phase 1 aber bewusst noch nicht migriert.
 
-Ergänzend zum GraphRAG-Index bleibt die **kuratierte Quellen-Tabelle** [`Übersicht.md`](Übersicht.md) erhalten – eine menschlich gepflegte Landkarte der Literatur nach **Themenclustern** und **Sub-Forschungsfragen (SRQ)**. Sie beantwortet, *welche* Quellen es gibt und wie relevant sie sind; der GraphRAG-Index beantwortet, *was inhaltlich* in ihnen steht.
+**Seit Phase 15 / G4 (2026-09-01) ist [`Übersicht.md`](Übersicht.md) außer Dienst** – sie bekommt keine neuen Zeilen mehr und dient nur noch als historischer Stand. Das einzige menschliche Relevanzurteil ihrer 131 kuratierten Zeilen (Themencluster, Relevanz-Einschätzung, SRQ-Zuordnung) ist **verlustfrei** nach [`metadata/curation.json`](metadata/curation.json) überführt ([ADR 0034](docs/adr/0034-decommission-uebersicht-and-inflow-stop-rule-phase15.md)). Der GraphRAG-Index bleibt unverändert die Antwort auf *was inhaltlich* in den Papern steht; *welche* Quellen es gibt und wie relevant sie sind, beantwortet jetzt die JSON-Datei statt der Tabelle.
 
-| Aspekt | `Übersicht.md` (kuratiert) | GraphRAG-Index (automatisch) |
+| Aspekt | `metadata/curation.json` (kuratiert, seit G4) | GraphRAG-Index (automatisch) |
 |---|---|---|
-| Zweck | Quellen einordnen, bewerten, SRQ zuordnen | Inhalte durchsuchbar/fragbar machen |
-| Pflege | menschlich, mit Pipeline-Entwurf | vollautomatisch bei Ingestion |
-| Stärke | Relevanz, Struktur, Nachvollziehbarkeit | Detail-, Synthese- und Multi-Hop-Fragen |
+| Zweck | Quellen bewerten, SRQ zuordnen (maschinenlesbar) | Inhalte durchsuchbar/fragbar machen |
+| Pflege | einmalig aus `Übersicht.md` überführt, seither statisch | vollautomatisch bei Ingestion |
+| Stärke | Relevanz, Nachvollziehbarkeit | Detail-, Synthese- und Multi-Hop-Fragen |
 
-Die Ingestion kann für neue PDFs **Entwurfszeilen** der Übersicht vorbefüllen (Titel, Links, Keywords, Kurzzusammenfassung); die wertenden Spalten (Relevanz, SRQ-Zuordnung) bleiben in deiner Hand.
+Neue PDFs bekommen seit G4 **keine** Entwurfszeile mehr; der Intake übernimmt sie ausschließlich in Korpus und Index.
 
 ## Kernidee: Lean Scientific GraphRAG
 
@@ -227,10 +232,11 @@ Doppelbestand zuverlässig verhindert:
    ([ADR 0031](docs/adr/0031-reference-contract-and-guardrail-phase13.md)).
 
 4. Für die übernommenen Paper läuft automatisch **ein** Ingest-Lauf (Extraktion, Index,
-   Ähnlichkeits- und Zitationsgraph, Qualitätsreport – voller Re-Index mit atomarem Swap), und
-   [`Übersicht.md`](Übersicht.md) bekommt je Paper eine **Entwurfszeile** mit der ID `Z1`, `Z2`, …
-   Die wertenden Spalten (`Relevanz fuer Expose`, `SRQ-Zuordnung`, `Themenfokus`) bleiben
-   `(manuell)` – die Kuratierung inklusive Umbenennung der ID bleibt bei dir.
+   Ähnlichkeits- und Zitationsgraph, Qualitätsreport – voller Re-Index mit atomarem Swap).
+   [`Übersicht.md`](Übersicht.md) ist seit Phase 15 / G4 **außer Dienst** und bekommt keine neue
+   Zeile mehr; das einzige menschliche Relevanzurteil liegt maschinenlesbar in
+   [`metadata/curation.json`](metadata/curation.json)
+   ([ADR 0034](docs/adr/0034-decommission-uebersicht-and-inflow-stop-rule-phase15.md)).
 5. Der Abschlussbericht listet jede Entscheidung samt Grund und die Qualitäts-Flags der neuen
    Paper; dieselben Angaben stehen append-only in `data/intake_log.md`.
 6. Der MCP-Server nutzt die aktualisierten Artefakte sofort (**On-Read**: er lädt den Index pro
@@ -245,10 +251,10 @@ Doppelbestand zuverlässig verhindert:
 >   Identifikator-Wurzel wie `v1` und landet in der Quarantäne. **Wer ersetzen will, löscht zuerst
 >   die alte Datei in `papers/`** und lässt den Intake danach laufen.
 
-Der **direkte Weg** bleibt daneben bestehen: PDF nach `papers/` legen, `python -m scripts.ingest`
-ausführen und die Übersicht mit `python -m scripts.update_overview` nachziehen. Er dedupliziert
-aber nur über Dateiname und Hash – ein inhaltsgleiches PDF unter anderem Namen würde doppelt
-indiziert.
+Der **direkte Weg** bleibt daneben bestehen: PDF nach `papers/` legen und `python -m scripts.ingest`
+ausführen. Er dedupliziert aber nur über Dateiname und Hash – ein inhaltsgleiches PDF unter
+anderem Namen würde doppelt indiziert. `python -m scripts.update_overview` verweigert seit G4
+den Lauf ohne `--force` (Retirement-Hinweis auf `metadata/curation.json`).
 
 ## Fragetypen → Suchmodus
 
@@ -298,9 +304,10 @@ research-graphrag/
 │  ├─ *.refjson                # Stub-Dateien der Referenz-Einträge (Phase 13 / R1)
 │  └─ _duplikate/              # Quarantäne der Identifikator-Duplikate
 ├─ papers/                     # Alle Paper-PDFs und Referenz-Einträge *.refjson (nicht versioniert)
-├─ Übersicht.md                # Kuratierte Literaturübersicht (Quellen-Tabelle)
-├─ metadata/                   # Zitierfähige Metadaten (versioniert, Phase 12)
-│  └─ paper_metadata.json      # Herkünfte `resolved` (online) und `manual` (Handpflege)
+├─ Übersicht.md                # Kuratierte Literaturübersicht (außer Dienst seit Phase 15 / G4, historischer Stand)
+├─ metadata/                   # Nicht rekonstruierbare Daten (versioniert, Phase 12 + 15/G4)
+│  ├─ paper_metadata.json      # Herkünfte `resolved` (online) und `manual` (Handpflege)
+│  └─ curation.json            # Kuratiertes Relevanzurteil (Themenfokus/Relevanz/SRQ), aus Übersicht.md überführt
 ├─ recherche/                  # (Phase 1) Rechercheartefakte – bewusst ausgelassen, nicht vorhanden
 │  ├─ prompts/                 # Research-Prompts (Suchstrategien)
 │  ├─ zusammenfassungen/       # Zusammenfassungen je Recherche-Runde
@@ -316,7 +323,7 @@ research-graphrag/
 │  ├─ references_log.md        # Protokoll der Referenz-Auflösung (append-only, Phase 13 / R1)
 │  └─ online_raw/              # datierte Rohantworten der abgefragten Dienste
 ├─ scripts/
-│  ├─ intake.py                # new_papers/ → Duplikatprüfung → papers/ → Ingest → Übersicht
+│  ├─ intake.py                # new_papers/ → Duplikatprüfung → papers/ → Ingest (Übersicht außer Dienst seit G4)
 │  ├─ ingest.py                # Drop-in → Extraktion → Index-Update
 │  ├─ citations.py             # Zitationen eines Papers (read-only, Phase 7 / A2)
 │  ├─ cite.py                  # Literaturangabe eines Papers in Harvard/APA (read-only, Phase 12)
@@ -324,13 +331,14 @@ research-graphrag/
 │  ├─ resolve_metadata.py      # Zitationsdaten online auflösen (separat startbar, Phase 12 / K2)
 │  ├─ resolve_references.py    # DOI/arXiv-Liste → Stub-Dateien im Eingang (separat startbar, Phase 13 / R1)
 │  ├─ eval_retrieval.py        # Hit@k/MRR, Modus-Ebene, Regressions-Check (Phase 7 / A4 + A6), Router (A7), Multi-Hop (Phase 10 / V3)
-│  └─ update_overview.py       # Entwurfszeilen → Übersicht.md (append-only)
+│  ├─ migrate_curation.py      # Übersicht.md → metadata/curation.json (Phase 15 / G4, mit --check)
+│  └─ update_overview.py       # Entwurfszeilen → Übersicht.md – außer Dienst seit G4, nur mit --force
 ├─ src/research_graphrag/
 │  ├─ intake.py                # Korpus-Zufluss mit Duplikatprüfung (Phase 8)
 │  ├─ extraction/              # pypdf → Canonical JSON (Option B, inkl. Textnormalisierung)
 │  ├─ indexing/               # Index-Orchestrierung (TF-IDF + BM25 + networkx/SQLite)
 │  ├─ retrieval/               # Query-Router (Local/Global/DRIFT/Basic)
-│  ├─ overview/                # Übersicht-Entwürfe (Staging, Phase 2)
+│  ├─ overview/                # Übersicht-Entwürfe (Staging, Phase 2) + Relevanzurteil-Migration (Phase 15 / G4)
 │  ├─ generation/              # LLM-Bridge: Evidenz + optionale Antwort-Synthese (Phase 7)
 │  ├─ evaluation/             # Gold-Set, Kennzahlen, Modus-Lauf, Baseline (Phase 7 / A6) + Router-Messung (A7) + Multi-Hop (Phase 10 / V3)
 │  ├─ online/                 # Online-Kandidatensuche: Transport-Port, arXiv/OpenAlex, Dedup, Bericht (Phase 9 / S1) + Metadaten-Auflösung (Phase 12 / K2) + Referenz-Einträge (Phase 13 / R1)
@@ -364,10 +372,7 @@ python -m scripts.intake
 # 2a. (alternativ) PDFs direkt nach papers/ kopieren und indexieren
 python -m scripts.ingest
 
-# 2b. (optional) Entwurfszeilen für die Übersicht nachziehen (append-only an Übersicht.md)
-python -m scripts.update_overview
-
-# 2c. (optional) Status/Konsistenz prüfen und Prüf-Fragen als QS durchspielen
+# 2b. (optional) Status/Konsistenz prüfen und Prüf-Fragen als QS durchspielen
 python -m scripts.status
 python -m scripts.qa
 

@@ -9,19 +9,24 @@ Determinismus: fixer Seed, stabile Tie-Breaks (``paper_id``) und ein einmal fris
 rekonstruierter TF-IDF-Raum – es werden bewusst keine ``sklearn``/``networkx``-Objekte
 serialisiert (kein pickle, keine Versions-Kopplung). Kanten entstehen als *mutual top-k*
 oberhalb einer Mindest-Ähnlichkeit; die Kantenmenge ist damit unabhängig von der
-Eingabereihenfolge der Papers (nur inhaltsbestimmt).
+Eingabereihenfolge der Papers (nur inhaltsbestimmt). Seit Phase 15 / G3 cacht
+``load_communities`` das Ergebnis **pro Prozess**, ungültig gemacht über den Zustand der
+Index-Datei, nie über eine Zeitspanne (dasselbe Muster wie ``TfidfIndex.load``,
+docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md).
 """
 
 from __future__ import annotations
 
 import json
 import sqlite3
+import threading
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import networkx as nx
+import numpy as np
 from networkx.algorithms.community import louvain_communities
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
@@ -169,24 +174,41 @@ def _leading_snippet(paper: CanonicalPaper) -> str:
 
 
 def _mutual_topk_edges(
-    paper_ids: list[str], sims: list[list[float]], k: int, min_similarity: float
+    paper_ids: list[str], similarity: Any, k: int, min_similarity: float
 ) -> list[tuple[str, str, float]]:
     """Bildet die *mutual top-k*-Kantenmenge (ungerichtet, ``source < target``).
 
     Eine Kante ``(i, j)`` entsteht nur, wenn ``j`` unter den Top-``k``-Nachbarn von ``i``
     **und** ``i`` unter denen von ``j`` liegt (jeweils oberhalb ``min_similarity``). Das hält
     den Graphen dünn und vermeidet Hubs. Tie-Break der Nachbarn: ``(-Ähnlichkeit, paper_id)``.
+
+    Die Nachbarschaft je Paper wird **direkt über NumPy** ermittelt (docs/roadmap-historie.md,
+    Phase 15 / G1): Die Spalten der Ähnlichkeitsmatrix werden einmalig nach ``paper_id``
+    aufsteigend sortiert; ein **stabiler** zeilenweiser Sortiervorgang (``np.argsort``, ganze
+    Matrix in einem Aufruf) liefert je Zeile die Nachbarn absteigend nach Ähnlichkeit, wobei
+    Gleichstände dank der vorsortierten Spalten automatisch in aufsteigender ``paper_id``-
+    Reihenfolge verbleiben – bit-genau dieselbe Tie-Break-Regel wie zuvor, nur ohne die O(n²)
+    Python-Objekte (verworfene Zwischenstufe: ein Python-Vergleichs-Tupel je Zeile×Spalte).
     """
     n = len(paper_ids)
-    neighbors: list[set[int]] = []
+    sim = np.asarray(similarity, dtype=np.float64)
+    diagonal = np.arange(n)
+    sim_no_self = sim.copy()
+    sim_no_self[diagonal, diagonal] = -np.inf  # Selbstbezug ausschließen (wie zuvor ``j != i``)
+
+    # Spalten aufsteigend nach paper_id vorsortieren: ein stabiler Sort auf dieser Reihenfolge
+    # bricht Gleichstände automatisch aufsteigend nach paper_id, ohne sie separat zu vergleichen.
+    order = np.argsort(np.array(paper_ids))
+    sim_reordered = sim_no_self[:, order]
+    ranked_positions = np.argsort(-sim_reordered, axis=1, kind="stable")
+    ranked_indices = order[ranked_positions]
+
+    neighbors: list[frozenset[int]] = []
     for i in range(n):
-        candidates = [
-            (-sims[i][j], paper_ids[j], j)
-            for j in range(n)
-            if j != i and sims[i][j] >= min_similarity
-        ]
-        candidates.sort()
-        neighbors.append({index for _neg_sim, _paper_id, index in candidates[:k]})
+        row_order = ranked_indices[i]
+        row_sim = sim_no_self[i, row_order]
+        valid = row_order[row_sim >= min_similarity][:k]
+        neighbors.append(frozenset(int(index) for index in valid))
 
     edges: list[tuple[str, str, float]] = []
     for i in range(n):
@@ -194,7 +216,7 @@ def _mutual_topk_edges(
             if i < j and i in neighbors[j]:
                 first, second = paper_ids[i], paper_ids[j]
                 source, target = (first, second) if first < second else (second, first)
-                edges.append((source, target, sims[i][j]))
+                edges.append((source, target, float(sim[i, j])))
     return sorted(edges)
 
 
@@ -261,9 +283,8 @@ def build_graph(
     features = vectorizer.get_feature_names_out()
     similarity = linear_kernel(matrix, matrix)
     n = len(unique)
-    sims = [[float(similarity[i][j]) for j in range(n)] for i in range(n)]
 
-    edges = _mutual_topk_edges(paper_ids, sims, k, min_similarity)
+    edges = _mutual_topk_edges(paper_ids, similarity, k, min_similarity)
 
     graph = nx.Graph()
     for paper_id in sorted(paper_ids):
@@ -362,8 +383,18 @@ def _persist(
         connection.close()
 
 
+_COMMUNITIES_CACHE_LOCK = threading.Lock()
+_COMMUNITIES_CACHE: dict[str, tuple[int, int, list[CommunityView]]] = {}
+"""Prozess-Cache: Pfad -> ((mtime_ns, Größe), Communities), siehe ``load_communities``."""
+
+
 def load_communities(db_path: str | Path) -> list[CommunityView]:
-    """Lädt die persistierten Communities (aufsteigend nach ``community_id``).
+    """Lädt die persistierten Communities, sofern nötig – sonst liefert der Prozess-Cache
+    dasselbe Ergebnis (Phase 15 / G3, dasselbe Muster wie ``TfidfIndex.load``).
+
+    Der Cache ist über den **Dateizustand** (Größe + Änderungszeit) ungültig gemacht, nie über
+    eine Zeitspanne – ein neu gebauter Graph wirkt beim nächsten Aufruf sofort
+    (docs/adr/0010-drop-in-workflow-and-qa-phase6.md).
 
     Args:
         db_path: Pfad zur SQLite-Index-Datei.
@@ -380,6 +411,21 @@ def load_communities(db_path: str | Path) -> list[CommunityView]:
     if not path.is_file():
         raise DomainError(ErrorCode.NOT_FOUND, f"Index nicht gefunden: {path}")
 
+    resolved = str(path.resolve())
+    stat = path.stat()
+    with _COMMUNITIES_CACHE_LOCK:
+        cached = _COMMUNITIES_CACHE.get(resolved)
+        if cached is not None and cached[0] == stat.st_mtime_ns and cached[1] == stat.st_size:
+            return cached[2]
+
+    views = _load_communities_from_db(path)
+    with _COMMUNITIES_CACHE_LOCK:
+        _COMMUNITIES_CACHE[resolved] = (stat.st_mtime_ns, stat.st_size, views)
+    return views
+
+
+def _load_communities_from_db(path: Path) -> list[CommunityView]:
+    """Liest die Communities unbedingt frisch aus SQLite (Baustein von ``load_communities``)."""
     connection = sqlite3.connect(str(path))
     try:
         has_table = connection.execute(

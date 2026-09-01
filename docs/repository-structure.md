@@ -41,8 +41,9 @@ research-graphrag/
 │  ├─ coverage_offline.py        # Offline-Coverage-Gate (ADR 0003)
 │  ├─ ingest.py                  # Drop-in → Canonical JSON → Index (Option B)
 │  ├─ ask.py                     # Frage → Retrieval-Modi (Basic/Local/Global/DRIFT + Router)
-│  ├─ intake.py                  # Korpus-Zufluss: new_papers/ → papers/ → Ingest → Übersicht (Phase 8)
-│  ├─ update_overview.py         # Entwurfszeilen → Übersicht.md (append-only, Option B)
+│  ├─ intake.py                  # Korpus-Zufluss: new_papers/ → papers/ → Ingest (Übersicht.md außer Dienst seit G4, Phase 8/15)
+│  ├─ update_overview.py         # Übersicht-Entwürfe – außer Dienst seit G4, nur mit --force
+│  ├─ migrate_curation.py        # Übersicht.md → metadata/curation.json (Phase 15 / G4)
 │  ├─ graph_info.py              # Community-Übersicht (read-only, Phase 3)
 │  ├─ citations.py               # Zitationen eines Papers (read-only, Phase 7 / A2)
 │  ├─ cite.py                    # Literaturangabe in Harvard/APA (read-only, Phase 12 / K1)

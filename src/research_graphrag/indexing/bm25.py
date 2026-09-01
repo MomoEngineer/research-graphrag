@@ -18,9 +18,10 @@ Gewicht eines Terms :math:`t` in einem Chunk :math:`d`:
     \\mathrm{idf}_t = \\ln\\left(1 + \\frac{N - n_t + 0.5}{n_t + 0.5}\\right)
 
 Die IDF-Variante (Lucene) ist stets positiv; sehr häufige Terme können damit keine negativen
-Beiträge und keine Rang-Inversionen erzeugen. Es wird nichts persistiert – die Gewichte werden
-beim Laden des Index aus den gespeicherten Texten rekonstruiert
-(docs/adr/0005-graphrag-index-backend-open.md).
+Beiträge und keine Rang-Inversionen erzeugen. Die Gewichte selbst werden **nicht** persistiert –
+sie werden bei jedem Laden des Index aus der (seit Phase 15 / G2 additiv persistierten)
+Term-Häufigkeitsmatrix neu berechnet (docs/adr/0005-graphrag-index-backend-open.md,
+docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md).
 """
 
 from __future__ import annotations

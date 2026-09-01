@@ -20,10 +20,12 @@ Ein read-only Überblick über diese Artefakte (Kennzahlen + Konsistenz-Check `p
 
 Aus diesem Ordner ist **nicht alles** regenerierbar: `manifest.json`, `intake_log.md`,
 `metadata_log.md`, `online_candidates.md` und `references_log.md` sind append-only Spuren
-vergangener Läufe. Zusammen mit `papers/`, der kuratierten `Übersicht.md`,
-`metadata/paper_metadata.json` und `new_papers/referenzen.txt` bilden sie den Sicherungsumfang
+vergangener Läufe. Zusammen mit `papers/`, der (seit Phase 15 / G4 außer Dienst gesetzten,
+historischen) `Übersicht.md`, `metadata/paper_metadata.json`, `metadata/curation.json` und
+`new_papers/referenzen.txt` bilden sie den Sicherungsumfang
 ([ADR 0027](../docs/adr/0027-corpus-backup-phase11.md), erweitert in
-[ADR 0029](../docs/adr/0029-reference-stub-resolution-phase13.md)):
+[ADR 0029](../docs/adr/0029-reference-stub-resolution-phase13.md) und
+[ADR 0034](../docs/adr/0034-decommission-uebersicht-and-inflow-stop-rule-phase15.md)):
 
 ```pwsh
 python -m scripts.backup --ziel D:\Sicherung\research-graphrag --dry-run

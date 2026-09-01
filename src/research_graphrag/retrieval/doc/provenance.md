@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/retrieval/provenance.py` |
 | **Paket** | `retrieval` – Suchmodi und Provenienz |
-| **Phase** | 4 (eingeführt), 7 / A3 + A4 (erweitert), 13 / R2 (Referenz-Einträge) |
-| **Grundlagen** | [ADR 0008](../../../../docs/adr/0008-retrieval-and-query-router-phase4.md), [ADR 0013](../../../../docs/adr/0013-chunking-refinement-phase7.md), [ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md) |
+| **Phase** | 4 (eingeführt), 7 / A3 + A4 (erweitert), 13 / R2 (Referenz-Einträge), 15 / G3 (Prozess-Cache) |
+| **Grundlagen** | [ADR 0008](../../../../docs/adr/0008-retrieval-and-query-router-phase4.md), [ADR 0013](../../../../docs/adr/0013-chunking-refinement-phase7.md), [ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md), [ADR 0033](../../../../docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md) |
 
 ---
 
@@ -57,7 +57,15 @@ ehrlichere Angabe als eine willkürlich gewählte Seite.
 Paper und den Text des jeweils ersten Chunks als Leit-Ausschnitt. Es wird kein `sklearn` geladen
 und keine Matrix rekonstruiert.
 
-Das ist der Grund, warum Global- und Zitations-Abfragen deutlich schneller sind als die
+Die zweite Abfrage (Leit-Ausschnitt je Paper) ist ein `JOIN` mit `GROUP BY paper_id` über
+**alle** Chunks – bei mehreren Zehntausend Chunks spürbar teurer, als die knappe Beschreibung
+vermuten lässt. Seit Phase 15 / G3 cacht `load` sein Ergebnis deshalb **pro Prozess**
+(dasselbe Muster wie `TfidfIndex.load`), geschlüsselt über Größe und Änderungszeit der
+Index-Datei; wiederholte Aufrufe (z. B. je Gold-Frage in der Global-/DRIFT-Evaluation) lesen die
+Datei dadurch nur noch beim ersten Mal wirklich neu ein
+([ADR 0033](../../../../docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md)).
+
+Das ist ein Grund, warum Global- und Zitations-Abfragen deutlich schneller sind als die
 Chunk-Modi: Sie brauchen den Vektorraum gar nicht.
 
 ### Die Score-Felder

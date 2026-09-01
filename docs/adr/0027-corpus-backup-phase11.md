@@ -146,3 +146,10 @@ eine zweite überschreibende Operation. Der Weg wird stattdessen in
   (Größenordnung Minuten), bevor gesucht werden kann.
 - **Folgeentscheidungen:** keine. Der Punkt berührt weder ein Schema noch einen Contract; es gibt
   **keinen** Re-Ingest und keine Änderung an einem Werkzeug.
+
+> **Nachtrag (2026-09-01, Phase 15 / G4):** `SOURCE_FILES` trägt zusätzlich
+> `metadata/curation.json` – das dorthin überführte, einzige menschliche Relevanzurteil ist
+> genauso wenig rekonstruierbar wie `paper_metadata.json` und gehört damit in denselben Umfang
+> ([ADR 0034](0034-decommission-uebersicht-and-inflow-stop-rule-phase15.md)). `Übersicht.md`
+> bleibt im Sicherungsumfang, obwohl sie ihre Rolle als aktive Senke verloren hat – als
+> historischer Stand trägt sie weiterhin Kontext, den keine andere Quelle hält.

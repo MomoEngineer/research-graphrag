@@ -22,10 +22,14 @@ bis dahin ungenutzt in einer Markdown-Tabelle.
 | `parse_curated` | Funktion | Übersichtstext → Einträge je Dateiname |
 | `load_curated` | Funktion | Dateipfad-Einstieg (fehlende Datei ⇒ leer) |
 | `parse_identifier` | Funktion | Zelle → `(doi, arxiv_id, url)` |
-| `column_index` | Funktion | Spaltenindex über den Anfang der Kopfzelle |
 | `records_from_curated` | Funktion | Einträge → `MetadataRecord` der Herkunft `curated` |
 | `CuratedEntry` | Dataclass | eine kuratierte Zeile in maschinenlesbarer Form |
 | `EXTERNAL_COLUMN_LABEL` / `NAME_COLUMN_LABEL` / `ARXIV_DOI_PREFIX` | Konstanten | Spaltenkennungen und arXiv-DOI-Präfix |
+
+> `column_index` (Spaltenindex über den Anfang der Kopfzelle) lebt seit Phase 15 / G4 in
+> `overview.drafts` und wird hier nur noch **importiert** – auch `overview.curation` (Themenfokus/
+> Relevanz/SRQ-Zuordnung) braucht dieselbe Kopfzellen-Suche, eine dritte Implementierung wäre eine
+> Fehlerquelle gewesen.
 
 ## 3. Ablauf
 

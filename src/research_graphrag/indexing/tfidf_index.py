@@ -1,32 +1,41 @@
 """Lexikalischer Chunk-Index über SQLite (Offline-Hybrid, Option B).
 
-Die **SQLite-Datei ist die Source of Truth** (Papers + Chunks). Die Bewertungsräume werden
-beim Laden **deterministisch aus den gespeicherten Chunk-Texten rekonstruiert**
-(``scikit-learn``) – es werden bewusst keine sklearn/scipy-Objekte serialisiert
-(kein pickle, keine Versions-Kopplung). Grundsatz:
-docs/adr/0005-graphrag-index-backend-open.md.
+Die **SQLite-Datei ist die Source of Truth** (Papers + Chunks). Seit Phase 15 / G2 wird
+zusätzlich der **fertig tokenisierte Zustand** (Vokabular + Zähl-Matrix) additiv persistiert –
+das sind reine Zahlen (kein `pickle`, keine Bindung an eine `scikit-learn`-Version), aus denen
+`TfidfTransformer` und BM25 beim Laden deterministisch **denselben** Raum rekonstruieren, den ein
+frischer `CountVectorizer`-Fit über dieselben Texte ergäbe – nur ohne die teure Tokenisierung.
+Grundsatz und Präzisierung: docs/adr/0005-graphrag-index-backend-open.md,
+docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md.
 
-Über **einer** Tokenisierung (``CountVectorizer``) stehen zwei Wertungen: der bisherige
-**TF-IDF-Kosinus** (via ``TfidfTransformer`` – dieselbe Pipeline, die ``TfidfVectorizer``
-intern bildet) und die handimplementierte **BM25**-Wertung
-(:mod:`research_graphrag.indexing.bm25`). Beide werden per Reciprocal Rank Fusion
-(:mod:`research_graphrag.indexing.fusion`) zur Standard-Wertung ``hybrid`` verbunden; siehe
-docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md. Der Klassenname :class:`TfidfIndex` bleibt
-aus Gründen der Stabilität bestehen (er ist in Spezifikationen und älteren ADRs referenziert).
+Über **einer** Tokenisierung stehen zwei Wertungen: der bisherige **TF-IDF-Kosinus** (via
+``TfidfTransformer`` – dieselbe Pipeline, die ``TfidfVectorizer`` intern bildet) und die
+handimplementierte **BM25**-Wertung (:mod:`research_graphrag.indexing.bm25`). Beide werden per
+Reciprocal Rank Fusion (:mod:`research_graphrag.indexing.fusion`) zur Standard-Wertung ``hybrid``
+verbunden; siehe docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md. Der Klassenname
+:class:`TfidfIndex` bleibt aus Gründen der Stabilität bestehen (er ist in Spezifikationen und
+älteren ADRs referenziert).
 
 Determinismus: Vektorisierer und Gewichte sind bei gleicher Eingabe/Konfiguration deterministisch;
-Ties werden über die ``chunk_id`` stabil gebrochen.
+Ties werden über die ``chunk_id`` stabil gebrochen. ``TfidfIndex.load`` cacht das Ergebnis
+**pro Prozess**, ungültig gemacht über den **Zustand der Datei** (Größe + Änderungszeit), nie
+über eine Zeitspanne – ein neu gebauter Index wirkt dadurch weiterhin ohne Neustart des
+MCP-Servers (On-Read-Frische, docs/adr/0010-drop-in-workflow-and-qa-phase6.md).
 """
 
 from __future__ import annotations
 
 import json
 import sqlite3
-from collections.abc import Mapping, Sequence
+import threading
+import warnings
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
+import numpy as np
+import scipy.sparse as sp
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.metrics.pairwise import linear_kernel
 
@@ -44,8 +53,15 @@ DEFAULT_SCORING: Scoring = "hybrid"
 
 _SCORINGS: frozenset[str] = frozenset(("hybrid", "tfidf", "bm25"))
 
-SCHEMA_VERSION = "0.5.0"
-"""Version des Index-Schemas. ``0.4.0 -> 0.5.0``: ``papers`` um ``document_kind`` erweitert –
+_CSR_DTYPE = np.int64
+"""Fester Speichertyp der persistierten Zähl-Matrix (versionsunabhängig von scikit-learn/scipy)."""
+
+SCHEMA_VERSION = "0.6.0"
+"""Version des Index-Schemas. ``0.5.0 -> 0.6.0``: neue Tabelle ``tfidf_state`` – Vokabular und
+Zähl-Matrix (CSR) werden beim Bau **einmal** tokenisiert und persistiert, statt bei **jedem**
+Laden aus den Chunk-Texten neu gefittet zu werden (Phase 15 / G2,
+docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md). ``0.4.0 -> 0.5.0``:
+``papers`` um ``document_kind`` erweitert –
 ein Referenz-Eintrag ohne Volltext ist eine **Eigenschaft des Dokuments**, kein Qualitäts-Flag
 (siehe docs/adr/0030-reference-entries-in-corpus-phase13.md). ``0.3.0 -> 0.4.0``: ``chunks`` um
 ``page_end`` erweitert – die
@@ -76,6 +92,15 @@ CREATE TABLE chunks (
     section_title TEXT NOT NULL DEFAULT '',
     row_index     INTEGER NOT NULL,
     FOREIGN KEY (paper_id) REFERENCES papers (paper_id)
+);
+CREATE TABLE tfidf_state (
+    id           INTEGER PRIMARY KEY CHECK (id = 0),
+    n_docs       INTEGER NOT NULL,
+    n_features   INTEGER NOT NULL,
+    vocabulary   TEXT NOT NULL,
+    counts_data    BLOB NOT NULL,
+    counts_indices BLOB NOT NULL,
+    counts_indptr  BLOB NOT NULL
 );
 """
 
@@ -117,12 +142,17 @@ class Hit:
 
 @dataclass(frozen=True)
 class _ChunkRef:
-    """Interne Chunk-Referenz inkl. Provenienz (Reihenfolge = TF-IDF-Zeile)."""
+    """Interne Chunk-Referenz inkl. Provenienz (Reihenfolge = TF-IDF-Zeile).
+
+    Trägt bewusst **keinen** Chunk-Text: Für die Wertung genügen Kennungen und Gewichte: Der
+    Text wird erst für die tatsächlichen Top-*k*-Treffer nachgeladen (Phase 15 / G2) – bei
+    Tausenden von Chunks wäre das Halten aller Texte im Speicher der größte, aber am wenigsten
+    genutzte Speicheranteil.
+    """
 
     chunk_id: str
     paper_id: str
     page_number: int
-    text: str
     source_uri: str
     section_title: str = ""
     page_end: int = 0
@@ -139,14 +169,17 @@ def _snippet(text: str, limit: int = 200) -> str:
     return collapsed[: limit - 1].rstrip() + "…"
 
 
-def _hit(ref: _ChunkRef, score: float, *, score_tfidf: float = 0.0, score_bm25: float = 0.0) -> Hit:
-    """Bildet eine interne Chunk-Referenz und ihre Scores auf einen :class:`Hit` ab."""
+def _hit(
+    ref: _ChunkRef, score: float, text: str, *, score_tfidf: float = 0.0, score_bm25: float = 0.0
+) -> Hit:
+    """Bildet eine interne Chunk-Referenz, ihren (separat nachgeladenen) Text und ihre Scores
+    auf einen :class:`Hit` ab."""
     return Hit(
         chunk_id=ref.chunk_id,
         paper_id=ref.paper_id,
         page_number=ref.page_number,
         score=score,
-        snippet=_snippet(ref.text),
+        snippet=_snippet(text),
         source_uri=ref.source_uri,
         section_title=ref.section_title,
         page_end=ref.page_end,
@@ -211,8 +244,36 @@ def _load_citation_data(
     return data
 
 
+def _serialize_counts(counts: Any) -> tuple[bytes, bytes, bytes]:
+    """Serialisiert eine Zähl-Matrix als CSR-Rohdaten (fester Speichertyp, :data:`_CSR_DTYPE`)."""
+    csr = counts.tocsr()
+    return (
+        csr.data.astype(_CSR_DTYPE).tobytes(),
+        csr.indices.astype(_CSR_DTYPE).tobytes(),
+        csr.indptr.astype(_CSR_DTYPE).tobytes(),
+    )
+
+
+def _deserialize_counts(
+    data: bytes, indices: bytes, indptr: bytes, n_docs: int, n_features: int
+) -> Any:
+    """Rekonstruiert die CSR-Zähl-Matrix bit-genau aus den gespeicherten Rohdaten."""
+    return sp.csr_matrix(
+        (
+            np.frombuffer(data, dtype=_CSR_DTYPE),
+            np.frombuffer(indices, dtype=_CSR_DTYPE),
+            np.frombuffer(indptr, dtype=_CSR_DTYPE),
+        ),
+        shape=(n_docs, n_features),
+    )
+
+
 def build_index(papers: Sequence[CanonicalPaper], db_path: str | Path) -> int:
     """Baut den Index (voller Re-Index) aus den nicht-leeren Chunks der Papers.
+
+    Tokenisiert die Chunk-Texte **einmal** (``CountVectorizer``) und persistiert Vokabular und
+    Zähl-Matrix additiv (``tfidf_state``) – ``TfidfIndex.load`` muss sie danach nur noch
+    deserialisieren statt neu zu fitten (Phase 15 / G2).
 
     Args:
         papers: Extrahierte Papers (siehe :mod:`research_graphrag.extraction.pdf`).
@@ -233,6 +294,11 @@ def build_index(papers: Sequence[CanonicalPaper], db_path: str | Path) -> int:
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists():
         path.unlink()  # voller Re-Index (Standard, siehe Roadmap.md)
+
+    vectorizer = CountVectorizer()
+    counts = vectorizer.fit_transform([chunk.text for chunk, _paper in indexable])
+    vocabulary = {term: int(index) for term, index in vectorizer.vocabulary_.items()}
+    counts_data, counts_indices, counts_indptr = _serialize_counts(counts)
 
     connection = sqlite3.connect(str(path))
     try:
@@ -278,11 +344,30 @@ def build_index(papers: Sequence[CanonicalPaper], db_path: str | Path) -> int:
                     row_index,
                 ),
             )
+        connection.execute(
+            "INSERT INTO tfidf_state "
+            "(id, n_docs, n_features, vocabulary, counts_data, counts_indices, counts_indptr) "
+            "VALUES (0, ?, ?, ?, ?, ?, ?)",
+            (
+                counts.shape[0],
+                counts.shape[1],
+                json.dumps(vocabulary, ensure_ascii=False),
+                counts_data,
+                counts_indices,
+                counts_indptr,
+            ),
+        )
         connection.commit()
     finally:
         connection.close()
 
     return len(indexable)
+
+
+_CACHE_LOCK = threading.Lock()
+_CACHE: dict[str, tuple[int, int, TfidfIndex]] = {}
+"""Prozess-Cache: aufgelöster Pfad -> ((mtime_ns, Größe), Index). Ungültig über den Dateizustand,
+nie über eine Zeitspanne (Phase 15 / G2, Weg C)."""
 
 
 class TfidfIndex:
@@ -295,12 +380,14 @@ class TfidfIndex:
         transformer: Any,
         matrix: Any,
         bm25_weights: Any,
+        db_path: str,
     ) -> None:
         self._refs = refs
         self._vectorizer = vectorizer
         self._transformer = transformer
         self._matrix = matrix
         self._bm25_weights = bm25_weights
+        self._db_path = db_path
 
     @property
     def size(self) -> int:
@@ -309,52 +396,102 @@ class TfidfIndex:
 
     @classmethod
     def load(cls, db_path: str | Path) -> TfidfIndex:
-        """Lädt den Index aus SQLite und rekonstruiert beide Bewertungsräume.
+        """Lädt den Index, sofern nötig – sonst liefert der Prozess-Cache dasselbe Objekt.
 
-        Aus **einem** ``CountVectorizer``-Fit entstehen die TF-IDF-Matrix (über
-        ``TfidfTransformer`` – identisch zum früheren ``TfidfVectorizer``) und die
-        BM25-Gewichte. Beide teilen damit Vokabular und Tokenisierung.
-
-        Raises:
-            DomainError: ``not_found`` wenn die Index-Datei fehlt; ``constraint_violation``
-                wenn der Index keine Chunks enthält (siehe docs/error-model.md).
+        Der Cache ist über den **Dateizustand** (Größe + Änderungszeit) ungültig gemacht, nie
+        über eine Zeitspanne: Ein neu gebauter Index (z. B. nach ``ingest``, atomarer Swap via
+        ``os.replace``) wirkt beim nächsten Aufruf sofort, ohne Neustart (Phase 15 / G2, Weg C;
+        docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md).
         """
         path = Path(db_path)
         if not path.is_file():
             raise DomainError(ErrorCode.NOT_FOUND, f"Index nicht gefunden: {path}")
 
+        resolved = str(path.resolve())
+        stat = path.stat()
+        with _CACHE_LOCK:
+            cached = _CACHE.get(resolved)
+            if cached is not None and cached[0] == stat.st_mtime_ns and cached[1] == stat.st_size:
+                return cached[2]
+
+        index = cls._build_from_db(path, resolved)
+        with _CACHE_LOCK:
+            _CACHE[resolved] = (stat.st_mtime_ns, stat.st_size, index)
+        return index
+
+    @classmethod
+    def _build_from_db(cls, path: Path, resolved: str) -> TfidfIndex:
+        """Baut ein :class:`TfidfIndex`-Objekt aus der persistierten Vokabular-/Zähl-Matrix.
+
+        Aus **einem** ``CountVectorizer``-Vokabular entstehen die TF-IDF-Matrix (über
+        ``TfidfTransformer`` – identisch zum früheren ``TfidfVectorizer``) und die
+        BM25-Gewichte. Beide teilen damit Vokabular und Tokenisierung. Die Chunk-Texte selbst
+        werden **nicht** geladen (siehe :class:`_ChunkRef`) – nur die für Wertung und
+        Provenienz nötigen Spalten.
+
+        Raises:
+            DomainError: ``constraint_violation`` wenn der Index keine Chunks oder keinen
+                persistierten Vokabular-Zustand enthält (siehe docs/error-model.md).
+        """
         connection = sqlite3.connect(str(path))
         try:
             rows = connection.execute(
-                "SELECT c.chunk_id, c.paper_id, c.page_number, c.text, p.source_uri, "
+                "SELECT c.chunk_id, c.paper_id, c.page_number, p.source_uri, "
                 "c.section_title, c.page_end, p.document_kind "
                 "FROM chunks c JOIN papers p ON p.paper_id = c.paper_id "
                 "ORDER BY c.row_index"
             ).fetchall()
             citation_data = _load_citation_data(connection)
+            has_state_table = connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'tfidf_state'"
+            ).fetchone()
+            state_row = (
+                connection.execute(
+                    "SELECT n_docs, n_features, vocabulary, counts_data, counts_indices, "
+                    "counts_indptr FROM tfidf_state WHERE id = 0"
+                ).fetchone()
+                if has_state_table
+                else None
+            )
         finally:
             connection.close()
 
         if not rows:
             raise DomainError(ErrorCode.CONSTRAINT_VIOLATION, "Index enthält keine Chunks.")
+        if state_row is None:
+            raise DomainError(
+                ErrorCode.CONSTRAINT_VIOLATION,
+                "Index enthält keinen tokenisierten Zustand (voller Re-Index nötig).",
+            )
 
         refs = tuple(
             _ChunkRef(
                 chunk_id=str(row[0]),
                 paper_id=str(row[1]),
                 page_number=int(row[2]),
-                text=str(row[3]),
-                source_uri=str(row[4]),
-                section_title=str(row[5]),
-                page_end=int(row[6]),
+                source_uri=str(row[3]),
+                section_title=str(row[4]),
+                page_end=int(row[5]),
                 identifiers=citation_data.get(str(row[1]), _NO_CITATION_DATA)[0],
                 citation_key=citation_data.get(str(row[1]), _NO_CITATION_DATA)[1],
-                document_kind=str(row[7]),
+                document_kind=str(row[6]),
             )
             for row in rows
         )
-        vectorizer = CountVectorizer()
-        counts = vectorizer.fit_transform([ref.text for ref in refs])
+
+        n_docs, n_features, vocabulary_json, counts_data, counts_indices, counts_indptr = state_row
+        vocabulary = json.loads(vocabulary_json)
+        # Das Vokabular stammt aus einem regulären Fit (siehe build_index) und ist dadurch bereits
+        # vollständig normalisiert; sklearn warnt bei vorgegebenem Vokabular dennoch pauschal auf
+        # Unicode-Einzelfälle, die vom Vergleich mit .lower() nicht erfasst werden (kein Bug,
+        # keine abweichenden Ergebnisse – siehe Byte-Identitätsnachweis in Roadmap.md, Phase 15/G2).
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            vectorizer = CountVectorizer(vocabulary=vocabulary)
+            vectorizer.fit([])  # finalisiert den Fit-Zustand, ohne das Vokabular zu verändern
+        counts = _deserialize_counts(
+            counts_data, counts_indices, counts_indptr, int(n_docs), int(n_features)
+        )
         transformer = TfidfTransformer()
         matrix = transformer.fit_transform(counts)
         return cls(
@@ -363,7 +500,23 @@ class TfidfIndex:
             transformer=transformer,
             matrix=matrix,
             bm25_weights=bm25.build_weights(counts),
+            db_path=resolved,
         )
+
+    def _fetch_texts(self, chunk_ids: Iterable[str]) -> dict[str, str]:
+        """Lädt die Texte der übergebenen Chunk-IDs nach (nur für die endgültigen Treffer)."""
+        ids = list(dict.fromkeys(chunk_ids))
+        if not ids:
+            return {}
+        connection = sqlite3.connect(self._db_path)
+        try:
+            placeholders = ",".join("?" for _ in ids)
+            rows = connection.execute(
+                f"SELECT chunk_id, text FROM chunks WHERE chunk_id IN ({placeholders})", ids
+            ).fetchall()
+        finally:
+            connection.close()
+        return {str(chunk_id): str(text) for chunk_id, text in rows}
 
     def _ranking(self, scores: Any) -> list[int]:
         """Absteigende Rangliste der Zeilen mit positivem Score (Tie-Break ``chunk_id``)."""
@@ -425,21 +578,20 @@ class TfidfIndex:
             ranked = fuse_rankings([self._ranking(tfidf_scores), self._ranking(bm25_scores)])
             order = sorted(ranked, key=lambda i: (-ranked[i], self._refs[i].chunk_id))
 
-        hits: list[Hit] = []
+        selected: list[tuple[_ChunkRef, float, float, float]] = []
         for i in order:
-            if len(hits) >= k:
+            if len(selected) >= k:
                 break
             ref = self._refs[i]
             if paper_ids is not None and ref.paper_id not in paper_ids:
                 continue
-            hits.append(
-                _hit(
-                    ref,
-                    ranked[i],
-                    score_tfidf=float(tfidf_scores[i]),
-                    score_bm25=float(bm25_scores[i]),
-                )
-            )
+            selected.append((ref, ranked[i], float(tfidf_scores[i]), float(bm25_scores[i])))
+
+        texts = self._fetch_texts(ref.chunk_id for ref, *_ in selected)
+        hits = [
+            _hit(ref, score, texts[ref.chunk_id], score_tfidf=score_tfidf, score_bm25=score_bm25)
+            for ref, score, score_tfidf, score_bm25 in selected
+        ]
         return demote_references(hits)
 
     def neighbors_of_chunk(self, chunk_id: str, k: int = 5) -> list[Hit]:
@@ -477,14 +629,17 @@ class TfidfIndex:
             key=lambda i: (-float(scores[i]), self._refs[i].chunk_id),
         )
 
-        hits: list[Hit] = []
+        selected: list[tuple[_ChunkRef, float]] = []
         for i in order:
-            if len(hits) >= k:
+            if len(selected) >= k:
                 break
             if i == seed_row:
                 continue
             score = float(scores[i])
             if score <= 0.0:
                 continue
-            hits.append(_hit(self._refs[i], score, score_tfidf=score))
+            selected.append((self._refs[i], score))
+
+        texts = self._fetch_texts(ref.chunk_id for ref, _score in selected)
+        hits = [_hit(ref, score, texts[ref.chunk_id], score_tfidf=score) for ref, score in selected]
         return demote_references(hits)
