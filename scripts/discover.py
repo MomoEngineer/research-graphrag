@@ -1,15 +1,22 @@
-"""CLI: Online-Kandidatensuche auf Metadatenebene (Phase 9 / S1).
+"""CLI: Online-Kandidatensuche auf Metadatenebene, opt-in Volltext-Download (Phase 9 / S1+S2).
 
 Sucht bei arXiv und OpenAlex nach Literatur zu einer Anfrage **aus dem eigenen Bestand**,
 dedupliziert die Treffer gegen den Korpus und hängt das Ergebnis an
-``data/online_candidates.md`` an. Es werden **keine** Volltexte geladen und keine Dateien in den
-Korpus geschrieben – der Weg dorthin führt ausschließlich über ``new_papers/`` und
+``data/online_candidates.md`` an. Standardmäßig werden **keine** Volltexte geladen und keine
+Dateien in den Korpus geschrieben – der Weg dorthin führt ausschließlich über ``new_papers/`` und
 ``python -m scripts.intake`` (docs/adr/0020-online-candidate-search-phase9.md).
+
+Mit ``--download`` lädt der Lauf **zusätzlich** automatisch, aber nur, wenn ein Kandidat eine
+Lizenz aus der Whitelist (CC0/CC-BY/CC-BY-SA, ausschließlich aus OpenAlex) trägt **und** der
+heruntergeladene Inhalt nachweislich zum Kandidaten gehört; alles andere bleibt ein Link im
+Bericht (docs/adr/0035-fulltext-download-phase9-s2.md). Auch ein Download landet ausschließlich in
+``new_papers/`` – die Übernahme in den Korpus bleibt Aufgabe von ``scripts.intake``.
 
 Aufruf vom Repository-Wurzelverzeichnis:
 
     python -m scripts.discover --community 2
     python -m scripts.discover --seed <paper_id> --seit 2023
+    python -m scripts.discover --community 2 --download
 
 Mit ``--dry-run`` werden nur die gebildeten Anfragen gezeigt – ohne Netzzugriff, ohne Bericht.
 
@@ -23,9 +30,11 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Sequence
+from dataclasses import replace
 from pathlib import Path
 
 from research_graphrag.errors import DomainError
+from research_graphrag.online.download import OUTCOME_DOWNLOADED, describe_outcome, download_all
 from research_graphrag.online.report import DiscoveryReport, append_report
 from research_graphrag.online.search import (
     DEFAULT_TERM_COUNT,
@@ -39,6 +48,7 @@ from research_graphrag.online.transport import create_client
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _DEFAULT_INDEX = _REPO_ROOT / "data" / "index" / "index.sqlite"
 _DEFAULT_DATA = _REPO_ROOT / "data"
+_DEFAULT_INBOX = _REPO_ROOT / "new_papers"
 
 
 def _build_queries(db_path: Path, args: argparse.Namespace) -> list[SearchQuery]:
@@ -67,6 +77,7 @@ def _print_report(report: DiscoveryReport, target: Path) -> None:
         f"[discover] {report.found} Treffer · {len(report.known)} bereits im Korpus · "
         f"{report.dropped_old} vor {report.min_year} · {len(report.fresh)} neu"
     )
+    outcomes = {item.candidate: item for item in report.downloads}
     for candidate in report.fresh:
         identifier = candidate.identifier or "(kein Identifikator)"
         print(f"  · {candidate.title[:88]}")
@@ -74,6 +85,13 @@ def _print_report(report: DiscoveryReport, target: Path) -> None:
             f"     {identifier} · {candidate.year or 'Jahr unbekannt'} · "
             f"{', '.join(candidate.sources)}"
         )
+        outcome = outcomes.get(candidate)
+        if outcome is not None:
+            reason = f" — {outcome.note}" if outcome.note else ""
+            print(f"     Download: {describe_outcome(outcome.outcome)}{reason}")
+    if report.downloads:
+        downloaded = sum(1 for item in report.downloads if item.outcome == OUTCOME_DOWNLOADED)
+        print(f"[discover] Download: {downloaded} von {len(report.downloads)} geladen")
     for note in report.notes:
         print(f"[discover] Hinweis: {note}")
     if report.raw_dir is not None:
@@ -88,7 +106,7 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     parser = argparse.ArgumentParser(
-        description="Online-Kandidatensuche ohne Download (Phase 9 / S1)."
+        description="Online-Kandidatensuche, optional mit Volltext-Download (Phase 9 / S1+S2)."
     )
     parser.add_argument(
         "--community",
@@ -119,6 +137,19 @@ def main() -> int:
         help="Nur die gebildeten Anfragen zeigen – ohne Abfrage und ohne Bericht",
     )
     parser.add_argument("--ohne-rohdaten", action="store_true", help="Rohantworten nicht ablegen")
+    parser.add_argument(
+        "--download",
+        action="store_true",
+        help=(
+            "Lädt frei lizenzierte Volltexte (CC0/CC-BY/CC-BY-SA, nur aus OpenAlex) automatisch "
+            "nach new_papers/ – nie Standard, alles andere bleibt ein Link im Bericht (ADR 0035)"
+        ),
+    )
+    parser.add_argument(
+        "--eingang",
+        default=str(_DEFAULT_INBOX),
+        help="Zielordner für --download (Standard: new_papers/)",
+    )
     parser.add_argument("--index", default=str(_DEFAULT_INDEX), help="Pfad zur Index-SQLite")
     parser.add_argument("--data", default=str(_DEFAULT_DATA), help="Pfad zum Datenverzeichnis")
     args = parser.parse_args()
@@ -145,6 +176,9 @@ def main() -> int:
             min_year=args.seit,
             keep_raw=not args.ohne_rohdaten,
         )
+        if args.download:
+            outcomes = download_all(client, Path(args.eingang), report.fresh)
+            report = replace(report, downloads=outcomes)
         target = append_report(data_path, report)
     except DomainError as exc:
         print(f"[discover] Fehler [{exc.code.value}]: {exc.message}")

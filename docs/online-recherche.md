@@ -5,11 +5,12 @@ Einrichtung über den ersten Lauf bis zu der Frage, wie aus einem Vorschlag ein 
 wird.
 
 > **Abgrenzung.** *Warum* der Modus so gebaut ist, steht in
-> [ADR 0020](adr/0020-online-candidate-search-phase9.md); *wie* er intern arbeitet, in den
-> [Modul-Dokus](../src/research_graphrag/online/doc/search.md); der konzeptionelle Ablauf in
-> [funktionsweise.md](funktionsweise.md). Hier geht es ausschließlich um die **Bedienung**.
-> Die Abschnitte 1–8 beschreiben die **Kandidatensuche**; der zweite Online-Lauf für Paper ohne
-> Volltext steht in [Abschnitt 9](#9-der-zweite-online-lauf-paper-ohne-volltext).
+> [ADR 0020](adr/0020-online-candidate-search-phase9.md) (Kandidatensuche) und
+> [ADR 0035](adr/0035-fulltext-download-phase9-s2.md) (Volltext-Download); *wie* er intern
+> arbeitet, in den [Modul-Dokus](../src/research_graphrag/online/doc/search.md). Hier geht es
+> ausschließlich um die **Bedienung**. Die Abschnitte 1–8 beschreiben die **Kandidatensuche**
+> samt dem opt-in Download (Abschnitt 6); der zweite Online-Lauf für Paper ohne Volltext steht in
+> [Abschnitt 9](#9-der-zweite-online-lauf-paper-ohne-volltext).
 
 ---
 
@@ -17,10 +18,11 @@ wird.
 
 | Er tut | Er tut **nicht** |
 | --- | --- |
-| Bei arXiv und OpenAlex nach Literatur suchen | PDFs herunterladen |
+| Bei arXiv und OpenAlex nach Literatur suchen | Ohne `--download` PDFs herunterladen |
 | Die Anfrage aus dem **eigenen Korpus** ableiten | Frei im Web suchen |
-| Treffer gegen den Korpus abgleichen | Etwas in den Korpus schreiben |
+| Treffer gegen den Korpus abgleichen | Etwas **in den Korpus** schreiben (auch mit `--download` nicht – nur nach `new_papers/`) |
 | Vorschläge in einen Bericht schreiben | Von selbst laufen oder von Copilot aufgerufen werden |
+| Mit `--download` frei lizenzierte Volltexte laden (opt-in, s. Abschnitt 6) | Bezahlschranken umgehen oder ohne Lizenznachweis laden |
 
 Der Modus wird **immer von Hand gestartet**. Er ist bewusst kein MCP-Werkzeug – Netzverkehr soll
 eine beobachtete Handlung bleiben.
@@ -138,6 +140,8 @@ python -m scripts.discover --community 2 --community 9 --seed 6a1ccc0a1fb6841b
 | `--dry-run` | Zeigt nur die gebildeten Anfragen – **ohne** Abfrage und **ohne** Bericht | Lauf wird ausgeführt |
 | `--proxy host:port` | Überschreibt `RESEARCH_GRAPHRAG_PROXY` für diesen Lauf | – |
 | `--ohne-rohdaten` | Legt die Rohantworten nicht ab | Rohantworten werden abgelegt |
+| `--download` | Lädt frei lizenzierte Volltexte automatisch nach `new_papers/` (Abschnitt 6) | aus – nur Bericht |
+| `--eingang` | Zielordner für `--download` | `new_papers/` |
 | `--index` / `--data` | Abweichende Pfade | `data/index/index.sqlite`, `data/` |
 
 **Drei praktische Hinweise:**
@@ -181,7 +185,33 @@ findest du Identifikator, Jahr, Quellen, Lizenz, Volltext-Link, den Abstract-Aus
 
 ## 6. Vom Vorschlag zum Paper im Korpus
 
-Der Modus lädt **nichts** herunter. Der vollständige Weg:
+Standardmäßig lädt der Modus **nichts** herunter. Mit `--download` versucht er es zusätzlich,
+aber nur für Kandidaten mit einer Lizenz aus der Whitelist – alles andere bleibt ein Link
+([ADR 0035](adr/0035-fulltext-download-phase9-s2.md)).
+
+### 6.1 Automatisch (`--download`)
+
+```powershell
+python -m scripts.discover --community 2 --download
+```
+
+Geladen wird **nur**, wenn beides zutrifft:
+
+1. **Lizenz aus der Whitelist** – `public-domain` (CC0), `cc-by` oder `cc-by-sa`, ausschließlich
+   aus OpenAlex. arXiv weist im Feed **nie** eine Lizenz aus (siehe S0-Befund); ein arXiv-Treffer
+   besteht die Whitelist deshalb nur, wenn OpenAlex denselben Kandidaten mit einer Lizenz
+   beigesteuert hat.
+2. **Inhalt passt zum Kandidaten** – mindestens zwei Seiten, und der Titel im PDF stimmt mit dem
+   berichteten Titel überein. Ein falsch verlinktes PDF oder eine Landing-Page wird dadurch
+   verworfen statt übernommen.
+
+Jeder Kandidat trägt im Bericht anschließend eine Download-Zeile, z. B. „Download: geladen —
+2345678 Bytes“ oder „Download: nicht geladen (Lizenz nicht in der Whitelist) — Lizenz
+'cc-by-nc' nicht in der Whitelist“ – auch im Fehlschlag bleiben Identifikator und Link stehen,
+damit der manuelle Weg (6.2) jederzeit offensteht. Geladene Dateien landen unter `--eingang`
+(Standard: `new_papers/`), benannt nach dem Muster `online-<titelwort>-<identifikator>.pdf`.
+
+### 6.2 Manuell (immer möglich, auch ohne `--download`)
 
 1. **Vorschlag prüfen.** Abstract im Bericht lesen; bei Bedarf dem Volltext-Link folgen.
 2. **PDF selbst laden.** Die Lizenz beachten – der Bericht weist sie aus, wenn die Quelle sie
@@ -190,9 +220,13 @@ Der Modus lädt **nichts** herunter. Der vollständige Weg:
 4. **Erst trocken prüfen:** `python -m scripts.intake --dry-run`
 5. **Übernehmen:** `python -m scripts.intake`
 
-Damit greift die reguläre Duplikatprüfung des Korpus-Zuflusses – sie ist die eigentliche
+### 6.3 Gemeinsame Absicherung
+
+Ob automatisch oder von Hand: Der Weg **in den Korpus** führt immer über `new_papers/` und den
+Intake. Damit greift die reguläre Duplikatprüfung des Korpus-Zuflusses – sie ist die eigentliche
 Absicherung gegen Doppelbestand und prüft bitgenau. Die Prüfung im Online-Modus erspart dir nur
-das Herunterladen von Bekanntem.
+das Herunterladen von Bekanntem, und die Inhaltsprüfung aus 6.1 nur das versehentliche Ablegen
+eines falsch zugeordneten PDFs.
 
 > **Wenn ein Paper doch doppelt vorgeschlagen wird:** Ein Korpus-Paper mit sehr kurzem Titel und
 > ohne Identifikator kann der Online-Prüfung entgehen. Der Intake fängt es beim Übernehmen

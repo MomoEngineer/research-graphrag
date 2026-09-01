@@ -83,8 +83,17 @@ class HttpResponse:
 class HttpClient(Protocol):
     """Injizierbarer Port für lesende Einzelabfragen (ADR 0020, Punkt 1)."""
 
-    def get(self, url: str, *, accept: str = "*/*") -> HttpResponse:
-        """Führt genau eine GET-Anfrage aus."""
+    def get(
+        self, url: str, *, accept: str = "*/*", max_bytes: int = MAX_RESPONSE_BYTES
+    ) -> HttpResponse:
+        """Führt genau eine GET-Anfrage aus.
+
+        Args:
+            url: Vollständige ``https``-URL.
+            accept: Wert der ``Accept``-Kopfzeile.
+            max_bytes: Obergrenze der gelesenen Antwort; der Default passt für Metadaten-Anfragen
+                (JSON/Atom), der Volltext-Download (ADR 0035) ruft mit einer größeren Grenze auf.
+        """
         ...
 
 
@@ -141,7 +150,9 @@ class ProxyHttpClient:
         self._timeout = timeout
         self._context = ssl.create_default_context(cafile=certifi.where())
 
-    def get(self, url: str, *, accept: str = "*/*") -> HttpResponse:
+    def get(
+        self, url: str, *, accept: str = "*/*", max_bytes: int = MAX_RESPONSE_BYTES
+    ) -> HttpResponse:
         """Führt genau eine GET-Anfrage aus.
 
         Weiterleitungen wird **nicht** gefolgt; ein 3xx-Status wird unverändert zurückgegeben,
@@ -150,6 +161,7 @@ class ProxyHttpClient:
         Args:
             url: Vollständige ``https``-URL.
             accept: Wert der ``Accept``-Kopfzeile.
+            max_bytes: Obergrenze der gelesenen Antwort (siehe :class:`HttpClient`).
 
         Returns:
             Die gelesene Antwort.
@@ -174,7 +186,7 @@ class ProxyHttpClient:
             with self._context.wrap_socket(sock, server_hostname=host) as tls:
                 tls.settimeout(self._timeout)
                 tls.sendall(request)
-                raw = _read_limited(tls)
+                raw = _read_limited(tls, max_bytes=max_bytes)
         except OSError as exc:
             sock.close()
             raise DomainError(
@@ -346,8 +358,8 @@ def _challenge_of(head: str) -> bytes | None:
     return None
 
 
-def _read_limited(sock: ssl.SSLSocket) -> bytes:
-    """Liest bis zum Verbindungsende, aber höchstens :data:`MAX_RESPONSE_BYTES`."""
+def _read_limited(sock: ssl.SSLSocket, *, max_bytes: int = MAX_RESPONSE_BYTES) -> bytes:
+    """Liest bis zum Verbindungsende, aber höchstens ``max_bytes``."""
     chunks: list[bytes] = []
     total = 0
     while True:
@@ -355,10 +367,10 @@ def _read_limited(sock: ssl.SSLSocket) -> bytes:
         if not data:
             break
         total += len(data)
-        if total > MAX_RESPONSE_BYTES:
+        if total > max_bytes:
             raise DomainError(
                 ErrorCode.CONSTRAINT_VIOLATION,
-                f"Antwort überschreitet {MAX_RESPONSE_BYTES} Bytes und wird verworfen.",
+                f"Antwort überschreitet {max_bytes} Bytes und wird verworfen.",
             )
         chunks.append(data)
     return b"".join(chunks)

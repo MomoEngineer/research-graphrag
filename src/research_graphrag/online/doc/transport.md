@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/online/transport.py` |
 | **Paket** | `online` – Kandidatensuche im Netz |
-| **Phase** | 9 / S1 |
-| **Grundlagen** | [ADR 0020](../../../../docs/adr/0020-online-candidate-search-phase9.md), [ADR 0032](../../../../docs/adr/0032-system-proxy-autodetection.md), [ADR 0004](../../../../docs/adr/0004-llm-bridge-via-mcp-sampling.md) |
+| **Phase** | 9 / S1+S2 |
+| **Grundlagen** | [ADR 0020](../../../../docs/adr/0020-online-candidate-search-phase9.md), [ADR 0032](../../../../docs/adr/0032-system-proxy-autodetection.md), [ADR 0004](../../../../docs/adr/0004-llm-bridge-via-mcp-sampling.md), [ADR 0035](../../../../docs/adr/0035-fulltext-download-phase9-s2.md) |
 
 ---
 
@@ -22,7 +22,7 @@ Die Beschränkung auf ein Modul ist die eigentliche Entwurfsentscheidung: Alles 
 
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
-| `HttpClient` | Protocol | Der Port: `get(url, accept) -> HttpResponse` |
+| `HttpClient` | Protocol | Der Port: `get(url, accept, max_bytes) -> HttpResponse` |
 | `ProxyHttpClient` | Klasse | Einzige Implementierung – direkt oder über einen Proxy |
 | `HttpResponse` | Dataclass | Status, Kopfzeilen, Rumpf (bereits entchunkt) |
 | `create_client` | Funktion | Erzeugt den Client; wählt den Endpunkt zweistufig |
@@ -80,8 +80,10 @@ Verifikation wird an keiner Stelle abgeschaltet.
    schließt `file://` und Klartextverbindungen aus.
 2. **Keine Weiterleitungen.** Ein 3xx-Status wird unverändert zurückgegeben, statt einem
    fremdbestimmten Ziel zu folgen.
-3. **Größengrenze.** Nach `MAX_RESPONSE_BYTES` wird abgebrochen, statt eine beliebig große
-   Antwort in den Speicher zu lesen.
+3. **Größengrenze.** Nach `max_bytes` (Default `MAX_RESPONSE_BYTES`) wird abgebrochen, statt eine
+   beliebig große Antwort in den Speicher zu lesen. Der Volltext-Download aus
+   [`download`](download.md) ruft mit einer eigenen, größeren Grenze auf (`MAX_DOWNLOAD_BYTES`,
+   ADR 0035) – Metadaten-Anfragen (JSON/Atom) bleiben beim engen Default.
 
 ## 4. Zusammenspiel
 

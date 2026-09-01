@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/online/report.py` |
 | **Paket** | `online` – Kandidatensuche im Netz |
-| **Phase** | 9 / S1 |
-| **Grundlagen** | [ADR 0020](../../../../docs/adr/0020-online-candidate-search-phase9.md), [ADR 0010](../../../../docs/adr/0010-drop-in-workflow-and-qa-phase6.md) |
+| **Phase** | 9 / S1+S2 |
+| **Grundlagen** | [ADR 0020](../../../../docs/adr/0020-online-candidate-search-phase9.md), [ADR 0010](../../../../docs/adr/0010-drop-in-workflow-and-qa-phase6.md), [ADR 0035](../../../../docs/adr/0035-fulltext-download-phase9-s2.md) |
 
 ---
 
@@ -18,6 +18,11 @@ darf seine Struktur nicht verändern.
 Über `append_section` teilen sich drei Vorgänge denselben Anhänge-Mechanismus: die
 Kandidatensuche (`data/online_candidates.md`), die Metadaten-Auflösung (`data/metadata_log.md`)
 und die Referenz-Auflösung (`data/references_log.md`, Phase 13 / R1).
+
+Mit `--download` (Phase 9 / S2) trägt `DiscoveryReport.downloads` zusätzlich ein Ergebnis je
+frischem Kandidaten aus [`download`](download.md); `render_report` zeigt es als eigene Zeile,
+Identifikator und Link bleiben davon unabhängig immer sichtbar. Ohne das Flag bleibt
+`downloads` leer und der Bericht identisch zu S1.
 
 ## 2. Öffentliche Schnittstelle
 
@@ -90,7 +95,9 @@ sie ließe sich die Dedup-Entscheidung nicht nachprüfen.
 
 Aufgerufen von `scripts/discover.py` nach einem Lauf aus [`search`](search.md); verarbeitet
 `Candidate` und `KnownCandidate` aus [`candidates`](candidates.md) sowie `SourceResult` aus
-[`sources`](sources.md). Schreibt ausschließlich unterhalb von `data/`.
+[`sources`](sources.md). Mit `--download` zusätzlich `DownloadOutcome` aus
+[`download`](download.md) (nur die Bezeichnung über `describe_outcome`, keine eigene Download-
+Logik). Schreibt ausschließlich unterhalb von `data/`.
 
 ## 5. Fehler und Grenzfälle
 

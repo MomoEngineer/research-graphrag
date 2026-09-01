@@ -183,6 +183,25 @@ def test_read_limited_rejects_oversized_response() -> None:
     assert excinfo.value.code is ErrorCode.CONSTRAINT_VIOLATION
 
 
+def test_read_limited_honors_a_custom_max_bytes() -> None:
+    """Der Download-Pfad (ADR 0035) ruft mit einer eigenen, größeren Grenze auf – hier geprüft
+    am umgekehrten Fall: eine **kleinere** Grenze greift ebenso."""
+    sock = cast(Any, _FakeSocket(b"x" * 50, chunk=50))
+
+    with pytest.raises(DomainError) as excinfo:
+        _read_limited(sock, max_bytes=10)
+
+    assert excinfo.value.code is ErrorCode.CONSTRAINT_VIOLATION
+
+
+def test_read_limited_default_matches_max_response_bytes() -> None:
+    """Ohne Angabe gilt weiterhin die bisherige Grenze – bestehende Aufrufer bleiben unverändert."""
+    payload = b"x" * (MAX_RESPONSE_BYTES - 1)
+    sock = cast(Any, _FakeSocket(payload, chunk=len(payload)))
+
+    assert _read_limited(sock) == payload
+
+
 @pytest.mark.parametrize("proxy", ["kein-port", "host:", ":8080", "host:8080/pfad", "host 8080"])
 def test_client_rejects_malformed_proxy(proxy: str) -> None:
     """Eine unbrauchbare Proxy-Angabe wird sofort gemeldet, nicht erst beim Verbinden."""

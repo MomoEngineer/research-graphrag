@@ -24,10 +24,18 @@
 > Deshalb liegt der gesamte Netzzugang hinter einem **injizierbaren Port**; alles andere ist
 > netzfrei und offline getestet. `python -m scripts.discover` sucht bei **arXiv und OpenAlex** zu
 > einer Anfrage aus dem eigenen Bestand, dedupliziert mit der **bestehenden** Intake-Logik und
-> schreibt einen append-only Bericht – **kein Download, kein MCP-Werkzeug**
-> ([ADR 0020](docs/adr/0020-online-candidate-search-phase9.md)). **S2 (Volltext-Download) bleibt
-> zurückgestellt**, weil arXiv im Feed keine Lizenz ausweist und OpenAlex nur bei 15 von 51
-> gemessenen Treffern – für eine belastbare Whitelist zu wenig. Aus **Phase 10** sind **V1**, **V2**
+> schreibt einen append-only Bericht – **kein MCP-Werkzeug**
+> ([ADR 0020](docs/adr/0020-online-candidate-search-phase9.md)). **Nachtrag (2026-09-01): S2
+> (Volltext-Download) ist umgesetzt.** Die ursprüngliche Zurückstellung – arXiv weist im Feed keine
+> Lizenz aus, OpenAlex nur bei 15 von 51 gemessenen Treffern, zu wenig für eine belastbare
+> Whitelist – wurde nicht durch eine bessere Lizenzquelle aufgelöst, sondern durch eine angepasste
+> Anforderung: Fehlt eine Lizenz aus der (jetzt engeren) Whitelist CC0/CC-BY/CC-BY-SA, ausschließlich
+> aus OpenAlex, bleibt der Kandidat ein Link statt eines Download-Versuchs – das ist der gewollte
+> Regelfall, nicht mehr ein Blocker. Neu ist eine Inhaltsprüfung, die vor dem Schreiben verifiziert,
+> dass der heruntergeladene Volltext zum Kandidaten gehört (derselbe Titel-Match-Mechanismus wie im
+> Intake), und ein optionaler `max_bytes`-Parameter am Transport-Port (100 MiB statt der
+> 5-MB-Metadatengrenze). `python -m scripts.discover --download` bleibt opt-in, nie Standard
+> ([ADR 0035](docs/adr/0035-fulltext-download-phase9-s2.md)). Aus **Phase 10** sind **V1**, **V2**
 > und **V3** umgesetzt: Die Local Search hängt nicht mehr an **einem** Seed, sondern an den **Top-5**
 > der Chunk-Wertung, deren Chunk-Nachbarschaften per Rang-Fusion zusammengeführt werden – Hit
 > 0,618 → **0,912**, MRR 0,532 → **0,654** bei **0 Regressionen** und unberührten übrigen Modi

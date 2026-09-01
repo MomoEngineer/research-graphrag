@@ -16,6 +16,11 @@ als Klartext mit ``http(s)``-Schema – nie als Markdown-Link mit fremdbestimmte
 Kandidatensuche (``data/online_candidates.md``), die Metadaten-Auflösung
 (``data/metadata_log.md``, docs/adr/0026-online-metadata-resolution.md) und die Referenz-Auflösung
 (``data/references_log.md``, docs/adr/0029-reference-stub-resolution-phase13.md).
+
+Mit ``--download`` (Phase 9 / S2, docs/adr/0035-fulltext-download-phase9-s2.md) trägt jeder frische
+Kandidat zusätzlich einen Download-Status; Identifikator und Link bleiben davon unabhängig immer
+sichtbar. Ohne das Flag ist :attr:`DiscoveryReport.downloads` leer und der Bericht unverändert
+gegenüber S1.
 """
 
 from __future__ import annotations
@@ -26,6 +31,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .candidates import Candidate, KnownCandidate
+from .download import DownloadOutcome, describe_outcome
 from .metadata import Resolution
 from .references import ACTION_SKIPPED, ACTION_WRITTEN, ReferenceOutcome
 from .sources import SearchQuery, SourceResult
@@ -97,6 +103,8 @@ class DiscoveryReport:
         dropped_old: Anzahl der wegen des Aktualitätsfilters verworfenen Kandidaten.
         min_year: Angewandte Jahresgrenze.
         raw_dir: Ablageort der Rohantworten, falls geschrieben.
+        downloads: Download-Versuche je frischem Kandidaten (ADR 0035); leer, wenn ``--download``
+            nicht gesetzt war – dann ändert sich am Bericht nichts gegenüber S1.
     """
 
     timestamp: str
@@ -109,6 +117,7 @@ class DiscoveryReport:
     min_year: int
     raw_dir: Path | None = None
     notes: tuple[str, ...] = field(default_factory=tuple)
+    downloads: tuple[DownloadOutcome, ...] = field(default_factory=tuple)
 
 
 def escape_markdown(text: str, *, limit: int) -> str:
@@ -170,10 +179,11 @@ def render_report(report: DiscoveryReport) -> list[str]:
         lines.append(f"- Hinweis: {escape_markdown(note, limit=300)}")
     lines.append("")
 
+    outcomes = {item.candidate: item for item in report.downloads}
     if report.fresh:
         lines += ["### Neue Kandidaten", ""]
     for number, candidate in enumerate(report.fresh, start=1):
-        lines += _render_candidate(number, candidate)
+        lines += _render_candidate(number, candidate, outcomes.get(candidate))
     if report.known:
         lines += ["### Bereits im Korpus (nicht vorgeschlagen)", ""]
         for item in report.known:
@@ -197,8 +207,10 @@ def _relative_raw_dir(raw_dir: Path) -> str:
     return "/".join(parts) if parts else raw_dir.name
 
 
-def _render_candidate(number: int, candidate: Candidate) -> list[str]:
-    """Rendert einen einzelnen Kandidaten samt Begründung."""
+def _render_candidate(
+    number: int, candidate: Candidate, download: DownloadOutcome | None
+) -> list[str]:
+    """Rendert einen Kandidaten samt Begründung und – sofern vorhanden – Download-Status."""
     identifier = escape_markdown(candidate.identifier, limit=200) or "(keiner)"
     year = str(candidate.year) if candidate.year else "unbekannt"
     url = safe_url(candidate.url)
@@ -211,8 +223,12 @@ def _render_candidate(number: int, candidate: Candidate) -> list[str]:
         f"- Volltext: {f'`{url}`' if url else '(keiner ausgewiesen)'}",
         f"- Vorgeschlagen wegen `{candidate.query_id}`: "
         f"{escape_markdown(candidate.reason, limit=MAX_TITLE_CHARS)}",
-        "",
     ]
+    if download is not None:
+        label = describe_outcome(download.outcome)
+        note = f" — {escape_markdown(download.note, limit=200)}" if download.note else ""
+        lines.append(f"- Download: {label}{note}")
+    lines.append("")
     abstract = escape_markdown(candidate.abstract, limit=MAX_ABSTRACT_CHARS)
     lines += [f"> {abstract}" if abstract else "> (kein Abstract)", ""]
     return lines

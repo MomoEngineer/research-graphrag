@@ -12,6 +12,11 @@ import pytest
 
 from research_graphrag.bibliography.model import ORIGIN_RESOLVED, MetadataRecord
 from research_graphrag.online.candidates import SOURCE_ARXIV, Candidate, KnownCandidate
+from research_graphrag.online.download import (
+    OUTCOME_DOWNLOADED,
+    OUTCOME_NO_LICENSE,
+    DownloadOutcome,
+)
 from research_graphrag.online.metadata import MATCH_DOI, Resolution, ResolutionTarget
 from research_graphrag.online.report import (
     MAX_ABSTRACT_CHARS,
@@ -149,6 +154,33 @@ def test_render_documents_known_candidates_with_evidence() -> None:
 
     assert "Bereits im Korpus" in text
     assert "Beleg über identifier: `arxiv:2501.00001`" in text
+
+
+def test_render_shows_the_download_status_of_each_candidate() -> None:
+    """Mit ``--download`` trägt jeder frische Kandidat einen Status – Beleg für ADR 0035."""
+    candidate = _candidate()
+    outcome = DownloadOutcome(candidate, OUTCOME_DOWNLOADED, "123456 Bytes")
+
+    text = "\n".join(render_report(_report(fresh=(candidate,), downloads=(outcome,))))
+
+    assert "Download: geladen — 123456 Bytes" in text
+
+
+def test_render_explains_why_a_candidate_was_not_downloaded() -> None:
+    """Der Grund steht im Klartext – nicht nur „nicht geladen"."""
+    candidate = _candidate(license="")
+    outcome = DownloadOutcome(candidate, OUTCOME_NO_LICENSE, "keine Lizenz ausgewiesen")
+
+    text = "\n".join(render_report(_report(fresh=(candidate,), downloads=(outcome,))))
+
+    assert "Download: nicht geladen (keine Lizenz ausgewiesen) — keine Lizenz ausgewiesen" in text
+
+
+def test_render_without_download_flag_shows_no_status_line() -> None:
+    """Ohne ``--download`` ändert sich am Bericht gegenüber S1 nichts."""
+    text = "\n".join(render_report(_report()))
+
+    assert "Download:" not in text
 
 
 def test_render_reports_empty_run() -> None:

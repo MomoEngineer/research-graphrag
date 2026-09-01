@@ -11,9 +11,12 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 > **Kein aktiver Plan derzeit:** Phase 15 (Skalierung, [Statusblock](docs/roadmap-historie.md#g0--alles-hinterfragen-und-messen-zwingend-zuerst))
 > und Phase 14 (Referenz-Ernte, [Statusblock](docs/roadmap-historie.md#e0--alles-hinterfragen-und-messen-zwingend-zuerst))
 > sind beide abgeschlossen; Phase 14 **entfällt in der geplanten Form** – E0 fand einen
-> billigeren, gleichwertigen Weg über die bestehende Kette und führte ihn selbst vor. Offen
-> bleiben nur zwei unabhängige Restpunkte ohne Reihenfolgekonflikt: [S2](#s2--volltext-holen-opt-in-lizenz-whitelist)
-> (Phase 9, zurückgestellt) und [V4](#v4--global-community-ranking-über-die-mitglieds-chunks-erst-messen-dann-entscheiden)
+> billigeren, gleichwertigen Weg über die bestehende Kette und führte ihn selbst vor. **Phase 9 /
+> S2 ist jetzt ebenfalls umgesetzt** ([ADR 0035](docs/adr/0035-fulltext-download-phase9-s2.md)) –
+> die ursprüngliche Zurückstellung wurde nicht durch eine neue Messung aufgelöst, sondern durch
+> eine an die Datenlage angepasste Anforderung: Fehlt eine Lizenz aus der Whitelist, bleibt der
+> Kandidat ein Link statt eines Download-Versuchs, das ist der gewollte Regelfall. Offen bleibt nur
+> noch **ein** Restpunkt: [V4](#v4--global-community-ranking-über-die-mitglieds-chunks-erst-messen-dann-entscheiden)
 > (Phase 10, nachgelagert) – siehe die Tabelle unten.
 
 ---
@@ -50,7 +53,7 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 | **7 / A7** – Router-Härtung         | Match-Art je Signal,`basic` als Rückfallebene, ausgewiesene Konfidenz und Signale                                   | [ADR 0017](docs/adr/0017-router-hardening-phase7.md)                                                                                                                                          |
 | **8** – Korpus-Zufluss & Intake      | dreistufige Dedup (`new_papers/` → `papers/`), Robustheits-Gate, atomarer Swap, append-only Übersicht (`Z`-IDs), `scripts.intake`; **M5** erreicht | [ADR 0019](docs/adr/0019-corpus-intake-new-papers-phase8.md)                                                                                    |
 | **12** – Zitierfähigkeit            | `metadata/paper_metadata.json`, feldweise Auflösung (`manual > curated > resolved > extracted`), `get_reference`, Literaturangaben Harvard/APA; **M8** erreicht | [ADR 0025](docs/adr/0025-citable-paper-metadata.md) · [ADR 0026](docs/adr/0026-online-metadata-resolution.md)                                    |
-| **9 / S0+S1** – Online-Kandidatensuche | arXiv + OpenAlex hinter injizierbarem Transport-Port, Dedup über die Intake-Logik, append-only Bericht; **M6** erreicht. **Offen:** [S2](#s2--volltext-holen-opt-in-lizenz-whitelist) (Volltext-Download) – bewusst zurückgestellt, Volltexte kommen von Hand | [ADR 0020](docs/adr/0020-online-candidate-search-phase9.md) · [ADR 0032](docs/adr/0032-system-proxy-autodetection.md) |
+| **9 / S0–S2** – Online-Kandidatensuche & Volltext-Download | arXiv + OpenAlex hinter injizierbarem Transport-Port, Dedup über die Intake-Logik, append-only Bericht; **M6** erreicht. **S2** (`--download`) lädt opt-in, nur bei Lizenz-Whitelist (CC0/CC-BY/CC-BY-SA, nur OpenAlex) und bestandenem Titel-Rückvergleich – alles andere bleibt ein Link | [ADR 0020](docs/adr/0020-online-candidate-search-phase9.md) · [ADR 0032](docs/adr/0032-system-proxy-autodetection.md) · [ADR 0035](docs/adr/0035-fulltext-download-phase9-s2.md) |
 | **10 / V1–V3** – Retrieval-Vertiefung | Local mit fünf Seeds, DRIFT über die Community-Vereinigung mit Fallback, Multi-Hop gegen den Zitationsgraphen messbar; **M7** erreicht. **Offen:** [V4](#v4--global-community-ranking-über-die-mitglieds-chunks-erst-messen-dann-entscheiden) – nachgelagert, siehe Reihenfolge | [ADR 0021](docs/adr/0021-local-multi-seed-phase10.md) · [ADR 0022](docs/adr/0022-drift-community-union-and-fallback-phase10.md) · [ADR 0023](docs/adr/0023-multihop-citation-evaluation-phase10.md) |
 | **11** – Betrieb & Datensicherheit | Sicherungsweg (B1), nachführbare Messgrundlage (B5), Graph-Grad geprüft und **verworfen** (B6), Auto-Watcher gestrichen (B4). **Aufgelöst:** B2/B3 sind in [Phase 15](docs/roadmap-historie.md#phase-15--skalierung-den-wachsenden-bestand-tragen) übergegangen – [Archiv](docs/roadmap-historie.md#phase-11--betrieb-robustheit--datensicherheit) | [ADR 0027](docs/adr/0027-corpus-backup-phase11.md) · [ADR 0028](docs/adr/0028-similarity-graph-degree-phase11.md) |
 | **13** – Referenz-Einträge ohne Volltext | `*.refjson`-Stubs aus DOI/arXiv, `document_kind` bis in jeden Beleg, Nachrangigkeits-Guardrail (13 → **3** Regressionen ohne Totalverlust); **M9** erreicht – [Details unten](#phase-13--referenz-einträge-ohne-volltext) | [ADR 0029](docs/adr/0029-reference-stub-resolution-phase13.md) · [ADR 0030](docs/adr/0030-reference-entries-in-corpus-phase13.md) · [ADR 0031](docs/adr/0031-reference-contract-and-guardrail-phase13.md) |
@@ -65,12 +68,9 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 
 ## Offene Restpunkte (kein Reihenfolgekonflikt)
 
-Mit Phase 14 und 15 abgeschlossen bleiben nur zwei voneinander unabhängige, bereits terminierte
-Entscheidungen offen – beide bereits oben in der Stand-Tabelle vermerkt:
+Mit Phase 9 / S2, 14 und 15 abgeschlossen bleibt nur noch **ein** Restpunkt offen, bereits oben in
+der Stand-Tabelle vermerkt:
 
-- **[S2 – Volltext-Download](#s2--volltext-holen-opt-in-lizenz-whitelist)** (Phase 9): bleibt
-  zurückgestellt, ohne Termin. Die Lizenzlage ist unverändert (arXiv weist im Feed keine Lizenz
-  aus, OpenAlex bei 15 von 51 Treffern), Volltexte werden bewusst von Hand beschafft.
 - **[V4 – Global-Ranking über die Mitglieds-Chunks](#v4--global-community-ranking-über-die-mitglieds-chunks-erst-messen-dann-entscheiden)**
   (Phase 10): nachgelagert. Die ursprüngliche Prämisse „ein Referenz-Zufluss flutet den Bestand
   mit hunderten einchunkigen Einträgen, bevor V4 misst" entfällt mit Phase 14s Ergebnis (E1/E2
@@ -86,11 +86,15 @@ oben).
 
 ## Phase 9 – Online-Research-Modus (separat startbar)
 
-> **Status: S0 beantwortet, S1 umgesetzt** ([ADR 0020](docs/adr/0020-online-candidate-search-phase9.md)).
+> **Status: S0 beantwortet, S1 und S2 umgesetzt** ([ADR 0020](docs/adr/0020-online-candidate-search-phase9.md),
+> [ADR 0035](docs/adr/0035-fulltext-download-phase9-s2.md)).
 > Der folgende S0-Befund (Messung vom 2026-08-03) entstand bewusst **ohne ADR** – S0 baut nichts
 > und entscheidet keine Architektur. Mit der Umsetzung von S1 ist der dort formulierte Vorbehalt
 > eingelöst: Die Entscheidung über Transport, Quellen und Sicherheitsgrenze steht jetzt im ADR.
-> **S2 bleibt zurückgestellt.**
+> **S2 ist seit 2026-09-01 ebenfalls umgesetzt** – nicht durch eine neue Messung, sondern durch
+> eine angepasste Anforderung: Statt einer belastbaren Whitelist-Abdeckung abzuwarten, gilt jetzt
+> „Lizenz aus der Whitelist und bestandene Inhaltsprüfung ⇒ Download, sonst Link" als der gewollte
+> Regelfall (Details unten bei S2).
 >
 > **Ergebnis: die Phase entfällt nicht.** Beide Abbruchkriterien wurden geprüft und **nicht**
 > ausgelöst. Wie in den Punkten A3–A7 und in Phase 8 hat die Messung die Vorgabe aber korrigiert.
@@ -205,6 +209,34 @@ _Modell-Tipp: Claude Opus 5._
 ### S2 – Volltext holen (opt-in, Lizenz-Whitelist)
 _Modell-Tipp: Claude Opus 5._
 
+> **Status: umgesetzt** ([ADR 0035](docs/adr/0035-fulltext-download-phase9-s2.md)) – mit einem
+> **engeren** Lizenzumfang als unten vorgesehen und einer **zusätzlichen** Inhaltsprüfung.
+>
+> **Abweichungen von der Vorgabe unten, jeweils begründet:**
+>
+> * **Keine „arXiv-Lizenzen" in der Whitelist.** Die Vorgabe nannte sie neben CC0/CC-BY/CC-BY-SA,
+>   aber arXiv weist im Atom-Feed nachweislich **keine** Lizenz aus (S0, erneut live geprüft am
+>   2026-09-01) – es gibt nichts, das geprüft werden könnte. Die Whitelist ist deshalb exakt
+>   `public-domain` (OpenAlex' Bezeichnung für CC0), `cc-by`, `cc-by-sa`, ausschließlich aus
+>   OpenAlex' `primary_location.license`.
+> * **Größengrenze neu bestimmt:** `MAX_RESPONSE_BYTES` (5 MB) des bestehenden Transport-Ports
+>   war für Metadaten kalibriert, nicht für Volltexte. Der Port bekommt einen optionalen
+>   `max_bytes`-Parameter; der Download-Pfad ruft mit 100 MiB auf (größte Korpus-Datei zum
+>   Entscheidungszeitpunkt × 2, gerundet).
+>
+> **Über die Vorgabe hinaus** prüft der Lauf nicht nur Content-Type/Größe, sondern auch, ob der
+> heruntergeladene Inhalt **nachweislich zum Kandidaten gehört**: mindestens zwei Seiten, Titel im
+> PDF gegen den berichteten Titel abgeglichen – mit demselben Titel-Match-Mechanismus, den der
+> Intake für seine eigene Titel-Verdachtsstufe nutzt (`TITLE_SIMILARITY = 0.85`), nur mit
+> vertauschten Rollen. Ohne diese Prüfung würde ein falsch verlinktes PDF oder eine Landing-Page
+> unbemerkt in `new_papers/` landen.
+>
+> **Akzeptanz erfüllt:** `--download` bleibt ein optionales Flag an `scripts.discover`, nie
+> Standard; ein nicht whitelisted lizenzierter oder inhaltlich nicht passender Treffer wird
+> nachweislich nicht geladen (Testfälle je Ausschlussgrund); ein Netzfehler hinterlässt keine
+> halbe Datei (atomares Schreiben über `.tmp` + `os.replace`); jeder Kandidat trägt im Bericht
+> einen Status samt Begründung, Identifikator und Link bleiben unabhängig davon immer sichtbar.
+
 - **Nur mit explizitem Flag** (`--download`), nie als Standard.
 - **Nur bei frei lizenzierten Quellen** (Whitelist, z. B. CC0/CC-BY/CC-BY-SA und die arXiv-Lizenzen). Alles andere wird **nicht** geladen, sondern nur als Link berichtet. Eine Umgehung von Bezahlschranken ist ausgeschlossen.
 - **Ziel ist ausschließlich `new_papers/`**; die Übernahme in den Korpus macht Phase 8. Es gibt genau **einen** Weg in den Korpus, nicht zwei.
@@ -217,7 +249,7 @@ Vollautomatischer Dauerbetrieb, Hintergrund-Suche, automatische Übernahme ohne 
 
 ### Definition of Done
 
-S0 ist beantwortet und dokumentiert (auch ein „lohnt sich nicht" ist ein gültiges Ergebnis). Bei positivem Befund liefert S1 einen belegten, deduplizierten Kandidaten-Bericht; S2 bleibt opt-in und lizenzgebunden.
+S0 ist beantwortet und dokumentiert (auch ein „lohnt sich nicht" ist ein gültiges Ergebnis). S1 liefert einen belegten, deduplizierten Kandidaten-Bericht; S2 ist umgesetzt und bleibt **opt-in und lizenzgebunden** – ohne `--download` ändert sich nichts.
 
 ---
 
@@ -784,7 +816,7 @@ _Modell-Tipp: Claude Opus 5._
 
 ### Bewusst ausgeschlossen
 
-Kein Volltext-Download (das bleibt [S2](#s2--volltext-holen-opt-in-lizenz-whitelist) und damit zurückgestellt), keine Umgehung von Bezahlschranken, keine automatische Übernahme ohne Sichtung, **keine LLM-gestützte Anreicherung** eines Abstracts zu etwas, das wie ein Volltext aussieht – das wäre Scheinsicherheit in Reinform –, kein MCP-Werkzeug und keine zweite Duplikatlogik neben der aus Phase 8.
+Kein Volltext-Download (das ist eine eigene Fähigkeit – [S2](#s2--volltext-holen-opt-in-lizenz-whitelist), separat über `scripts.discover --download`), keine Umgehung von Bezahlschranken, keine automatische Übernahme ohne Sichtung, **keine LLM-gestützte Anreicherung** eines Abstracts zu etwas, das wie ein Volltext aussieht – das wäre Scheinsicherheit in Reinform –, kein MCP-Werkzeug und keine zweite Duplikatlogik neben der aus Phase 8.
 
 ### Definition of Done
 

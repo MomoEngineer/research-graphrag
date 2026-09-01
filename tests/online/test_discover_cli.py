@@ -15,6 +15,7 @@ from scripts import discover as cli
 from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
 from research_graphrag.indexing.graph_index import build_graph
 from research_graphrag.indexing.tfidf_index import build_index
+from research_graphrag.online.download import OUTCOME_DOWNLOADED, DownloadOutcome
 from research_graphrag.online.transport import HttpResponse
 
 ARXIV_FEED = """<?xml version="1.0" encoding="UTF-8"?>
@@ -189,6 +190,67 @@ def test_cli_reports_missing_seed(
 
     assert code == 1
     assert "not_found" in capsys.readouterr().out
+
+
+def test_cli_never_attempts_a_download_without_the_flag(
+    workspace: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Ohne ``--download`` bleibt der bisherige S1-Bericht unverändert – kein Download-Versuch."""
+    db, data_path = workspace
+
+    def _forbidden(*_: object, **__: object) -> tuple[DownloadOutcome, ...]:
+        raise AssertionError("Ohne --download darf kein Download-Versuch stattfinden.")
+
+    monkeypatch.setattr("scripts.discover.download_all", _forbidden)
+
+    code = _run(monkeypatch, ["--community", "0", "--index", str(db), "--data", str(data_path)])
+
+    assert code == 0
+
+
+def test_cli_download_flag_attempts_and_reports_a_download(
+    workspace: tuple[Path, Path],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """``--download`` löst je frischem Kandidaten einen Versuch aus und fasst ihn zusammen."""
+    db, data_path = workspace
+    inbox = data_path / "eingang"
+
+    def _fake_download_all(
+        client: object, target: Path, candidates: tuple[object, ...]
+    ) -> tuple[DownloadOutcome, ...]:
+        assert target == inbox
+        return tuple(
+            DownloadOutcome(candidate, OUTCOME_DOWNLOADED, "123 Bytes")  # type: ignore[arg-type]
+            for candidate in candidates
+        )
+
+    monkeypatch.setattr("scripts.discover.download_all", _fake_download_all)
+
+    code = _run(
+        monkeypatch,
+        [
+            "--community",
+            "0",
+            "--index",
+            str(db),
+            "--data",
+            str(data_path),
+            "--seit",
+            "2021",
+            "--download",
+            "--eingang",
+            str(inbox),
+        ],
+    )
+
+    assert code == 0
+    output = capsys.readouterr().out
+    assert "Download: geladen" in output
+    assert "Download: 1 von 1 geladen" in output
+    content = (data_path / "online_candidates.md").read_text(encoding="utf-8")
+    assert "Download: geladen — 123 Bytes" in content
 
 
 def test_cli_can_skip_raw_storage(
