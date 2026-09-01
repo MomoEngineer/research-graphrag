@@ -90,3 +90,18 @@ Werkzeug; ein späterer Umzug nach `src/` (falls als Tool benötigt) bleibt offe
 - **Folgeentscheidungen:** Performance-Cache und inkrementelles `graphrag update` sind Kandidaten
   für Phase 7 ([Roadmap.md](../../Roadmap.md)); solange der On-Read-Zugriff bleibt, ist dafür kein
   neuer ADR nötig.
+
+## Nachtrag (2026-09-01, Phase 15 / G5)
+
+Punkt 1 der Entscheidung („On-Read beibehalten, **kein Cache**") und die Begründung „bei ≤ 500
+Papern vertretbar" sind durch [ADR 0033](0033-response-latency-cache-and-persisted-tfidf-state-phase15.md)
+überholt: Seit Phase 15 / G2 gibt es einen Prozess-Cache über den Dateizustand der Index-Datei
+(Weg C) plus einen persistierten TF-IDF-Zustand (Weg A) – die On-Read-Frische aus Punkt 1 bleibt
+dabei **wörtlich** erhalten (ein atomarer Swap invalidiert den Cache-Eintrag), nur der wiederholte
+Neubau des Vektorraums entfällt. Die Korpus-Auslegung „≤ 500 Paper" ist durch die gemessene
+Auslegung aus [Roadmap.md, G5](../../Roadmap.md#g5--auslegung-neu-festschreiben) ersetzt:
+**≤ 750 Volltexte / ≤ 1500 Gesamteinträge (2026-09-01)**. Die Zahl ist niedriger als die aus G0.1
+hergeleitete erste Marke (1000), weil eine direkte Nachmessung am Auslegungsstand zeigte, dass
+Local (nicht Basic oder DRIFT) die 5-s-Marke schon zwischen 800 und 900 Papern reißt – siehe
+G5-Statusblock in der Roadmap. Punkte 2–5 dieses ADRs (QS-Skript,
+`scripts.status`, voller atomarer Re-Index als Standard) bleiben unverändert gültig.

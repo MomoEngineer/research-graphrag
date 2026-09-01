@@ -40,3 +40,14 @@ Kein externer Dienst, keine Secrets, kein Batch-LLM im Index-Bau. Die Deps (`pyp
 - **Positiv:** Voll offline-tauglich, deterministischer und reproduzierbarer Index; nutzt ausschließlich vorhandene Bausteine; secret-frei. Konzeptuelle Nähe zum Vorbild-Repo `mcs-copilot-tools` (SQLite-Graph, TF-IDF, RRF, Sampling).
 - **Negativ / Aufwand:** Weicht vom README-/Roadmap-Stack ab (Reconcile nötig); `pypdf` liefert weniger Struktur/Tabellen als Docling; **Louvain statt Leiden**; „Community-Reports" nicht als vorab erzeugte LLM-Zusammenfassungen; DRIFT nur angenähert.
 - **Folgeentscheidungen:** README/Roadmap-Reconcile (Tech-Stack); spätere **Option C** per Folge-ADR, falls Teile des MS-GraphRAG-Stacks beschaffbar werden.
+
+## Nachtrag (2026-09-01, Phase 15 / G5)
+
+Der Grundsatz „nichts wird als Modell serialisiert" ist in
+[ADR 0033](0033-response-latency-cache-and-persisted-tfidf-state-phase15.md) präzisiert (er
+richtet sich gegen das Pickeln von Objekten, nicht gegen das Persistieren reiner Zahlen) und
+bleibt damit unverändert in Kraft. Die für Option B ursprünglich unterstellte Korpusgröße
+„≤ 500 Paper" ist durch die gemessene Auslegung aus
+[Roadmap.md, G5](../../Roadmap.md#g5--auslegung-neu-festschreiben) ersetzt: **≤ 750 Volltexte /
+≤ 1500 Gesamteinträge**. Die Entscheidung für Option B (TF-IDF/SQLite/Louvain statt Microsoft
+GraphRAG) ist davon unberührt – sie beruhte auf Beschaffbarkeit, nicht auf Korpusgröße.

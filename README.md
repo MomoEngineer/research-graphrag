@@ -93,10 +93,9 @@
 > **umsortiert, nicht aussortiert** (13 Regressionen → **3 ohne Totalverlust**, Handprobe
 > **10/10**).
 >
-> **Phase 15 (Skalierung) läuft, G0–G4 sind umgesetzt.** Der Bestand steht bei **606** Papern
-> (Stand 2026-09-01); die Auslegung „max. ~500" stammt aus der Zeit mit 145 und ist damit klar
-> überschritten – die endgültige, gemessene Auslegung steht noch aus (G5). Vier Stufen sind
-> abgeschlossen: **G0** hat den Zuschnitt bestätigt und die kalte Wand bei 606 Papern schon
+> **Phase 15 (Skalierung) ist umgesetzt.** Der Bestand steht bei **606** Papern
+> (Stand 2026-09-01); die frühere Auslegung „max. ~500" stammte aus der Zeit mit 145 Papern und war
+> damit klar überschritten. Fünf Stufen sind abgeschlossen: **G0** hat den Zuschnitt bestätigt und die kalte Wand bei 606 Papern schon
 > gerissen gefunden (bis zu 9,7 s Reload); **G1** hat die beiden quadratischen Stellen im
 > Aufnahmepfad begradigt (Aho-Corasick, NumPy-Vektorisierung), byte-identisch nachgewiesen; **G2**
 > hat einen Prozess-Cache samt persistiertem TF-IDF-Zustand gebaut – warme Anfragen liegen jetzt
@@ -109,8 +108,15 @@
 > [`metadata/curation.json`](metadata/curation.json) überführt; der Intake schreibt seither keine
 > neuen Zeilen mehr, und der geplante Referenz-Zufluss aus Phase 14 hat jetzt eine geschriebene
 > Stoppregel statt „bis es sich erschöpft"
-> ([ADR 0034](docs/adr/0034-decommission-uebersicht-and-inflow-stop-rule-phase15.md)).
-> Offen bleiben **G5** (Auslegung mit Messdatum neu festschreiben) und danach **Phase 14**
+> ([ADR 0034](docs/adr/0034-decommission-uebersicht-and-inflow-stop-rule-phase15.md)). **G5 ist
+> ebenfalls abgeschlossen:** Die neue Auslegung steht mit Messdatum fest – **≤ 750 Volltexte /
+> ≤ 1500 Gesamteinträge (2026-09-01)**. Die aus G0.1 hergeleitete erste Marke (1000) hielt einer
+> direkten Nachmessung am Auslegungsstand **nicht** stand: Nicht Basic oder DRIFT, sondern **Local**
+> – der laut Fragetyp-Contract primäre Modus für Detailfragen – reißt die 5-s-Marke bereits
+> zwischen 800 und 900 Papern (bis zu elf volle Korpus-Scorings je Anfrage statt eines einzigen bei
+> Basic). 750 ist die mit Marge nachgemessene, tragfähige Zahl für alle vier Modi. Beide Gold-Sets
+> sind gegen den 606-Paper-Bestand neu abgeleitet, beide Baselines neu eingefroren, beide
+> `--check`-Läufe melden 0 Abweichungen. Als nächstes folgt **Phase 14**
 > ([Roadmap](Roadmap.md#phase-15--skalierung-den-wachsenden-bestand-tragen)).
 
 ---
@@ -121,7 +127,7 @@ Dieses Projekt baut ein **GraphRAG-System** über einer lokalen Sammlung wissens
 
 - **Kein Teil einer wissenschaftlichen Arbeit**, sondern ein Werkzeug, das die tägliche Arbeit mit Papern erleichtert (u. a. begleitend zu einer Masterarbeit genutzt).
 - **Konsolidierte Forschungsbasis:** ersetzt den bisherigen separaten `Recherche`-Ordner und vereint PDFs, die kuratierte [Literaturübersicht](Übersicht.md) und den GraphRAG-Index an einem Ort.
-- **Klein & lokal:** aktuell **468** Paper (Stand 2026-08-28). Die ursprüngliche Auslegung „max. ~500" stammt aus der Zeit mit 145 Papern und ist damit faktisch erreicht; sie wird in [Phase 15](Roadmap.md#phase-15--skalierung-den-wachsenden-bestand-tragen) durch eine **gemessene** Auslegung mit Messdatum ersetzt.
+- **Klein & lokal:** aktuell **606** Paper (Stand 2026-09-01). Die ursprüngliche Auslegung „max. ~500" stammte aus der Zeit mit 145 Papern; [Phase 15 / G5](Roadmap.md#g5--auslegung-neu-festschreiben) ersetzt sie durch die **gemessene** Auslegung **≤ 750 Volltexte / ≤ 1500 Gesamteinträge (2026-09-01)**.
 - **Container-frei:** reine Python-Umgebung, kein Docker- oder Datenbank-Server nötig.
 - **Drop-in-Workflow:** neue PDFs in einen Ordner legen, kurz ein Skript ausführen – fertig.
 

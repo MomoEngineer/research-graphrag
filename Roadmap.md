@@ -2,7 +2,7 @@
 
 Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistenten. Der Plan ist **iterativ**: erst ein dünner, lauffähiger Durchstich, dann gezielte Ausbaustufen. **Bewusst ohne Zeitschätzungen** – Fortschritt wird über die „Definition of Done" (DoD) je Phase und über Meilensteine gemessen.
 
-> Ergänzt die [README](README.md). **Die Phasen 0–8 sowie 11, 12 und 13 sind abgeschlossen** und hier nur noch als Ergebnis-Tabelle zusammengefasst; die vollständigen Status-Blockquotes mit allen Kennzahlen, korrigierten Annahmen und offen dokumentierten Abweichungen stehen wörtlich in der [Roadmap-Historie](docs/roadmap-historie.md). **Phase 13 steht ausnahmsweise noch vollständig hier**, weil [Phase 14](#phase-14--referenz-ernte-externe-verweise-aus-dem-eigenen-bestand) unmittelbar darauf aufbaut. Aktiv geplant sind die **Phasen 15** (Skalierung) und **14** (Referenz-Ernte) – **in dieser Reihenfolge**, siehe [Bearbeitungsreihenfolge](#der-aktive-plan--bearbeitungsreihenfolge); beide beginnen vor jedem Code mit einer Mess- und Hinterfragungs-Stufe. Aus den Phasen 9 und 10 ist je ein Restpunkt offen ([S2](#s2--volltext-holen-opt-in-lizenz-whitelist) zurückgestellt, [V4](#v4--global-community-ranking-über-die-mitglieds-chunks-erst-messen-dann-entscheiden) nachgelagert).
+> Ergänzt die [README](README.md). **Die Phasen 0–8 sowie 11, 12 und 13 sind abgeschlossen** und hier nur noch als Ergebnis-Tabelle zusammengefasst; die vollständigen Status-Blockquotes mit allen Kennzahlen, korrigierten Annahmen und offen dokumentierten Abweichungen stehen wörtlich in der [Roadmap-Historie](docs/roadmap-historie.md). **Phase 13 steht ausnahmsweise noch vollständig hier**, weil [Phase 14](#phase-14--referenz-ernte-externe-verweise-aus-dem-eigenen-bestand) unmittelbar darauf aufbaut. **Phase 15** (Skalierung) ist mit G5 abgeschlossen (Status- und Ergebnis-Blöcke stehen noch vollständig hier, analog zu Phase 13); aktiv ist als Nächstes **Phase 14** (Referenz-Ernte), siehe [Bearbeitungsreihenfolge](#der-aktive-plan--bearbeitungsreihenfolge) – sie beginnt vor jedem Code mit einer Mess- und Hinterfragungs-Stufe. Aus den Phasen 9 und 10 ist je ein Restpunkt offen ([S2](#s2--volltext-holen-opt-in-lizenz-whitelist) zurückgestellt, [V4](#v4--global-community-ranking-über-die-mitglieds-chunks-erst-messen-dann-entscheiden) nachgelagert).
 
 ---
 
@@ -11,7 +11,7 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 - **Lean & container-frei:** reine Python-Umgebung, kein Docker-/DB-Server.
 - **Provenienz zuerst:** jede Antwort ist auf Paper/Abschnitt/Seite rückführbar.
 - **Inkrementell nutzbar:** neue PDFs per Drop-in-Ordner + Skript, ohne alles neu aufzusetzen.
-- **Klein, aber wachstumsfähig:** ursprünglich optimiert für ≤ 500 Paper – eine Zahl aus der Zeit mit 145 Papern, die bei **468** faktisch erreicht ist und in [Phase 15 / G5](#g5--auslegung-neu-festschreiben) durch eine **gemessene** Auslegung mit Messdatum ersetzt wird.
+- **Klein, aber wachstumsfähig:** **gemessene Auslegung (2026-09-01, [Phase 15 / G5](#g5--auslegung-neu-festschreiben)): ≤ 750 Volltexte / ≤ 1500 Gesamteinträge.** Die frühere Zahl „≤ 500 Paper" stammte aus der Zeit mit 145 Papern und war bei 468 bereits faktisch erreicht; die neue Zahl ist eine **direkt am Auslegungsstand nachgemessene** 5-s-Marke für eine kalte Einzelanfrage über **alle vier** Modi (nicht nur Basic) – Local reißt die Marke bereits zwischen 800 und 900 Papern, deutlich vor der aus G0.1 grob hergeleiteten 1000er-Zahl (siehe [ADR 0033](docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md) und den G5-Statusblock). Auch 750 ist eine **Marke, keine Wand für die Ewigkeit** – jenseits von 606 Papern sind Retrieval-Güte (G0.3) und Community-Lift (G0.4) nur strukturell, nicht inhaltlich validiert.
 - **Offline zuerst:** umgesetzt ist die Offline-Variante (Option B, [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)); ein Netzzugriff bleibt eine **separat startbare Zusatzfunktion**, nie eine Voraussetzung.
 - **Erst messen, dann bauen.** Das ist die wichtigste Lehre aus den Phase-7-Punkten und keine Floskel: In **A3** war die vermutete Ursache der `short_chunk`-Flut falsch (nicht die Seitengrenze, sondern die Überschriften-Heuristik), in **A4** bestätigte sich die Annahme „Fusion schlägt Einzelverfahren" nicht, in **A5** saß das Keyword-Rauschen nicht im Vektorraum, sondern in der Auswahlpolitik, in **A6** hätte eine nackte Coverage-Kennzahl die triviale Strategie gekürt, und in **A7** waren die vermuteten Signal-Konflikte mit 1 von 44 Fragen praktisch inexistent. Jede Ausbaustufe beginnt daher mit einer Wegwerf-Messung und einem **Abbruchkriterium**.
 - **Präzision vor Recall**, wo Daten in den Korpus oder in den Graphen fließen ([ADR 0011](docs/adr/0011-intra-corpus-citation-graph-phase7.md)).
@@ -775,14 +775,18 @@ Kein Volltext-Download (das bleibt [S2](#s2--volltext-holen-opt-in-lizenz-whitel
 
 ## Phase 15 – Skalierung: den wachsenden Bestand tragen
 
-> **Status: G0 beantwortet (2026-09-01), G1–G5 offen.** G0 hat die Phase **bestätigt, aber nicht
-> verkleinert oder gestrichen** – anders als bei
+> **Status: Phase 15 abgeschlossen (G0–G5, zuletzt G5 am 2026-09-01).** G0 hat die Phase
+> **bestätigt, aber nicht verkleinert oder gestrichen** – anders als bei
 > [S0](#s0--recherche--machbarkeit-zwingend-zuerst-mit-abbruchkriterium),
 > [B6](docs/roadmap-historie.md#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen) oder
 > [R0](#r0--ausbeute-nutzen-und-verdrängung-messen-zwingend-zuerst-mit-abbruchkriterium) hat keine
-> der Abbruchbedingungen gegriffen. **Die vollständigen Ergebnisse stehen im Statusblock direkt
-> unter [G0](#g0--alles-hinterfragen-und-messen-zwingend-zuerst).** Kein Produktivcode wurde
-> gebaut – G1–G5 sind weiterhin offen und beginnen erst mit einer gesonderten Freigabe.
+> der Abbruchbedingungen gegriffen. **Die vollständigen Ergebnisse stehen in den Statusblöcken
+> direkt unter [G0](#g0--alles-hinterfragen-und-messen-zwingend-zuerst) bis
+> [G5](#g5--auslegung-neu-festschreiben).** G5 hat zuletzt die Auslegung selbst festgeschrieben
+> (**≤ 750 Volltexte / ≤ 1500 Gesamteinträge** – niedriger als die aus G0.1 grob hergeleitete
+> 1000er-Zahl, weil eine direkte Nachmessung am Auslegungsstand zeigte, dass **Local** die 5-s-Marke
+> schon zwischen 800 und 900 Papern reißt) und beide Gold-Sets/Baselines gegen den gewachsenen
+> 606-Paper-Bestand neu eingefroren.
 >
 > **Nutzervorgabe (2026-09-01, geht über den ursprünglichen Zuschnitt hinaus):** Antwortzeiten
 > **< 1 s, warm im MCP-Server, am neuen Auslegungsstand aus G0.1** (nicht am heutigen Stand). Sie
@@ -802,8 +806,9 @@ Kein Volltext-Download (das bleibt [S2](#s2--volltext-holen-opt-in-lizenz-whitel
 
 **Ziel:** Der Bestand soll wachsen können, ohne dass Antwortzeit, Aufnahmedauer, Speicherbedarf
 oder Retrieval-Güte kippen – und ohne das Speichermodell zu wechseln. Die Auslegung „≤ 500 Paper"
-stammt aus der Zeit mit 145 Papern und ist praktisch erreicht; sie wird in dieser Phase
-**gemessen ersetzt**, nicht stillschweigend überschritten.
+stammt aus der Zeit mit 145 Papern und war praktisch erreicht; sie ist durch [G5](#g5--auslegung-neu-festschreiben)
+**gemessen ersetzt**, nicht stillschweigend überschritten: **≤ 750 Volltexte / ≤ 1500 Gesamteinträge
+(Messdatum 2026-09-01).**
 
 ### Der Ist-Stand, der diese Phase auslöst (gemessen am 2026-08-28)
 
@@ -1738,6 +1743,94 @@ Ablage ab; die Stoppregel steht schriftlich und mit Zahlen, bevor Phase 14 den e
 
 ### G5 – Auslegung neu festschreiben
 _Modell-Tipp: Claude Sonnet 5._
+
+> **Status (2026-09-01, umgesetzt): Auslegung festgeschrieben (750/1500, nach unten korrigiert
+> gegenüber der ersten, aus G0.1 hergeleiteten Schätzung von 1000), beide Gold-Sets neu abgeleitet,
+> beide Baselines neu eingefroren, 0 Abweichungen.**
+>
+> **1. Die Auslegung ist ein Paar, wie G0.0 Punkt 3 verlangt hat: ≤ 750 Volltexte /
+> ≤ 1500 Gesamteinträge.** [G0.1](#g01--wo-genau-liegt-die-wand) hatte grob hergeleitet, dass die
+> warme Suchzeit (< 1 s) zwischen 1000 und 1500 synthetischen Papern kippt – das war aber eine
+> Hochrechnung auf Basis der **Basic**-Suche, nie eine direkte Messung am tatsächlichen
+> Auslegungsstand mit dem heute gebauten Code. Eine solche direkte Nachmessung (Wegwerf-Skript,
+> Chimären-Methode wie in G0.1, Index-Kopien nie am Live-Index) war deshalb Teil dieses Schritts –
+> und korrigierte die Vorgabe erneut, diesmal deutlich:
+>
+> | n (Paper, real+Chimäre) | Basic kalt | DRIFT kalt | **Local kalt** |
+> | --- | --- | --- | --- |
+> | 606 (real, Live-Index) | 3,9 s | – | 3,9 s |
+> | 700 | – | – | 4,5 s |
+> | 750 | 3,5 s | 3,5 s | **4,5 s** |
+> | 800 | – | – | 4,6 s |
+> | 900 | – | – | **5,5 s ⚠** |
+> | 1000 | 3,7 s | 3,8 s | **5,9 s ⚠** |
+> | 1500 (inkl. 500 Referenz-Stubs) | 3,7–3,8 s | 3,8 s | **5,8–6,0 s ⚠** |
+>
+> **Nicht Basic oder DRIFT reißen die 5-s-Marke, sondern Local** – laut
+> [Fragetyp-Contract](#fragetypen--suchmodus) der **primäre** Modus für Detailfragen, den größten
+> und häufigsten Fragetyp. Ursache: `search_local` bewertet pro Anfrage bis zu **elf** volle
+> Korpus-Scorings (eine Seed-Suche + fünf Nachbarschafts-Scorings je Seed + bis zu fünf
+> Fan-out-Suchen), während Basic mit **einem** auskommt – ein struktureller Multiplikator, der in
+> keiner der bisherigen Antwortzeit-Messungen (G0, G2, G3) explizit gegen den Auslegungsstand
+> geprüft wurde: G0.1 maß nur Basic, die G3-„Ebenen-Messung" nur Global und DRIFT. **750** ist die
+> mit Marge (Basic/DRIFT ≈ 3,5 s, Local 4,5 s, Marge ≈ 0,5 s) direkt nachgemessene, für **alle
+> vier** Modi tragfähige Zahl – nicht die aus G0.1 grob hergeleitete 1000er-Marke.
+>
+> Referenz-Einträge zählen laut [G0.2](#g02--was-kostet-ein-referenz-eintrag-wirklich) auf der
+> Graph-Achse **voll**, auf der Text-/Suchachse **kaum** – das bestätigt auch diese Messung (Local
+> bei 1000 vs. 1500 praktisch gleich: 5,9 s vs. 5,8–6,0 s trotz 500 zusätzlicher Einträge). Deshalb
+> bleibt **1500** die Zahl für die Gesamtzahl der Einträge (Volltexte **und** Referenz-Stubs), auch
+> wenn die bindende Marke für Volltexte selbst niedriger liegt.
+> **Offen ausgewiesen statt verschwiegen:** G0.3 (Retrieval-Güte) und G0.4 (Community-Lift) sind
+> **nur im echten Bereich bis 606 Papern** hart validiert; jenseits davon beruht die 750er-Marke auf
+> der Geschwindigkeitsmessung allein, nicht auf einer gemessenen Qualitätsgarantie. Die
+> **strukturelle** Ursache des Local-Befunds (elf statt eine Suche je Anfrage) ist damit **nicht
+> behoben**, nur vermessen und in die Auslegung eingepreist – eine Optimierung von `search_local`
+> (z. B. eine gemeinsame Vektorisierung der Anfrage über Seed-, Nachbarschafts- und
+> Fan-out-Suchen) bliebe ein möglicher, hier bewusst **nicht** umgesetzter Folgeschritt.
+>
+> **2. Beide Gold-Sets neu abgeleitet, beide Baselines neu eingefroren – gegen den realen
+> 606-Paper-Bestand** (42 388 Chunks, 184 Communities, 2548 `CITES`-Kanten, Index-Schema **0.6.0**,
+> `python -m scripts.status` bestätigt Konsistenz):
+>
+> | Gold-Set/Baseline | Vorher (eingefroren 2026-08-09, 373 Paper) | Nachher (2026-09-01, 606 Paper) |
+> | --- | --- | --- |
+> | Retrieval-Gold (`retrieval-gold.json`) | Version 1.4.0 | **Version 1.5.0**, 34 Fragen, 34/34 Labels reproduzierbar |
+> | Retrieval-Baseline | Hit@5/MRR@5 auf 373-Paper-Stand | primitive/basic/local **0,912 / 0,819**; global 0,529 / 0,435; drift 0,588 / 0,489 – `--check` **0 Abweichungen** |
+> | Multi-Hop-Gold (`citation-gold.json`) | Version 1.0.0, 121 Anker | **Version 1.0.0**, **181 Anker** (mehr Paper mit ≥ 3 zitierenden Quellen), 0 Befunde |
+> | Multi-Hop-Baseline | Hit@5 auf 373-Paper-Stand | local_title **0,890 / 0,750** (schlägt basic_title 0,663 / 0,610 weiterhin deutlich) – `--check` **0 Abweichungen** |
+>
+> Beide `--write-gold`-Läufe liefen **vor** dem jeweiligen `--write-baseline` (zweistufig wie in
+> V1/V2/R3 verlangt); beide `--check`-Läufe direkt danach bestätigen 0 Abweichungen gegen die
+> gerade selbst eingefrorene Baseline – der eigentliche Nachweis der Übung ist damit nicht die
+> Regression (es gibt keine, gegen sich selbst), sondern dass **beide Ableitungen sauber
+> durchlaufen** (34/34 bzw. 181/181 Labels reproduzierbar, keine verwaisten Fragen). **Nebenbefund:**
+> Der `--write-gold`-Default `_NEXT_GOLD_VERSION` in `scripts/eval_retrieval.py` war seit dem
+> 1.4.0-Freeze (2026-08-09) veraltet (stand auf `1.3.0`, weil 1.4.0 seinerzeit über ein explizites
+> `--gold-version` statt über den Default gesetzt wurde) – ein erster Lauf ohne explizite Angabe
+> hätte damit die Version scheinbar auf 1.3.0 **zurückgestuft**. Behoben durch expliziten Re-Lauf
+> mit `--gold-version 1.5.0` und einen aktualisierten Default samt Hinweis, ihn vor dem nächsten
+> `--write-gold` erneut anzuheben.
+>
+> **3. Die neue Zahl ist an allen Stellen mit der alten nachgezogen, mit Messdatum:**
+> [Leitprinzipien](#leitprinzipien), [README](README.md) (Statuszeile und „Klein & lokal"),
+> [CONTRIBUTING.md](CONTRIBUTING.md) Leitprinzip 6, dazu Nachträge an
+> [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md) (Korpusgröße war nie der Grund für
+> Option B) und [ADR 0010](docs/adr/0010-drop-in-workflow-and-qa-phase6.md) (Punkt 1 „kein Cache"
+> ist seit ADR 0033 überholt). Die archivierten Belege in
+> [docs/roadmap-historie.md](docs/roadmap-historie.md) und die Alt-ADRs 0006/0007 bleiben
+> **unverändert** stehen – sie sind datierte Entscheidungen ihrer Zeit, keine lebende Spezifikation.
+>
+> **Kein ADR nötig** (reine Festschreibung + Neueinfrieren + eine Messung, kein architektonischer
+> Eingriff – wie schon bei G0/G3; der in Punkt 1 benannte strukturelle Local-Befund bleibt
+> unbehoben und damit ADR-frei). Der Skalierungs-Nachweis lief als **Wegwerf-Skript** (Chimären-
+> Methode wie G0, Index-Kopien, nie am Live-Index) – kein Teil des Repos. Einziger echter
+> Produktivcode-Eingriff ist der oben genannte Default-Fix in `scripts/eval_retrieval.py` (reiner
+> Wertwechsel + Docstring, keine neue Logik, deshalb ohne neuen Test); `ruff check .`,
+> `ruff format --check .` und `mypy src` sauber, Gesamtstand **1007** Tests weiterhin grün.
+> `docs/funktionsweise.md` Abschnitt 1 behauptete bereits **vor** G5 nicht mehr „der Index wird pro
+> Anfrage frisch geladen" (durch G2/G3 bereits korrigiert) – dieser DoD-Punkt der Phase war beim
+> Erreichen von G5 schon erfüllt.
 
 **Aufgabe:** Die Zahl „≤ 500 Paper" steht in den [Leitprinzipien](#leitprinzipien), in der
 [README](README.md) und im [Zielbild](#zielbild--erst-bei-belegter-beschaffbarkeit). Sie stammt aus

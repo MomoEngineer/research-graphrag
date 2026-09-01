@@ -13,7 +13,7 @@ Dieses Dokument ist das zentrale Regelwerk für die Arbeit am Repository **Resea
 3. **Reproduzierbarkeit.** Versionen werden über ein Lockfile fixiert; Seeds/Läufe werden festgehalten, wo Ergebnisse variieren.
 4. **Offline-bewusst.** Die Entwicklung erfolgt in einem Umfeld ohne PyPI-Zugang; es werden nur beschaffbare Werkzeuge vorausgesetzt (siehe [ADR 0002](docs/adr/0002-venv-and-offline-dependency-strategy.md) und [ADR 0003](docs/adr/0003-offline-test-and-coverage-tooling.md)).
 5. **Lokal zuerst.** Der MCP-Server wird lokal per `stdio` in VS Code eingebunden und von Copilot genutzt.
-6. **Klein, aber wachstumsfähig.** Optimiert für ≤ 500 Paper mit klaren Erweiterungspfaden (siehe [Roadmap.md](Roadmap.md)).
+6. **Klein, aber wachstumsfähig.** Gemessene Auslegung (2026-09-01, [Roadmap.md](Roadmap.md#g5--auslegung-neu-festschreiben)): ≤ 750 Volltexte / ≤ 1500 Gesamteinträge, mit klaren Erweiterungspfaden darüber hinaus.
 
 ---
 
