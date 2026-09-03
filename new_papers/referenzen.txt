@@ -45,6 +45,8 @@ https://doi.org/10.1109/Forge66646.2025.00009
 # AI-Agent-Grundlagenrecherche (2026-09-01) - Volltext-Download blockiert (Bot-Schutz/Paywall)
 10.1016/j.inffus.2025.103599   # AI Agents vs. Agentic AI: A Conceptual Taxonomy, Applications and Challenges
 10.1145/3593013.3594033   # Harms from Increasingly Agentic Algorithmic Systems
+ 	
+https://doi.org/10.48550/arXiv.2603.03638
 
 
 
