@@ -45,9 +45,759 @@ https://doi.org/10.1109/Forge66646.2025.00009
 # AI-Agent-Grundlagenrecherche (2026-09-01) - Volltext-Download blockiert (Bot-Schutz/Paywall)
 10.1016/j.inffus.2025.103599   # AI Agents vs. Agentic AI: A Conceptual Taxonomy, Applications and Challenges
 10.1145/3593013.3594033   # Harms from Increasingly Agentic Algorithmic Systems
+https://doi.org/10.48550/arXiv.2508.06805
+https://doi.org/10.1016/j.eswa.2025.129947
+https://doi.org/10.1016/j.jss.2023.111709
 
 
 
 
+# Breite Online-Recherche (2026-09-03) - Chunk communities-B1
+10.3390/ai6090226   # Retrieval-Augmented Generation (RAG) in Healthcare: A Comprehensive Review
+10.1002/aisy.202400304   # A Perspective on Explainable Artificial Intelligence Methods: SHAP and LIME
+10.1186/s40537-024-00905-w   # Feature selection strategies: a comparative analysis of SHAP-value and importance-based methods
+10.3390/fi15030088   # Machine Learning for Data Center Optimizations: Feature Selection Using Shapley Additive exPlanation (SHAP)
 
+# Breite Online-Recherche (2026-09-03) - Chunk communities-B2
+10.3390/computers14090382   # GraphTrace: A Modular Retrieval Framework Combining Knowledge Graphs and Large Language Models for Multi-Hop Question Answering
+10.1038/s41598-021-98019-3   # Translating synthetic natural language to database queries with a polyglot deep learning framework
+10.3390/bdcc9120309   # Evaluating Faithfulness in Agentic RAG Systems for e-Governance Applications Using LLM-Based Judging Frameworks
+10.3390/app15116315   # Hybrid Multi-Agent GraphRAG for E-Government: Towards a Trustworthy AI Assistant
 
+# Breite Online-Recherche (2026-09-03) - Chunk kuratiert-1
+10.1109/jiot.2021.3079510   # Digital Twin Networks: A Survey
+10.1109/jiot.2021.3098508   # Adaptive Edge Association for Wireless Digital Twin Networks in 6G
+10.1109/mcom.001.2200830   # 6G Digital Twin Networks: From Theory to Practice
+10.1109/mwc.002.2200015   # Security and Privacy in Vehicular Digital Twin Networks: Challenges and Solutions
+10.1109/mnet.105.2100620   # FedTwin: Blockchain-Enabled Adaptive Asynchronous Federated Learning for Digital Twin Networks
+10.1109/mwc.013.2200296   # Five Disruptive Technologies in 6G to Support Digital Twin Networks
+arXiv:2512.14297   # A Threshold-Triggered Deep Q-Network-Based Framework for Self-Healing in Autonomic Software-Defined IIoT-Edge Networks
+10.1049/rpg2.12145   # Coordinated flexible energy and self‐healing management according to the multi‐agent system‐based restoration scheme in active distribution network
+10.1109/comst.2022.3212586   # Zero Touch Management: A Survey of Network Automation Solutions for 5G and 6G Networks
+10.1109/globecom46510.2021.9686011   # Towards Addressing the Spatial Sparsity of MDT Reports to Enable Zero Touch Network Automation
+10.1016/j.jnca.2022.103362   # A survey on Zero touch network and Service Management (ZSM) for 5G and beyond networks
+10.1109/upwiecon67212.2025.11390129   # Intent-Driven Zero-Touch Provisioning in Private 5G Networks with AI/ML Automation
+10.52783/jes.8791   # A Novel Framework for Detecting Anomalies in Network Security using LLM and Deep Learning
+10.1109/noms57970.2025.11073574   # Explainable Anomaly Detection in Network Traffic Using LLM
+10.3390/app14052074   # A Review of Current Trends, Techniques, and Challenges in Large Language Models (LLMs)
+10.1609/aaai.v38i3.27963   # AnomalyGPT: Detecting Industrial Anomalies Using Large Vision-Language Models
+10.1007/978-981-95-4434-9_32   # Few-Shot Retrieval-Augmented LLMs for Anomaly Detection in Network Traffic
+10.3390/telecom7030073   # HuntGPT: Integrating Machine Learning-Based Anomaly Detection and Explainable AI with Large Language Models (LLMs)
+10.1109/mcom.002.2400276   # On Combining XAI and LLMs for Trustworthy Zero-Touch Network and Service Management in 6G
+10.55524/ijircst.2025.13.4.1   # A Review of Generative AI and DevOps Pipelines: CI/CD, Agentic Automation, MLOps Integration, and LLMs
+10.2139/ssrn.5290005   # A Review of Generative AI and DevOps Pipelines: CI/CD, Agentic Automation, MLOps Integration, and Large Language Models
+arXiv:2607.07052   # Progressive Crystallization: Turning Agent Exploration into Deterministic, Lower-Cost Workflows in Production
+10.5281/zenodo.20576239   # OpenWOP: A Vendor-Neutral Protocol for Durable, Portable Agentic Workflow Orchestration
+10.1109/ase63991.2025.00278   # A Characterization Study of Bugs in LLM Agent Workflow Orchestration Frameworks
+10.1016/j.softx.2026.102585   # Version 6.1.25 - AI-KM: An integrated platform for knowledge management and agent workflow orchestration
+10.1145/3711896.3737221   # FlowXpert: Expertizing Troubleshooting Workflow Orchestration with Knowledge Base and Multi-Agent Coevolution
+arXiv:2604.02720   # Cognitive Comparability and the Limits of Governance: Evaluating Authority Under Radical Capability Asymmetry
+10.1007/s00146-023-01635-y   # Accountability in artificial intelligence: what it is and how it works
+10.1109/access.2025.3560911   # LLM Agentic Workflow for Automated Vulnerability Detection and Remediation in Infrastructure-as-Code
+
+# Breite Online-Recherche (2026-09-03) - Chunk kuratiert-2
+arXiv:2310.11770   # Telecom AI Native Systems in the Age of Generative AI -- An Engineering Perspective
+10.1109/tmlcn.2025.3593184   # TelecomGPT: A Framework to Build Telecom-Specific Large Language Models
+10.63282/3050-9416.ijaibdcms-v5i4p106   # Using LLMs as Incident Prevention Copilots in Cloud Infrastructure
+10.15680/ijmrset.2025.0802085   # AI Driven ChatOps for DevSecOps: Automating Security Incident Response
+10.1002/nem.70029   # A Comprehensive Survey on LLM‐Based Network Management and Operations
+10.1007/s44427-025-00002-7   # Virtual Assistants: A Review of the Next Frontier in AI Interaction
+10.5120/ijca2025925820   # SOC Talent Multiplication: AI Copilots as Force Multipliers in Short-Staffed Teams
+10.32996/jcsts.2025.7.3.105   # DevOps Assistants: The Rise of AI Co-Pilots in Cloud Infrastructure Management
+10.70593/978-93-7185-022-3   # Artificial Intelligence-Driven DevOps: Automating, Optimizing, and Securing Modern Software Delivery
+10.18653/v1/2023.emnlp-main.495   # Active Retrieval Augmented Generation
+10.1109/icoei65986.2025.11013438   # Explainable Multi-Stage Churn Prediction using Graph Neural Network in Telecom Sector
+arXiv:2504.20462   # TAMO: Fine-Grained Root Cause Analysis via Tool-Assisted LLM Agent with Multi-Modality Observation Data in Cloud-Native Systems
+10.1038/s41586-025-09422-z   # DeepSeek-R1 incentivizes reasoning in LLMs through reinforcement learning
+10.1145/3701716.3715225   # Flow-of-Action: SOP Enhanced LLM-Based Multi-Agent System for Root Cause Analysis
+10.1109/jiot.2025.3578512   # A Root Cause Analysis Framework for IoT Based on Dynamic Causal Graphs Assisted by LLMs
+10.1109/cascon62161.2024.10838171   # Augmenting Automatic Root-Cause Identification with Incident Alerts Using LLM
+10.1145/3627673.3680016   # RCAgent: Cloud Root Cause Analysis by Autonomous Agents with Tool-Augmented Large Language Models
+10.1016/j.inffus.2023.101805   # Explainable Artificial Intelligence (XAI): What we know and what is left to attain Trustworthy Artificial Intelligence
+arXiv:2310.07637   # OpsEval: A Comprehensive IT Operations Benchmark Suite for Large Language Models
+10.1145/3625289   # A Joint Study of the Challenges, Opportunities, and Roadmap of MLOps and AIOps: A Systematic Survey
+10.1016/j.iswa.2025.200608   # AIOps for log anomaly detection in the era of LLMs: A systematic literature review
+10.3390/electronics14091775   # A Practical Approach to Defining a Framework for Developing an Agentic AIOps System
+10.1145/3637528.3671810   # LogParser-LLM: Advancing Efficient Log Parsing with Large Language Models
+10.1145/3698038.3698525   # Building AI Agents for Autonomous Clouds: Challenges and Design Principles
+10.3390/s25061666   # Generative AI and LLMs for Critical Infrastructure Protection: Evaluation Benchmarks, Agentic AI, Challenges, and Opportunities
+10.3390/electronics14153008   # LEMAD: LLM-Empowered Multi-Agent System for Anomaly Detection in Power Grid Services
+
+# Breite Online-Recherche (2026-09-03) - Chunk communities-R2-1
+10.1109/icosst64562.2024.10871140   # To Enhance Graph-Based Retrieval-Augmented Generation (RAG) with Robust Retrieval Techniques
+10.1038/s41598-025-21222-z   # Research on the construction and application of retrieval enhanced generation (RAG) model based on knowledge graph
+arXiv:2508.06616   # Generative AI for Intent-Driven Network Management in 6G RAN: A Case Study on the Mamba Model
+10.1109/comst.2023.3249835   # On the Road to 6G: Visions, Requirements, Key Technologies, and Testbeds
+10.1016/j.eng.2021.11.003   # Toward Wisdom-Evolutionary and Primitive-Concise 6G: A New Paradigm of Semantic Communication Networks
+10.1109/lnet.2024.3503292   # Maestro: LLM-Driven Collaborative Automation of Intent-Based 6G Networks
+10.1109/ictc55196.2022.9952437   # Intent-Based Network Management in 6G Core Networks
+10.1109/eucnc/6gsummit60053.2024.10597022   # Towards Intent-based Network Management for the 6G System adopting Multimodal Generative AI
+arXiv:2604.14717   # Layered Mutability: Continuity and Governance in Persistent Self-Modifying Agents
+10.1145/3597503.3639219   # Evaluating Large Language Models in Class-Level Code Generation
+10.1109/tcad.2025.3604320   # CodeV: Empowering LLMs With HDL Generation Through Multilevel Summarization
+
+# Breite Online-Recherche (2026-09-03) - Chunk communities-R2-2
+10.1136/bmj.n71   # The PRISMA 2020 statement: an updated guideline for reporting systematic reviews
+arXiv:2407.00513   # Dynamic Optimization of Video Streaming Quality Using Network Digital Twin Technology
+10.1109/jsac.2023.3310077   # Digital-Twin-Enabled 6G Mobile Network Video Streaming Using Mobile Crowdsourcing
+10.3390/rs14061335   # Digital Twin Technology Challenges and Applications: A Comprehensive Review
+10.5121/ijcnc.2021.13607   # Utilizing XAI Technique to Improve Autoencoder based Model for Computer Network Anomaly Detection with Shapley Additive Explanation(SHAP)
+10.1016/j.eswa.2023.121751   # Explainable artificial intelligence for intrusion detection in IoT networks: A deep learning based approach
+arXiv:2607.24884   # Beyond "What to Retrieve": Uncertainty in Retrieval-Augmented Code Generation
+10.3390/bdcc8090115   # QA-RAG: Exploring LLM Reliance on External Knowledge
+10.1145/3408897   # Security Smells in Ansible and Chef Scripts
+10.1145/3524842.3527964   # Smelly variables in ansible infrastructure code
+10.1109/msr52588.2021.00078   # Andromeda: A Dataset of Ansible Galaxy Roles and Their Evolution
+10.1109/icsa-c57050.2023.00074   # Practitioner Perceptions of Ansible Test Smells
+
+# Breite Online-Recherche (2026-09-03) - Chunk communities-R2-3
+10.1145/3424672   # Knowledge Graph Embedding for Link Prediction
+10.1162/tacl_a_00360   # KEPLER: A Unified Model for Knowledge Embedding and Pre-trained Language Representation
+arXiv:2505.23419   # SWE-bench Goes Live!
+10.1145/3676536.3676801   # MEIC: Re-thinking RTL Debug Automation using LLMs
+10.1145/3676536.3676830   # OriGen: Enhancing RTL Code Generation with Code-to-Code Augmentation and Self-Reflection
+10.1145/3649329.3657356   # Data is all you need: Finetuning LLMs for Chip Design via an Automated design-data augmentation framework
+10.1145/3676536.3676679   # Natural language is not enough: Benchmarking multi-modal generative AI for Verilog generation
+10.1145/3733237   # LLM-assisted Bug Identification and Correction for Verilog HDL
+10.1145/3727980   # A data-centric chip design agent framework for Verilog code generation
+10.1109/isqed65160.2025.11014472   # Adding Context to LLM-Guided Verilog Repair
+10.1145/3736411   # FLAG: F inding L ine A nomalies (in RTL code) with G enerative AI
+arXiv:2302.13851   # Implicit Poisoning Attacks in Two-Agent Reinforcement Learning: Adversarial Policies for Training-Time Attacks
+arXiv:2605.31281   # Wind Turbine Maintenance Log Labelling Framework: LLM-Driven Data Correction and Enrichment via Semantic Extraction of Reliability Intelligence
+10.1146/annurev-control-042920-020211   # Safe Learning in Robotics: From Learning-Based Control to Safe Reinforcement Learning
+
+# Breite Online-Recherche (2026-09-03) - Chunk communities-R2-4
+10.1016/j.softx.2025.102367   # EnergyPlus-MCP: A model-context-protocol server for ai-driven building energy modeling
+10.3390/electronics15102214   # Beyond Tool Poisoning: Attack Surfaces of Malicious Remote MCP Servers Across LLM Platforms
+10.1038/s41540-026-00767-3   # Intelligent tool orchestration for rapid mechanistic model prototyping: MCP servers as AI-biology interfaces
+10.20944/preprints202504.0245.v1   # A Survey of the Model Context Protocol (MCP): Standardizing Context to Enhance Large Language Models (LLMs)
+arXiv:2211.13737   # CycleGANWM: A CycleGAN watermarking method for ownership verification
+arXiv:2608.21945   # Ontology-based Requirements Transformation
+arXiv:2605.01347   # MAD-OPD: Breaking the Ceiling in On-Policy Distillation via Multi-Agent Debate
+arXiv:2605.23099   # SVR-MAD: A Bayesian-Inspired Framework for Posterior-Guided Multi-Agent Debate
+arXiv:2606.13197   # ARMOR-MAD: Adaptive Routing for Heterogeneous Multi-Agent Debate in Large Language Model Reasoning
+arXiv:2601.04742   # Tool-MAD: A Multi-Agent Debate Framework for Fact Verification with Diverse Tool Augmentation and Adaptive Retrieval
+arXiv:2507.13038   # MAD-Spear: A Conformity-Driven Prompt Injection Attack on Multi-Agent Debate Systems
+10.1145/3579639   # Security Misconfigurations in Open Source Kubernetes Manifests: An Empirical Study
+10.1145/3647722.3647743   # Lightweight Cloud Native Application Management Platform
+10.1145/3701716.3715299   # MemEngine: A Unified and Modular Library for Developing Advanced Memory of LLM-based Agents
+10.1145/3774904.3792089   # HingeMem: Boundary Guided Long-Term Memory with Query Adaptive Retrieval for Scalable Dialogues
+10.12688/f1000research.169927.1   # Trustworthy agentic AI systems: a cross-layer review of architectures, threat models, and governance strategies for real-world deployment
+10.5281/zenodo.18557554   # Cross-Source Fusion Search for Heterogeneous AI Memory Systems
+
+# Breite Online-Recherche (2026-09-03) - Chunk communities-R2-5
+10.1145/3696410.3714608   # Decoupling Knowledge and Context: An Efficient and Effective Retrieval Augmented Generation Framework via Cross Attention
+10.3390/app16052221   # DualGraphRAG: A Dual-View Graph-Enhanced Retrieval-Augmented Generation Framework for Reliable and Efficient Question Answering
+10.1609/aaai.v35i16.17667   # Document-Level Relation Extraction with Reconstruction
+10.1016/j.neucom.2023.126327   # Deep neural networks in the cloud: Review, applications, challenges and research directions
+10.1016/j.comnet.2022.109477   # Intent-driven autonomous network and service management in future cellular networks: A structured literature review
+10.1145/3623809.3623875   # Comparing How a Chatbot References User Utterances from Previous Chatting Sessions: An Investigation of Users' Privacy Concerns and Perceptions
+10.3390/technologies12070099   # Analysis of the Use of Artificial Intelligence in Software-Defined Intelligent Networks: A Survey
+
+# Breite Online-Recherche (2026-09-03) - Chunk communities-R2-6
+arXiv:2601.13383   # A Lightweight Modular Framework for Constructing Autonomous Agents Driven by Large Language Models: Design, Implementation, and Applications in AgentForge
+10.52710/cfs.1067   # Autonomous Evaluation Architectures: Multi-Agent LLM Pipelines, Browser-Grounded Testing: Programmatic Alignment via DSPy, and Adversarial Robustness in Production Orchestration Systems
+10.66279/y29vex64   # A Systematic Survey of LLM-Based Agentic AI Frameworks for Multi-Agent Coordination and Interoperability
+10.1007/978-3-032-01082-7   # Agents and Multi-Agent Systems Development
+10.1093/bioadv/vbaf323   # Prompt-to-Pill: Multi-Agent Drug Discovery and Clinical Simulation Pipeline
+10.3390/app122010240   # Variability Management in Dynamic Software Product Lines for Self-Adaptive Systems—A Systematic Mapping
+10.1007/978-3-030-97457-2_15   # Seamless Integration and Testing for MAS Engineering
+
+# Breite Online-Recherche (2026-09-03) - Chunk communities-R2-7
+arXiv:2408.15411   # AUTOGENICS: Automated Generation of Context-Aware Inline Comments for Code Snippets on Programming Q&A Sites Using LLM
+arXiv:2603.25973   # MemoryCD: Benchmarking Long-Context User Memory of LLM Agents for Lifelong Cross-Domain Personalization
+
+# Breite Online-Recherche (2026-09-03) - Chunk communities-R2-8
+arXiv:2608.07067   # DocMemo: Dynamic Evidence Discovery via Probabilistic Memory-Guided Retrieval for Multi-Modal Document Understanding
+
+# Breite Online-Recherche (2026-09-03) - Chunk kuratiert-R2-1
+arXiv:2201.04657   # Deep Learning-based Link Configuration for Radar-aided Multiuser mmWave Vehicle-to-Infrastructure Communication
+arXiv:2510.21900   # Deep Literature Survey Automation with an Iterative Workflow
+arXiv:2508.18661   # Extracting Information from Scientific Literature via Visual Table Question Answering Models
+arXiv:2604.22757   # StratRAG: A Multi-Hop Retrieval Evaluation Dataset for Retrieval-Augmented Generation Systems
+
+# Breite Online-Recherche (2026-09-03) - Chunk kuratiert-R2-2
+arXiv:2406.11912   # AgileCoder: Dynamic Collaborative Agents for Software Development based on Agile Methodology
+arXiv:2408.09031   # A Primer on Generative AI for Telecom: From Theory to Practice
+
+# Breite Online-Recherche (2026-09-03) - Chunk seed-R3-1
+arXiv:2205.11454   # What is Your Metric Telling You? Evaluating Classifier Calibration under Context-Specific Definitions of Reliability
+
+# Breite Online-Recherche (2026-09-03) - Chunk seed-R3-2
+arXiv:2506.14634   # AIn't Nothing But a Survey? Using Large Language Models for Coding German Open-Ended Survey Responses on Survey Motivation
+arXiv:2308.09341   # Document Automation Architectures: Updated Survey in Light of Large Language Models
+arXiv:2410.20238   # A Survey of Large Language Models for Arabic Language and its Dialects
+arXiv:2211.05278   # Network Security Roadmap
+
+# Breite Online-Recherche (2026-09-03) - Chunk seed-R3-4
+arXiv:2604.24153   # Right-to-Act: A Pre-Execution Non-Compensatory Decision Protocol for AI Systems
+arXiv:2509.19199   # Agentic Reinforcement Learning with Implicit Step Rewards
+arXiv:2608.25336   # Provenance Before Prose: Claim-Locked Reporting
+
+# Breite Online-Recherche (2026-09-03) - Chunk seed-R3-5
+arXiv:2607.21327   # From Static Bibliometrics to Dynamic Knowledge Graphs: An LLM-Powered Framework for Modernizing Science, Technology, and Innovation (STI) Analytics
+
+# Breite Online-Recherche (2026-09-03) - Chunk seed-R3-6
+
+# Breite Online-Recherche (2026-09-03) - Chunk communities-R3-1
+arXiv:2603.16440   # Capability-Guided Compression: Toward Interpretability-Aware Budget Allocation for Large Language Models
+
+# Breite Online-Recherche (2026-09-03) - Chunk communities-R3-2
+arXiv:2503.23718   # PROMFUZZ: Leveraging LLM-Driven and Bug-Oriented Composite Analysis for Detecting Functional Bugs in Smart Contracts
+arXiv:2201.10874   # Fuzzing Class Specifications
+
+# Breite Online-Recherche (2026-09-03) - Chunk communities-R3-3
+arXiv:2510.25779   # Magentic Marketplace: An Open-Source Environment for Studying Agentic Markets
+
+# Breite Online-Recherche (2026-09-03) - Chunk seed-R4-2
+arXiv:2201.10422   # Language Generation for Broad-Coverage, Explainable Cognitive Systems
+arXiv:2302.09377   # Cognitive Architecture for Decision-Making Based on Brain Principles Programming (in Russian)
+
+# Breite Online-Recherche (2026-09-03) - Chunk seed-R4-3
+arXiv:2508.03014   # Survey of Large Language Models in Extended Reality: Technical Paradigms and Application Frontiers
+arXiv:2401.06805   # Exploring the Reasoning Abilities of Multimodal Large Language Models (MLLMs): A Comprehensive Survey on Emerging Trends in Multimodal Reasoning
+arXiv:2407.07196   # Large Language Models for Wearable Sensor-Based Human Activity Recognition, Health Monitoring, and Behavioral Modeling: A Survey of Early Trends, Datasets, and Challenges
+arXiv:2301.06447   # HiFlash: Communication-Efficient Hierarchical Federated Learning with Adaptive Staleness Control and Heterogeneity-aware Client-Edge Association
+
+# Breite Online-Recherche (2026-09-03) - Chunk seed-R4-4
+arXiv:2306.10336   # Fair Causal Feature Selection
+arXiv:2406.14401   # Fair Streaming Feature Selection
+arXiv:2103.07110   # Explaining Network Intrusion Detection System Using Explainable AI Framework
+arXiv:2606.05710   # Explainable AI-Driven Cyber Risk Analytics and Model Reliability Assessment for Intelligent Governance of U.S. Critical Infrastructure: An XGBoost and SHAP-Based Intrusion Detection Framework
+arXiv:2606.05701   # Cognitive Threat Intelligence and Explainable Federated Security Analytics for distributed Infrastructure Systems
+arXiv:2608.16160   # A Calibrated and Explainable Bimodal Machine Learning Framework for Hybrid Intrusion Detection
+
+# Breite Online-Recherche (2026-09-03) - Chunk seed-R4-5
+
+# Breite Online-Recherche (2026-09-03) - Chunk seed-R4-8
+
+# Breite Online-Recherche (2026-09-03) - Chunk seed-R4-10
+arXiv:2109.04223   # KELM: Knowledge Enhanced Pre-Trained Language Representations with Message Passing on Hierarchical Relational Graphs
+
+# Breite Online-Recherche (2026-09-03) - Chunk seed-R4-11
+arXiv:2604.12172   # COBALT-TLA: A Neuro-Symbolic Verification Loop for Cross-Chain Bridge Vulnerability Discovery
+
+# Breite Online-Recherche (2026-09-03) - Chunk seed-R4-12
+arXiv:2602.23374   # Higress-RAG: A Holistic Optimization Framework for Enterprise Retrieval-Augmented Generation via Dual Hybrid Retrieval, Adaptive Routing, and CRAG
+
+# Breite Online-Recherche (2026-09-03) - Chunk kuratiert-R4-1
+arXiv:2504.12443   # Bridging the Gap: A Comparative Study of Academic and Developer Approaches to Smart Contract Vulnerabilities
+arXiv:2108.08628   # A Reinforcement Learning Approach for GNSS Spoofing Attack Detection of Autonomous Vehicles
+arXiv:2404.02432   # GNSS Spoofing Detection by Crowdsourcing Double Differential Pseudorange Spatial Distribution
+
+# Breite Online-Recherche (2026-09-03) - Chunk kuratiert-R4-2
+arXiv:2608.28021   # Compared to What? A Human-Anchored Security Benchmark for LLM-Generated Infrastructure-as-Code
+arXiv:2209.09780   # Dislocated Accountabilities in the AI Supply Chain: Modularity and Developers' Notions of Responsibility
+arXiv:2402.08189   # Simulating Human Strategic Behavior: Comparing Single and Multi-agent LLMs
+arXiv:2608.24314   # Benchmarking LLM Judges for Voice-Agent Evaluation: Reliability, Calibration, and Human Oversight
+arXiv:2408.13006   # Systematic Evaluation of LLM-as-a-Judge in LLM Alignment Tasks: Explainable Metrics and Diverse Prompt Templates
+arXiv:2411.15594   # A Survey on LLM-as-a-Judge
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R5-1
+arXiv:2601.05264   # Engineering the RAG Stack: A Comprehensive Review of the Architecture and Trust Frameworks for Retrieval-Augmented Generation Systems
+10.1145/3701228   # CRUD-RAG: A Comprehensive Chinese Benchmark for Retrieval-Augmented Generation of Large Language Models
+10.3390/app14199103   # Automating Systematic Literature Reviews with Retrieval-Augmented Generation: A Comprehensive Overview
+10.1016/j.plrev.2024.10.013   # LLMs and generative agent-based models for complex systems research
+10.1109/tdsc.2022.3192419   # How About Bug-Triggering Paths? - Understanding and Characterizing Learning-Based Vulnerability Detectors
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R5-2
+10.18653/v1/2023.findings-emnlp.123   # Towards Mitigating LLM Hallucination via Self Reflection
+arXiv:2509.21237   # Query-Centric Graph Retrieval Augmented Generation
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R5-3
+10.61173/3k7v9734   # Analysis of Research Status in the Field of Automated Program Repair
+arXiv:2509.16701   # RelRepair: Enhancing Automated Program Repair by Retrieving Relevant Code
+10.1145/3611643.3616271   # Copiloting the Copilots: Fusing Large Language Models with Completion Engines for Automated Program Repair
+10.1145/3728894   # LLM Hallucinations in Practical Code Generation: Phenomena, Mechanism, and Mitigation
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R5-4
+10.1145/3714393.3726494   # TerrARA: Automated Security Threat Modeling for Infrastructure as Code
+10.6084/m9.figshare.19726603   # GLITCH: Replication Package with Code and Datasets (ASE 2022)
+10.1109/msec.2021.3065190   # Different Kind of Smells: Security Smells in Infrastructure as Code Scripts
+10.1017/s089006042200018x   # Graph transformation in engineering design: an overview of the last decade
+10.1145/3764944.3764949   # An LLM-based Agentic Framework for Accessible NetworkControl
+10.1145/3764944.3764957   # OFCnetLLM: Large Language Model for Network Monitoring and Alertness
+10.36227/techrxiv.173386065.57486944/v1   # A Survey on Large Language Models for Network Operations & Management: Applications, Techniques, and Opportunities
+10.1145/3737897.3767287   # Secure Model Context Protocol for Large Language Models with Dual Signatures
+10.1145/3524610.3527895   # Example-based vulnerability detection and repair in Java code
+10.1109/sp46215.2023.10179420   # Examining Zero-Shot Vulnerability Repair with Large Language Models
+10.1145/3643651.3659892   # Evaluating Large Language Models for Real-World Vulnerability Repair in C/C++ Code
+10.1145/3475960.3475985   # CVEfixes: automated collection of vulnerabilities and their fixes from open-source software
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R5-5
+10.1145/3649506   # Harnessing the Power of LLMs in Practice: A Survey on ChatGPT and Beyond
+10.1145/3794763.3794817   # A Multi-Agent Framework for Automated Exploit Generation with Constraint-Guided Comprehension and Reflection
+10.1609/aaai.v35i16.17665   # Entity Structure Within and Throughout: Modeling Mention Dependencies for Document-Level Relation Extraction
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R5-6
+arXiv:2505.10960   # Relational Graph Transformer
+10.1109/bigcomp68355.2026.00043   # Improving Relational Deep Learning via Language Model-based Graph Augmentation
+10.1145/3711896.3736558   # Relational Deep Learning: Challenges, Foundations and Next-Generation Architectures
+10.1145/3744918   # Graph Neural Networks for Tabular Data Learning: A Survey with Taxonomy and Directions
+10.1371/journal.pone.0340997   # Network intrusion detection using a hybrid graph-based convolutional network and transformer architecture
+10.1145/3540250.3549098   # VulRepair: a T5-based automated software vulnerability repair
+10.1145/3631974   # A Survey of Learning-based Automated Program Repair
+10.1109/ccge50943.2021.9776450   # Creating Helm Charts to ease deployment of Enterprise Application and its related Services in Kubernetes
+10.3390/s21051910   # Kubernetes Cluster for Automating Software Production Environment
+10.14569/ijacsa.2022.0130460   # Framework to Deploy Containers using Kubernetes and CI/CD Pipeline
+10.1145/3544548.3581388   # Why Johnny Can’t Prompt: How Non-AI Experts Try (and Fail) to Design LLM Prompts
+10.1145/3605764.3623985   # Not What You've Signed Up For: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection
+10.1145/3637528.3671458   # Bias and Unfairness in Information Retrieval Systems: New Challenges in the LLM Era
+10.1007/s40747-022-00806-6   # Scholarly knowledge graphs through structuring scholarly communication: a review
+10.1162/qss_a_00322   # Challenges in building scholarly knowledge graphs for research assessment in open science
+10.3390/make7020038   # Knowledge Graphs and Their Reciprocal Relationship with Large Language Models
+10.3390/info15080509   # Construction of Knowledge Graphs: Current State and Challenges
+10.1007/978-3-032-05409-8_10   # Neuro-Symbolic Federated Research Artifact Search
+10.3233/faia250477   # Towards Agentic AI – Neuro-Symbolic Organization of Research Contributions with Knowledge Graphs and Large Language Models
+10.3389/frma.2021.694307   # Enhancing Knowledge Graph Extraction and Validation From Scholarly Publications Using Bibliographic Metadata
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R5-7
+10.32604/cmc.2026.078330   # Evaluating Open-Source LLM Agents for SQL Generation and Structured Analytics on Relational Databases
+10.36227/techrxiv.174495492.22752319/v1   # A Survey on Model Context Protocol: Architecture, State-of-the-art, Challenges and Future Directions
+arXiv:2606.21867   # ForEx: A Formal Verification Framework for Explainable Reasoning in Logical Fallacy Detection and Annotation
+10.23919/date58400.2024.10546729   # LLM-Guided Formal Verification Coupled with Mutation Testing
+10.1145/3624725   # The Science of Detecting LLM-Generated Text
+10.1145/3617555.3617874   # The FormAI Dataset: Generative AI in Software Security through the Lens of Formal Verification
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R5-8
+arXiv:2411.10213   # An Empirical Study on LLM-based Agents for Automated Bug Fixing
+10.1109/icse48619.2023.00194   # Large Language Models are Few-shot Testers: Exploring LLM-based General Bug Reproduction
+10.1145/3655103.3655110   # Exploring the Potential of Large Language Models (LLMs)in Learning on Graphs
+10.1145/3551349.3556955   # CoditT5: Pretraining for Source Code and Natural Language Editing
+10.1145/3636430   # StructCoder: Structure-Aware Transformer for Code Generation
+10.1145/3597503.3639125   # GrammarT5: Grammar-Integrated Pretrained Encoder-Decoder Neural Model for Code
+10.1609/aaai.v35i16.17650   # Code Completion by Modeling Flattened Abstract Syntax Trees as Graphs
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R5-9
+10.1145/3447772   # Knowledge Graphs
+10.1016/j.neucom.2024.127680   # ConvTKG: A query-aware convolutional neural network-based embedding model for temporal knowledge graph completion
+arXiv:2201.03647   # CausalKG: Causal Knowledge Graph Explainability using interventional and counterfactual reasoning
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R5-10
+10.1145/3690635   # Structured Chain-of-Thought Prompting for Code Generation
+10.1145/3728940   # ClassEval-T: Evaluating Large Language Models in Class-Level Code Translation
+10.1145/3715749   # Beyond Functional Correctness: Investigating Coding Style Inconsistencies in Large Language Models
+10.1145/3703155   # A Survey on Hallucination in Large Language Models: Principles, Taxonomy, Challenges, and Open Questions
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R5-11
+10.36227/techrxiv.173886317.71891930/v1   # A Collaborative Multi-Agent LLM Approach for Knowledge Graph Curation and Query from Multi-Modal Data Sources
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R5-12
+10.4230/oasics.parma-ditam.2023.2   # Challenges and Opportunities in C/C++ Source-To-Source Compilation (Invited Paper)
+10.1016/j.patcog.2021.107899   # Pruning by explaining: A novel criterion for deep neural network pruning
+10.1145/3803437.3805230   # RepoFuse: A Dual-Context Approach to Repository-Level Code Completion at Industrial Scale
+10.18653/v1/2025.findings-emnlp.648   # A Survey of RAG-Reasoning Systems in Large Language Models
+10.1145/3711896.3737249   # Multi-Agent Proactive Information Seeking with Adaptive LLM Orchestration for Non-Factoid Question Answering
+10.1109/re59067.2024.00038   # Code Gradients: Towards Automated Traceability of LLM-Generated Code
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R5-13
+10.3390/sym14030471   # A Survey of Automatic Source Code Summarization
+10.1109/icse48619.2023.00179   # SkCoder: A Sketch-based Approach for Automatic Code Generation
+10.1145/3630010   # How Important Are Good Method Names in Neural Code Generation? A Model Robustness Perspective
+10.18653/v1/2023.ijcnlp-main.45   # A Multitask, Multilingual, Multimodal Evaluation of ChatGPT on Reasoning, Hallucination, and Interactivity
+10.3390/electronics10050593   # Evaluating the Quality of Machine Learning Explanations: A Survey on Methods and Metrics
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R5-14
+10.1007/978-3-031-04083-2_2   # Explainable AI Methods - A Brief Overview
+10.1007/s10462-024-10888-y   # Large language models (LLMs): survey, technical frameworks, and future challenges
+10.1145/3442381.3450141   # Inductive Entity Representations from Text via Link Prediction
+10.3233/sw-233467   # ProVe: A pipeline for automated provenance verification of knowledge graphs against textual sources
+10.52710/cfs.1001   # Multi-Agent Orchestration for Intent-Based Network Operations: Automated Diagnosis and Remediation at Scale
+10.1109/comst.2022.3215919   # A Survey on Intent-Based Networking
+arXiv:2603.16458   # Agentic AI for SAGIN Resource Management_Semantic Awareness, Orchestration, and Optimization
+10.1109/tce.2023.3324010   # AI-Driven Data Analytics and Intent-Based Networking for Orchestration and Control of B5G Consumer Electronics Services
+10.1007/s42979-023-01698-0   # Intent-Driven Orchestration: Enforcing Service Level Objectives for Cloud Native Deployments
+10.32604/cmc.2022.017118   # An Intent-Driven Closed-Loop Platform for 5G Network Service Orchestration
+10.1109/infocom48880.2022.9796744   # OrchestRAN: Network Automation through Orchestrated Intelligence in the Open RAN
+10.1016/j.comnet.2025.111564   # R-IBN: A reinforcement learning-based intent-driven framework for end-to-end service orchestration and optimization
+10.1109/eucnc/6gsummit60053.2024.10597096   # Time-based coordination in Intent-driven management for Vehicular Service Orchestration
+10.1145/3691620.3695054   # GraphCoder: Enhancing Repository-Level Code Completion via Coarse-to-fine Retrieval Based on Code Context Graph
+10.1016/j.cola.2026.101412   # Evaluating package-level scoping strategies for repository-level code completion in Pharo
+10.1145/3696630.3728535   # RAG or Fine-tuning? A Comparative Study on LCMs-based Code Completion in Industry
+
+# Breite Online-Recherche (2026-09-04) - Chunk kuratiert-R5-1
+10.1145/3701716.3717821   # Graphusion: A RAG Framework for Scientific Knowledge Graph Construction with a Global Perspective
+arXiv:2604.21051   # Residual Risk Assessment in Benign Code: How Far Are We? A Multi-Model Semantic and Structural Similarity Approach
+
+# Breite Online-Recherche (2026-09-04) - Chunk kuratiert-R5-2
+10.1145/3759425.3763390   # Position: Vibe Coding Needs Vibe Reasoning: Improving Vibe Coding with Formal Verification
+arXiv:2511.13044   # Bi-View Embedding Fusion: A Hybrid Learning Approach for Knowledge Graph's Nodes Classification Addressing Problems with Limited Data
+10.1145/3773084   # Large Language Models for Constructing and Optimizing Machine Learning Workflows: A Survey
+10.1109/jiot.2025.3648858   # ARM: Autonomous Remediation and Management With LLM Agents for Intent-Driven Control
+10.36227/techrxiv.175339621.11238943/v1   # Practical Integration of Large Language Models into Enterprise CI/CD Pipelines for Security Policy Validation: An Industry-Focused Evaluation
+10.21203/rs.3.rs-9932577/v1   # Autonomous System Vulnerability Remediation: A Survey of Agentic AI, Reinforcement Learning, Benchmarks, and Operational Safety
+10.18653/v1/2024.emnlp-main.632   # CodeAgent: Autonomous Communicative Agents for Code Review
+10.1145/3728922   # You Name It, I Run It: An LLM Agent to Execute Tests of Arbitrary Projects
+10.1145/3711896.3736570   # Evaluation and Benchmarking of LLM Agents: A Survey
+10.1109/e-science58273.2023.10254843   # RepoGraph: A Novel Semantic Code Exploration Tool for Python Repositories Based on Knowledge Graphs and Deep Learning
+10.1145/3728871   # OmniGIRL: A Multilingual and Multimodal Benchmark for GitHub Issue Resolution
+10.1145/3772077   # LUMEN: Enhancing IoT System Observability with Multi-Agent Large Language Models and Knowledge Graphs
+
+# Breite Online-Recherche (2026-09-04) - Chunk kuratiert-R5-3
+10.1109/access.2023.3267548   # Digital Twins for 5G Networks: A Modeling and Deployment Methodology
+10.1016/j.jss.2021.111059   # On the practice of semantic versioning for Ansible galaxy roles: An empirical study and a change classification model
+10.1002/smr.2480   # Predictive maintenance of infrastructure code using “fluid” datasets: An exploratory study on Ansible defect proneness
+10.1016/j.infsof.2021.106593   # The do’s and don’ts of infrastructure code: A systematic gray literature review
+10.1109/compsac65507.2025.00075   # Harnessing the Power of LLMs for Code Smell Detection in Terraform Infrastructure as Code
+10.52710/cfs.730   # A Comparative Study of LLMs for Infrastructure-as-Code Generation and Optimization
+10.35940/ijitee.d4757.15040326   # Self-Healing Infrastructure: Autonomous LLM Agents for Real-Time Remediation of Configuration Drift and Security Misconfigurations in IaC Deployments
+10.1109/aiops66738.2025.00011   # Automated Bug Discovery in Cloud Infrastructure-as-Code Updates with LLM Agents
+10.21275/sr25523162246   # Infrastructure as Code (IaC) Evolution - A Comparative Study of Terraform and AWS Cloud Formation
+10.1145/3694715.3695974   # Unearthing Semantic Checks for Cloud Infrastructure-as-Code Programs
+10.1145/3501385.3543957   # Automatic Generation of Programming Exercises and Code Explanations Using Large Language Models
+
+# Breite Online-Recherche (2026-09-04) - Chunk kuratiert-R5-4
+arXiv:2510.25692   # A Configuration-First Framework for Reproducible, Low-Code Machine Learning: a Localization Use Case
+10.1007/978-3-031-25460-4_18   # HoneyChart: Automated Honeypot Management over Kubernetes
+10.1007/s10586-022-03718-9   # On the performance of SQL scalable systems on Kubernetes: a comparative study
+10.1109/secdev61143.2024.00008   # Repairing Infrastructure-as-Code using Large Language Models
+10.3390/bdcc9040087   # LLM Fine-Tuning: Concepts, Opportunities, and Challenges
+10.4230/oasics.commit2data.3   # BLOOM: A 176B-Parameter Open-Access Multilingual Language Model
+
+# Breite Online-Recherche (2026-09-04) - Chunk kuratiert-R5-5
+10.1109/mnet.2024.3420120   # Intent-Based Management of Next-Generation Networks: an LLM-Centric Approach
+10.4230/lipics.cosit.2024.11   # GPT-4 Technical Report
+arXiv:2603.13812   # Switching Coordinator: An SDN Application for Flexible QKD-Networks
+10.23919/cnsm67658.2025.11297487   # Flow-Rule Generation for SDN Using LLMs with Retry-Based Deployment Validation
+10.1145/3718958.3750537   # Intent-Driven Network Management with Multi-Agent LLMs: The Confucius Framework
+10.1109/access.2022.3229899   # LINK-GUARD: An Effective and Scalable Security Framework for Link Discovery in SDN Networks
+10.1007/978-3-032-00642-4_4   # LLM-Enhanced Intrusion Detection for Containerized Applications: A Two-Tier Strategy for SDN and Kubernetes Environments
+10.1109/icct67417.2025.11374106   # An LLM-Based Intent-Driven Framework for Automated Routing Configuration
+arXiv:2408.17368   # Configuration Monitor Synthesis
+10.1109/netsoft51509.2021.9492554   # To All Intents and Purposes: Towards Flexible Intent Expression
+10.1145/3485447.3512235   # HiddenCPG: Large-Scale Vulnerable Clone Detection Using Subgraph Isomorphism of Code Property Graphs
+10.1109/iccwamtip53232.2021.9674145   # Vulmg: A Static Detection Solution For Source Code Vulnerabilities Based On Code Property Graph and Graph Attention Network
+10.1145/3641850   # CodeKGC: Code Language Model for Generative Knowledge Graph Construction
+
+# Breite Online-Recherche (2026-09-04) - Chunk kuratiert-R5-6
+10.1007/978-3-031-97576-9_6   # Repository-Level Code Understanding by LLMs via Hierarchical Summarization: Improving Code Search and Bug Localization
+10.1145/3611643.3613892   # InferFix: End-to-End Program Repair with LLMs
+10.1007/s10462-023-10465-9   # Knowledge Graphs: Opportunities and Challenges
+arXiv:2602.16736   # The Compute ICE-AGE: Invariant Compute Envelope under Addressable Graph Evolution
+arXiv:2604.13102   # CCCE: A Continuous Code Calibration Engine for Autonomous Enterprise Codebase Maintenance via Knowledge Graph Traversal and Adaptive Decision Gating
+
+# Breite Online-Recherche (2026-09-04) - Chunk kuratiert-R5-7
+arXiv:2110.12679   # Improving Embedded Knowledge Graph Multi-hop Question Answering by introducing Relational Chain Reasoning
+10.1609/aaai.v35i5.16565   # GaussianPath:A Bayesian Multi-Hop Reasoning Framework for Knowledge Graph Reasoning
+arXiv:2512.07921   # DeepCode: Open Agentic Coding
+arXiv:2604.06485   # Inference-Time Code Selection via Symbolic Equivalence Partitioning
+10.1145/3534678.3539321   # GraphMAE: Self-Supervised Masked Graph Autoencoders
+10.1145/3520312.3534862   # A systematic evaluation of large language models of code
+10.1145/3545945.3569823   # Conversing with Copilot: Exploring Prompt Engineering for Solving CS1 Problems Using Natural Language
+10.18293/seke2023-077   # Practices and Challenges of Using GitHub Copilot: An Empirical Study
+10.1145/3589996   # Taking Flight with Copilot
+10.1145/3558489.3559072   # Assessing the quality of GitHub copilot’s code generation
+10.1109/access.2024.3403858   # Methodology for Code Synthesis Evaluation of LLMs Presented by a Case Study of ChatGPT and Copilot
+
+# Expose-Literaturverzeichnis (direkter Abruf, 2026-09-04)
+doi:10.1109/access.2026.3652325   # Methods and Techniques of Agentic Software Engineering: A Systematic Literature Review
+
+# Expose-Literaturverzeichnis (direkter Abruf, 2026-09-04)
+doi:10.18653/v1/2026.acl-long.201   # CodeFlowBench: A Multi-turn, Iterative Benchmark for Complex Code Generation
+
+# Breite Online-Recherche (2026-09-04) - Chunk kuratiert-R6-1
+10.1145/3718958.3750516   # S2: A Distributed Configuration Verifier for Hyper-Scale Networks
+10.1145/3616401   # Automation for Network Security Configuration: State of the Art and Research Trends
+10.1109/dsn58291.2024.00053   # SyRep: Efficient Synthesis and Repair of Fast Re-Route Forwarding Tables for Resilient Networks
+10.1145/3591222   # Modular Control Plane Verification via Temporal Invariants
+10.1145/3570361.3613256   # Chroma: Learning and Using Network Contexts to Reinforce Performance Improving Configurations
+10.1145/3750022.3750453   # A Forwarding-Path-Aware Sampling Strategy for Config2Spec
+10.1145/3519939.3523717   # P4BID: information flow control in p4
+10.1145/3571197   # Comparative Synthesis: Learning Near-Optimal Network Designs by Query
+
+# Breite Online-Recherche (2026-09-04) - Chunk kuratiert-R6-2
+10.1145/3699711   # A Systematic Literature Review on Automated Software Vulnerability Detection Using Machine Learning
+10.1145/3607199.3607242   # DiverseVul: A New Vulnerable Source Code Dataset for Deep Learning Based Vulnerability Detection
+10.1145/3551349.3556927   # TreeCen: Building Tree Graph for Scalable Semantic Code Clone Detection
+10.1016/j.infsof.2024.107544   # Hidden code vulnerability detection: A study of the Graph-BiLSTM algorithm
+10.1145/3576915.3623084   # AdCPG: Classifying JavaScript Code Property Graphs with Explanations for Ad and Tracker Blocking
+10.1002/spe.3205   # VulGraB : Graph ‐embedding‐based code vulnerability detection with bi‐directional gated graph neural network
+10.1145/3474369.3486866   # Explaining Graph Neural Networks for Vulnerability Discovery
+arXiv:2501.08947   # Taint Analysis for Graph APIs Focusing on Broken Access Control
+10.1016/j.cose.2022.102823   # HyVulDect: A hybrid semantic vulnerability mining system based on graph neural network
+10.1016/j.jss.2024.111973   # Deriving modernity signatures of codebases with static analysis
+10.63282/3050-9246.ijetcsit-v4i2p105   # Ansible vs. Terraform: A Comparative Study on Infrastructure as Code (IaC) Efficiency in Enterprise IT
+10.1007/978-3-031-96590-6_18   # Metadata Assisted Supply-Chain Attack Detection for Ansible
+10.58425/ajt.v4i1.351   # Infrastructure as Code (IaC) for Enterprise Applications: A Comparative Study of Terraform and CloudFormation
+10.1109/icse43902.2021.00022   # Hero: On the Chaos When PATH Meets Modules
+10.30574/wjaets.2025.15.3.1161   # Implementing infrastructure as code with Terraform for cloud-based services
+10.52783/jisem.v10i60s.13257   # Implementing Infrastructure as Code (IaC) with Terraform for Scalable Cloud Deployments
+10.32628/cseit241051032   # Automating Infrastructure Management: Benefits and Challenges of Ansible and Terraform Implementation Across Sectors
+arXiv:2608.10281   # From Prompt Injection to Web Exploitation: Revisiting Classic Vulnerabilities in LLM-Integrated Applications
+10.1007/s10207-021-00545-8   # Robotics cyber security: vulnerabilities, attacks, countermeasures, and recommendations
+10.1145/3556974   # Android Source Code Vulnerability Detection: A Systematic Literature Review
+
+# Breite Online-Recherche (2026-09-04) - Chunk kuratiert-R6-3
+10.1145/3768582   # PVDetector: Pretrained Vulnerability Detection on Vulnerability-enriched Code Semantic Graph
+arXiv:2409.00747   # Dependency-Aware Code Naturalness
+arXiv:2606.04298   # Anycast Performance in Context
+10.1145/3603269.3604843   # Beyond a Centralized Verifier: Scaling Data Plane Checking via Distributed, On-Device Verification
+
+# Breite Online-Recherche (2026-09-04) - Chunk kuratiert-R6-4
+10.1145/3560815   # Pre-train, Prompt, and Predict: A Systematic Survey of Prompting Methods in Natural Language Processing
+10.1109/icccs55155.2022.9845995   # Lightweight Natural Language Driven Intent Translation Mechanism for Intent Based Networking
+
+# Breite Online-Recherche (2026-09-04) - Chunk kuratiert-R6-5
+10.24963/ijcai.2024/895   # SecV: LLM-based Secure Verilog Generation with Clue-Guided Exploration on Hardware-CWE Knowledge Graph
+10.3389/fdata.2024.1386720   # A systematic literature review on the impact of AI models on the security of code generation
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R7-1
+10.1109/access.2023.3265894   # NLP Powered Intent Based Network Management for Private 5G Networks
+10.1016/j.comnet.2022.109457   # Intent Based Networking management with conflict detection and policy resolution in an enterprise network
+arXiv:2109.03544   # What really changes when developers intend to improve their source code: a commit-level study of static metric value and static analysis warning changes
+10.1109/mnet.2024.3427313   # Large Multi-Modal Models (LMMs) as Universal Foundation Models for AI-Native Wireless Systems
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R7-2
+arXiv:2405.01103   # LLM Security Guard for Code
+arXiv:2606.03190   # Focused on the User, Overlooking the Risks: Security and Privacy Understandings, Practices and Challenges of Independent Chinese AI Agent Developers
+10.1109/icse48619.2023.00129   # Automated Program Repair in the Era of Large Pre-trained Language Models
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R7-3
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R7-4
+arXiv:2604.17948   # RAVEN: Retrieval-Augmented Vulnerability Exploration Network for Memory Corruption Analysis in User Code and Binary Programs
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R7-5
+arXiv:2512.18256   # MSC-180: A Benchmark for Automated Formal Theorem Proving from Mathematical Subject Classification
+arXiv:2508.06931   # Automated Formalization via Conceptual Retrieval-Augmented LLMs
+10.1145/3639372   # Explainability for Large Language Models: A Survey
+10.1007/s41019-025-00296-9   # LLM-Based Agents for Tool Learning: A Survey
+10.1038/s41586-023-06924-6   # Mathematical discoveries from program search with large language models
+10.1145/3770084   # A Survey on LLM-based Code Generation for Low-Resource and Domain-Specific Programming Languages
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R7-6
+10.20944/preprints202511.0656.v2   # Large Language Model for Verilog Code Generation: Literature Review and the Road Ahead
+10.1145/3827602   # A Survey of Circuit Foundation Model: Foundation AI Models for VLSI Circuit Design and EDA
+10.1109/iclad65226.2025.00009   # AssertionForge: Enhancing Formal Verification Assertion Generation with Structured Representation of Specifications and RTL
+10.1145/3649329.3658493   # ChatCPU: An Agile CPU Design and Verification Platform with LLM
+10.1145/3676536.3676775   # RTLRewriter: Methodologies for Large Models aided RTL Code Optimization
+10.1145/3676536.3676781   # HLSPilot: LLM-based High-Level Synthesis
+10.1145/3676536.3676816   # ADO-LLM: Analog Design Bayesian Optimization with In-Context Learning of Large Language Models
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R7-7
+10.1145/3473572   # Modular, compositional, and executable formal semantics for LLVM IR
+arXiv:2511.01104   # HarnessLLM: Automatic Testing Harness Generation via Reinforcement Learning
+arXiv:2503.10784   # Vulnerability Detection: From Formal Verification to Large Language Models and Hybrid Approaches: A Comprehensive Overview
+10.1145/3691620.3695014   # LLM Meets Bounded Model Checking: Neuro-symbolic Loop Invariant Inference
+arXiv:2305.07163   # Lattice-preserving $\mathcal{ALC}$ ontology embeddings with saturation
+arXiv:2608.27101   # pro-team at LLMs4OL 2026 Tasks Flagship and Reuse: Retrieval-Augmented Generation and Vocabulary-Constrained Filtering for Ontology Learning
+10.1177/15705838241296446   # Integrating Ontologies and Large Language Models to Implement Retrieval Augmented Generation
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R7-8
+10.5121/csit.2025.150908   # MCP Guardian: A Security-First Layer for Safeguarding MCP-Based AI System
+10.1145/3551349.3559555   # Few-shot training LLMs for project-specific code-summarization
+10.1051/wujns/2023286474   # Improve Code Summarization via Prompt-Tuning CodeT5
+10.1145/3597503.3623345   # Dataflow Analysis-Inspired Deep Learning for Efficient Vulnerability Detection
+10.1145/3708522   # Large Language Model for Vulnerability Detection and Repair: Literature Review and the Road Ahead
+10.1145/3769082   # LLMs in Software Security: A Survey of Vulnerability Detection Techniques and Insights
+10.3390/app132112084   # TCCCD: Triplet-Based Cross-Language Code Clone Detection
+10.1145/3664606   # Unveiling Code Pre-Trained Models: Investigating Syntax and Semantics Capacities
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R7-9
+10.1016/j.comnet.2022.109289   # Smart contract vulnerability detection combined with multi-objective detection
+10.3390/s22093577   # CBGRU: A Detection Method of Smart Contract Vulnerability Based on a Hybrid Model
+10.1016/j.infsof.2023.107221   # A survey on smart contract vulnerabilities: Data sources, detection and repair
+10.1109/issre52982.2021.00047   # Peculiar: Smart Contract Vulnerability Detection Based on Crucial Data Flow Graph and Pre-training Techniques
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R7-10
+arXiv:2407.16326   # On The Expressive Power of Knowledge Graph Embedding Methods
+arXiv:2201.04531   # Towards Refactoring FRETish Requirements
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R7-11
+arXiv:2605.14892   # Beyond Individual Intelligence: Surveying Collaboration, Failure Attribution, and Self-Evolution in LLM-based Multi-Agent Systems
+
+# Breite Online-Recherche (2026-09-04) - Chunk kuratiert-R7-1
+arXiv:2505.14929   # Lean-auto: An Interface between Lean 4 and Automated Theorem Provers
+arXiv:2306.15596   # Automated Fuzzing Harness Generation for Library APIs and Binary Protocol Parsers
+arXiv:2608.00150   # Exposed by Design: A Dynamic Security Assessment of Internet-Facing MCP Servers at Scale
+
+# Breite Online-Recherche (2026-09-04) - Chunk kuratiert-R7-2
+
+# Breite Online-Recherche (2026-09-04) - Chunk kuratiert-R7-3
+arXiv:2307.09950   # Prompting for Automatic Log Template Extraction
+arXiv:2508.06942   # When Prompt Engineering Meets Software Engineering: CNL-P as Natural and Robust "APIs'' for Human-AI Interaction
+arXiv:2203.01590   # 5G Network Slice Isolation
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-1
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-2
+10.23919/apnoms52696.2021.9562662   # Network Data Analytics Function for IBN-based Network Slice Lifecycle Management
+10.3390/fi14040116   # ML-Based 5G Network Slicing Security: A Comprehensive Survey
+10.1007/s10462-021-09996-w   # Multi-agent deep reinforcement learning: a survey
+10.1007/s10458-023-09633-6   # A survey of multi-agent deep reinforcement learning with communication
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-3
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-4
+arXiv:2602.00158   # RAPTOR: Ridge-Adaptive Logistic Probes
+10.1109/comst.2023.3280465   # Explainable Intrusion Detection for Cyber Defences in the Internet of Things: Opportunities and Solutions
+10.1016/j.ins.2023.119000   # An explainable deep learning-enabled intrusion detection framework in IoT networks
+10.3390/bdcc6040126   # Explaining Intrusion Detection-Based Convolutional Neural Networks Using Shapley Additive Explanations (SHAP)
+10.3390/electronics11193079   # Explainable Artificial Intelligence for Intrusion Detection System
+10.1155/2021/6634811   # Explainable Artificial Intelligence (XAI) to Enhance Trust Management in Intrusion Detection Systems Using Decision Tree Model
+10.1109/tvt.2023.3327275   # X-CANIDS: Signal-Aware Explainable Intrusion Detection System for Controller Area Network-Based In-Vehicle Network
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-5
+10.14445/22312803/ijctt-v73i1p111   # Agentic Retrieval-Augmented Generation: Advancing AI-Driven Information Retrieval and Processing
+10.1145/3746252.3761471   # SQuAI: Scientific Question-Answering with Multi-Agent Retrieval-Augmented Generation
+10.1109/access.2021.3120143   # Security and Trust in the 6G Era
+10.1007/s00521-024-09863-z   # Network security AIOps for online stream data monitoring
+10.1109/access.2022.3193102   # A Survey on Observability of Distributed Edge & Container-Based Microservices
+10.1007/s10664-021-10063-9   # Enjoy your observability: an industrial survey of microservice tracing and analysis
+10.1016/j.comnet.2024.110350   # A comprehensive survey on digital twin for future networks and emerging Internet of Things industry
+10.1145/3483424   # A Survey of AIOps Methods for Failure Management
+10.1145/3533378   # Challenges in Deploying Machine Learning: A Survey of Case Studies
+10.1145/3691338   # Deep Learning for Time Series Anomaly Detection: A Survey
+10.18535/ijsrm/v12i11.ec01   # Agentic AI in Predictive AIOps: Enhancing IT Autonomy and Performance
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-6
+10.1145/3803437.3805531   # Complexity-Ranked Iterative Refactoring from Microservices to LLM-based Multi-Agent Systems
+10.1038/s42256-023-00626-4   # Parameter-efficient fine-tuning of large-scale pre-trained language models
+10.1007/s10462-025-11236-4   # Parameter-efficient fine-tuning in large language models: a survey of methodologies
+10.1109/issre59848.2023.00026   # LLaMA-Reviewer: Advancing Code Review Automation with Large Language Models through Parameter-Efficient Fine-Tuning
+10.1145/3714461   # Exploring Parameter-Efficient Fine-Tuning Techniques for Code Generation with Large Language Models
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-7
+arXiv:2308.07134   # Language is All a Graph Needs
+10.1109/gcwkshps58843.2023.10464857   # Digital Twin-Native AI-Driven Service Architecture for Industrial Networks
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-8
+10.1016/j.comcom.2021.01.021   # Deep Learning for Network Traffic Monitoring and Analysis (NTMA): A Survey
+10.1109/tits.2022.3141893   # Safe Navigation and Evasive Maneuvers Based on Probabilistic Multi-Controller Architecture
+10.1016/j.ifacol.2023.10.421   # Safe Control Design for Unknown Nonlinear Systems with Koopman-based Fixed-Time Identification
+10.1109/tac.2022.3175628   # Predictive Control Barrier Functions: Enhanced Safety Mechanisms for Learning-Based Control
+10.23919/acc50511.2021.9483029   # Safety-Critical Model Predictive Control with Discrete-Time Control Barrier Function
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-9
+10.1162/tacl_a_00530   # Improving the Domain Adaptation of Retrieval Augmented Generation (RAG) Models for Open Domain Question Answering
+arXiv:2507.03114   # Characterizing Compute-Communication Overlap in GPU-Accelerated Distributed Deep Learning: Performance and Power Implications
+10.1109/access.2021.3105396   # 5G Security Challenges and Solutions: A Review by OSI Layers
+10.1109/jproc.2021.3061701   # 6G Wireless Systems: Vision, Requirements, Challenges, Insights, and Opportunities
+10.30574/wjaets.2024.11.2.0098   # TCP/IP stack transport layer performance, privacy, and security issues
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-10
+arXiv:2306.06755   # CoTran: An LLM-based Code Translator using Reinforcement Learning with Feedback from Compiler and Symbolic Execution
+10.1145/3600006.3613165   # Efficient Memory Management for Large Language Model Serving with PagedAttention
+10.1145/3620666.3651380   # NeuPIMs: NPU-PIM Heterogeneous Acceleration for Batched LLM Inferencing
+10.1145/3763147   # Translation Validation for LLVM’s AArch64 Backend
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-11
+10.1109/comst.2023.3273282   # Cyber Threat Intelligence Mining for Proactive Cybersecurity Defense: A Survey and New Perspectives
+10.1186/s42400-025-00505-y   # CTI-Thinker: an LLM-driven system for CTI knowledge graph construction and attack reasoning
+10.3390/computation13020030   # From Vulnerability to Defense: The Role of Large Language Models in Enhancing Cybersecurity
+10.3390/app13126986   # A Systematic Literature Review on Penetration Testing in Networks: Future Research Directions
+arXiv:2505.15796   # Lean-SMT: An SMT tactic for discharging proof goals in Lean
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-12
+arXiv:2404.07917   # DesignQA: A Multimodal Benchmark for Evaluating Large Language Models' Understanding of Engineering Documentation
+10.1109/csr61664.2024.10679494   # CyberMetric: A Benchmark Dataset based on Retrieval-Augmented Generation for Evaluating LLMs in Cybersecurity Knowledge
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-13
+arXiv:2608.12571   # Is this Citation on Point?
+arXiv:2510.06823   # Exposing Citation Vulnerabilities in Generative Engines
+10.3837/tiis.2026.04.024   # LRT–ReviChain: Lightweight Orchestration for Improved Recency in Generative AI Services
+arXiv:2507.00460   # Pitfalls of Evaluating Language Models with Open Benchmarks
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-14
+10.3390/drones9070484   # A Survey on UAV Control with Multi-Agent Reinforcement Learning
+10.5281/zenodo.19642733   # Restart and Refine: Scalable IFDS Taint Analysis across Memory Budgets (Artifact)
+10.1109/ase56229.2023.00027   # Merge-Replay: Efficient IFDS-Based Taint Analysis by Consolidating Equivalent Value Flows
+10.1109/cgo51591.2021.9370311   # Scaling Up the IFDS Algorithm with Efficient Disk-Assisted Computing
+10.1109/cgo57630.2024.10444884   # Boosting the Performance of Multi-Solver IFDS Algorithms with Flow-Sensitivity Optimizations
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-15
+10.1145/3733826.3762679   # Asynchronous Information Flow Tracking with Neural Network-based Acceleration
+10.1145/3765906   # SHIFT: Selective Hardware Information Flow Tracking Driven by Deterministic Constraints
+10.1145/3727353.3727475   # Survey of propagation strategy in taint analysis
+10.1007/s12083-021-01127-0   # Blockchain smart contracts: Applications, challenges, and future trends
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-16
+arXiv:2201.05021   # Robustness against Read Committed for Transaction Templates with Functional Constraints
+10.1109/ase56229.2023.00181   # An Empirical Study on Fine-Tuning Large Language Models of Code for Automated Program Repair
+10.1016/j.eng.2022.04.024   # Pre-Trained Language Models and Their Applications
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-17
+10.1038/s41586-024-08025-4   # Scalable watermarking for identifying large language model outputs
+10.1145/3691626   # A Survey of Text Watermarking in the Era of Large Language Models
+10.1109/wifs58808.2023.10374576   # Three Bricks to Consolidate Watermarks for Large Language Models
+10.1109/access.2024.3376693   # DeepTextMark: A Deep Learning-Driven Text Watermarking Approach for Identifying Large Language Model Generated Text
+10.20944/preprints202402.1409.v1   # ArabianGPT: Native Arabic GPT-based Large Language Model
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-18
+10.1109/iros58592.2024.10802322   # SMART-LLM: Smart Multi-Agent Robot Task Planning using Large Language Models
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-19
+arXiv:2512.09015   # Luxical: High-Speed Lexical-Dense Text Embeddings
+10.18653/v1/2021.naacl-main.241   # COIL: Revisit Exact Lexical Match in Information Retrieval with Contextualized Inverted List
+10.3390/electronics13081561   # Scalable Multi-Robot Task Allocation Using Graph Deep Reinforcement Learning with Graph Normalization
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-20
+arXiv:2603.20280   # Mix-and-Match Pruning: Globally Guided Layer-Wise Sparsification of DNNs
+10.1145/3534678.3539260   # Learned Token Pruning for Transformers
+10.26102/2310-6018/2026.57.6.020   # Математическая модель процесса автоматизированного построения обзорных текстов, основанного на использовании цитатно-осведомленной суммаризации
+10.1145/3801096   # LLLMs: A Data-Driven Survey of Evolving Research on Limitations of Large Language Models
+10.1145/3774904.3792459   # S-Path-RAG: Semantic-Aware Shortest-Path Retrieval Augmented Generation for Multi-Hop Knowledge Graph Question Answering
+arXiv:2412.18644   # DynaGRAG | Exploring the Topology of Information for Advancing Language Understanding and Generation in Graph Retrieval-Augmented Generation
+arXiv:2409.19006   # Towards Automated Patent Workflows: AI-Orchestrated Multi-Agent Framework for Intellectual Property Management and Analysis
+10.1145/3726302.3729957   # Parametric Retrieval Augmented Generation
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-21
+10.1109/access.2023.3329071   # Enabling Generative AI to Produce SQL Statements: A Framework for the Auto- Generation of Knowledge Based on EBNF Context-Free Grammars
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-22
+10.1057/s41599-024-03611-3   # Large language models empowered agent-based modeling and simulation: a survey and perspectives
+10.21203/rs.3.rs-8196796/v1   # Reinforcement Learning for Large Language Model Fine-Tuning: A Systematic Literature Review
+10.58496/mjcsc/2023/002   # Role of ChatGPT in Computer Programming.
+10.7717/peerj-cs.3257   # RefactorGPT: a ChatGPT-based multi-agent framework for automated code refactoring
+10.1016/j.metrad.2023.100022   # A comprehensive survey of ChatGPT: Advancements, applications, prospects, and challenges
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-23
+10.1016/j.infsof.2021.106717   # Supporting refactoring of BDD specifications—An empirical study
+10.3390/electronics13091644   # AI-Driven Refactoring: A Pipeline for Identifying and Correcting Data Clumps in Git Repositories
+10.1145/3711896.3736555   # A Survey of WebAgents: Towards Next-Generation AI Agents for Web Automation with Large Foundation Models
+10.21203/rs.3.rs-8912469/v1   # LATCH: latency-bounded latent lookahead for constraint-safe web agents
+
+# Breite Online-Recherche (2026-09-04) - Chunk seed-R8-24
+
+# Breite Online-Recherche (2026-09-04) - Chunk kuratiert-R8-1
+arXiv:2411.19354   # Dynamic Taint Tracking using Partial Instrumentation for Java Applications
+arXiv:2505.24258   # FABLE: A Novel Data-Flow Analysis Benchmark on Procedural Text for Large Language Model Evaluation
+arXiv:2410.12853   # Diversity of Thought Elicits Stronger Reasoning Capabilities in Multi-Agent Debate Frameworks
+
+# Community-Discovery (2026-09-13) - scripts.discover --community 2 (KG-RAG/GraphRAG)
+10.1109/eccst68196.2025.11441168   # CRAG-IKG: A Conflict- and Reliability-Aware GraphRAG Framework for Noisy Industrial Knowledge Graphs
+10.2196/76454   # GraphRAG-Enabled Local Large Language Model for Gestational Diabetes Mellitus: Development of a Proof-of-Concept (JMIR, Bot-Schutz verhindert Download)
+10.3390/make7020038   # Knowledge Graphs and Their Reciprocal Relationship with Large Language Models (cc-by, MDPI-Bot-Schutz verhindert Download)
+10.1007/978-3-031-97992-7_69   # GraphRAG for Human Centricity in Supply Chain Reconfiguration
+
+# Community-Discovery (2026-09-13) - scripts.discover --community 39 (GraphRAG hierarchisch/HippoRAG)
+10.1145/3770855.3818963   # Condition-Gated Reasoning for Context-Dependent Biomedical Question Answering (cc-by, ACM-Bot-Schutz verhindert Download)
+10.36227/techrxiv.176704339.93520117/v1   # Data in Agentic AI: A Comprehensive Survey (TechRxiv, kein direkter PDF-Zugriff)
+
+# Community-Discovery (2026-09-13) - scripts.discover --community 21 (agentische/hybride RAG)
+10.1145/3746027.3754761   # HM-RAG: Hierarchical Multi-Agent Multimodal Retrieval Augmented Generation
+10.1109/icsa-c65153.2025.00074   # Agentic RAG with Human-in-the-Retrieval
+10.1109/ickg63256.2024.00023   # Emotional RAG: Enhancing Role-Playing Agents through Emotional Retrieval
+10.1145/3673791.3698416   # AU-RAG: Agent-based Universal Retrieval Augmented Generation (cc-by, ACM-Bot-Schutz verhindert Download)
+10.1109/cisce69494.2026.11504621   # MERMAIDS: Structured Memory and Evidence Reuse for Reducing Multi-Hop Retrieval Hallucinations in Agentic RAG
+10.1093/jamia/ocaf008   # Improving large language model applications in biomedicine with retrieval-augmented generation: a systematic review, meta-analysis, and clinical development guidelines (cc-by-nc, Bot-Schutz verhindert Download)
+10.3390/app15084234   # Retrieval-Augmented Generation (RAG) Chatbots for Education: A Survey of Applications (cc-by, MDPI-Bot-Schutz verhindert Download)
+10.2139/ssrn.5188363   # Agentic RAG Systems for Improving Adaptability and Performance in AI-Driven Information Retrieval (SSRN, kein Abstract verfuegbar)
+10.3390/app152312547   # KA-RAG: Integrating Knowledge Graphs and Agentic Retrieval-Augmented Generation for an Intelligent Educational Question-Answering Model (cc-by, MDPI-Bot-Schutz verhindert Download)
+
+# Community-Discovery (2026-09-13) - scripts.discover --community 22 (SWE-Bench/Agenten-Programreparatur)
+10.1109/icse-seip66354.2025.00038   # Evaluating Agent-Based Program Repair at Google (cc-by, IEEE-Bot-Schutz verhindert Download)
+10.1109/saner64311.2025.00068   # Evaluating Software Development Agents: Patch Patterns, Code Quality, and Issue Complexity in Real-World GitHub Scenarios
+10.5281/zenodo.20534219   # The Lever Is Late: Causal Control of Long-Horizon Agent Termination Lives in a Task-Matched, Late Action-Commitment Block (Zenodo, Bot-Schutz verhindert Download)
+10.2139/ssrn.7234653   # SWE-Exp: Experience-Driven Software Issue Resolution (SSRN, kein Abstract verfuegbar)
+
+# Community-Discovery (2026-09-13) - scripts.discover --community 5 (IaC/Terraform)
+10.1109/compsac65507.2025.00075   # Harnessing the Power of LLMs for Code Smell Detection in Terraform Infrastructure as Code
+
+# Community-Discovery (2026-09-13) - scripts.discover --community 9 (Intent-based Networking 6G)
+10.1109/nof62948.2024.10741513   # Intent-Based Network Resource Slicing in 6G
+10.1109/infocomwkshps61880.2024.10620891   # Intent-Driven 6G End-to-End Network Orchestration
+10.1364/jocn.514890   # Intent-based AI system in packet-optical networks towards 6G [Invited]
+
+# Community-Discovery (2026-09-13) - scripts.discover --community 37 (Evaluation Codegenerierung)
+10.1145/3672459   # Self-Collaboration Code Generation via ChatGPT
