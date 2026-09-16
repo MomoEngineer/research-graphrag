@@ -801,3 +801,7 @@ arXiv:2410.12853   # Diversity of Thought Elicits Stronger Reasoning Capabilitie
 
 # Community-Discovery (2026-09-13) - scripts.discover --community 37 (Evaluation Codegenerierung)
 10.1145/3672459   # Self-Collaboration Code Generation via ChatGPT
+
+# Jinja2/Templatesprachen-Recherche (2026-09-16) - Volltext blockiert (Cloudflare-Bot-Schutz auf
+# dem Institutsrepositorium iris.unica.it; Primaerquelle IEEE Xplore kostenpflichtig)
+10.1109/raid67961.2025.00057   # {{alert('CSTI')}}: Large-Scale Detection of Client-Side Template Injection (RAID 2025)
