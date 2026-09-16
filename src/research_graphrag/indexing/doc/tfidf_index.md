@@ -100,7 +100,7 @@ Wörter tragend sein. Die Keyword-Politik wirkt an anderer Stelle, als Nachfilte
 
 ```mermaid
 flowchart TD
-    Q["Anfrage"] --> V["Eingaben prüfen:<br/>leer · k ≤ 0 · unbekannte Wertung"]
+    Q["Anfrage"] --> V["Eingaben prüfen:<br/>leer · k ≤ 0 · k > MAX_RESULT_COUNT · unbekannte Wertung"]
     V --> S["_scores: immer BEIDE Wertungen"]
     S --> M{"scoring"}
     M -- tfidf --> R1["Rangliste TF-IDF"]
@@ -183,12 +183,13 @@ Andere Leser der Index-Datei – `provenance`, `paper`, `citations`, `graph_inde
 | Situation | Fehlercode |
 | --- | --- |
 | keine indexierbaren Chunks beim Aufbau | `invalid_input` |
-| leere Anfrage, `k <= 0`, unbekannte Wertung | `invalid_input` |
+| leere Anfrage, `k <= 0`, `k > MAX_RESULT_COUNT` (ADR 0037), unbekannte Wertung | `invalid_input` |
 | `score_chunks_by_paper`: leere Anfrage, unbekannte Wertung (kein `k`) | `invalid_input` |
 | Index-Datei fehlt | `not_found` |
 | Index vorhanden, aber ohne Chunks | `constraint_violation` |
 | Index vorhanden, aber ohne `tfidf_state` (Vor-G2-Schema) | `constraint_violation` |
 | `neighbors_of_chunk` mit unbekannter Chunk-ID | `not_found` |
+| `neighbors_of_chunk` mit `k > MAX_RESULT_COUNT` | `invalid_input` (ADR 0037) |
 
 Kein Treffer ist **kein** Fehler: Die Suche liefert eine leere Liste. Ein Chunk erscheint nur,
 wenn mindestens ein Verfahren ihn positiv bewertet.
@@ -212,3 +213,7 @@ wenn mindestens ein Verfahren ihn positiv bewertet.
   hintereinander) teilen ihn nicht – nur ein langlebiger Prozess (MCP-Server) profitiert über
   mehrere Anfragen hinweg.
 - **Kein Feld-Ranking.** Titel, Abschnitt und Fließtext werden gleich gewichtet.
+- **`k` ist gedeckelt.** Seit [ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md)
+  gilt für `search`/`neighbors_of_chunk` dieselbe geteilte Obergrenze
+  (`research_graphrag.limits.MAX_RESULT_COUNT`) wie für die übrigen Retrieval-Werkzeuge – eine
+  MCP-Antwort soll nicht unbegrenzt mit dem angefragten `k` wachsen können.

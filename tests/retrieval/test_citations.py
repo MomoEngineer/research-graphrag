@@ -137,7 +137,7 @@ def test_result_to_dict_shape(tmp_path: Path) -> None:
 
     payload = get_citations(db, "aaaa0001").to_dict()
 
-    assert set(payload) == {"paper", "cites", "cited_by"}
+    assert set(payload) == {"paper", "cites", "cites_total", "cited_by", "cited_by_total"}
     assert set(payload["paper"]) == {
         "paper_id",
         "document_kind",
@@ -191,3 +191,28 @@ def test_errors_are_domain_errors(tmp_path: Path) -> None:
     assert empty.value.code is ErrorCode.INVALID_INPUT
     assert missing_index.value.code is ErrorCode.NOT_FOUND
     assert unknown.value.code is ErrorCode.NOT_FOUND
+
+
+def test_limit_caps_each_direction_and_exposes_totals(tmp_path: Path) -> None:
+    """``limit`` deckelt ``cites``/``cited_by`` unabhängig; die Totals bleiben unverkürzt (ADR 0037)."""
+    db = _build(tmp_path)
+
+    result = get_citations(db, "aaaa0001", limit=1)
+
+    assert len(result.cited_by) == 1
+    assert result.cited_by_total == 2
+    assert result.cites == ()
+    assert result.cites_total == 0
+
+
+def test_limit_bounds_are_domain_errors(tmp_path: Path) -> None:
+    """``limit <= 0`` und ``limit > MAX_RESULT_COUNT`` sind ``invalid_input`` (ADR 0037)."""
+    db = _build(tmp_path)
+
+    with pytest.raises(DomainError) as too_low:
+        get_citations(db, "aaaa0001", limit=0)
+    with pytest.raises(DomainError) as too_high:
+        get_citations(db, "aaaa0001", limit=51)
+
+    assert too_low.value.code is ErrorCode.INVALID_INPUT
+    assert too_high.value.code is ErrorCode.INVALID_INPUT

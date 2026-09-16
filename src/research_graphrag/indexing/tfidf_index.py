@@ -44,6 +44,7 @@ from research_graphrag.extraction.model import DOCUMENT_KIND_FULL, DOCUMENT_KIND
 from research_graphrag.extraction.pdf import CanonicalPaper
 from research_graphrag.indexing import bm25
 from research_graphrag.indexing.fusion import fuse_rankings
+from research_graphrag.limits import check_max_count
 
 Scoring = Literal["hybrid", "tfidf", "bm25"]
 """Wählbare Wertung: Rang-Fusion beider Verfahren, nur TF-IDF-Kosinus oder nur BM25."""
@@ -600,7 +601,7 @@ class TfidfIndex:
 
         Args:
             query: Natürlichsprachige Anfrage.
-            k: Maximale Trefferzahl (> 0).
+            k: Maximale Trefferzahl (``0 < k <= MAX_RESULT_COUNT``).
             paper_ids: Optionaler Filter – nur Chunks dieser Paper werden berücksichtigt
                 (z. B. Local-Fan-out je Nachbarpaper oder DRIFT innerhalb einer Community).
             scoring: ``hybrid`` (Default, Rang-Fusion aus BM25 und TF-IDF), ``tfidf``
@@ -613,11 +614,12 @@ class TfidfIndex:
             :func:`demote_references`).
 
         Raises:
-            DomainError: ``invalid_input`` bei leerer Anfrage, ``k <= 0`` oder unbekannter
-                Wertung.
+            DomainError: ``invalid_input`` bei leerer Anfrage, ``k <= 0``,
+                ``k > MAX_RESULT_COUNT`` (ADR 0037) oder unbekannter Wertung.
         """
         if k <= 0:
             raise DomainError(ErrorCode.INVALID_INPUT, "k muss > 0 sein.")
+        check_max_count("k", k)
 
         ranked, tfidf_scores, bm25_scores = self._all_scores(query, scoring)
         order = sorted(ranked, key=lambda i: (-ranked[i], self._refs[i].chunk_id))
@@ -649,7 +651,7 @@ class TfidfIndex:
 
         Args:
             chunk_id: Ausgangs-Chunk (muss im Index liegen).
-            k: Maximale Nachbarzahl (> 0).
+            k: Maximale Nachbarzahl (``0 < k <= MAX_RESULT_COUNT``).
 
         Returns:
             Absteigend sortierte Nachbar-Treffer mit Score > 0; leer ohne Übereinstimmung.
@@ -658,11 +660,12 @@ class TfidfIndex:
             :func:`demote_references`).
 
         Raises:
-            DomainError: ``invalid_input`` bei ``k <= 0``; ``not_found`` wenn die ``chunk_id``
-                unbekannt ist.
+            DomainError: ``invalid_input`` bei ``k <= 0`` oder ``k > MAX_RESULT_COUNT``
+                (ADR 0037); ``not_found`` wenn die ``chunk_id`` unbekannt ist.
         """
         if k <= 0:
             raise DomainError(ErrorCode.INVALID_INPUT, "k muss > 0 sein.")
+        check_max_count("k", k)
         seed_row = next((i for i, ref in enumerate(self._refs) if ref.chunk_id == chunk_id), None)
         if seed_row is None:
             raise DomainError(ErrorCode.NOT_FOUND, f"Chunk nicht gefunden: {chunk_id}")

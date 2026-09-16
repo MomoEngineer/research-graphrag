@@ -14,7 +14,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.indexing.citation_graph import load_citations
+from research_graphrag.limits import MAX_RESULT_COUNT, check_max_count
 from research_graphrag.retrieval.provenance import PaperRef, ProvenanceAssembler
 
 
@@ -36,47 +38,70 @@ class CitationLink:
 
 @dataclass(frozen=True)
 class CitationsResult:
-    """Zitations-Nachbarschaft eines Papers in beide Richtungen."""
+    """Zitations-Nachbarschaft eines Papers in beide Richtungen.
+
+    ``cites``/``cited_by`` sind auf ``limit`` Einträge gedeckelt; ``cites_total``/
+    ``cited_by_total`` nennen die tatsächliche Kantenzahl **vor** der Deckelung, damit eine
+    Kürzung sichtbar bleibt statt stillschweigend zu geschehen
+    (docs/adr/0037-mcp-tool-response-size-ceiling.md).
+    """
 
     paper: PaperRef
     cites: tuple[CitationLink, ...]
+    cites_total: int
     cited_by: tuple[CitationLink, ...]
+    cited_by_total: int
 
     def to_dict(self) -> dict[str, Any]:
         """Serialisiert das Ergebnis (Output-Schema von ``get_citations``)."""
         return {
             "paper": self.paper.to_dict(),
             "cites": [link.to_dict() for link in self.cites],
+            "cites_total": self.cites_total,
             "cited_by": [link.to_dict() for link in self.cited_by],
+            "cited_by_total": self.cited_by_total,
         }
 
 
-def get_citations(db_path: str | Path, paper_id: str) -> CitationsResult:
+def get_citations(
+    db_path: str | Path, paper_id: str, *, limit: int = MAX_RESULT_COUNT
+) -> CitationsResult:
     """Liefert die Intra-Korpus-Zitationen eines Papers mit Provenienz.
 
     Args:
         db_path: Pfad zur SQLite-Index-Datei.
         paper_id: Stabile Paper-ID (nicht leer).
+        limit: Maximale Zahl der Einträge **je Richtung** (``0 < limit <= MAX_RESULT_COUNT``);
+            Default :data:`research_graphrag.limits.MAX_RESULT_COUNT`.
 
     Returns:
         Ein :class:`CitationsResult`; ``cites`` (zitiert) und ``cited_by`` (wird zitiert von)
-        sind stabil nach der ``paper_id`` des Gegenübers sortiert und können leer sein.
+        sind stabil nach der ``paper_id`` des Gegenübers sortiert, auf ``limit`` Einträge
+        gedeckelt und können leer sein.
 
     Raises:
-        DomainError: ``invalid_input`` bei leerer ``paper_id``; ``not_found`` wenn Index oder
-            Paper fehlen; ``constraint_violation`` wenn der Index keinen Zitationsgraphen
-            enthält (siehe docs/error-model.md).
+        DomainError: ``invalid_input`` bei leerer ``paper_id``, ``limit <= 0`` oder
+            ``limit > MAX_RESULT_COUNT`` (ADR 0037); ``not_found`` wenn Index oder Paper fehlen;
+            ``constraint_violation`` wenn der Index keinen Zitationsgraphen enthält (siehe
+            docs/error-model.md).
     """
+    if limit <= 0:
+        raise DomainError(ErrorCode.INVALID_INPUT, "limit muss > 0 sein.")
+    check_max_count("limit", limit)
+
     view = load_citations(db_path, paper_id)
     assembler = ProvenanceAssembler.load(db_path)
+    cites = tuple(
+        CitationLink(assembler.paper_ref(edge.target_paper_id), edge.method) for edge in view.cites
+    )
+    cited_by = tuple(
+        CitationLink(assembler.paper_ref(edge.source_paper_id), edge.method)
+        for edge in view.cited_by
+    )
     return CitationsResult(
         paper=assembler.paper_ref(paper_id),
-        cites=tuple(
-            CitationLink(assembler.paper_ref(edge.target_paper_id), edge.method)
-            for edge in view.cites
-        ),
-        cited_by=tuple(
-            CitationLink(assembler.paper_ref(edge.source_paper_id), edge.method)
-            for edge in view.cited_by
-        ),
+        cites=cites[:limit],
+        cites_total=len(cites),
+        cited_by=cited_by[:limit],
+        cited_by_total=len(cited_by),
     )

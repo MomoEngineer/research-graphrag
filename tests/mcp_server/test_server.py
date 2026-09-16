@@ -39,6 +39,7 @@ from research_graphrag.indexing.citation_graph import build_citation_graph
 from research_graphrag.indexing.graph_index import build_graph
 from research_graphrag.indexing.metadata_index import build_metadata_index
 from research_graphrag.indexing.tfidf_index import build_index
+from research_graphrag.mcp_server import server as server_module
 from research_graphrag.mcp_server.server import mcp
 
 _TOOLS = {
@@ -229,13 +230,58 @@ async def test_get_citations_unknown_paper_yields_not_found_envelope(index_db: P
 
 @pytest.mark.anyio
 async def test_list_topics_returns_topics(index_db: Path) -> None:
-    """list_topics liefert die Community-Übersicht des Korpus."""
+    """list_topics liefert die gefilterte, membergelöste Community-Übersicht (Spec 0.2.0)."""
     async with client_session(mcp) as client:
         result = await client.call_tool("list_topics", {})
     assert result.isError is False
     payload = _structured(result)
+    assert set(payload) == {"topics", "total_matching", "truncated"}
     assert isinstance(payload["topics"], list)
     assert payload["topics"]
+    assert "members" not in payload["topics"][0]
+
+
+@pytest.mark.anyio
+async def test_list_topics_community_id_returns_full_detail(index_db: Path) -> None:
+    """Mit community_id liefert das Werkzeug genau eine Community inklusive members."""
+    async with client_session(mcp) as client:
+        overview = await client.call_tool("list_topics", {})
+        target = _structured(overview)["topics"][0]
+        result = await client.call_tool("list_topics", {"community_id": target["community_id"]})
+
+    assert result.isError is False
+    payload = _structured(result)
+    assert payload["community_id"] == target["community_id"]
+    assert isinstance(payload["members"], list)
+    assert payload["members"]
+
+
+@pytest.mark.anyio
+async def test_list_topics_unknown_community_id_yields_not_found_envelope(index_db: Path) -> None:
+    """Eine unbekannte community_id -> strukturierter not_found-Fehler (isError=true)."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool("list_topics", {"community_id": 999_999})
+    assert result.isError is True
+    assert _structured(result)["error"]["code"] == "not_found"
+
+
+@pytest.mark.anyio
+async def test_list_topics_min_size_one_includes_singletons(index_db: Path) -> None:
+    """min_size=1 lässt auch Ein-Paper-Communities in die Übersicht."""
+    async with client_session(mcp) as client:
+        default = await client.call_tool("list_topics", {})
+        broadened = await client.call_tool("list_topics", {"min_size": 1})
+
+    assert _structured(broadened)["total_matching"] >= _structured(default)["total_matching"]
+
+
+@pytest.mark.anyio
+async def test_list_topics_limit_above_max_yields_invalid_input_envelope(index_db: Path) -> None:
+    """limit > MAX_RESULT_COUNT -> strukturierter invalid_input-Fehler (ADR 0037)."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool("list_topics", {"limit": 51})
+    assert result.isError is True
+    assert _structured(result)["error"]["code"] == "invalid_input"
 
 
 @pytest.mark.anyio
@@ -339,6 +385,27 @@ async def test_empty_query_yields_invalid_input_envelope(index_db: Path) -> None
     assert _structured(result)["error"]["code"] == "invalid_input"
 
 
+@pytest.mark.anyio
+async def test_search_basic_k_above_max_result_count_yields_invalid_input_envelope(
+    index_db: Path,
+) -> None:
+    """k > MAX_RESULT_COUNT -> strukturierter invalid_input-Fehler (ADR 0037)."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool("search_basic", {"query": "attention", "k": 51})
+    assert result.isError is True
+    assert _structured(result)["error"]["code"] == "invalid_input"
+
+
+@pytest.mark.anyio
+async def test_get_citations_limit_caps_and_exposes_totals(index_db: Path) -> None:
+    """get_citations deckelt cites/cited_by über limit und weist die Totals aus (ADR 0037)."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool("get_citations", {"paper_id": "aaaa0001", "limit": 1})
+    assert result.isError is False
+    payload = _structured(result)
+    assert set(payload) == {"paper", "cites", "cites_total", "cited_by", "cited_by_total"}
+
+
 async def _sampling_callback(
     context: RequestContext[Any, Any],
     params: CreateMessageRequestParams,
@@ -437,3 +504,26 @@ async def test_answer_question_unknown_mode_yields_invalid_input_envelope(index_
         )
     assert result.isError is True
     assert _structured(result)["error"]["code"] == "invalid_input"
+
+
+def test_guard_rejects_a_response_over_the_safety_threshold(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """_guard verwirft eine zu große Antwort als constraint_violation, nie gekürzt (ADR 0037)."""
+    monkeypatch.setattr(server_module, "_MAX_RESPONSE_BYTES", 10)
+
+    result = server_module._guard("dummy_tool", lambda: {"citations": ["x" * 100]})
+
+    assert isinstance(result, CallToolResult)
+    assert result.isError is True
+    assert result.structuredContent is not None
+    assert result.structuredContent["error"]["code"] == "constraint_violation"
+
+
+def test_guard_passes_through_a_response_within_the_safety_threshold() -> None:
+    """Unterhalb der Schwelle liefert _guard die Antwort unverändert durch."""
+    payload = {"citations": ["ok"]}
+
+    result = server_module._guard("dummy_tool", lambda: payload)
+
+    assert result == payload

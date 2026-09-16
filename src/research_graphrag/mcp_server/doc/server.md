@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/mcp_server/server.py` |
 | **Paket** | `mcp_server` – MCP-Server über `stdio` |
-| **Phase** | 5 (eingeführt), 7 / A1 + A2 (zwei Werkzeuge ergänzt), 12 / K1 (`get_reference` ergänzt) |
-| **Grundlagen** | [ADR 0009](../../../../docs/adr/0009-mcp-server-stdio-phase5.md), [ADR 0012](../../../../docs/adr/0012-llm-bridge-and-answer-synthesis-phase7.md), [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md) |
+| **Phase** | 5 (eingeführt), 7 / A1 + A2 (zwei Werkzeuge ergänzt), 12 / K1 (`get_reference` ergänzt), ADR 0037 (Größen-Sicherheitsnetz, `list_topics`-Neuschnitt) |
+| **Grundlagen** | [ADR 0009](../../../../docs/adr/0009-mcp-server-stdio-phase5.md), [ADR 0012](../../../../docs/adr/0012-llm-bridge-and-answer-synthesis-phase7.md), [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md), [ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md) |
 
 ---
 
@@ -30,6 +30,12 @@ Die neun Werkzeuge: `search_basic`, `search_local`, `search_global`, `search_dri
 [`specs/`](../specs); die Werkzeugnamen werden explizit gesetzt und weichen daher von den
 Python-Funktionsnamen ab.
 
+Seit [ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md) hat `list_topics`
+eigene Fachlogik in [`retrieval/topics.py`](../../retrieval/doc/topics.md) statt einer direkten
+Weiterreichung von `graph_index.load_communities`: Der Wrapper entscheidet anhand des Parameters
+`community_id`, ob er die gefilterte Übersicht (`topics.list_topics`) oder den Einzelabruf
+(`topics.get_topic`) ruft.
+
 Der Einstiegspunkt `python -m research_graphrag.mcp_server` liegt in `__main__.py` und ruft
 lediglich `main()` auf.
 
@@ -41,6 +47,9 @@ flowchart TD
     B --> C["_guard"]
     C --> D["Kernfunktion in retrieval/ bzw. generation/"]
     D -- Erfolg --> E["to_dict → dict"]
+    E --> SZ{"serialisierte Größe<br/>> _MAX_RESPONSE_BYTES?"}
+    SZ -- nein --> OK["Antwort ausliefern"]
+    SZ -- ja --> TOOBIG["constraint_violation<br/>Protokoll: Warnung"]
     D -- DomainError --> F["Fehler-Envelope, isError = true<br/>Protokoll: Info"]
     D -- unerwartet --> G["internal_error<br/>Protokoll: mit Stacktrace"]
 ```
@@ -53,6 +62,7 @@ flowchart TD
 | --- | --- |
 | fachlicher Fehler | in den Envelope übersetzt, als Information protokolliert |
 | unerwartete Ausnahme | in `internal_error` übersetzt, mit Stacktrace protokolliert |
+| Antwort über `_MAX_RESPONSE_BYTES` (ADR 0037) | in `constraint_violation` übersetzt, als Warnung protokolliert – **nie** ausgeliefert |
 
 Der Envelope wird **doppelt** ausgeliefert – als JSON-Text und als strukturierter Inhalt –, weil
 Clients unterschiedlich darauf zugreifen.
@@ -60,6 +70,21 @@ Clients unterschiedlich darauf zugreifen.
 Wichtig ist die letzte Sicherung: Eine unerwartete Ausnahme darf **nie** ungefiltert nach außen
 gelangen. Ihr Text könnte Pfade oder interne Details preisgeben; nach außen geht nur eine
 allgemeine Meldung, die Einzelheiten bleiben im Protokoll.
+
+### Das Byte-Sicherheitsnetz (ADR 0037)
+
+Seit [ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md) prüft `_guard` nach
+einem erfolgreichen `produce()` **zusätzlich** die serialisierte Größe der Antwort gegen
+`_MAX_RESPONSE_BYTES` (900.000 Byte, Marge unter der 1-MB-MCP-Transportgrenze). Bei Überschreitung
+wird die bereits serialisierte Antwort **verworfen** und stattdessen ein strukturierter
+`constraint_violation`-Fehler gemeldet – nie wird eine Antwort mitten im Inhalt abgeschnitten
+ausgeliefert.
+
+Dieses Netz soll im Normalfall **nie greifen**: Die eigentliche Größenbegrenzung liegt in der
+geteilten Obergrenze `research_graphrag.limits.MAX_RESULT_COUNT`, die jeder Trefferzahl-Parameter
+(`k`/`n`/`fan_out`/`communities`/`limit`) bereits an seiner eigenen Validierungsstelle durchsetzt
+(deutlich unter dieser Schwelle, siehe ADR 0037 für die Messtabelle). `_guard` fängt ausschließlich
+Unvorhergesehenes ab.
 
 ### On-Read: der Index wird pro Anfrage geladen
 
@@ -123,10 +148,12 @@ flowchart LR
     SV --> RD["retrieval/drift"]
     SV --> RP["retrieval/paper"]
     SV --> RC["retrieval/citations"]
-    SV --> GI["indexing/graph_index"]
+    SV --> RT["retrieval/topics"]
     SV --> AN["generation/answer"]
     SV --> SM["mcp_server/sampling"]
     SV --> ER["errors: Envelope"]
+    SV --> LM["limits: MAX_RESULT_COUNT"]
+    RT --> GI["indexing/graph_index"]
 ```
 
 Die Einbindung beschreibt [docs/vscode-integration.md](../../../../docs/vscode-integration.md);
@@ -138,9 +165,10 @@ Alle Fehler verlassen den Server als Envelope mit gesetztem Fehler-Flag – nie 
 
 | Situation | Code im Envelope |
 | --- | --- |
-| leere Anfrage, unbekannter Modus, ungültige Zahl | `invalid_input` |
+| leere Anfrage, unbekannter Modus, ungültige Zahl, Trefferzahl-Parameter über `MAX_RESULT_COUNT` (ADR 0037) | `invalid_input` |
 | Index oder Paper nicht vorhanden | `not_found` |
 | Index ohne Chunks, Graph oder Zitationskanten | `constraint_violation` |
+| serialisierte Antwort über `_MAX_RESPONSE_BYTES` (ADR 0037) | `constraint_violation` |
 | unerwarteter Fehler | `internal_error` |
 | Sampling schlägt fehl | **kein** Fehler – `generated = false` |
 

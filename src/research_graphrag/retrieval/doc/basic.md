@@ -72,7 +72,7 @@ Gleichstand landet jede Frage hier.
 | --- | --- |
 | Index-Datei fehlt | `not_found` |
 | Index ohne Chunks | `constraint_violation` |
-| leere Anfrage, `k <= 0`, unbekannte Wertung | `invalid_input` |
+| leere Anfrage, `k <= 0`, `k > MAX_RESULT_COUNT` (ADR 0037), unbekannte Wertung | `invalid_input` |
 | kein Treffer | kein Fehler – leeres Ergebnis |
 
 ## 6. Determinismus

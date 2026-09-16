@@ -31,7 +31,7 @@ Passagen).
 
 ```mermaid
 flowchart TD
-    Q["Anfrage"] --> KV["k ≤ 0 und communities ≤ 0 prüfen"]
+    Q["Anfrage"] --> KV["k ≤ 0, communities ≤ 0,<br/>beide > MAX_RESULT_COUNT prüfen"]
     KV --> R["rank_communities(query, n)<br/>validiert Anfrage und Graph,<br/>scort Communities über Mitglieds-Chunks<br/>(lädt TfidfIndex selbst, Phase 10 / V4)"]
     R --> IX["TfidfIndex.load<br/>(Prozess-Cache, i.d.R. bereits geladen)"]
     IX --> U{"Mitglieder vorhanden?"}
@@ -126,7 +126,7 @@ MCP-Werkzeug – und vorerst auch nicht über die CLI (Begründung im ADR).
 
 | Situation | Fehlercode |
 | --- | --- |
-| `k <= 0`, `communities <= 0` | `invalid_input` (vor dem Index geprüft) |
+| `k <= 0`, `communities <= 0`, beide > `MAX_RESULT_COUNT` (ADR 0037) | `invalid_input` (vor dem Index geprüft) |
 | leere Anfrage | `invalid_input` (aus `rank_communities`) |
 | Index-Datei fehlt | `not_found` |
 | kein Graph bzw. keine Communities | `constraint_violation` – **nicht** vom Fallback aufgefangen |
@@ -157,3 +157,5 @@ Tie-Break über die `chunk_id`.
   sich tatsächlich widersprechen, beurteilt der lesende Agent.
 - **`answer_question` weist den Fallback nicht aus.** Dort ist nur der Modus vermerkt; die Belege
   selbst tragen ihre Provenienz korrekt.
+- **`k` und `communities` sind gedeckelt.** Seit [ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md)
+  gilt für beide dieselbe geteilte Obergrenze (`research_graphrag.limits.MAX_RESULT_COUNT`).

@@ -105,6 +105,13 @@ def test_global_non_positive_n_raises_invalid_input(tmp_path: Path) -> None:
     assert excinfo.value.code is ErrorCode.INVALID_INPUT
 
 
+def test_global_n_above_max_result_count_raises_invalid_input(tmp_path: Path) -> None:
+    """n > MAX_RESULT_COUNT -> invalid_input (ADR 0037)."""
+    with pytest.raises(DomainError) as excinfo:
+        search_global(_build(tmp_path), "transformer", n=51)
+    assert excinfo.value.code is ErrorCode.INVALID_INPUT
+
+
 def test_global_without_graph_raises_constraint_violation(tmp_path: Path) -> None:
     """Ohne gebauten Graphen (keine Communities) -> constraint_violation."""
     with pytest.raises(DomainError) as excinfo:

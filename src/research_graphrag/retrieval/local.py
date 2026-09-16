@@ -32,6 +32,7 @@ from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.indexing.fusion import fuse_rankings
 from research_graphrag.indexing.graph_index import load_neighbors
 from research_graphrag.indexing.tfidf_index import DEFAULT_SCORING, Hit, Scoring, TfidfIndex
+from research_graphrag.limits import check_max_count
 from research_graphrag.retrieval.provenance import Citation
 
 DEFAULT_SEEDS = 5
@@ -143,10 +144,12 @@ def search_local(
     Args:
         db_path: Pfad zur SQLite-Index-Datei.
         query: Natürlichsprachige Anfrage (nicht leer).
-        k: Maximale Zahl der Chunk-Nachbarn **insgesamt** (> 0), nicht je Seed.
-        fan_out: Maximale Zahl der Graph-Nachbarpaper (>= 0). ``0`` überspringt den
-            Fan-out und benötigt daher **keinen** gebauten Graphen.
-        seeds: Maximale Zahl der Seed-Chunks (> 0); Default :data:`DEFAULT_SEEDS`.
+        k: Maximale Zahl der Chunk-Nachbarn **insgesamt** (``0 < k <= MAX_RESULT_COUNT``), nicht
+            je Seed.
+        fan_out: Maximale Zahl der Graph-Nachbarpaper (``0 <= fan_out <= MAX_RESULT_COUNT``).
+            ``0`` überspringt den Fan-out und benötigt daher **keinen** gebauten Graphen.
+        seeds: Maximale Zahl der Seed-Chunks (``0 < seeds <= MAX_RESULT_COUNT``); Default
+            :data:`DEFAULT_SEEDS`.
         scoring: Wertung für Seeds und Fan-out-Belege – ``hybrid`` (Default), ``tfidf`` oder
             ``bm25``. Die Chunk-Nachbarschaft beruht unabhängig davon auf dem TF-IDF-Kosinus
             (siehe docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md).
@@ -156,14 +159,17 @@ def search_local(
 
     Raises:
         DomainError: ``invalid_input`` bei leerer Anfrage, ``k <= 0``, ``fan_out < 0``,
-            ``seeds <= 0`` oder unbekannter Wertung; ``not_found`` wenn die Index-Datei fehlt;
+            ``seeds <= 0``, einem der drei Parameter über ``MAX_RESULT_COUNT`` (ADR 0037) oder
+            unbekannter Wertung; ``not_found`` wenn die Index-Datei fehlt;
             ``constraint_violation`` wenn der Index keine Chunks enthält bzw. (bei
             ``fan_out > 0``) kein Graph gebaut wurde (siehe docs/error-model.md).
     """
     if fan_out < 0:
         raise DomainError(ErrorCode.INVALID_INPUT, "fan_out muss >= 0 sein.")
+    check_max_count("fan_out", fan_out)
     if seeds <= 0:
         raise DomainError(ErrorCode.INVALID_INPUT, "seeds muss > 0 sein.")
+    check_max_count("seeds", seeds)
 
     index = TfidfIndex.load(db_path)
     seed_hits = index.search(query, seeds, scoring=scoring)  # validiert Anfrage/k/Wertung intern

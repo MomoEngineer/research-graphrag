@@ -41,7 +41,7 @@ und [ADR 0028](../../../../docs/adr/0028-similarity-graph-degree-phase11.md)).
 
 ```mermaid
 flowchart TD
-    Q["Anfrage"] --> V["Eingaben prüfen: leer, n ≤ 0"]
+    Q["Anfrage"] --> V["Eingaben prüfen: leer, n ≤ 0, n > MAX_RESULT_COUNT"]
     V --> LC["load_communities"]
     V --> TI["TfidfIndex.load"]
     TI --> SCP["score_chunks_by_paper(query)<br/>Hybrid-Score je Chunk, gruppiert nach Paper"]
@@ -114,7 +114,7 @@ Community-Auswahl und ihre Darstellung existieren nur **einmal** im Code.
 
 | Situation | Fehlercode |
 | --- | --- |
-| leere Anfrage, `n <= 0` | `invalid_input` |
+| leere Anfrage, `n <= 0`, `n > MAX_RESULT_COUNT` (ADR 0037) | `invalid_input` |
 | Index-Datei fehlt | `not_found` |
 | kein Graph bzw. keine Communities | `constraint_violation` |
 | keine Community passt | kein Fehler – leeres Ergebnis |
@@ -141,3 +141,6 @@ Community-ID – nie die Speicherreihenfolge.
   nicht gemessen.
 - **Abhängig von der Community-Qualität.** Eine schlecht geschnittene Community lässt sich hier
   nicht mehr reparieren.
+- **`n` ist gedeckelt.** Seit [ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md)
+  gilt dieselbe geteilte Obergrenze wie bei den übrigen Retrieval-Werkzeugen
+  (`research_graphrag.limits.MAX_RESULT_COUNT`).

@@ -19,6 +19,7 @@ from typing import Any
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.indexing.graph_index import CommunityView, load_communities
 from research_graphrag.indexing.tfidf_index import DEFAULT_SCORING, TfidfIndex
+from research_graphrag.limits import check_max_count
 from research_graphrag.retrieval.provenance import PaperRef, ProvenanceAssembler
 
 DEFAULT_TOP_COMMUNITIES = 5
@@ -93,21 +94,23 @@ def rank_communities(
     Args:
         db_path: Pfad zur SQLite-Index-Datei.
         query: Natürlichsprachige Anfrage (nicht leer).
-        n: Maximale Zahl der Communities (> 0).
+        n: Maximale Zahl der Communities (``0 < n <= MAX_RESULT_COUNT``).
 
     Returns:
         Bis zu ``n`` Paare ``(community, score)`` mit Score > 0, absteigend sortiert
         (Tie-Break: kleinere ``community_id``); leer, wenn keine Community passt.
 
     Raises:
-        DomainError: ``invalid_input`` bei leerer Anfrage oder ``n <= 0``; ``not_found`` wenn
-            die Index-Datei fehlt; ``constraint_violation`` wenn kein Graph/keine Communities
-            vorliegen (siehe docs/error-model.md).
+        DomainError: ``invalid_input`` bei leerer Anfrage, ``n <= 0`` oder
+            ``n > MAX_RESULT_COUNT`` (ADR 0037); ``not_found`` wenn die Index-Datei fehlt;
+            ``constraint_violation`` wenn kein Graph/keine Communities vorliegen (siehe
+            docs/error-model.md).
     """
     if not query.strip():
         raise DomainError(ErrorCode.INVALID_INPUT, "Leere Suchanfrage.")
     if n <= 0:
         raise DomainError(ErrorCode.INVALID_INPUT, "n muss > 0 sein.")
+    check_max_count("n", n)
 
     communities = load_communities(db_path)
     index = TfidfIndex.load(db_path)

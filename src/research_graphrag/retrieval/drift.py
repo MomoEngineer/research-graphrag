@@ -21,6 +21,7 @@ from typing import Any
 
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.indexing.tfidf_index import DEFAULT_SCORING, Scoring, TfidfIndex
+from research_graphrag.limits import check_max_count
 from research_graphrag.retrieval.global_search import (
     CommunityMatch,
     build_community_match,
@@ -72,11 +73,11 @@ def search_drift(
     Args:
         db_path: Pfad zur SQLite-Index-Datei.
         query: Natürlichsprachige Anfrage (nicht leer).
-        k: Maximale Zahl der lokal verfeinerten Chunk-Belege (> 0).
-        communities: Maximale Zahl der berücksichtigten Communities (> 0); Default
-            :data:`DEFAULT_COMMUNITIES`. Ihre Mitglieder bilden **eine** Kandidatenmenge; die
-            Rangfolge der Communities wirkt nur über die Zugehörigkeit, nicht über die
-            Reihenfolge der Belege.
+        k: Maximale Zahl der lokal verfeinerten Chunk-Belege (``0 < k <= MAX_RESULT_COUNT``).
+        communities: Maximale Zahl der berücksichtigten Communities
+            (``0 < communities <= MAX_RESULT_COUNT``); Default :data:`DEFAULT_COMMUNITIES`. Ihre
+            Mitglieder bilden **eine** Kandidatenmenge; die Rangfolge der Communities wirkt nur
+            über die Zugehörigkeit, nicht über die Reihenfolge der Belege.
         scoring: Wertung der lokalen Verfeinerung – ``hybrid`` (Default), ``tfidf`` oder
             ``bm25``. Die Community-Auswahl bleibt davon unberührt (siehe
             docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md).
@@ -88,15 +89,17 @@ def search_drift(
         Findet auch die corpusweite Suche nichts, bleibt ``citations`` leer.
 
     Raises:
-        DomainError: ``invalid_input`` bei leerer Anfrage, ``k <= 0``, ``communities <= 0``
-            oder unbekannter Wertung; ``not_found`` wenn die Index-Datei fehlt;
-            ``constraint_violation`` wenn kein Graph/keine Communities vorliegen (siehe
-            docs/error-model.md).
+        DomainError: ``invalid_input`` bei leerer Anfrage, ``k <= 0``, ``communities <= 0``,
+            einem der beiden Parameter über ``MAX_RESULT_COUNT`` (ADR 0037) oder unbekannter
+            Wertung; ``not_found`` wenn die Index-Datei fehlt; ``constraint_violation`` wenn
+            kein Graph/keine Communities vorliegen (siehe docs/error-model.md).
     """
     if k <= 0:
         raise DomainError(ErrorCode.INVALID_INPUT, "k muss > 0 sein.")
+    check_max_count("k", k)
     if communities <= 0:
         raise DomainError(ErrorCode.INVALID_INPUT, "communities muss > 0 sein.")
+    check_max_count("communities", communities)
 
     ranked = rank_communities(db_path, query, communities)  # validiert Anfrage und den Graphen
     index = TfidfIndex.load(db_path)

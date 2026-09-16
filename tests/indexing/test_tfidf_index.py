@@ -174,6 +174,15 @@ def test_non_positive_k_raises_invalid_input(tmp_path: Path) -> None:
     assert excinfo.value.code is ErrorCode.INVALID_INPUT
 
 
+def test_k_above_max_result_count_raises_invalid_input(tmp_path: Path) -> None:
+    """k > MAX_RESULT_COUNT -> invalid_input (ADR 0037)."""
+    db = tmp_path / "index.sqlite"
+    build_index([_paper("iiii9999", ["content for the index"])], db)
+    with pytest.raises(DomainError) as excinfo:
+        TfidfIndex.load(db).search("content", k=51)
+    assert excinfo.value.code is ErrorCode.INVALID_INPUT
+
+
 def _sectioned_paper(paper_id: str, texts: Sequence[str], section: str) -> CanonicalPaper:
     chunks = tuple(
         Chunk(
@@ -250,6 +259,15 @@ def test_neighbors_of_chunk_non_positive_k_raises_invalid_input(tmp_path: Path) 
     build_index([_paper("aaaa0001", ["transformer attention encoder"])], db)
     with pytest.raises(DomainError) as excinfo:
         TfidfIndex.load(db).neighbors_of_chunk("aaaa0001-p1", k=0)
+    assert excinfo.value.code is ErrorCode.INVALID_INPUT
+
+
+def test_neighbors_of_chunk_k_above_max_result_count_raises_invalid_input(tmp_path: Path) -> None:
+    """k > MAX_RESULT_COUNT -> invalid_input (ADR 0037)."""
+    db = tmp_path / "index.sqlite"
+    build_index([_paper("aaaa0001", ["transformer attention encoder"])], db)
+    with pytest.raises(DomainError) as excinfo:
+        TfidfIndex.load(db).neighbors_of_chunk("aaaa0001-p1", k=51)
     assert excinfo.value.code is ErrorCode.INVALID_INPUT
 
 

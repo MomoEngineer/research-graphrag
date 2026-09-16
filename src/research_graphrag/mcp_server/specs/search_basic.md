@@ -4,6 +4,10 @@
 > `src/research_graphrag/retrieval/basic.py`; als MCP-Tool registriert in **Phase 5**
 > ([ADR 0009](../../../../docs/adr/0009-mcp-server-stdio-phase5.md)).
 
+> **Änderung `0.2.0` → `0.3.0` ([ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md)):**
+> `k` hat jetzt eine Obergrenze (`50`, geteilt mit den übrigen Retrieval-Werkzeugen). Abwärtskompatibel
+> für jeden bestehenden Aufruf mit `k <= 50`.
+
 ---
 
 ## Metadaten
@@ -11,7 +15,7 @@
 | Feld | Wert |
 | --- | --- |
 | **Tool-Name** | `search_basic` (generisch) |
-| **Version** | `0.2.0` |
+| **Version** | `0.3.0` |
 | **Capability-Schicht** | Retrieval – Basic Search (siehe README.md) |
 | **Status** | Implementiert (Phase 0b, Durchstich) |
 
@@ -26,7 +30,9 @@ Beantwortet exakte/faktische Fragen über **Top-k-Vektorsuche (TF-IDF)** auf Pap
 | Parameter | Typ | Pflicht | Beschreibung / Wertebereich |
 | --- | --- | --- | --- |
 | `query` | `str` | ja | Natürlichsprachige Anfrage; nicht leer. |
-| `k` | `int` | nein | Maximale Trefferzahl (> 0); Default `5`. |
+| `k` | `int` | nein | Maximale Trefferzahl (`0 < k <= 50`); Default `5`. |
+
+> Die Obergrenze `50` ist die geteilte `MAX_RESULT_COUNT` aller Retrieval-Werkzeuge ([ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md), Modul `research_graphrag.limits`) – sie schützt die MCP-Transportgrenze von 1 MB.
 
 > Der Index-Pfad ist **Server-Konfiguration**, kein Tool-Parameter (Standard: `data/index/index.sqlite`).
 
@@ -74,7 +80,7 @@ Beantwortet exakte/faktische Fragen über **Top-k-Vektorsuche (TF-IDF)** auf Pap
 
 ## 6. Fehlerverhalten
 
-- `invalid_input`: leere `query` oder `k <= 0`.
+- `invalid_input`: leere `query`, `k <= 0` oder `k > 50`.
 - `not_found`: Index-Datei fehlt.
 - `constraint_violation`: Index enthält keine Chunks.
 

@@ -30,6 +30,15 @@ aufrufende Agent selbst (kein serverseitiges LLM-Sampling, siehe
 > (`strong`/`weak`/`none`) und auslösende Signale. Bei explizit gewähltem Modus ist das Feld
 > `null` ([ADR 0017](../../../docs/adr/0017-router-hardening-phase7.md)).
 
+> **Antworten bleiben unter der 1-MB-Transportgrenze:** Alle Trefferzahl-Parameter (`k`, `n`,
+> `fan_out`, `communities`, `limit`) teilen eine Obergrenze `MAX_RESULT_COUNT = 50`
+> (`research_graphrag.limits`) und werden bei Überschreitung mit `invalid_input` abgelehnt statt
+> still gekürzt. `list_topics` liefert standardmäßig eine gefilterte, membergelöste Übersicht
+> (`min_size`/`limit`); die volle Mitgliederliste einer Community liefert `community_id`.
+> `_guard` prüft zusätzlich als letzte Absicherung die serialisierte Antwortgröße und meldet
+> `constraint_violation`, statt eine übergroße Antwort jemals mitten im Inhalt abzuschneiden
+> ([ADR 0037](../../../docs/adr/0037-mcp-tool-response-size-ceiling.md)).
+
 > Code-Walkthroughs werden – wie in Phase 4 – nur für nicht-triviale Tools verlangt; die hier
 > registrierten Tools sind dünne Wrapper um die getestete Kernlogik und daher **spec-only**
 > (right-sized, siehe [CONTRIBUTING.md](../../../CONTRIBUTING.md)). Das gilt auch für

@@ -19,22 +19,24 @@ Paper-Provenienz an, sodass keine Folgeaufrufe nötig sind, um die Antwort zu be
 
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
-| `get_citations` | Funktion | Paper-ID → `CitationsResult` |
-| `CitationsResult` | Dataclass | Das Paper selbst plus `cites` und `cited_by`, mit `to_dict()` |
+| `get_citations` | Funktion | Paper-ID (+ optional `limit`) → `CitationsResult` |
+| `CitationsResult` | Dataclass | Das Paper selbst plus gedeckelte `cites`/`cited_by` und ihre Totals, mit `to_dict()` |
 | `CitationLink` | Dataclass | Ein Gegenüber-Paper (inkl. `document_kind`) plus Match-Kriterium |
 
 ## 3. Ablauf
 
 ```mermaid
 flowchart TD
-    A["paper_id"] --> B["load_citations<br/>prüft Eingabe, Index, Paper, Tabelle"]
+    A["paper_id, limit"] --> LV["limit > 0, limit <= MAX_RESULT_COUNT prüfen"]
+    LV --> B["load_citations<br/>prüft Eingabe, Index, Paper, Tabelle"]
     B --> C["ProvenanceAssembler.load"]
     C --> D["paper_ref für das Paper selbst"]
     B --> E["je Kante in cites:<br/>paper_ref(Ziel)"]
     B --> F["je Kante in cited_by:<br/>paper_ref(Quelle)"]
+    E --> TR["auf limit kürzen,<br/>Totals vor der Kürzung merken"]
+    F --> TR
     D --> G["CitationsResult"]
-    E --> G
-    F --> G
+    TR --> G
 ```
 
 ### Die Schichtung
@@ -59,6 +61,17 @@ das gewichten.
 sie zu verschachteln. Ein Eintrag ist damit direkt als Beleg verwendbar, ohne dass der Aufrufer
 zwei Ebenen auspacken muss.
 
+### `limit` und die Totals
+
+Seit [ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md) deckelt `limit`
+(dieselbe geteilte Obergrenze wie bei den übrigen Retrieval-Werkzeugen,
+`research_graphrag.limits.MAX_RESULT_COUNT`) `cites` und `cited_by` **unabhängig** je Richtung –
+ein Paper kann mehr ausgehende als eingehende Kanten haben (oder umgekehrt). `cites_total`/
+`cited_by_total` zählen **vor** der Deckelung, damit eine Kürzung sichtbar bleibt: Am realen
+Korpus wird das voraussichtlich selten greifen (382 `CITES`-Kanten insgesamt bei 606 Papern zum
+Zeitpunkt von [ADR 0011](../../../../docs/adr/0011-intra-corpus-citation-graph-phase7.md)), aber
+ein einzelnes „Hub"-Paper könnte mit wachsendem Korpus mehr als 50 eingehende Zitationen sammeln.
+
 ## 4. Zusammenspiel
 
 ```mermaid
@@ -74,7 +87,7 @@ flowchart LR
 
 | Situation | Fehlercode |
 | --- | --- |
-| leere `paper_id` | `invalid_input` |
+| leere `paper_id`, `limit <= 0` oder `limit > MAX_RESULT_COUNT` (ADR 0037) | `invalid_input` |
 | Index-Datei fehlt | `not_found` |
 | Paper nicht im Index | `not_found` |
 | kein Zitationsgraph im Index | `constraint_violation` |

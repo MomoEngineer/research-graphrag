@@ -8,6 +8,10 @@
 > Das Feld `seed` (ein Objekt oder `null`) ist durch die Liste **`seeds`** ersetzt. Das ist ein
 > **bewusster Bruch** des Output-Schemas; das Input-Schema bleibt unverändert.
 
+> **Änderung `0.3.0` → `0.4.0` ([ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md)):**
+> `k` und `fan_out` haben jetzt eine Obergrenze (`50`, geteilt mit den übrigen Retrieval-Werkzeugen).
+> Abwärtskompatibel für jeden bestehenden Aufruf innerhalb dieser Grenze.
+
 ---
 
 ## Metadaten
@@ -15,7 +19,7 @@
 | Feld | Wert |
 | --- | --- |
 | **Tool-Name** | `search_local` (generisch) |
-| **Version** | `0.3.0` |
+| **Version** | `0.4.0` |
 | **Capability-Schicht** | Retrieval – Local Search (siehe README.md) |
 | **Status** | Implementiert (Phase 4; Multi-Seed seit Phase 10 / V1) |
 
@@ -32,10 +36,12 @@ Die Verankerung an mehreren Seeds ersetzt die frühere Verankerung an einem einz
 | Parameter | Typ | Pflicht | Beschreibung / Wertebereich |
 | --- | --- | --- | --- |
 | `query` | `str` | ja | Natürlichsprachige Anfrage; nicht leer. |
-| `k` | `int` | nein | Maximale Zahl der Chunk-Nachbarn **insgesamt** (> 0); Default `5`. |
-| `fan_out` | `int` | nein | Maximale Zahl der Graph-Nachbarpaper (>= 0); Default `5`. `0` überspringt den Fan-out (benötigt keinen Graphen). |
+| `k` | `int` | nein | Maximale Zahl der Chunk-Nachbarn **insgesamt** (`0 < k <= 50`); Default `5`. |
+| `fan_out` | `int` | nein | Maximale Zahl der Graph-Nachbarpaper (`0 <= fan_out <= 50`); Default `5`. `0` überspringt den Fan-out (benötigt keinen Graphen). |
 
 > Der Index-Pfad ist **Server-Konfiguration**, kein Tool-Parameter (Standard: `data/index/index.sqlite`).
+>
+> Die Obergrenze `50` ist die geteilte `MAX_RESULT_COUNT` aller Retrieval-Werkzeuge ([ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md), Modul `research_graphrag.limits`) – sie gilt auch für die interne Seed-Zahl.
 >
 > Die Zahl der Seeds ist **bewusst kein** Tool-Parameter: Sie beschreibt die interne Ankerbildung, nicht die gewünschte Ergebnisgröße, und ist – wie die Wertung – gemessen statt wählbar ([ADR 0021](../../../../docs/adr/0021-local-multi-seed-phase10.md)). CLI und Python-API bieten sie als `--seeds` bzw. `seeds` an.
 
@@ -90,7 +96,7 @@ Bei den `seeds` und den Fan-out-Belegen ist `score` der **Fusionswert** der Hybr
 
 ## 6. Fehlerverhalten
 
-- `invalid_input`: leere `query`, `k <= 0`, `fan_out < 0` oder `seeds <= 0` (nur über CLI/API erreichbar).
+- `invalid_input`: leere `query`, `k <= 0` oder `k > 50`, `fan_out < 0` oder `fan_out > 50`, `seeds <= 0` oder `seeds > 50` (Grenzen für `seeds` nur über CLI/API erreichbar).
 - `not_found`: Index-Datei fehlt.
 - `constraint_violation`: Index enthält keine Chunks; bzw. `fan_out > 0`, aber kein Graph gebaut.
 

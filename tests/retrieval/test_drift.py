@@ -214,6 +214,20 @@ def test_drift_non_positive_communities_raises_invalid_input(
     assert excinfo.value.code is ErrorCode.INVALID_INPUT
 
 
+def test_drift_k_above_max_result_count_raises_invalid_input(tmp_path: Path) -> None:
+    """k > MAX_RESULT_COUNT -> invalid_input (ADR 0037)."""
+    with pytest.raises(DomainError) as excinfo:
+        search_drift(_build(tmp_path), "transformer", k=51)
+    assert excinfo.value.code is ErrorCode.INVALID_INPUT
+
+
+def test_drift_communities_above_max_result_count_raises_invalid_input(tmp_path: Path) -> None:
+    """communities > MAX_RESULT_COUNT -> invalid_input (ADR 0037)."""
+    with pytest.raises(DomainError) as excinfo:
+        search_drift(_build(tmp_path), "transformer", communities=51)
+    assert excinfo.value.code is ErrorCode.INVALID_INPUT
+
+
 def test_drift_without_graph_raises_constraint_violation(tmp_path: Path) -> None:
     """Ohne gebauten Graphen -> constraint_violation; der Fallback verdeckt das **nicht**."""
     with pytest.raises(DomainError) as excinfo:

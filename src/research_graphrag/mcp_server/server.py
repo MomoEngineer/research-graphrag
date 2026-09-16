@@ -16,6 +16,10 @@ Grundsätze (docs/adr/0009-mcp-server-stdio-phase5.md):
   Ausgabe mit ``isError = true`` übersetzt (docs/error-model.md).
 - Logging erfolgt auf **stderr** – stdout ist beim ``stdio``-Transport dem MCP-Protokoll
   vorbehalten.
+- Jede Antwort bleibt unter der 1-MB-MCP-Transportgrenze: eine geteilte Obergrenze
+  (``research_graphrag.limits.MAX_RESULT_COUNT``) für alle Trefferzahl-Parameter plus ein
+  Byte-Sicherheitsnetz in :func:`_guard`, das eine zu große Antwort nie ausliefert und nie
+  mitten im Inhalt abschneidet (docs/adr/0037-mcp-tool-response-size-ceiling.md).
 """
 
 from __future__ import annotations
@@ -35,7 +39,7 @@ from mcp.server.fastmcp import Context, FastMCP
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.generation.answer import AUTO_MODE, answer_question
 from research_graphrag.generation.provider import NoopGenerationProvider
-from research_graphrag.indexing.graph_index import load_communities
+from research_graphrag.limits import MAX_RESULT_COUNT
 from research_graphrag.mcp_server.sampling import provider_for
 from research_graphrag.retrieval.basic import search_basic
 from research_graphrag.retrieval.citations import get_citations
@@ -44,6 +48,8 @@ from research_graphrag.retrieval.global_search import search_global
 from research_graphrag.retrieval.local import search_local
 from research_graphrag.retrieval.paper import get_paper
 from research_graphrag.retrieval.reference import get_reference
+from research_graphrag.retrieval.topics import DEFAULT_LIMIT, DEFAULT_MIN_SIZE, get_topic
+from research_graphrag.retrieval.topics import list_topics as list_topics_overview
 
 logging.basicConfig(
     level=os.environ.get("RESEARCH_GRAPHRAG_LOG_LEVEL", "INFO"),
@@ -53,6 +59,15 @@ logging.basicConfig(
 logger = logging.getLogger("research_graphrag.mcp_server")
 
 _DEFAULT_INDEX = Path("data") / "index" / "index.sqlite"
+
+_MAX_RESPONSE_BYTES = 900_000
+"""Sicherheitsschwelle für eine serialisierte Tool-Antwort (ADR 0037).
+
+Deutlich unter der MCP-Transportgrenze von 1 MB: Bei korrekt bemessener
+``research_graphrag.limits.MAX_RESULT_COUNT`` bleibt jede reguläre Antwort weit darunter (siehe
+ADR 0037); dieses Netz fängt ausschließlich Unvorhergesehenes ab. Eine Antwort wird dabei **nie**
+in der Mitte abgeschnitten – bei Überschreiten wird sie verworfen und stattdessen ein
+strukturierter Fehler gemeldet."""
 
 mcp = FastMCP("research-graphrag")
 
@@ -83,10 +98,13 @@ def _guard(
     """Führt die Tool-Logik aus und übersetzt Fehler an der Server-Grenze.
 
     Fachliche :class:`DomainError` werden in eine strukturierte Fehlerausgabe übersetzt;
-    unerwartete Ausnahmen werden als ``internal_error`` gemeldet (letzte Sicherung).
+    unerwartete Ausnahmen werden als ``internal_error`` gemeldet. Als letzte Sicherung prüft
+    ``_guard`` zusätzlich die serialisierte Größe einer erfolgreichen Antwort gegen
+    :data:`_MAX_RESPONSE_BYTES` (ADR 0037) – eine Überschreitung wird nie ausgeliefert und nie
+    mitten im Inhalt abgeschnitten, sondern als ``constraint_violation`` gemeldet.
     """
     try:
-        return produce()
+        result = produce()
     except DomainError as exc:
         logger.info("Fachlicher Fehler [%s]: %s", exc.code.value, exc.message)
         return _error_result(exc)
@@ -95,6 +113,24 @@ def _guard(
         return _error_result(
             DomainError(ErrorCode.INTERNAL_ERROR, f"Interner Fehler im Tool {tool_name}.")
         )
+
+    size = len(json.dumps(result, ensure_ascii=False).encode("utf-8"))
+    if size > _MAX_RESPONSE_BYTES:
+        logger.warning(
+            "Antwort von %s überschreitet die Sicherheitsschwelle: %d Byte (Grenze: %d).",
+            tool_name,
+            size,
+            _MAX_RESPONSE_BYTES,
+        )
+        return _error_result(
+            DomainError(
+                ErrorCode.CONSTRAINT_VIOLATION,
+                f"Antwort von {tool_name} überschreitet die Sicherheitsschwelle von "
+                f"{_MAX_RESPONSE_BYTES:,} Byte ({size:,} Byte) – Parameter wie k/limit "
+                "verkleinern.",
+            )
+        )
+    return result
 
 
 @mcp.tool(
@@ -236,17 +272,27 @@ async def answer_question_tool(
     name="list_topics",
     title="Themencluster (Communities)",
     description=(
-        "Listet die Themencluster des Korpus (Louvain-Communities) mit Größe, Keywords, "
-        "Mitglieds-Papern und Vertretern. Nützlich, um den Korpus zu überblicken oder eine "
+        "Listet die Themencluster des Korpus (Louvain-Communities) mit Größe, Keywords und "
+        "Vertretern. Standardmäßig ohne Ein-Paper-Cluster (`min_size`, Default 2) und auf die "
+        f"`limit` größten Communities begrenzt (Default/Maximum {MAX_RESULT_COUNT}). Für die "
+        "volle Mitgliederliste einer einzelnen Community `community_id` angeben – dann werden "
+        "`min_size`/`limit` ignoriert. Nützlich, um den Korpus zu überblicken oder eine "
         "Community für Global/DRIFT auszuwählen."
     ),
 )
-def list_topics_tool() -> dict[str, Any]:
-    """Übersicht der Korpus-Communities (siehe specs/list_topics.md)."""
-    return _guard(  # type: ignore[return-value]
-        "list_topics",
-        lambda: {"topics": [view.to_dict() for view in load_communities(_index_path())]},
-    )
+def list_topics_tool(
+    min_size: int = DEFAULT_MIN_SIZE,
+    limit: int = DEFAULT_LIMIT,
+    community_id: int | None = None,
+) -> dict[str, Any]:
+    """Community-Übersicht oder Einzelabruf per `community_id` (siehe specs/list_topics.md)."""
+
+    def produce() -> dict[str, Any]:
+        if community_id is not None:
+            return get_topic(_index_path(), community_id).to_dict()
+        return list_topics_overview(_index_path(), min_size=min_size, limit=limit).to_dict()
+
+    return _guard("list_topics", produce)  # type: ignore[return-value]
 
 
 @mcp.tool(

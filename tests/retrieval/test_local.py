@@ -242,6 +242,27 @@ def test_local_non_positive_seeds_raises_invalid_input(tmp_path: Path, seeds: in
     assert excinfo.value.code is ErrorCode.INVALID_INPUT
 
 
+def test_local_fanout_above_max_result_count_raises_invalid_input(tmp_path: Path) -> None:
+    """fan_out > MAX_RESULT_COUNT -> invalid_input (ADR 0037)."""
+    with pytest.raises(DomainError) as excinfo:
+        search_local(_build(tmp_path), "attention", fan_out=51)
+    assert excinfo.value.code is ErrorCode.INVALID_INPUT
+
+
+def test_local_seeds_above_max_result_count_raises_invalid_input(tmp_path: Path) -> None:
+    """seeds > MAX_RESULT_COUNT -> invalid_input (ADR 0037)."""
+    with pytest.raises(DomainError) as excinfo:
+        search_local(_build(tmp_path), "attention", seeds=51)
+    assert excinfo.value.code is ErrorCode.INVALID_INPUT
+
+
+def test_local_k_above_max_result_count_raises_invalid_input(tmp_path: Path) -> None:
+    """k > MAX_RESULT_COUNT -> invalid_input, geerbt aus TfidfIndex.neighbors_of_chunk (ADR 0037)."""
+    with pytest.raises(DomainError) as excinfo:
+        search_local(_build(tmp_path), "attention", k=51, fan_out=0)
+    assert excinfo.value.code is ErrorCode.INVALID_INPUT
+
+
 def test_local_missing_index_raises_not_found(tmp_path: Path) -> None:
     """Fehlender Index -> not_found."""
     with pytest.raises(DomainError) as excinfo:

@@ -28,7 +28,7 @@ Fachliche Fehler werden **nicht** als unbehandelte Exceptions geworfen, sondern 
 | `permission_denied` | Zugriff außerhalb erlaubter Grenzen | Pfad außerhalb `papers/` bzw. der Workspace-Roots |
 | `parse_error` | Quelle nicht parsebar | korruptes PDF, ungültiges Canonical JSON |
 | `dependency_error` | externer/vernetzter Dienst nicht verfügbar | Cloud-Backend (falls genutzt) nicht erreichbar |
-| `constraint_violation` | fachliche Invariante verletzt | Abfrage angefordert, aber kein Index gebaut |
+| `constraint_violation` | fachliche Invariante verletzt | Abfrage angefordert, aber kein Index gebaut; serialisierte Tool-Antwort überschreitet die Sicherheitsschwelle des MCP-Servers ([ADR 0037](adr/0037-mcp-tool-response-size-ceiling.md)) |
 | `internal_error` | unerwarteter interner Fehler (Bug) | nicht abgefangene Ausnahme im Tool |
 
 > **Abgrenzung `dependency_error` ↔ `internal_error`:** Fehler eines **eingebetteten, im Prozess laufenden** Stores (z. B. die lokale SQLite-Index-Datei) sind **kein** `dependency_error`, sondern `internal_error`. `dependency_error` ist ausschließlich für **externe/vernetzte** Dienste vorgesehen.

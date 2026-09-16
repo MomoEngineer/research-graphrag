@@ -4,6 +4,10 @@
 > `src/research_graphrag/retrieval/global_search.py`; als MCP-Tool registriert in
 > **Phase 5** ([ADR 0009](../../../../docs/adr/0009-mcp-server-stdio-phase5.md)).
 
+> **Änderung `0.2.0` → `0.3.0` ([ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md)):**
+> `n` hat jetzt eine Obergrenze (`50`, geteilt mit den übrigen Retrieval-Werkzeugen). Abwärtskompatibel
+> für jeden bestehenden Aufruf mit `n <= 50`.
+
 ---
 
 ## Metadaten
@@ -11,7 +15,7 @@
 | Feld | Wert |
 | --- | --- |
 | **Tool-Name** | `search_global` (generisch) |
-| **Version** | `0.2.0` |
+| **Version** | `0.3.0` |
 | **Capability-Schicht** | Retrieval – Global Search (siehe README.md) |
 | **Status** | Implementiert (Phase 4) |
 
@@ -26,9 +30,11 @@ Beantwortet **Cross-Paper-/Themenfragen** als Offline-Analog zum GraphRAG-„Glo
 | Parameter | Typ | Pflicht | Beschreibung / Wertebereich |
 | --- | --- | --- | --- |
 | `query` | `str` | ja | Natürlichsprachige Anfrage; nicht leer. |
-| `n` | `int` | nein | Maximale Zahl der Communities (> 0); Default `5`. |
+| `n` | `int` | nein | Maximale Zahl der Communities (`0 < n <= 50`); Default `5`. |
 
 > Der Index-Pfad ist **Server-Konfiguration**, kein Tool-Parameter (Standard: `data/index/index.sqlite`).
+>
+> Die Obergrenze `50` ist die geteilte `MAX_RESULT_COUNT` aller Retrieval-Werkzeuge ([ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md), Modul `research_graphrag.limits`).
 
 ## 3. Output-Schema
 
@@ -74,7 +80,7 @@ Jeder Vertreter trägt zusätzlich `identifiers` und `citation_key` und ist dami
 
 ## 6. Fehlerverhalten
 
-- `invalid_input`: leere `query` oder `n <= 0`.
+- `invalid_input`: leere `query`, `n <= 0` oder `n > 50`.
 - `not_found`: Index-Datei fehlt.
 - `constraint_violation`: kein Graph gebaut bzw. keine Communities vorhanden.
 

@@ -98,6 +98,7 @@ Sprachmodell.
 | --- | --- | --- | --- | --- |
 | **MCP-Server (stdio)** | Stellt neun Werkzeuge für GitHub Copilot bereit und lädt den Index **pro Anfrage** frisch – neue Paper wirken ohne Neustart | `python -m research_graphrag.mcp_server` | [mcp_server/server](../src/research_graphrag/mcp_server/doc/server.md) | [0009](adr/0009-mcp-server-stdio-phase5.md), [0010](adr/0010-drop-in-workflow-and-qa-phase6.md) |
 | **Fehlerübersetzung an der Grenze** | Übersetzt interne Fehler in eine strukturierte, kategorisierte Ausgabe; unerwartete Fehler werden nie durchgereicht | jedes Werkzeug | [errors](../src/research_graphrag/doc/errors.md), [mcp_server/server](../src/research_graphrag/mcp_server/doc/server.md) | [error-model.md](error-model.md), [0009](adr/0009-mcp-server-stdio-phase5.md) |
+| **Antwort-Größen-Obergrenze** | Eine geteilte Grenze (`MAX_RESULT_COUNT = 50`) für jeden Trefferzahl-Parameter (`k`/`n`/`fan_out`/`communities`/`limit`) hält jede Antwort weit unter der 1-MB-MCP-Transportgrenze; ein Byte-Sicherheitsnetz meldet eine unvorhergesehen zu große Antwort als Fehler statt sie mitten im Inhalt abzuschneiden | jedes Werkzeug | [limits](../src/research_graphrag/doc/limits.md), [mcp_server/server](../src/research_graphrag/mcp_server/doc/server.md) | [0037](adr/0037-mcp-tool-response-size-ceiling.md) |
 | **Kommandozeile** | Fünfzehn Skripte für Intake, Ingestion, Fragen, Zitation, Status, Sicherung, QS, Online-Recherche und Evaluation – der vollständige Funktionsumfang ohne Copilot | `python -m scripts.<name>` | [scripts/README.md](../scripts/README.md) | — |
 
 ### Die neun MCP-Werkzeuge
@@ -111,7 +112,7 @@ Sprachmodell.
 | `get_paper` | Metadaten und Struktur eines Papers | [get_paper.md](../src/research_graphrag/mcp_server/specs/get_paper.md) |
 | `get_citations` | Zitationen innerhalb des Korpus | [get_citations.md](../src/research_graphrag/mcp_server/specs/get_citations.md) |
 | `get_reference` | Literaturangabe in Harvard und APA | [get_reference.md](../src/research_graphrag/mcp_server/specs/get_reference.md) |
-| `list_topics` | Themenübersicht über alle Communities | [list_topics.md](../src/research_graphrag/mcp_server/specs/list_topics.md) |
+| `list_topics` | Gefilterte, gedeckelte Themenübersicht; `community_id` liefert eine Community mit voller Mitgliederliste | [list_topics.md](../src/research_graphrag/mcp_server/specs/list_topics.md) |
 | `answer_question` | Modus-Wahl, Evidenz und optionale Formulierung in einem Aufruf | [answer_question.md](../src/research_graphrag/mcp_server/specs/answer_question.md) |
 
 ## F. Qualitätssicherung und Evaluation

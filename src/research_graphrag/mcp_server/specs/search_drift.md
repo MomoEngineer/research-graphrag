@@ -9,6 +9,11 @@
 > hinzu kommt **`fallback`**. Das ist ein **bewusster Bruch** des Output-Schemas; das
 > Input-Schema bleibt unverändert.
 
+> **Änderung `0.3.0` → `0.4.0` ([ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md)):**
+> `k` hat jetzt eine Obergrenze (`50`, geteilt mit den übrigen Retrieval-Werkzeugen); ebenso die
+> Python-API-Option `communities`. Abwärtskompatibel für jeden bestehenden Aufruf innerhalb dieser
+> Grenze.
+
 ---
 
 ## Metadaten
@@ -16,7 +21,7 @@
 | Feld | Wert |
 | --- | --- |
 | **Tool-Name** | `search_drift` (generisch) |
-| **Version** | `0.3.0` |
+| **Version** | `0.4.0` |
 | **Capability-Schicht** | Retrieval – DRIFT Search (siehe README.md) |
 | **Status** | Implementiert (Phase 4; Community-Vereinigung und Fallback seit Phase 10 / V2) |
 
@@ -33,9 +38,11 @@ Liefert dieser Pfad **keine** Belege, fällt das Werkzeug sichtbar auf die Chunk
 | Parameter | Typ | Pflicht | Beschreibung / Wertebereich |
 | --- | --- | --- | --- |
 | `query` | `str` | ja | Natürlichsprachige Anfrage; nicht leer. |
-| `k` | `int` | nein | Maximale Zahl der lokal verfeinerten Chunk-Belege (> 0); Default `6`. |
+| `k` | `int` | nein | Maximale Zahl der lokal verfeinerten Chunk-Belege (`0 < k <= 50`); Default `6`. |
 
 > Der Index-Pfad ist **Server-Konfiguration**, kein Tool-Parameter (Standard: `data/index/index.sqlite`).
+>
+> Die Obergrenze `50` ist die geteilte `MAX_RESULT_COUNT` aller Retrieval-Werkzeuge ([ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md), Modul `research_graphrag.limits`) – sie gilt auch für die Python-API-Option `communities`.
 >
 > Die Zahl der berücksichtigten Communities ist **bewusst kein** Tool-Parameter: Sie beschreibt die interne Auswahl, nicht die gewünschte Ergebnisgröße, und ist – wie die Zahl der Local-Seeds – gemessen statt wählbar ([ADR 0022](../../../../docs/adr/0022-drift-community-union-and-fallback-phase10.md)). Die Python-API bietet sie als `communities`; eine CLI-Option gibt es bewusst **noch nicht** (Begründung im ADR).
 
@@ -82,7 +89,7 @@ Jeder Beleg – Community-Vertreter wie Chunk-Zitat – trägt zusätzlich `iden
 
 ## 6. Fehlerverhalten
 
-- `invalid_input`: leere `query`, `k <= 0` oder `communities <= 0` (nur über CLI/API erreichbar).
+- `invalid_input`: leere `query`, `k <= 0` oder `k > 50`, `communities <= 0` oder `communities > 50` (Grenzen für `communities` nur über CLI/API erreichbar).
 - `not_found`: Index-Datei fehlt.
 - `constraint_violation`: kein Graph gebaut bzw. keine Communities vorhanden. Ein **defekter** Index wird bewusst **nicht** vom Fallback aufgefangen.
 

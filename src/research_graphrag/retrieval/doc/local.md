@@ -31,7 +31,7 @@ eine Fundstelle und den Hop zu benachbarten Dokumenten.
 
 ```mermaid
 flowchart TD
-    Q["Anfrage"] --> V["fan_out < 0 und seeds <= 0 prüfen"]
+    Q["Anfrage"] --> V["fan_out < 0, seeds <= 0,<br/>beide > MAX_RESULT_COUNT prüfen"]
     V --> L["TfidfIndex.load"]
     L --> S["search(query, k=seeds)<br/>= die Seeds"]
     S --> E{"Seed gefunden?"}
@@ -129,8 +129,8 @@ beschreibt die interne Ankerbildung, nicht die gewünschte Ergebnisgröße.
 
 | Situation | Fehlercode |
 | --- | --- |
-| `fan_out < 0`, `seeds <= 0` | `invalid_input` (vor dem Index geprüft) |
-| leere Anfrage, `k <= 0`, unbekannte Wertung | `invalid_input` (aus der Index-Suche) |
+| `fan_out < 0`, `seeds <= 0`, `fan_out`/`seeds` > `MAX_RESULT_COUNT` (ADR 0037) | `invalid_input` (vor dem Index geprüft) |
+| leere Anfrage, `k <= 0`, `k > MAX_RESULT_COUNT`, unbekannte Wertung | `invalid_input` (aus der Index-Suche) |
 | Index fehlt | `not_found` |
 | Index ohne Chunks, oder `fan_out > 0` ohne Graph | `constraint_violation` |
 | kein Treffer gefunden | kein Fehler – leeres Ergebnis mit `seeds = ()` |
@@ -150,3 +150,5 @@ Kantenordnung des Graphen.
 - **Der Zugewinn durch die Seeds ist teilweise definitorisch:** Mit `seeds = k` enthält das Bündel
   die Top-*k* der Chunk-Suche und damit dasselbe wie [basic](basic.md). Nachbarschaft und Fan-out
   tragen zur Trefferquote wenig bei; ihr Wert ist der Kontext.
+- **`k`, `fan_out` und `seeds` sind gedeckelt.** Seit [ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md)
+  gilt für alle drei dieselbe geteilte Obergrenze (`research_graphrag.limits.MAX_RESULT_COUNT`).

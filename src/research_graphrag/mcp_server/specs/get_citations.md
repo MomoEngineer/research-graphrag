@@ -5,6 +5,12 @@
 > `src/research_graphrag/indexing/citation_graph.py`; als MCP-Tool registriert
 > ([ADR 0011](../../../../docs/adr/0011-intra-corpus-citation-graph-phase7.md)).
 
+> **Änderung `0.2.0` → `0.3.0` ([ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md)):**
+> Neuer Parameter `limit` deckelt `cites`/`cited_by` je Richtung (dieselbe `MAX_RESULT_COUNT` wie
+> die übrigen Retrieval-Werkzeuge); neue Felder `cites_total`/`cited_by_total` machen eine
+> Kürzung sichtbar. Abwärtskompatibel für jedes Paper mit höchstens 50 Kanten je Richtung
+> (heute jedes Paper im Korpus).
+
 ---
 
 ## Metadaten
@@ -12,7 +18,7 @@
 | Feld | Wert |
 | --- | --- |
 | **Tool-Name** | `get_citations` |
-| **Version** | `0.2.0` |
+| **Version** | `0.3.0` |
 | **Capability-Schicht** | Graph / Zitationsnetz (siehe README.md) |
 | **Status** | Implementiert (Phase 7 / A2) |
 
@@ -27,8 +33,11 @@ Beantwortet **Zitationsfragen innerhalb des eigenen Korpus**: „welche Paper zi
 | Parameter | Typ | Pflicht | Beschreibung / Wertebereich |
 | --- | --- | --- | --- |
 | `paper_id` | `str` | ja | Stabile Paper-ID (kein Datei-Pfad); nicht leer. Quelle: Treffer der `search_*`-Tools oder `list_topics`. |
+| `limit` | `int` | nein | Maximale Zahl der Einträge **je Richtung** (`cites` und `cited_by` unabhängig; `0 < limit <= 50`); Default `50`. |
 
 > Der Index-Pfad ist **Server-Konfiguration**, kein Tool-Parameter (Standard: `data/index/index.sqlite`).
+>
+> Die Obergrenze `50` ist die geteilte `MAX_RESULT_COUNT` aller Retrieval-Werkzeuge ([ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md), Modul `research_graphrag.limits`).
 
 ## 3. Output-Schema
 
@@ -38,13 +47,15 @@ Beantwortet **Zitationsfragen innerhalb des eigenen Korpus**: „welche Paper zi
   "cites": [
     { "paper_id": "…", "document_kind": "reference", "source_uri": "file:///…", "snippet": "…", "identifiers": { "doi": "10.…" }, "citation_key": "Beispiel2023", "method": "doi" }
   ],
+  "cites_total": 1,
   "cited_by": [
     { "paper_id": "…", "document_kind": "full", "source_uri": "file:///…", "snippet": "…", "identifiers": {}, "citation_key": "", "method": "title" }
-  ]
+  ],
+  "cited_by_total": 1
 }
 ```
 
-- `cites` = Paper, die das angefragte Paper **zitiert**; `cited_by` = Paper, die es **zitieren**.
+- `cites` = Paper, die das angefragte Paper **zitiert**; `cited_by` = Paper, die es **zitieren**. Beide Listen sind auf `limit` Einträge gedeckelt; `cites_total`/`cited_by_total` nennen die tatsächliche Zahl **vor** der Deckelung – eine Kürzung ist damit immer sichtbar (`cites_total > limit` bzw. `cited_by_total > limit`).
 - `document_kind` ist `full` (Volltext) oder `reference` (**Referenz-Eintrag ohne Volltext**). Gerade in `cites` ist das häufig: Ein Referenz-Eintrag existiert oft genau deshalb, weil sein Volltext nicht beschaffbar war – als Kanten**ziel** ist er trotzdem vollwertig ([ADR 0031](../../../../docs/adr/0031-reference-contract-and-guardrail-phase13.md)).
 - `method` ∈ `doi` | `arxiv` | `title` und benennt das **präziseste** Kriterium, über das die Kante erkannt wurde (Präzedenz `doi` > `arxiv` > `title`) – damit ist die Belastbarkeit einer Kante für den Aufrufer sichtbar.
 - `identifiers` und `citation_key` machen jedes genannte Paper **extern auflösbar**; beide stammen aus dem aufgelösten Metadatensatz und können leer sein ([ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md)). Belegte Schlüssel sind `doi`, `arxiv` und `url`.
@@ -64,7 +75,7 @@ Beantwortet **Zitationsfragen innerhalb des eigenen Korpus**: „welche Paper zi
 
 ## 6. Fehlerverhalten
 
-- `invalid_input`: leere `paper_id`.
+- `invalid_input`: leere `paper_id`, `limit <= 0` oder `limit > 50`.
 - `not_found`: Index-Datei fehlt **oder** `paper_id` ist unbekannt.
 - `constraint_violation`: der Index enthält **keinen** Zitationsgraphen (Ingest mit älterem Stand gebaut).
 
@@ -81,5 +92,5 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 ## 9. Testabdeckung
 
 - `tests/indexing/test_citation_graph.py`: Kantenbildung (DOI/arXiv/Titel, Präzedenz, Selbstzitat-Ausschluss), Determinismus, additive Persistenz, Fehlerfälle von `load_citations`.
-- `tests/retrieval/test_citations.py`: Provenienz-Anreicherung, Sortierung, Fehlerfälle.
+- `tests/retrieval/test_citations.py`: Provenienz-Anreicherung, Sortierung, Deckelung (`limit`, `cites_total`/`cited_by_total`), Fehlerfälle.
 - `tests/mcp_server/test_server.py`: Tool-Contract über einen In-Memory-Client (Erfolg + Fehler-Envelope).
