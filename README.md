@@ -162,6 +162,19 @@
 > [ADR 0022](docs/adr/0022-drift-community-union-and-fallback-phase10.md) bereits benannte Grenze
 > der lokalen Verfeinerung bei großer Kandidatenmenge, jetzt ausgelöst statt nur beobachtet
 > ([ADR 0036](docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md)).
+>
+> **Nachtrag (2026-09-16): Die G5-Ceiling ist überholt, nicht durch eine neue Zahl ersetzt.** Der
+> reale Bestand ist auf **3.461 Paper / 220.964 Chunks / 1.170 Communities** gewachsen – das
+> 4,6-Fache der G5-Auslegung. Eine Nachmessung direkt am realen Bestand (nicht per
+> Chimären-Bisektion wie G5, weil der Bestand bereits jenseits jeder plausiblen neuen Wand liegt)
+> zeigt: **Alle vier Modi reißen die 5-s-Marke kalt** (9,6–15,8 s Median); warm hält nur noch
+> Basic/Global die 1-s-Marke (Median 0,872 s/0,839 s, stark geschrumpfte Marge gegenüber vormals
+> 0,169 s), DRIFT liegt bereits darüber (1,722 s), und **Local liegt mit Median 6,064 s über
+> beiden Marken** – die erste direkte Messung der warmen Local-Latenz überhaupt. Statt einer neuen
+> Zahl markiert [ADR 0038](docs/adr/0038-corpus-ceiling-revision-local-search-latency.md) die
+> ≤750/≤1500-Ceiling als überholt: Eine neu hergeleitete Wand läge ohnehin unterhalb des bereits
+> produktiven Bestands. ADR 0033s Revisionsbedingung (~1.500–2.000 Paper) ist damit eingelöst –
+> **Weg B (FTS5)** wird zur empfohlenen nächsten Phase erhoben, aber noch nicht umgesetzt.
 
 ---
 
@@ -171,7 +184,7 @@ Dieses Projekt baut ein **GraphRAG-System** über einer lokalen Sammlung wissens
 
 - **Kein Teil einer wissenschaftlichen Arbeit**, sondern ein Werkzeug, das die tägliche Arbeit mit Papern erleichtert (u. a. begleitend zu einer Masterarbeit genutzt).
 - **Konsolidierte Forschungsbasis:** ersetzt den bisherigen separaten `Recherche`-Ordner und vereint PDFs, die kuratierte [Literaturübersicht](Übersicht.md) und den GraphRAG-Index an einem Ort.
-- **Klein & lokal:** aktuell **606** Paper (Stand 2026-09-01). Die ursprüngliche Auslegung „max. ~500" stammte aus der Zeit mit 145 Papern; [Phase 15 / G5](docs/roadmap-historie.md#g5--auslegung-neu-festschreiben) ersetzt sie durch die **gemessene** Auslegung **≤ 750 Volltexte / ≤ 1500 Gesamteinträge (2026-09-01)**.
+- **Klein & lokal:** aktuell **3.461** Paper (Stand 2026-09-16). Die G5-Auslegung „≤ 750 Volltexte / ≤ 1500 Gesamteinträge" (2026-09-01) ist beim 4,6-Fachen überholt: Eine Nachmessung am realen Bestand ([ADR 0038](docs/adr/0038-corpus-ceiling-revision-local-search-latency.md)) zeigt, dass die 5-s-Marke inzwischen kalt in **allen vier** Modi reißt und Local (Median 6,064 s) sie sogar warm reißt – statt einer neuen Zahl gilt bis zu einer dedizierten Fix-Phase (Weg B/FTS5) der gemessene Ist-Zustand als Grenze.
 - **Container-frei:** reine Python-Umgebung, kein Docker- oder Datenbank-Server nötig.
 - **Drop-in-Workflow:** neue PDFs in einen Ordner legen, kurz ein Skript ausführen – fertig.
 

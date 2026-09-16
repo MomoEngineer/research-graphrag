@@ -150,7 +150,8 @@ gebaut". `docs/error-model.md` wird um dieses Beispiel ergänzt.
 - **Die veraltete ≤750/≤1500-Ceiling in README/CONTRIBUTING jetzt korrigieren.** Zurückgestellt:
   Die Zahl ist das Ergebnis einer dedizierten Latenzmessung (G5); sie ohne erneute Messung zu
   überschreiben widerspräche demselben Prinzip, das dieses ADR befolgt. Empfohlen als **separate**
-  Folgearbeit (G5-Neuvermessung inkl. Local-Search-Latenz bei 3.461 Papern).
+  Folgearbeit (G5-Neuvermessung inkl. Local-Search-Latenz bei 3.461 Papern) – umgesetzt in
+  [ADR 0038](0038-corpus-ceiling-revision-local-search-latency.md).
 
 ## Konsequenzen
 
@@ -167,4 +168,5 @@ gebaut". `docs/error-model.md` wird um dieses Beispiel ergänzt.
   werden. Der neue `retrieval/topics.py`-Layer ist zusätzlicher Code für ein zuvor triviales
   Werkzeug.
 - **Folgeentscheidungen:** Eine Neuvermessung der ≤750/≤1500-Korpus-Ceiling (inkl.
-  Local-Search-Latenz bei 3.461 Papern, siehe oben) bleibt offene, separate Folgearbeit.
+  Local-Search-Latenz bei 3.461 Papern, siehe oben) bleibt offene, separate Folgearbeit –
+  umgesetzt in [ADR 0038](0038-corpus-ceiling-revision-local-search-latency.md).

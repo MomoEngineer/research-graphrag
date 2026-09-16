@@ -140,3 +140,14 @@ Chunks ist der Volltext der mit Abstand größte, aber für die Wertung ungenutz
   Mikro-Race zwischen Cache-Treffer und Text-Nachladen wird bewusst in Kauf genommen (siehe oben).
 - **Folgeentscheidungen:** Weg B (FTS5) bleibt eine offene, an einer konkreten Korpusgröße
   festgemachte Option für einen späteren Schnitt, keine automatische Folgearbeit.
+
+## Nachtrag (2026-09-16)
+
+Die hier benannte Revisionsbedingung („~1.500–2.000 Paper") ist eingetreten: Der reale Bestand
+liegt bei 3.461 Papern. [ADR 0038](0038-corpus-ceiling-revision-local-search-latency.md) löst die
+damit fällige Nachmessung ein – mit ernüchterndem Ergebnis: Der hier gebaute Prozess-Cache (Weg C)
+hält die 1-s-Marke für Basic/Global noch (mit stark geschrumpfter Marge), aber nicht mehr für
+Local (warmer Median 6,064 s) und nicht mehr für DRIFT (1,722 s). Das bestätigt die hier getroffene
+Einschätzung, Weg C sei „notwendig, aber nicht automatisch hinreichend" – am heutigen Bestand ist
+er für Local nicht mehr hinreichend. Weg B (FTS5) ist damit von der offenen Option zur empfohlenen
+nächsten Phase erhoben (noch nicht umgesetzt, siehe ADR 0038).

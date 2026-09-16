@@ -13,7 +13,7 @@ Dieses Dokument ist das zentrale Regelwerk für die Arbeit am Repository **Resea
 3. **Reproduzierbarkeit.** Versionen werden über ein Lockfile fixiert; Seeds/Läufe werden festgehalten, wo Ergebnisse variieren.
 4. **Offline-bewusst.** Die Entwicklung erfolgt in einem Umfeld ohne PyPI-Zugang; es werden nur beschaffbare Werkzeuge vorausgesetzt (siehe [ADR 0002](docs/adr/0002-venv-and-offline-dependency-strategy.md) und [ADR 0003](docs/adr/0003-offline-test-and-coverage-tooling.md)).
 5. **Lokal zuerst.** Der MCP-Server wird lokal per `stdio` in VS Code eingebunden und von Copilot genutzt.
-6. **Klein, aber wachstumsfähig.** Gemessene Auslegung (2026-09-01, [Roadmap.md](docs/roadmap-historie.md#g5--auslegung-neu-festschreiben)): ≤ 750 Volltexte / ≤ 1500 Gesamteinträge, mit klaren Erweiterungspfaden darüber hinaus.
+6. **Klein, aber wachstumsfähig.** Die 2026-09-01 gemessene Auslegung (≤ 750 Volltexte / ≤ 1500 Gesamteinträge, [Roadmap.md](docs/roadmap-historie.md#g5--auslegung-neu-festschreiben)) ist beim realen Bestand (3.461 Paper, Stand 2026-09-16) um das 4,6-Fache überschritten. Eine Nachmessung direkt am realen Bestand ([ADR 0038](docs/adr/0038-corpus-ceiling-revision-local-search-latency.md)) bestätigt: Die 5-s-Marke reißt kalt in **allen vier** Modi, warm reißt sie **Local** (Median 6,064 s) und liegt **DRIFT** bereits über der 1-s-Marke. Statt einer neuen Zahl gilt bis zu einer dedizierten Fix-Phase (Weg B/FTS5, ADR-0033-Revisionsbedingung ausgelöst) der gemessene Ist-Zustand als Grenze – **keine** unbelegte Zahl fortschreiben.
 
 ---
 
