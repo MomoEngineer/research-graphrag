@@ -1355,7 +1355,7 @@ _Modell-Tipp: Claude Sonnet 5._
 > | 1500 (inkl. 500 Referenz-Stubs) | 3,7–3,8 s | 3,8 s | **5,8–6,0 s ⚠** |
 >
 > **Nicht Basic oder DRIFT reißen die 5-s-Marke, sondern Local** – laut
-> [Fragetyp-Contract](../Roadmap.md#fragetypen--suchmodus) der **primäre** Modus für Detailfragen, den größten
+> [Fragetyp-Contract](../README.md#fragetypen--suchmodus) der **primäre** Modus für Detailfragen, den größten
 > und häufigsten Fragetyp. Ursache: `search_local` bewertet pro Anfrage bis zu **elf** volle
 > Korpus-Scorings (eine Seed-Suche + fünf Nachbarschafts-Scorings je Seed + bis zu fünf
 > Fan-out-Suchen), während Basic mit **einem** auskommt – ein struktureller Multiplikator, der in
