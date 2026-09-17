@@ -77,6 +77,7 @@ Ein ADR wird angelegt bei u. a.:
 | [0036](0036-global-community-ranking-over-member-chunks-phase10.md) | Global-Community-Ranking über die Mitglieds-Chunks (Phase 10 / V4): Community-Score als Mittel der Top-5-Hybrid-Chunk-Scores statt Keywords+Summary, neue Methode `TfidfIndex.score_chunks_by_paper` | Akzeptiert |
 | [0037](0037-mcp-tool-response-size-ceiling.md) | Obergrenze für MCP-Tool-Antworten: `list_topics`-Neuschnitt (Filter/Limit/Einzelabruf), geteilte Trefferzahl-Grenze `MAX_RESULT_COUNT`, Byte-Sicherheitsnetz in `_guard` | Akzeptiert |
 | [0038](0038-corpus-ceiling-revision-local-search-latency.md) | Korpus-Ceiling überholt: Local Search reißt die 1-s-Marke auch warm (Median 6,064 s) und alle vier Modi die 5-s-Marke kalt bei 3.461 Papern; ≤750/≤1500-Ceiling als überholt markiert statt durch neue Zahl ersetzt, Weg B (FTS5) zur empfohlenen nächsten Phase erhoben | Akzeptiert |
+| [0039](0039-correction-tool-and-pdf-file-access.md) | Erste Schreib-Werkzeuge der MCP-Oberfläche: `correct_paper_metadata` (feldweiser Merge in die `manual`-Herkunft, append-only Protokoll, wirksam erst beim nächsten Ingest) und `get_paper_file` (liefert den lokalen PDF-Pfad statt Bytes, `document_kind`-sensitiv) | Akzeptiert |
 
 > **Lücke bei 0024:** Die Nummer war für einen Stand zur visuellen Korpus-Exploration vergeben,
 > von dem im Arbeitsverzeichnis nur noch Bytecode unter `src/research_graphrag/viz/__pycache__/`

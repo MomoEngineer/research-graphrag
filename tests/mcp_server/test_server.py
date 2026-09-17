@@ -13,6 +13,7 @@ Async-Brücke aus :mod:`research_graphrag.mcp_server.sampling` real durchlaufen 
 
 from __future__ import annotations
 
+import dataclasses
 import json
 from collections.abc import Sequence
 from pathlib import Path
@@ -48,10 +49,12 @@ _TOOLS = {
     "search_global",
     "search_drift",
     "get_paper",
+    "get_paper_file",
     "get_citations",
     "list_topics",
     "get_reference",
     "answer_question",
+    "correct_paper_metadata",
 }
 
 _SAMPLED_ANSWER = "Aufmerksamkeit ist der Kern der Architektur [1]."
@@ -170,12 +173,16 @@ def index_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     build_citation_graph(papers, db)
     build_metadata_index(papers, db)
     monkeypatch.setenv("RESEARCH_GRAPHRAG_INDEX", str(db))
+    monkeypatch.setenv(
+        "RESEARCH_GRAPHRAG_METADATA", str(tmp_path / "metadata" / "paper_metadata.json")
+    )
+    monkeypatch.setenv("RESEARCH_GRAPHRAG_DATA", str(tmp_path / "data"))
     return db
 
 
 @pytest.mark.anyio
 async def test_list_tools_exposes_all_tools(index_db: Path) -> None:
-    """Der Server listet genau die neun zugesagten Tools."""
+    """Der Server listet genau die elf zugesagten Tools."""
     async with client_session(mcp) as client:
         listed = await client.list_tools()
     assert {tool.name for tool in listed.tools} == _TOOLS
@@ -305,6 +312,95 @@ async def test_get_reference_unknown_paper_yields_not_found_envelope(index_db: P
     """Unbekannte paper_id -> strukturierter not_found-Fehler (isError=true)."""
     async with client_session(mcp) as client:
         result = await client.call_tool("get_reference", {"paper_id": "zzzznope0"})
+    assert result.isError is True
+    assert _structured(result)["error"]["code"] == "not_found"
+
+
+@pytest.mark.anyio
+async def test_get_paper_file_reports_missing_local_pdf(index_db: Path) -> None:
+    """Die Fixture-Paper zeigen auf nicht real vorhandene Dateien -> available=false, kein Fehler."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool("get_paper_file", {"paper_id": "aaaa0001"})
+    assert result.isError is False
+    payload = _structured(result)
+    assert payload["document_kind"] == "full"
+    assert payload["available"] is False
+    assert payload["reason"] == "file_missing"
+    assert payload["path"] == ""
+
+
+@pytest.mark.anyio
+async def test_get_paper_file_resolves_a_real_local_pdf(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Ein tatsächlich vorhandenes PDF liefert available=true und den nativen Pfad."""
+    pdf = tmp_path / "Original.pdf"
+    pdf.write_bytes(b"%PDF-1.4 test")
+    paper = dataclasses.replace(
+        _paper("cccc0001", ["irrelevant content for retrieval"]),
+        source_uri=pdf.resolve().as_uri(),
+    )
+    db = tmp_path / "index" / "index.sqlite"
+    build_index([paper], db)
+    monkeypatch.setenv("RESEARCH_GRAPHRAG_INDEX", str(db))
+
+    async with client_session(mcp) as client:
+        result = await client.call_tool("get_paper_file", {"paper_id": "cccc0001"})
+    assert result.isError is False
+    payload = _structured(result)
+    assert payload["available"] is True
+    assert payload["path"] == str(pdf.resolve())
+    assert payload["size_bytes"] == pdf.stat().st_size
+
+
+@pytest.mark.anyio
+async def test_get_paper_file_unknown_paper_yields_not_found_envelope(index_db: Path) -> None:
+    """Unbekannte paper_id -> strukturierter not_found-Fehler (isError=true)."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool("get_paper_file", {"paper_id": "zzzznope0"})
+    assert result.isError is True
+    assert _structured(result)["error"]["code"] == "not_found"
+
+
+@pytest.mark.anyio
+async def test_correct_paper_metadata_writes_manual_record(index_db: Path) -> None:
+    """Eine erfolgreiche Korrektur meldet die geänderten Felder und effective_after."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool(
+            "correct_paper_metadata",
+            {"paper_id": "aaaa0001", "doi": "10.1145/9999999", "evidence": "laut Publisher-Seite"},
+        )
+    assert result.isError is False
+    payload = _structured(result)
+    assert payload["applied_fields"] == ["doi"]
+    assert payload["record"]["doi"] == "10.1145/9999999"
+    assert payload["record"]["origin"] == "manual"
+    assert payload["effective_after"] == "python -m scripts.ingest"
+
+
+@pytest.mark.anyio
+async def test_correct_paper_metadata_without_fields_yields_invalid_input_envelope(
+    index_db: Path,
+) -> None:
+    """Ohne mindestens ein Korrekturfeld -> strukturierter invalid_input-Fehler."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool(
+            "correct_paper_metadata", {"paper_id": "aaaa0001", "evidence": "Beleg"}
+        )
+    assert result.isError is True
+    assert _structured(result)["error"]["code"] == "invalid_input"
+
+
+@pytest.mark.anyio
+async def test_correct_paper_metadata_unknown_paper_yields_not_found_envelope(
+    index_db: Path,
+) -> None:
+    """Unbekannte paper_id -> strukturierter not_found-Fehler (isError=true)."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool(
+            "correct_paper_metadata",
+            {"paper_id": "zzzznope0", "doi": "10.1/x", "evidence": "Beleg"},
+        )
     assert result.isError is True
     assert _structured(result)["error"]["code"] == "not_found"
 

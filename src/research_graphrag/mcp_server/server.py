@@ -2,9 +2,10 @@
 
 Registriert die Retrieval-Modi aus Phase 4 (Basic/Local/Global/DRIFT), die Katalog-Tools
 ``get_paper`` und ``list_topics``, die Zitations-Abfrage ``get_citations``, die Literaturangabe
-``get_reference`` sowie die belegte Antwort ``answer_question`` als MCP-Tools und startet den
-``stdio``-Transport, über den VS Code den Server als lokalen Unterprozess betreibt (siehe
-docs/vscode-integration.md).
+``get_reference``, die belegte Antwort ``answer_question``, den lokalen PDF-Pfad
+``get_paper_file`` sowie die Metadaten-Korrektur ``correct_paper_metadata`` als MCP-Tools und
+startet den ``stdio``-Transport, über den VS Code den Server als lokalen Unterprozess betreibt
+(siehe docs/vscode-integration.md).
 
 Grundsätze (docs/adr/0009-mcp-server-stdio-phase5.md):
 
@@ -20,6 +21,11 @@ Grundsätze (docs/adr/0009-mcp-server-stdio-phase5.md):
   (``research_graphrag.limits.MAX_RESULT_COUNT``) für alle Trefferzahl-Parameter plus ein
   Byte-Sicherheitsnetz in :func:`_guard`, das eine zu große Antwort nie ausliefert und nie
   mitten im Inhalt abschneidet (docs/adr/0037-mcp-tool-response-size-ceiling.md).
+- ``get_paper_file`` überträgt deshalb bewusst **keine** Datei-Bytes, sondern nur den lokalen
+  Pfad; ``correct_paper_metadata`` ist das erste **schreibende** Tool (schreibt ausschließlich
+  die ``manual``-Herkunft nach ``metadata/paper_metadata.json``, wirksam erst beim nächsten
+  Ingest, append-only protokolliert in ``data/corrections_log.md``,
+  docs/adr/0039-correction-tool-and-pdf-file-access.md).
 """
 
 from __future__ import annotations
@@ -36,6 +42,7 @@ import anyio.to_thread
 import mcp.types as types
 from mcp.server.fastmcp import Context, FastMCP
 
+from research_graphrag.bibliography.corrections import apply_manual_correction
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.generation.answer import AUTO_MODE, answer_question
 from research_graphrag.generation.provider import NoopGenerationProvider
@@ -47,6 +54,7 @@ from research_graphrag.retrieval.drift import search_drift
 from research_graphrag.retrieval.global_search import search_global
 from research_graphrag.retrieval.local import search_local
 from research_graphrag.retrieval.paper import get_paper
+from research_graphrag.retrieval.paper_file import get_paper_file
 from research_graphrag.retrieval.reference import get_reference
 from research_graphrag.retrieval.topics import DEFAULT_LIMIT, DEFAULT_MIN_SIZE, get_topic
 from research_graphrag.retrieval.topics import list_topics as list_topics_overview
@@ -59,6 +67,8 @@ logging.basicConfig(
 logger = logging.getLogger("research_graphrag.mcp_server")
 
 _DEFAULT_INDEX = Path("data") / "index" / "index.sqlite"
+_DEFAULT_METADATA = Path("metadata") / "paper_metadata.json"
+_DEFAULT_DATA_DIR = Path("data")
 
 _MAX_RESPONSE_BYTES = 900_000
 """Sicherheitsschwelle für eine serialisierte Tool-Antwort (ADR 0037).
@@ -75,6 +85,16 @@ mcp = FastMCP("research-graphrag")
 def _index_path() -> str:
     """Liefert den konfigurierten Index-Pfad (Env ``RESEARCH_GRAPHRAG_INDEX`` oder Default)."""
     return os.environ.get("RESEARCH_GRAPHRAG_INDEX", str(_DEFAULT_INDEX))
+
+
+def _metadata_path() -> str:
+    """Liefert den konfigurierten Pfad zu ``paper_metadata.json`` (Env oder Default)."""
+    return os.environ.get("RESEARCH_GRAPHRAG_METADATA", str(_DEFAULT_METADATA))
+
+
+def _data_dir() -> str:
+    """Liefert das konfigurierte Datenverzeichnis für append-only Protokolle (Env oder Default)."""
+    return os.environ.get("RESEARCH_GRAPHRAG_DATA", str(_DEFAULT_DATA_DIR))
 
 
 def _error_result(error: DomainError) -> types.CallToolResult:
@@ -217,6 +237,25 @@ def get_paper_tool(paper_id: str) -> dict[str, Any]:
 
 
 @mcp.tool(
+    name="get_paper_file",
+    title="Original-PDF lokal auffinden (kein Datei-Inhalt)",
+    description=(
+        "Liefert den lokalen Dateisystem-Pfad des Original-PDFs eines Papers, sofern vorhanden "
+        "- keine Datei-Bytes (kollidiert mit der 1-MB-Antwortgrenze bei den meisten Papern). "
+        "Der Agent liest die Datei anschliessend ueber sein eigenes Dateisystem-Werkzeug. "
+        "Referenz-Eintraege ohne Volltext und ein lokal nicht auffindbares PDF sind KEIN "
+        "Fehler, sondern `available = false` mit `reason` ('reference_only'/'file_missing') "
+        "und Klartext in `note`."
+    ),
+)
+def get_paper_file_tool(paper_id: str) -> dict[str, Any]:
+    """Löst den lokalen PDF-Pfad eines Papers auf (siehe specs/get_paper_file.md)."""
+    return _guard(  # type: ignore[return-value]
+        "get_paper_file", lambda: get_paper_file(_index_path(), paper_id).to_dict()
+    )
+
+
+@mcp.tool(
     name="get_citations",
     title="Zitationen (Intra-Korpus)",
     description=(
@@ -311,6 +350,57 @@ def get_reference_tool(paper_id: str) -> dict[str, Any]:
     return _guard(  # type: ignore[return-value]
         "get_reference", lambda: get_reference(_index_path(), paper_id).to_dict()
     )
+
+
+@mcp.tool(
+    name="correct_paper_metadata",
+    title="Metadaten-Korrektur (manual-Herkunft, ADR 0039)",
+    description=(
+        "Korrigiert bibliografische Metadaten eines Papers (title/authors/year/venue/doi/"
+        "arxiv_id/url) mit hoechster Herkunfts-Prioritaet 'manual'. Mindestens ein Feld-"
+        "Parameter UND ein nicht-leerer Beleg (evidence) sind Pflicht. Ein vorhandener "
+        "manual-Record wird gemerged (bereits gesetzte, hier nicht uebergebene Felder bleiben "
+        "erhalten). Schreibt nach metadata/paper_metadata.json (git-versioniert) und "
+        "protokolliert jeden Aufruf append-only in data/corrections_log.md. WICHTIG: Die "
+        "Korrektur wirkt NICHT sofort - get_paper/get_reference/answer_question zeigen sie "
+        "erst nach dem naechsten 'python -m scripts.ingest'-Lauf (siehe `effective_after` in "
+        "der Antwort)."
+    ),
+)
+def correct_paper_metadata_tool(
+    paper_id: str,
+    evidence: str,
+    title: str | None = None,
+    authors: list[str] | None = None,
+    year: int | None = None,
+    venue: str | None = None,
+    doi: str | None = None,
+    arxiv_id: str | None = None,
+    url: str | None = None,
+) -> dict[str, Any]:
+    """Schreibt eine `manual`-Korrektur (siehe specs/correct_paper_metadata.md)."""
+    fields: dict[str, Any] = {}
+    if title is not None:
+        fields["title"] = title
+    if authors is not None:
+        fields["authors"] = authors
+    if year is not None:
+        fields["year"] = year
+    if venue is not None:
+        fields["venue"] = venue
+    if doi is not None:
+        fields["doi"] = doi
+    if arxiv_id is not None:
+        fields["arxiv_id"] = arxiv_id
+    if url is not None:
+        fields["url"] = url
+
+    def produce() -> dict[str, Any]:
+        return apply_manual_correction(
+            _index_path(), _metadata_path(), _data_dir(), paper_id, fields, evidence
+        ).to_dict()
+
+    return _guard("correct_paper_metadata", produce)  # type: ignore[return-value]
 
 
 def main() -> None:

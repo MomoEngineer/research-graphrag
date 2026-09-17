@@ -175,6 +175,20 @@
 > ≤750/≤1500-Ceiling als überholt: Eine neu hergeleitete Wand läge ohnehin unterhalb des bereits
 > produktiven Bestands. ADR 0033s Revisionsbedingung (~1.500–2.000 Paper) ist damit eingelöst –
 > **Weg B (FTS5)** wird zur empfohlenen nächsten Phase erhoben, aber noch nicht umgesetzt.
+>
+> **Nachtrag (2026-09-17): ADR 0039 ist umgesetzt – erste schreibende MCP-Werkzeuge.** Bisher
+> waren alle MCP-Werkzeuge lesende Wrapper um den deterministisch neu gebauten Index. Zwei neue
+> Werkzeuge ergänzen das: `get_paper_file` löst zu einer `paper_id` den **lokalen
+> Dateisystem-Pfad** des Original-PDFs auf (kein Dateiinhalt – kollidiert mit der in ADR 0037
+> gemessenen 1-MB-Antwortgrenze; der Agent liest die Datei über sein eigenes
+> Dateisystem-Werkzeug), und `correct_paper_metadata` korrigiert bibliografische Metadaten
+> (Titel/Autoren/Jahr/Venue/DOI/arXiv/URL) als `manual`-Herkunft – die bereits höchste Stufe der
+> bestehenden Auflösungskette (ADR 0025). Beide Werkzeuge sind dünne Wrapper um bestehende
+> Bausteine: `get_paper_file` nutzt die bereits vorhandene `source_uri`, `correct_paper_metadata`
+> die bestehende, atomare Persistenz aus `bibliography.store` und denselben
+> Append-only-Mechanismus wie `metadata_log.md`. Eine Korrektur wirkt **nicht sofort** – wie beim
+> bestehenden `python -m scripts.resolve_metadata` erst nach dem nächsten
+> `python -m scripts.ingest`-Lauf, was jede Antwort über `effective_after` ausweist.
 
 ---
 
@@ -491,7 +505,7 @@ python -m scripts.resolve_references
 #    (Agent-Modus) die bereitgestellten Werkzeuge aufrufen
 ```
 
-Der MCP-Server stellt u. a. Werkzeuge bereit wie `search_local`, `search_global`, `search_drift`, `search_basic`, `get_paper`, `get_citations`, `get_reference` und `list_topics` – jeweils mit Quellenangaben. **Jeder** Beleg trägt seit Phase 12 zusätzlich die extern auflösbaren `identifiers` (DOI/arXiv/URL) und einen `citation_key`; die **fertige Literaturangabe** in Harvard und APA liefern `get_reference`, `get_paper` und der `references`-Block von `answer_question` ([ADR 0025](docs/adr/0025-citable-paper-metadata.md)). Dazu kommt `answer_question`: ein Aufruf, der den Modus selbst wählt und **nummerierte Belege** mit Zitier-Contract liefert (optional per `synthesize = true` vom Client-Modell formuliert). Wählt der Router den Modus (`mode = "auto"`, Default), weist die Antwort unter `routing` aus, **warum** – mit Konfidenzstufe und auslösenden Signalen ([ADR 0017](docs/adr/0017-router-hardening-phase7.md)).
+Der MCP-Server stellt u. a. Werkzeuge bereit wie `search_local`, `search_global`, `search_drift`, `search_basic`, `get_paper`, `get_citations`, `get_reference` und `list_topics` – jeweils mit Quellenangaben. **Jeder** Beleg trägt seit Phase 12 zusätzlich die extern auflösbaren `identifiers` (DOI/arXiv/URL) und einen `citation_key`; die **fertige Literaturangabe** in Harvard und APA liefern `get_reference`, `get_paper` und der `references`-Block von `answer_question` ([ADR 0025](docs/adr/0025-citable-paper-metadata.md)). Dazu kommt `answer_question`: ein Aufruf, der den Modus selbst wählt und **nummerierte Belege** mit Zitier-Contract liefert (optional per `synthesize = true` vom Client-Modell formuliert). Wählt der Router den Modus (`mode = "auto"`, Default), weist die Antwort unter `routing` aus, **warum** – mit Konfidenzstufe und auslösenden Signalen ([ADR 0017](docs/adr/0017-router-hardening-phase7.md)). Zwei weitere Werkzeuge ergänzen das Portfolio ([ADR 0039](docs/adr/0039-correction-tool-and-pdf-file-access.md)): `get_paper_file` liefert den lokalen Dateipfad des Original-PDFs (kein Dateiinhalt) und `correct_paper_metadata` korrigiert bibliografische Metadaten als `manual`-Herkunft – als erstes **schreibendes** Werkzeug, wirksam erst nach dem nächsten `python -m scripts.ingest`.
 
 ## Qualitätssicherung (pragmatisch)
 

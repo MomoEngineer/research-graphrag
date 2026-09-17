@@ -4,14 +4,14 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/mcp_server/server.py` |
 | **Paket** | `mcp_server` – MCP-Server über `stdio` |
-| **Phase** | 5 (eingeführt), 7 / A1 + A2 (zwei Werkzeuge ergänzt), 12 / K1 (`get_reference` ergänzt), ADR 0037 (Größen-Sicherheitsnetz, `list_topics`-Neuschnitt) |
-| **Grundlagen** | [ADR 0009](../../../../docs/adr/0009-mcp-server-stdio-phase5.md), [ADR 0012](../../../../docs/adr/0012-llm-bridge-and-answer-synthesis-phase7.md), [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md), [ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md) |
+| **Phase** | 5 (eingeführt), 7 / A1 + A2 (zwei Werkzeuge ergänzt), 12 / K1 (`get_reference` ergänzt), ADR 0037 (Größen-Sicherheitsnetz, `list_topics`-Neuschnitt), ADR 0039 (`get_paper_file` + erstes schreibendes Werkzeug `correct_paper_metadata`) |
+| **Grundlagen** | [ADR 0009](../../../../docs/adr/0009-mcp-server-stdio-phase5.md), [ADR 0012](../../../../docs/adr/0012-llm-bridge-and-answer-synthesis-phase7.md), [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md), [ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md), [ADR 0039](../../../../docs/adr/0039-correction-tool-and-pdf-file-access.md) |
 
 ---
 
 ## 1. Zweck
 
-Die **Außengrenze** des Systems: Hier werden neun Werkzeuge für GitHub Copilot registriert, hier
+Die **Außengrenze** des Systems: Hier werden elf Werkzeuge für GitHub Copilot registriert, hier
 werden Fehler in eine strukturierte Ausgabe übersetzt, und hier wird der `stdio`-Transport
 gestartet.
 
@@ -25,10 +25,18 @@ Der Server enthält **keine** Fachlogik. Jedes Werkzeug ist ein dünner Wrapper 
 | `mcp` | Objekt | Die FastMCP-Instanz mit den registrierten Werkzeugen |
 | `main` | Funktion | Startet den `stdio`-Transport |
 
-Die neun Werkzeuge: `search_basic`, `search_local`, `search_global`, `search_drift`, `get_paper`,
-`get_citations`, `get_reference`, `answer_question`, `list_topics`. Ihre Verträge stehen in
-[`specs/`](../specs); die Werkzeugnamen werden explizit gesetzt und weichen daher von den
-Python-Funktionsnamen ab.
+Die elf Werkzeuge: `search_basic`, `search_local`, `search_global`, `search_drift`, `get_paper`,
+`get_paper_file`, `get_citations`, `get_reference`, `answer_question`, `list_topics`,
+`correct_paper_metadata`. Ihre Verträge stehen in [`specs/`](../specs); die Werkzeugnamen werden
+explizit gesetzt und weichen daher von den Python-Funktionsnamen ab.
+
+`get_paper_file` (Wrapper um [`retrieval/paper_file.get_paper_file`](../../retrieval/doc/paper_file.md))
+und `correct_paper_metadata` (Wrapper um
+[`bibliography/corrections.apply_manual_correction`](../../bibliography/doc/corrections.md)) sind
+die einzigen Werkzeuge, die nicht ausschließlich den Index lesen – Ersteres liest zusätzlich vom
+Dateisystem (nur Existenz/Größe, nie Inhalt), Letzteres schreibt nach
+`metadata/paper_metadata.json` und protokolliert append-only
+([ADR 0039](../../../../docs/adr/0039-correction-tool-and-pdf-file-access.md)).
 
 Seit [ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md) hat `list_topics`
 eigene Fachlogik in [`retrieval/topics.py`](../../retrieval/doc/topics.md) statt einer direkten
@@ -103,7 +111,7 @@ wird.
 
 ### Nur ein asynchrones Werkzeug
 
-Acht Werkzeuge sind synchron. Nur `answer_question` ist asynchron – und auch das nur, weil
+Zehn Werkzeuge sind synchron. Nur `answer_question` ist asynchron – und auch das nur, weil
 optionales Sampling einen laufenden Event-Loop braucht:
 
 ```mermaid
@@ -147,13 +155,17 @@ flowchart LR
     SV --> RG["retrieval/global_search"]
     SV --> RD["retrieval/drift"]
     SV --> RP["retrieval/paper"]
+    SV --> RPF["retrieval/paper_file"]
     SV --> RC["retrieval/citations"]
     SV --> RT["retrieval/topics"]
     SV --> AN["generation/answer"]
     SV --> SM["mcp_server/sampling"]
+    SV --> BC["bibliography/corrections"]
     SV --> ER["errors: Envelope"]
     SV --> LM["limits: MAX_RESULT_COUNT"]
     RT --> GI["indexing/graph_index"]
+    BC --> BS["bibliography/store"]
+    BC --> LOG["online/report: append_section"]
 ```
 
 Die Einbindung beschreibt [docs/vscode-integration.md](../../../../docs/vscode-integration.md);
@@ -171,11 +183,14 @@ Alle Fehler verlassen den Server als Envelope mit gesetztem Fehler-Flag – nie 
 | serialisierte Antwort über `_MAX_RESPONSE_BYTES` (ADR 0037) | `constraint_violation` |
 | unerwarteter Fehler | `internal_error` |
 | Sampling schlägt fehl | **kein** Fehler – `generated = false` |
+| PDF lokal nicht auffindbar / Referenz-Eintrag ohne Volltext (`get_paper_file`) | **kein** Fehler – `available = false` mit `reason` |
 
 ## 6. Determinismus
 
-Der Server fügt keinen Nichtdeterminismus hinzu: Er reicht Parameter durch und serialisiert
-Ergebnisse. Der einzige variable Anteil ist die optionale Formulierung.
+Der Server fügt kaum Nichtdeterminismus hinzu: Er reicht Parameter durch und serialisiert
+Ergebnisse. Variable Anteile sind die optionale Formulierung (`answer_question`) und der
+Zeitstempel im Korrektur-Protokoll (`correct_paper_metadata`, analog zu den bestehenden
+append-only Protokollen der Skripte).
 
 ## 7. Grenzen
 
@@ -186,5 +201,10 @@ Ergebnisse. Der einzige variable Anteil ist die optionale Formulierung.
 - **Keine Wertungs-Umschaltung an den Werkzeugen.** Die Wahl zwischen den Wertungen ist ein
   Analyse-Schalter der Kommandozeile
   ([ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)).
-- **Keine Schreiboperationen.** Der Server indexiert nicht; die Ingestion bleibt ein bewusst
-  angestoßener Vorgang.
+- **Keine Indexierung/Ingestion.** Der Server baut den Index nicht selbst; das bleibt ein bewusst
+  angestoßener Vorgang (`python -m scripts.ingest`).
+- **Genau eine Schreiboperation, eng begrenzt.** `correct_paper_metadata` ist seit
+  [ADR 0039](../../../../docs/adr/0039-correction-tool-and-pdf-file-access.md) die einzige
+  Ausnahme: Es schreibt ausschließlich die `manual`-Herkunft nach
+  `metadata/paper_metadata.json` – nie den Index selbst, nie extrahierten Volltext. Die
+  Änderung wirkt erst nach dem nächsten Ingest.

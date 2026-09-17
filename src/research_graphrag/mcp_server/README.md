@@ -15,10 +15,12 @@ aufrufende Agent selbst (kein serverseitiges LLM-Sampling, siehe
 | `search_global` | Retrieval – Cross-Paper-Synthese | [specs/search_global.md](specs/search_global.md) |
 | `search_drift` | Retrieval – Widersprüche & Vergleiche | [specs/search_drift.md](specs/search_drift.md) |
 | `get_paper` | Katalog / Provenienz | [specs/get_paper.md](specs/get_paper.md) |
+| `get_paper_file` | Katalog / lokaler Dateipfad | [specs/get_paper_file.md](specs/get_paper_file.md) |
 | `get_citations` | Graph / Zitationsnetz | [specs/get_citations.md](specs/get_citations.md) |
 | `get_reference` | Zitation / Literaturangabe | [specs/get_reference.md](specs/get_reference.md) |
 | `list_topics` | Übersicht / Katalog | [specs/list_topics.md](specs/list_topics.md) |
 | `answer_question` | Antwort / Synthese | [specs/answer_question.md](specs/answer_question.md) |
+| `correct_paper_metadata` | Korrektur / Zitation (**schreibend**) | [specs/correct_paper_metadata.md](specs/correct_paper_metadata.md) |
 
 > **Sampling nur opt-in:** Alle Evidenz-Tools sind modellfrei. Ausschließlich `answer_question`
 > kann mit `synthesize = true` über **MCP-Sampling** eine Antwort vom **Client-Modell**
@@ -38,6 +40,17 @@ aufrufende Agent selbst (kein serverseitiges LLM-Sampling, siehe
 > `_guard` prüft zusätzlich als letzte Absicherung die serialisierte Antwortgröße und meldet
 > `constraint_violation`, statt eine übergroße Antwort jemals mitten im Inhalt abzuschneiden
 > ([ADR 0037](../../../docs/adr/0037-mcp-tool-response-size-ceiling.md)).
+
+> **`get_paper_file` überträgt keinen Dateiinhalt:** Nur den nativen lokalen Pfad des
+> Original-PDFs (kein Datei-Pfad als Eingabe, nur `paper_id`) – konsistent mit der 1-MB-Grenze
+> aus ADR 0037. Der Agent liest die Datei selbst weiter. Referenz-Einträge und lokal fehlende
+> PDFs sind sichtbar `available = false`, kein Fehler.
+>
+> **`correct_paper_metadata` ist das erste schreibende Tool** dieser Oberfläche: Es schreibt
+> ausschließlich die `manual`-Herkunft nach `metadata/paper_metadata.json` (git-versioniert,
+> append-only protokolliert in `data/corrections_log.md`). Die Korrektur wirkt **nicht sofort**
+> in den übrigen Tools – erst nach dem nächsten `python -m scripts.ingest`-Lauf, ausgewiesen als
+> `effective_after` in der Antwort ([ADR 0039](../../../docs/adr/0039-correction-tool-and-pdf-file-access.md)).
 
 > Code-Walkthroughs werden – wie in Phase 4 – nur für nicht-triviale Tools verlangt; die hier
 > registrierten Tools sind dünne Wrapper um die getestete Kernlogik und daher **spec-only**
@@ -69,10 +82,13 @@ Repository-Wurzel.
 | Variable | Zweck | Pflicht | Default |
 | --- | --- | --- | --- |
 | `RESEARCH_GRAPHRAG_INDEX` | Pfad zur SQLite-Index-Datei | nein | `data/index/index.sqlite` |
+| `RESEARCH_GRAPHRAG_METADATA` | Pfad zu `metadata/paper_metadata.json` (Ziel von `correct_paper_metadata`) | nein | `metadata/paper_metadata.json` |
+| `RESEARCH_GRAPHRAG_DATA` | Datenverzeichnis für append-only Protokolle (`data/corrections_log.md`) | nein | `data` |
 | `RESEARCH_GRAPHRAG_LOG_LEVEL` | Log-Niveau (stderr) | nein | `INFO` |
 
 > **Keine** Pfad-Root-Grenze (`RESEARCH_GRAPHRAG_WORKSPACE_ROOTS`) nötig: kein Tool nimmt einen
-> nutzergesteuerten Datei-Pfad entgegen (nur `query`/`paper_id`), siehe
+> nutzergesteuerten Datei-Pfad entgegen (nur `query`/`paper_id`, plus benannte
+> Korrekturfelder bei `correct_paper_metadata`), siehe
 > [ADR 0009](../../../docs/adr/0009-mcp-server-stdio-phase5.md).
 >
 > **Secrets:** keine – die Tools liefern nur Evidenz + Provenienz; ein LLM kommt allein zur
@@ -97,4 +113,7 @@ python -m pytest tests/mcp_server
 - [ADR 0009](../../../docs/adr/0009-mcp-server-stdio-phase5.md) (MCP-Server Phase 5),
   [ADR 0008](../../../docs/adr/0008-retrieval-and-query-router-phase4.md) (Retrieval-Modi),
   [ADR 0004](../../../docs/adr/0004-llm-bridge-via-mcp-sampling.md) (LLM-Bridge),
-  [ADR 0005](../../../docs/adr/0005-graphrag-index-backend-open.md) (Index-Backend).
+  [ADR 0005](../../../docs/adr/0005-graphrag-index-backend-open.md) (Index-Backend),
+  [ADR 0037](../../../docs/adr/0037-mcp-tool-response-size-ceiling.md) (Antwort-Größen-Obergrenze),
+  [ADR 0039](../../../docs/adr/0039-correction-tool-and-pdf-file-access.md) (Korrektur-Tool &
+  PDF-Datei-Zugriff).
