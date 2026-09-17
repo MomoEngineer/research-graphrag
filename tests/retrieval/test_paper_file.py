@@ -14,6 +14,7 @@ from research_graphrag.retrieval.paper_file import (
     REASON_FILE_MISSING,
     REASON_REFERENCE_ONLY,
     PaperFileResult,
+    _path_from_file_uri,
     get_paper_file,
 )
 
@@ -139,6 +140,50 @@ def test_missing_index_raises_not_found(tmp_path: Path) -> None:
     with pytest.raises(DomainError) as excinfo:
         get_paper_file(tmp_path / "absent.sqlite", "aaaa1111")
     assert excinfo.value.code is ErrorCode.NOT_FOUND
+
+
+def test_available_pdf_with_unicode_and_special_characters_in_filename(tmp_path: Path) -> None:
+    """Reale Paper-Titel enthalten Unicode, Leer- und Sonderzeichen – der Pfad bleibt exakt."""
+    pdf = tmp_path / "$Σ$-Mem – Über Sätze & (Klammern) [Test].pdf"
+    pdf.write_bytes(b"%PDF-1.4 test content")
+
+    db = tmp_path / "index" / "index.sqlite"
+    build_index([_full_paper("dddd4444", pdf.resolve().as_uri())], db)
+
+    result = get_paper_file(db, "dddd4444")
+
+    assert result.available is True
+    assert Path(result.path) == pdf.resolve()
+
+
+def test_non_file_scheme_uri_is_treated_as_unavailable(tmp_path: Path) -> None:
+    """Eine source_uri ohne file://-Schema (theoretisch) ist kein Absturz, sondern file_missing."""
+    db = tmp_path / "index" / "index.sqlite"
+    build_index([_full_paper("eeee5555", "https://example.org/not-a-local-file.pdf")], db)
+
+    result = get_paper_file(db, "eeee5555")
+
+    assert result.available is False
+    assert result.reason == REASON_FILE_MISSING
+
+
+def test_path_from_file_uri_handles_windows_drive_paths() -> None:
+    """Lokale Laufwerkspfade (file:///C:/…) werden korrekt in native Pfade übersetzt."""
+    path = _path_from_file_uri("file:///C:/Users/moritz/papers/Beispiel%20Paper.pdf")
+    assert path is not None
+    assert str(path) == r"C:\Users\moritz\papers\Beispiel Paper.pdf"
+
+
+def test_path_from_file_uri_handles_unc_shares() -> None:
+    """UNC-Freigaben (file://host/share/…) werden zu \\\\host\\share\\… aufgelöst."""
+    path = _path_from_file_uri("file://fileserver/papers/Beispiel.pdf")
+    assert path is not None
+    assert str(path) == r"\\fileserver\papers\Beispiel.pdf"
+
+
+def test_path_from_file_uri_rejects_non_file_scheme() -> None:
+    """Ein anderes Schema (z. B. https) liefert None statt eines falschen Pfades."""
+    assert _path_from_file_uri("https://example.org/paper.pdf") is None
 
 
 def test_unknown_paper_id_raises_not_found(tmp_path: Path) -> None:

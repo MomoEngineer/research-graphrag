@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -128,6 +129,60 @@ def test_second_correction_of_same_field_overwrites_it(tmp_path: Path) -> None:
 
     assert result.record.doi == "neu"
     assert result.previous == {"doi": "alt"}
+
+
+def test_authors_field_round_trips_as_a_list(tmp_path: Path) -> None:
+    """Eine Autorenkorrektur wird als Liste gespeichert und im Protokoll lesbar dargestellt."""
+    db = _index(tmp_path)
+    metadata_path, data_dir = _paths(tmp_path)
+
+    result = apply_manual_correction(
+        db,
+        metadata_path,
+        data_dir,
+        "aaaa1111",
+        {"authors": ["Anna Beispiel", "Bert Muster"]},
+        "laut Titelseite",
+    )
+
+    assert result.record.authors == ("Anna Beispiel", "Bert Muster")
+    assert result.previous == {"authors": []}
+    payload = result.to_dict()
+    assert payload["record"]["authors"] == ["Anna Beispiel", "Bert Muster"]
+
+    log_text = (data_dir / LOG_NAME).read_text(encoding="utf-8")
+    assert "Anna Beispiel" in log_text
+    assert "Bert Muster" in log_text
+
+
+def test_log_entry_neutralizes_markdown_and_control_characters_in_values(tmp_path: Path) -> None:
+    """Feldwerte/Belege aus nicht vertrauenswürdigem Text zerstören das Protokoll nicht."""
+    db = _index(tmp_path)
+    metadata_path, data_dir = _paths(tmp_path)
+    hostile_evidence = "Beleg mit *Markdown* [Link](javascript:alert(1)) und\nZeilenumbruch"
+    hostile_venue = "## Fake-Überschrift `code` | Pipe"
+
+    apply_manual_correction(
+        db, metadata_path, data_dir, "aaaa1111", {"venue": hostile_venue}, hostile_evidence
+    )
+
+    log_text = (data_dir / LOG_NAME).read_text(encoding="utf-8")
+    # Der Log bleibt ein gültiges, einzelnes Dokument: Die injizierte "## "-Überschrift steht
+    # nicht am Zeilenanfang und wird deshalb nicht als eigener Markdown-Abschnitt interpretiert
+    # (nur der echte, von _render_entry gesetzte Eintrags-Header zählt).
+    assert len(re.findall(r"(?m)^## ", log_text)) == 1
+    # Der eingebettete Zeilenumbruch im Beleg wurde zu einem Leerzeichen kollabiert (escape_markdown)
+    # – sonst könnte hostiler Text eine neue Zeile und damit eine eigene "## "-Zeile erzeugen.
+    beleg_line = next(line for line in log_text.splitlines() if line.startswith("- Beleg:"))
+    assert "Zeilenumbruch" in beleg_line
+    # Der eigentliche Inhalt bleibt (maskiert) auffindbar.
+    assert "Fake" in log_text
+    assert "Markdown" in log_text
+
+    # Der live gespeicherte Record ist von der Maskierung unberührt (reines JSON, kein Markdown).
+    stored = load_records(metadata_path)[0]
+    assert stored.venue == hostile_venue
+    assert stored.evidence == hostile_evidence
 
 
 def test_correction_keeps_other_papers_and_resolved_records_untouched(tmp_path: Path) -> None:

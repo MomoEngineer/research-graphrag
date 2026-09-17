@@ -392,6 +392,27 @@ async def test_correct_paper_metadata_without_fields_yields_invalid_input_envelo
 
 
 @pytest.mark.anyio
+async def test_correct_paper_metadata_wrong_type_is_rejected_at_the_protocol_boundary(
+    index_db: Path,
+) -> None:
+    """Ein falscher Parametertyp (year als String) wird per Schema abgelehnt, nicht als Crash.
+
+    Das ist die vom SDK behandelte Protokoll-/Discovery-Fehlerebene (docs/error-model.md,
+    Abschnitt 1) – anders als eine fachliche DomainError trägt sie keinen strukturierten
+    Envelope, sondern eine SDK-eigene Validierungsmeldung. Wichtig ist nur: kein unbehandelter
+    Absturz, `isError = true`.
+    """
+    async with client_session(mcp) as client:
+        result = await client.call_tool(
+            "correct_paper_metadata",
+            {"paper_id": "aaaa0001", "evidence": "x", "year": "not-a-number"},
+        )
+    assert result.isError is True
+    assert result.content and result.content[0].type == "text"
+    assert "year" in result.content[0].text
+
+
+@pytest.mark.anyio
 async def test_correct_paper_metadata_unknown_paper_yields_not_found_envelope(
     index_db: Path,
 ) -> None:
