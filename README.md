@@ -270,7 +270,9 @@ verbaut sind, liest [docs/features.md](docs/features.md); **wie** sie zusammenar
 Moduls** steht jeweils in dessen Modul-Doku unter `src/research_graphrag/<paket>/doc/`. Eine
 **Schritt-für-Schritt-Anleitung zum Online-Modus** (Einrichtung, Anfrage wählen, Bericht lesen,
 Vorschlag übernehmen, Fehlerdiagnose) steht in
-[docs/online-recherche.md](docs/online-recherche.md). Die
+[docs/online-recherche.md](docs/online-recherche.md). Wie ein Agent diesen Server zusammen mit
+dem separaten MCP-Server `docx-mcp` nutzt, um Literaturrecherche belegt in ein Word-Dokument zu
+überführen, beschreibt [docs/docx-mcp-integration.md](docs/docx-mcp-integration.md). Die
 Aufgabenteilung dieser Dokumente regelt [ADR 0018](docs/adr/0018-code-documentation-architecture.md).
 Der **weitere Plan** steht in der [Roadmap](Roadmap.md), die **Entstehungsgeschichte** der
 abgeschlossenen Phasen 0–7 mit allen Kennzahlen in der

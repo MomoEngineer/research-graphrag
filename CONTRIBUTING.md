@@ -25,6 +25,7 @@ Dieses Dokument ist das zentrale Regelwerk für die Arbeit am Repository **Resea
 | [docs/funktionsweise.md](docs/funktionsweise.md) | Wie das System arbeitet: Abläufe und Zusammenspiel der Pakete (Mermaid) |
 | [docs/roadmap-historie.md](docs/roadmap-historie.md) | Archiv der abgeschlossenen Phasen 0–7 (vollständige Status-Blockquotes mit Kennzahlen) |
 | [docs/vscode-integration.md](docs/vscode-integration.md) | Einbindung des MCP-Servers in VS Code + Copilot (mit venv-Interpreter) |
+| [docs/docx-mcp-integration.md](docs/docx-mcp-integration.md) | Zusammenspiel mit dem separaten MCP-Server `docx-mcp`: Suche-Schreiben-Zitieren-Muster, Zitations-Rückverfolgbarkeit, Qualitätsmerkmale |
 | [docs/online-recherche.md](docs/online-recherche.md) | Anleitung zum Online-Modus: Einrichtung (Proxy), Anfrage wählen, Bericht lesen, Vorschlag übernehmen, Fehlerdiagnose |
 | [docs/repository-structure.md](docs/repository-structure.md) | Verbindliche Ordnerstruktur und Definition of Done |
 | [docs/testing.md](docs/testing.md) | Teststrategie (offline-tauglich) |

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import dataclasses
 import json
-from collections.abc import Sequence
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -30,15 +30,7 @@ from mcp.types import (
     TextContent,
 )
 
-from research_graphrag.extraction.model import (
-    SECTION_KIND_BODY,
-    SECTION_KIND_REFERENCES,
-    Section,
-)
-from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
-from research_graphrag.indexing.citation_graph import build_citation_graph
-from research_graphrag.indexing.graph_index import build_graph
-from research_graphrag.indexing.metadata_index import build_metadata_index
+from research_graphrag.extraction.pdf import CanonicalPaper
 from research_graphrag.indexing.tfidf_index import build_index
 from research_graphrag.mcp_server import server as server_module
 from research_graphrag.mcp_server.server import mcp
@@ -67,117 +59,6 @@ def _structured(result: CallToolResult) -> dict[str, Any]:
     assert result.content and result.content[0].type == "text"
     payload: dict[str, Any] = json.loads(result.content[0].text)
     return payload
-
-
-def _paper(
-    paper_id: str,
-    texts: Sequence[str],
-    *,
-    identifiers: dict[str, str] | None = None,
-    references: str = "",
-) -> CanonicalPaper:
-    chunks = [
-        Chunk(
-            chunk_id=f"{paper_id}-c{index:04d}",
-            paper_id=paper_id,
-            page_number=index + 1,
-            text=text,
-            char_count=len(text),
-            section_id="s-body",
-            section_title="Introduction" if index == 0 else "Methods",
-        )
-        for index, text in enumerate(texts)
-    ]
-    sections = [
-        Section(
-            section_id="s-body",
-            title="Introduction",
-            kind=SECTION_KIND_BODY,
-            level=1,
-            page_number=1,
-            order=0,
-        )
-    ]
-    if references:
-        sections.append(
-            Section(
-                section_id="s-refs",
-                title="References",
-                kind=SECTION_KIND_REFERENCES,
-                level=1,
-                page_number=len(texts) + 1,
-                order=1,
-            )
-        )
-        chunks.append(
-            Chunk(
-                chunk_id=f"{paper_id}-c{len(texts):04d}",
-                paper_id=paper_id,
-                page_number=len(texts) + 1,
-                text=references,
-                char_count=len(references),
-                section_id="s-refs",
-                section_title="References",
-            )
-        )
-    return CanonicalPaper(
-        paper_id=paper_id,
-        source_uri=f"file:///{paper_id}.pdf",
-        source_sha256="0" * 64,
-        n_pages=len(chunks),
-        chunks=tuple(chunks),
-        quality_flags=(),
-        sections=tuple(sections),
-        identifiers=identifiers or {},
-    )
-
-
-@pytest.fixture
-def index_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Baut einen kleinen Index + Graphen und richtet den Server per Env darauf aus."""
-    papers = [
-        _paper(
-            "aaaa0001",
-            [
-                "transformer attention mechanism self attention encoder doi:10.1145/1234",
-                "multi head attention transformer sequence model",
-            ],
-            identifiers={"arxiv": "2405.20455", "doi": "10.1145/1234"},
-        ),
-        _paper(
-            "aaaa0002",
-            [
-                "self attention transformer architecture heads",
-                "transformer encoder attention pretraining language",
-            ],
-            references="[1] Vorarbeit zur Aufmerksamkeit. doi:10.1145/1234",
-        ),
-        _paper(
-            "bbbb0001",
-            [
-                "graph neural network message passing nodes",
-                "graph community detection louvain modularity",
-            ],
-        ),
-        _paper(
-            "bbbb0002",
-            [
-                "citation graph clustering communities dataset",
-                "dataset benchmark evaluation metric accuracy graph",
-            ],
-        ),
-    ]
-    db = tmp_path / "index" / "index.sqlite"
-    build_index(papers, db)
-    build_graph(papers, db)
-    build_citation_graph(papers, db)
-    build_metadata_index(papers, db)
-    monkeypatch.setenv("RESEARCH_GRAPHRAG_INDEX", str(db))
-    monkeypatch.setenv(
-        "RESEARCH_GRAPHRAG_METADATA", str(tmp_path / "metadata" / "paper_metadata.json")
-    )
-    monkeypatch.setenv("RESEARCH_GRAPHRAG_DATA", str(tmp_path / "data"))
-    return db
 
 
 @pytest.mark.anyio
@@ -331,13 +212,13 @@ async def test_get_paper_file_reports_missing_local_pdf(index_db: Path) -> None:
 
 @pytest.mark.anyio
 async def test_get_paper_file_resolves_a_real_local_pdf(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, make_paper_fn: Callable[..., CanonicalPaper]
 ) -> None:
     """Ein tatsächlich vorhandenes PDF liefert available=true und den nativen Pfad."""
     pdf = tmp_path / "Original.pdf"
     pdf.write_bytes(b"%PDF-1.4 test")
     paper = dataclasses.replace(
-        _paper("cccc0001", ["irrelevant content for retrieval"]),
+        make_paper_fn("cccc0001", ["irrelevant content for retrieval"]),
         source_uri=pdf.resolve().as_uri(),
     )
     db = tmp_path / "index" / "index.sqlite"

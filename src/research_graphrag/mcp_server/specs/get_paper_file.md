@@ -112,3 +112,28 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
   (`reason = "file_missing"`), unbekannte `paper_id`, leere `paper_id`, fehlender Index.
 - `tests/mcp_server/test_server.py`: Tool-Contract über einen In-Memory-Client (Erfolg +
   Fehler-Envelope).
+
+## 10. Beispiel
+
+Real erzeugt gegen den Testindex aus `tests/mcp_server/conftest.py`; geprüft in `tests/mcp_server/test_spec_examples.py`. Die Fixture-Paper zeigen auf eine nicht real vorhandene Datei – deshalb `available = false`, `reason = "file_missing"`, **kein** Fehler (`isError = false`).
+
+Anfrage:
+
+```json
+{ "paper_id": "aaaa0001" }
+```
+
+Antwort:
+
+```json
+{
+  "paper_id": "aaaa0001",
+  "document_kind": "full",
+  "available": false,
+  "path": "",
+  "source_uri": "file:///aaaa0001.pdf",
+  "size_bytes": 0,
+  "reason": "file_missing",
+  "note": "Volltext im Index verzeichnet, aber lokal nicht auffindbar: file:///aaaa0001.pdf"
+}
+```

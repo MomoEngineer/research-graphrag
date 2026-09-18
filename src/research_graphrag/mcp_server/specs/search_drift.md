@@ -107,3 +107,51 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 ## 9. Testabdeckung
 
 - `tests/retrieval/test_drift.py`: Community-Vereinigung + lokale Verfeinerung (auf Mitglieder beschränkt), Fallback bei fehlender Übereinstimmung (Belege identisch zur Basic-Suche), die seit V4 geschlossene alte Fallback-Lücke (`test_drift_finds_the_orphans_own_community_instead_of_falling_back`), `communities`-Grenzen, Determinismus, Fehler-/Edge-Cases (`invalid_input`, `not_found`, `constraint_violation`), Output-Schema.
+
+## 10. Beispiel
+
+Real erzeugt gegen den Testindex aus `tests/mcp_server/conftest.py`; geprüft in `tests/mcp_server/test_spec_examples.py`. Die passendste Community (Graph/Community-Detection) liefert Belege, deshalb `fallback = false`.
+
+Anfrage:
+
+```json
+{ "query": "graph communities", "k": 2 }
+```
+
+Antwort (`citations` gekürzt auf den Top-1-Treffer):
+
+```json
+{
+  "query": "graph communities",
+  "communities": [
+    {
+      "community_id": 1,
+      "score": 0.0320,
+      "size": 2,
+      "keywords": ["graph", "dataset", "community", "detection", "louvain", "message", "modularity", "network", "neural", "nodes"],
+      "representatives": [
+        { "paper_id": "bbbb0001", "document_kind": "full", "source_uri": "file:///bbbb0001.pdf", "snippet": "graph neural network message passing nodes", "identifiers": {}, "citation_key": "bbbb0001" },
+        { "paper_id": "bbbb0002", "document_kind": "full", "source_uri": "file:///bbbb0002.pdf", "snippet": "citation graph clustering communities dataset", "identifiers": {}, "citation_key": "bbbb0002" }
+      ]
+    }
+  ],
+  "fallback": false,
+  "citations": [
+    {
+      "paper_id": "bbbb0002",
+      "document_kind": "full",
+      "section_title": "Introduction",
+      "page_number": 1,
+      "page_end": 1,
+      "chunk_id": "bbbb0002-c0000",
+      "score": 0.0328,
+      "score_tfidf": 0.5863,
+      "score_bm25": 2.9358,
+      "source_uri": "file:///bbbb0002.pdf",
+      "snippet": "citation graph clustering communities dataset",
+      "identifiers": {},
+      "citation_key": "bbbb0002"
+    }
+  ]
+}
+```

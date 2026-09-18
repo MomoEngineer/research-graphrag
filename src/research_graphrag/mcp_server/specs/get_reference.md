@@ -113,3 +113,43 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
   Jahr, viele Autoren).
 - `tests/mcp_server/test_server.py`: Tool-Contract über einen In-Memory-Client (Erfolg +
   Fehler-Envelope).
+
+## 10. Beispiel
+
+Real erzeugt gegen den Testindex aus `tests/mcp_server/conftest.py`; geprüft in `tests/mcp_server/test_spec_examples.py`. Ohne kuratierte/online aufgelöste Angabe fehlen die Autoren – `missing`/`note` weisen das aus, statt sie zu raten.
+
+Anfrage:
+
+```json
+{ "paper_id": "aaaa0001" }
+```
+
+Antwort:
+
+```json
+{
+  "paper_id": "aaaa0001",
+  "source_uri": "file:///aaaa0001.pdf",
+  "styles": ["harvard", "apa"],
+  "reference": {
+    "paper_id": "aaaa0001",
+    "title": "aaaa0001",
+    "authors": [],
+    "year": 2024,
+    "venue": "",
+    "doi": "10.1145/1234",
+    "arxiv_id": "2405.20455",
+    "url": "",
+    "identifiers": { "doi": "10.1145/1234", "arxiv": "2405.20455" },
+    "citation_key": "aaaa00012024",
+    "origins": { "arxiv_id": "extracted", "doi": "extracted", "title": "extracted", "year": "extracted" },
+    "confidence": "weak",
+    "citable": false,
+    "harvard": "aaaa0001 (2024) Available at: https://doi.org/10.1145/1234",
+    "apa": "aaaa0001. (2024). https://doi.org/10.1145/1234",
+    "in_text": { "harvard": "(aaaa0001, 2024)", "apa": "(aaaa0001, 2024)" }
+  },
+  "missing": ["authors"],
+  "note": "Unvollständige Angabe – es fehlen: Autoren. Fehlende Felder ergänzt der Auflösungslauf `python -m scripts.resolve_metadata` oder ein Eintrag der Herkunft 'manual' in metadata/paper_metadata.json."
+}
+```

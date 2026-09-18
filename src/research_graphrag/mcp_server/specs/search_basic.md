@@ -98,3 +98,38 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 ## 9. Testabdeckung
 
 - `tests/retrieval/test_basic.py`: Funktions-/Provenienz-Test, No-Match, Fehler-/Edge-Cases (`not_found`, `invalid_input`).
+
+## 10. Beispiel
+
+Real erzeugt gegen den Testindex aus `tests/mcp_server/conftest.py` (Paper `aaaa0001`/`aaaa0002` zu Attention/Transformer); geprüft in `tests/mcp_server/test_spec_examples.py`.
+
+Anfrage:
+
+```json
+{ "query": "attention", "k": 2 }
+```
+
+Antwort (gekürzt auf den ersten Treffer; `search_basic` liefert bei `k=2` zwei Einträge):
+
+```json
+{
+  "query": "attention",
+  "citations": [
+    {
+      "paper_id": "aaaa0001",
+      "document_kind": "full",
+      "section_title": "Introduction",
+      "page_number": 1,
+      "page_end": 1,
+      "chunk_id": "aaaa0001-c0000",
+      "score": 0.0328,
+      "score_tfidf": 0.4775,
+      "score_bm25": 0.9470,
+      "source_uri": "file:///aaaa0001.pdf",
+      "snippet": "transformer attention mechanism self attention encoder doi:10.1145/1234",
+      "identifiers": { "doi": "10.1145/1234", "arxiv": "2405.20455" },
+      "citation_key": "aaaa00012024"
+    }
+  ]
+}
+```

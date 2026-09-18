@@ -137,3 +137,68 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 - `tests/generation/test_ask_synthesis.py`: CLI-Pfad `--synthese` (Noop-Degradation und generierte Antwort).
 - `tests/mcp_server/test_sampling.py`: Capability-Fallback der Sampling-Brücke (ohne Sampling → Noop).
 - `tests/mcp_server/test_server.py`: Tool-Contract über einen In-Memory-Client – Default ohne Synthese, **echter Sampling-Roundtrip** über einen Sampling-Callback und sichtbare Degradation ohne Sampling-Fähigkeit.
+
+## 10. Beispiel
+
+Real erzeugt gegen den Testindex aus `tests/mcp_server/conftest.py` mit `synthesize=false` (Default); geprüft in `tests/mcp_server/test_spec_examples.py`. Die Frage enthält kein Router-Signal, deshalb fällt `auto` auf `basic` zurück (`routing.confidence = "none"`).
+
+Anfrage:
+
+```json
+{ "query": "How does attention work?", "k": 2 }
+```
+
+Antwort (`evidence.items`/`references` gekürzt auf den ersten Eintrag):
+
+```json
+{
+  "query": "How does attention work?",
+  "mode": "basic",
+  "routing": {
+    "mode": "basic",
+    "confidence": "none",
+    "signals": [],
+    "rationale": "Kein Modus-Signal erkannt → Standard basic"
+  },
+  "answer": "",
+  "generated": false,
+  "model": "",
+  "citation_contract": "Du beantwortest Fragen zu einem wissenschaftlichen Paper-Korpus. Nutze ausschließlich die nummerierten Belege im Kontext … Antworte knapp und auf Deutsch.",
+  "evidence": {
+    "query": "How does attention work?",
+    "mode": "basic",
+    "items": [
+      {
+        "index": 1,
+        "paper_id": "aaaa0001",
+        "document_kind": "full",
+        "label": "Paper aaaa0001 · Abschnitt Introduction · Seite 1",
+        "snippet": "transformer attention mechanism self attention encoder doi:10.1145/1234",
+        "source_uri": "file:///aaaa0001.pdf",
+        "identifiers": { "doi": "10.1145/1234", "arxiv": "2405.20455" },
+        "citation_key": "aaaa00012024"
+      }
+    ]
+  },
+  "references": [
+    {
+      "paper_id": "aaaa0001",
+      "title": "aaaa0001",
+      "authors": [],
+      "year": 2024,
+      "venue": "",
+      "doi": "10.1145/1234",
+      "arxiv_id": "2405.20455",
+      "url": "",
+      "identifiers": { "doi": "10.1145/1234", "arxiv": "2405.20455" },
+      "citation_key": "aaaa00012024",
+      "origins": { "arxiv_id": "extracted", "doi": "extracted", "title": "extracted", "year": "extracted" },
+      "confidence": "weak",
+      "citable": false,
+      "harvard": "aaaa0001 (2024) Available at: https://doi.org/10.1145/1234",
+      "apa": "aaaa0001. (2024). https://doi.org/10.1145/1234",
+      "in_text": { "harvard": "(aaaa0001, 2024)", "apa": "(aaaa0001, 2024)" }
+    }
+  ]
+}
+```

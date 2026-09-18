@@ -94,3 +94,42 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 - `tests/indexing/test_citation_graph.py`: Kantenbildung (DOI/arXiv/Titel, Präzedenz, Selbstzitat-Ausschluss), Determinismus, additive Persistenz, Fehlerfälle von `load_citations`.
 - `tests/retrieval/test_citations.py`: Provenienz-Anreicherung, Sortierung, Deckelung (`limit`, `cites_total`/`cited_by_total`), Fehlerfälle.
 - `tests/mcp_server/test_server.py`: Tool-Contract über einen In-Memory-Client (Erfolg + Fehler-Envelope).
+
+## 10. Beispiel
+
+Real erzeugt gegen den Testindex aus `tests/mcp_server/conftest.py`: `aaaa0002` zitiert `aaaa0001` über die DOI im Referenzabschnitt; geprüft in `tests/mcp_server/test_spec_examples.py`.
+
+Anfrage:
+
+```json
+{ "paper_id": "aaaa0001" }
+```
+
+Antwort:
+
+```json
+{
+  "paper": {
+    "paper_id": "aaaa0001",
+    "document_kind": "full",
+    "source_uri": "file:///aaaa0001.pdf",
+    "identifiers": { "doi": "10.1145/1234", "arxiv": "2405.20455" },
+    "citation_key": "aaaa00012024",
+    "snippet": "transformer attention mechanism self attention encoder doi:10.1145/1234"
+  },
+  "cites": [],
+  "cites_total": 0,
+  "cited_by": [
+    {
+      "paper_id": "aaaa0002",
+      "document_kind": "full",
+      "source_uri": "file:///aaaa0002.pdf",
+      "identifiers": {},
+      "citation_key": "aaaa0002",
+      "snippet": "self attention transformer architecture heads",
+      "method": "doi"
+    }
+  ],
+  "cited_by_total": 1
+}
+```

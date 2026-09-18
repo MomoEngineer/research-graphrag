@@ -98,3 +98,46 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 
 - `tests/retrieval/test_paper.py`: Funktions-/Provenienz-Test, `not_found` (fehlender Index, unbekannte ID), `invalid_input`.
 - `tests/mcp_server/test_server.py`: Tool-Contract über einen In-Memory-Client (Erfolg + Fehler-Envelope).
+
+## 10. Beispiel
+
+Real erzeugt gegen den Testindex aus `tests/mcp_server/conftest.py`; geprüft in `tests/mcp_server/test_spec_examples.py`. Ohne Online-Auflösung/kuratierte Angabe bleiben `title`/`authors`/`venue` extrahiert-leer – `reference.citable = false` weist das aus, statt einen Titel zu erfinden.
+
+Anfrage:
+
+```json
+{ "paper_id": "aaaa0001" }
+```
+
+Antwort:
+
+```json
+{
+  "paper_id": "aaaa0001",
+  "document_kind": "full",
+  "source_uri": "file:///aaaa0001.pdf",
+  "identifiers": { "arxiv": "2405.20455", "doi": "10.1145/1234" },
+  "n_pages": 2,
+  "n_chunks": 2,
+  "sections": ["Introduction", "Methods"],
+  "snippet": "transformer attention mechanism self attention encoder doi:10.1145/1234",
+  "reference": {
+    "paper_id": "aaaa0001",
+    "title": "aaaa0001",
+    "authors": [],
+    "year": 2024,
+    "venue": "",
+    "doi": "10.1145/1234",
+    "arxiv_id": "2405.20455",
+    "url": "",
+    "identifiers": { "doi": "10.1145/1234", "arxiv": "2405.20455" },
+    "citation_key": "aaaa00012024",
+    "origins": { "arxiv_id": "extracted", "doi": "extracted", "title": "extracted", "year": "extracted" },
+    "confidence": "weak",
+    "citable": false,
+    "harvard": "aaaa0001 (2024) Available at: https://doi.org/10.1145/1234",
+    "apa": "aaaa0001. (2024). https://doi.org/10.1145/1234",
+    "in_text": { "harvard": "(aaaa0001, 2024)", "apa": "(aaaa0001, 2024)" }
+  }
+}
+```

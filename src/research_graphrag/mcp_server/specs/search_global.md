@@ -97,3 +97,47 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 ## 9. Testabdeckung
 
 - `tests/retrieval/test_global.py`: Community-Ranking, No-Match, Fehler-/Edge-Cases (`invalid_input`, `not_found`, `constraint_violation`), Output-Schema.
+
+## 10. Beispiel
+
+Real erzeugt gegen den Testindex aus `tests/mcp_server/conftest.py` (zwei Communities: Attention/Transformer und Graph/Community-Detection); geprüft in `tests/mcp_server/test_spec_examples.py`.
+
+Anfrage:
+
+```json
+{ "query": "graph communities", "n": 1 }
+```
+
+Antwort:
+
+```json
+{
+  "query": "graph communities",
+  "communities": [
+    {
+      "community_id": 1,
+      "score": 0.0320,
+      "size": 2,
+      "keywords": ["graph", "dataset", "community", "detection", "louvain", "message", "modularity", "network", "neural", "nodes"],
+      "representatives": [
+        {
+          "paper_id": "bbbb0001",
+          "document_kind": "full",
+          "source_uri": "file:///bbbb0001.pdf",
+          "snippet": "graph neural network message passing nodes",
+          "identifiers": {},
+          "citation_key": "bbbb0001"
+        },
+        {
+          "paper_id": "bbbb0002",
+          "document_kind": "full",
+          "source_uri": "file:///bbbb0002.pdf",
+          "snippet": "citation graph clustering communities dataset",
+          "identifiers": {},
+          "citation_key": "bbbb0002"
+        }
+      ]
+    }
+  ]
+}
+```

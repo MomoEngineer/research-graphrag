@@ -159,7 +159,9 @@ def _guard(
     description=(
         "Beantwortet exakte/faktische Fragen (DOI, Metrik, F1-Score, Abkürzung) über eine "
         "Top-k-TF-IDF-Suche auf Paper-Chunks und liefert belegte Zitate (Paper · Abschnitt · "
-        "Seite · Chunk). Liefert nur Evidenz + Provenienz; die Antwort formuliert der Agent."
+        "Seite · Chunk). Liefert nur Evidenz + Provenienz; die Antwort formuliert der Agent. "
+        'Beispiel: query="attention", k=2 → citations[0] = {paper_id: "aaaa0001", '
+        'section_title: "Introduction", page_number: 1, score: 0.033}.'
     ),
 )
 def search_basic_tool(query: str, k: int = 5) -> dict[str, Any]:
@@ -175,7 +177,9 @@ def search_basic_tool(query: str, k: int = 5) -> dict[str, Any]:
     description=(
         "Beantwortet Detailfragen zu einem Paper und Zitations-/Methodennetz-Fragen: Seed-Chunks, "
         "Chunk-Nachbarschaft und Paper-Fan-out über den Ähnlichkeitsgraphen. `fan_out=0` "
-        "überspringt den Graph-Fan-out. Liefert nur Evidenz + Provenienz."
+        "überspringt den Graph-Fan-out. Liefert nur Evidenz + Provenienz. "
+        'Beispiel: query="attention", fan_out=5 → seeds[0].paper_id = "aaaa0001", '
+        'fan_out[0] = {paper_id: "aaaa0002", weight: 0.61} (Nachbar über den Ähnlichkeitsgraphen).'
     ),
 )
 def search_local_tool(query: str, k: int = 5, fan_out: int = 5) -> dict[str, Any]:
@@ -192,7 +196,10 @@ def search_local_tool(query: str, k: int = 5, fan_out: int = 5) -> dict[str, Any
     description=(
         "Beantwortet corpusweite Themen-/Syntheses-Fragen über ein Ranking der "
         "Louvain-Communities (Keywords + Summary) mit repräsentativer Paper-Provenienz. "
-        "Liefert nur Evidenz + Provenienz; die Antwort formuliert der Agent."
+        "Liefert nur Evidenz + Provenienz; die Antwort formuliert der Agent. "
+        'Beispiel: query="graph communities", n=1 → communities[0] = {community_id: 1, '
+        'keywords: ["graph", "community", "detection", …], '
+        'representatives: ["bbbb0001", "bbbb0002"]}.'
     ),
 )
 def search_global_tool(query: str, k: int = 5) -> dict[str, Any]:
@@ -210,7 +217,9 @@ def search_global_tool(query: str, k: int = 5) -> dict[str, Any]:
         "thematisch passendsten Communities, dann fokussierte Chunk-Belege in der Vereinigung "
         "ihrer Paper. Ohne passende Community wird sichtbar auf die corpusweite Suche "
         "zurückgefallen (`fallback`). Liefert nur Evidenz + Provenienz; die Antwort formuliert "
-        "der Agent."
+        "der Agent. "
+        'Beispiel: query="graph communities", k=2 → communities[0].community_id = 1, '
+        'fallback=false, citations[0].paper_id = "bbbb0002".'
     ),
 )
 def search_drift_tool(query: str, k: int = 6) -> dict[str, Any]:
@@ -226,7 +235,9 @@ def search_drift_tool(query: str, k: int = 6) -> dict[str, Any]:
     description=(
         "Liefert die Metadaten eines Papers per stabiler `paper_id`: Quelle (source_uri), "
         "Identifikatoren (DOI/arXiv), Seiten-/Chunk-Umfang, Abschnittstitel und ein "
-        "Leit-Snippet. Read-only aus dem Index; kein Datei-Pfad."
+        "Leit-Snippet. Read-only aus dem Index; kein Datei-Pfad. "
+        'Beispiel: paper_id="aaaa0001" → {n_pages: 2, sections: ["Introduction", "Methods"], '
+        'identifiers: {"doi": "10.1145/1234", "arxiv": "2405.20455"}}.'
     ),
 )
 def get_paper_tool(paper_id: str) -> dict[str, Any]:
@@ -245,7 +256,9 @@ def get_paper_tool(paper_id: str) -> dict[str, Any]:
         "Der Agent liest die Datei anschliessend ueber sein eigenes Dateisystem-Werkzeug. "
         "Referenz-Eintraege ohne Volltext und ein lokal nicht auffindbares PDF sind KEIN "
         "Fehler, sondern `available = false` mit `reason` ('reference_only'/'file_missing') "
-        "und Klartext in `note`."
+        "und Klartext in `note`. "
+        'Beispiel: paper_id="aaaa0001" ohne lokale Datei → {available: false, '
+        'reason: "file_missing", path: ""}.'
     ),
 )
 def get_paper_file_tool(paper_id: str) -> dict[str, Any]:
@@ -262,7 +275,9 @@ def get_paper_file_tool(paper_id: str) -> dict[str, Any]:
         "Liefert die Zitationsbeziehungen eines Papers **innerhalb des Korpus**: `cites` "
         "(zitiert) und `cited_by` (wird zitiert von), jeweils mit Quelle und dem Kriterium "
         "des Treffers (doi/arxiv/title). Beantwortet 'welche Paper bauen auf X auf?'. "
-        "Read-only aus dem Index; externe Referenzen werden nicht aufgelöst."
+        "Read-only aus dem Index; externe Referenzen werden nicht aufgelöst. "
+        'Beispiel: paper_id="aaaa0001" → cited_by=[{paper_id: "aaaa0002", method: "doi"}], '
+        "cites=[] (aaaa0001 wird zitiert, zitiert selbst aber niemanden im Korpus)."
     ),
 )
 def get_citations_tool(paper_id: str) -> dict[str, Any]:
@@ -283,7 +298,10 @@ def get_citations_tool(paper_id: str) -> dict[str, Any]:
         "auslösende Signale); bei `weak`/`none` lohnt ggf. ein expliziter Modus. Empfohlen "
         "für Agenten mit eigenem Modell: `synthesize=false` (Default) – formuliere die Antwort "
         "selbst und zitiere die Belegnummern. Mit `synthesize=true` formuliert der Server die "
-        "Antwort über MCP-Sampling; ohne Sampling-Fähigkeit bleibt `generated=false`."
+        "Antwort über MCP-Sampling; ohne Sampling-Fähigkeit bleibt `generated=false`. "
+        'Beispiel: query="How does attention work?" (ohne Router-Signal) → mode="basic", '
+        'routing.confidence="none", evidence.items[0].label = "Paper aaaa0001 · Abschnitt '
+        'Introduction · Seite 1".'
     ),
 )
 async def answer_question_tool(
@@ -316,7 +334,10 @@ async def answer_question_tool(
         f"`limit` größten Communities begrenzt (Default/Maximum {MAX_RESULT_COUNT}). Für die "
         "volle Mitgliederliste einer einzelnen Community `community_id` angeben – dann werden "
         "`min_size`/`limit` ignoriert. Nützlich, um den Korpus zu überblicken oder eine "
-        "Community für Global/DRIFT auszuwählen."
+        "Community für Global/DRIFT auszuwählen. "
+        "Beispiel (ohne Parameter): topics=[{community_id: 0, size: 2, "
+        'keywords: ["attention", "transformer", …]}, {community_id: 1, size: 2, '
+        'keywords: ["graph", "community", …]}].'
     ),
 )
 def list_topics_tool(
@@ -342,7 +363,9 @@ def list_topics_tool(
         "Titel, Jahr, Venue, DOI/arXiv sowie die formatierten Angaben in **Harvard** und "
         "**APA** samt Kurzbeleg für den Fließtext. Nutze dies, wenn aus einem Suchtreffer "
         "zitiert werden soll. Ist der Datensatz unvollständig, weist `missing`/`note` das aus – "
-        "fehlende Angaben werden nie geraten. Read-only aus dem Index."
+        "fehlende Angaben werden nie geraten. Read-only aus dem Index. "
+        'Beispiel: paper_id="aaaa0001" → reference.harvard = "aaaa0001 (2024) Available at: '
+        'https://doi.org/10.1145/1234", missing=["authors"] (keine Autoren ohne Online-Auflösung).'
     ),
 )
 def get_reference_tool(paper_id: str) -> dict[str, Any]:
@@ -364,7 +387,10 @@ def get_reference_tool(paper_id: str) -> dict[str, Any]:
         "protokolliert jeden Aufruf append-only in data/corrections_log.md. WICHTIG: Die "
         "Korrektur wirkt NICHT sofort - get_paper/get_reference/answer_question zeigen sie "
         "erst nach dem naechsten 'python -m scripts.ingest'-Lauf (siehe `effective_after` in "
-        "der Antwort)."
+        "der Antwort). "
+        'Beispiel: paper_id="aaaa0001", venue="ACM SIGCOMM", evidence="laut Publisher-Landingpage" '
+        '→ applied_fields=["venue"], record.origin="manual", '
+        'effective_after="python -m scripts.ingest".'
     ),
 )
 def correct_paper_metadata_tool(

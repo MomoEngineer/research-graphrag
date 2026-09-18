@@ -114,3 +114,76 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 ## 9. Testabdeckung
 
 - `tests/retrieval/test_local.py`: Seeds/Nachbarschaft/Fan-out, Multi-Seed-Fusion und Seed-Ausschluss, `seeds`-Grenzen, `fan_out=0` ohne Graph, No-Match, Fehler-/Edge-Cases (`invalid_input`, `not_found`, `constraint_violation`), Output-Schema.
+
+## 10. Beispiel
+
+Real erzeugt gegen den Testindex aus `tests/mcp_server/conftest.py`; geprüft in `tests/mcp_server/test_spec_examples.py`. `aaaa0002` zitiert `aaaa0001` über die DOI im Referenzabschnitt – sichtbar sowohl in `neighborhood` (der Referenz-Chunk selbst) als auch im `fan_out` (Graph-Nachbarpaper `aaaa0002`).
+
+Anfrage:
+
+```json
+{ "query": "attention", "k": 4, "fan_out": 5 }
+```
+
+Antwort (gekürzt: `seeds` enthält vier Einträge, hier nur der Top-1; `neighborhood`/`fan_out` vollständig):
+
+```json
+{
+  "query": "attention",
+  "seeds": [
+    {
+      "paper_id": "aaaa0001",
+      "document_kind": "full",
+      "section_title": "Introduction",
+      "page_number": 1,
+      "page_end": 1,
+      "chunk_id": "aaaa0001-c0000",
+      "score": 0.0328,
+      "score_tfidf": 0.4775,
+      "score_bm25": 0.9470,
+      "source_uri": "file:///aaaa0001.pdf",
+      "snippet": "transformer attention mechanism self attention encoder doi:10.1145/1234",
+      "identifiers": { "doi": "10.1145/1234", "arxiv": "2405.20455" },
+      "citation_key": "aaaa00012024"
+    }
+  ],
+  "neighborhood": [
+    {
+      "paper_id": "aaaa0002",
+      "document_kind": "full",
+      "section_title": "References",
+      "page_number": 3,
+      "page_end": 3,
+      "chunk_id": "aaaa0002-c0002",
+      "score": 0.0164,
+      "score_tfidf": 0.4340,
+      "score_bm25": 0.0,
+      "source_uri": "file:///aaaa0002.pdf",
+      "snippet": "[1] Vorarbeit zur Aufmerksamkeit. doi:10.1145/1234",
+      "identifiers": {},
+      "citation_key": "aaaa0002"
+    }
+  ],
+  "fan_out": [
+    {
+      "paper_id": "aaaa0002",
+      "weight": 0.6121,
+      "citation": {
+        "paper_id": "aaaa0002",
+        "document_kind": "full",
+        "section_title": "Introduction",
+        "page_number": 1,
+        "page_end": 1,
+        "chunk_id": "aaaa0002-c0000",
+        "score": 0.0323,
+        "score_tfidf": 0.3441,
+        "score_bm25": 0.8697,
+        "source_uri": "file:///aaaa0002.pdf",
+        "snippet": "self attention transformer architecture heads",
+        "identifiers": {},
+        "citation_key": "aaaa0002"
+      }
+    }
+  ]
+}
+```

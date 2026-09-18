@@ -113,3 +113,38 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 - `tests/indexing/test_graph_index.py`: `CommunityView.to_dict()` (Serialisierung).
 - `tests/retrieval/test_topics.py`: Filterung (`min_size`), Deckelung (`limit`, `truncated`/`total_matching`), Einzelabruf (`community_id`), Fehler-/Edge-Cases (`invalid_input`, `not_found`).
 - `tests/mcp_server/test_server.py`: Tool-Contract über einen In-Memory-Client (Erfolg + Fehler-Envelope, beide Modi).
+
+## 10. Beispiel
+
+Real erzeugt gegen den Testindex aus `tests/mcp_server/conftest.py` (zwei Communities: Attention/Transformer und Graph/Community-Detection); geprüft in `tests/mcp_server/test_spec_examples.py`.
+
+Anfrage (Übersichts-Modus):
+
+```json
+{}
+```
+
+Antwort:
+
+```json
+{
+  "topics": [
+    {
+      "community_id": 0,
+      "size": 2,
+      "keywords": ["attention", "transformer", "encoder", "self", "architecture", "aufmerksamkeit", "heads", "language", "pretraining", "vorarbeit"],
+      "summary": "transformer attention mechanism self attention encoder doi:10.1145/1234",
+      "representatives": ["aaaa0001", "aaaa0002"]
+    },
+    {
+      "community_id": 1,
+      "size": 2,
+      "keywords": ["graph", "dataset", "community", "detection", "louvain", "message", "modularity", "network", "neural", "nodes"],
+      "summary": "graph neural network message passing nodes",
+      "representatives": ["bbbb0001", "bbbb0002"]
+    }
+  ],
+  "total_matching": 2,
+  "truncated": false
+}
+```

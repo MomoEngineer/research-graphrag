@@ -52,7 +52,6 @@ versionierte Metadatendatei von Hand zu editieren.
   "applied_fields": ["doi", "venue"],
   "previous": { "doi": "", "venue": "arXiv (Cornell University)" },
   "record": {
-    "paper_id": "…",
     "origin": "manual",
     "title": "",
     "authors": [],
@@ -131,3 +130,42 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
   zweiten identischen Aufrufs.
 - `tests/mcp_server/test_server.py`: Tool-Contract über einen In-Memory-Client (Erfolg +
   Fehler-Envelope je Fehlerfall).
+
+## 10. Beispiel
+
+Real erzeugt gegen den Testindex aus `tests/mcp_server/conftest.py`; geprüft in `tests/mcp_server/test_spec_examples.py`. **Hinweis:** `record` trägt anders als früher hier dokumentiert **kein** eigenes `paper_id`-Feld (die `MetadataRecord.to_dict()`-Speicherform lässt es bewusst weg – der Aufruf-Envelope trägt `paper_id` bereits auf oberster Ebene); Abschnitt 3 wurde entsprechend korrigiert.
+
+Anfrage:
+
+```json
+{
+  "paper_id": "aaaa0001",
+  "authors": ["Anna Beispiel", "Bert Muster"],
+  "venue": "ACM SIGCOMM",
+  "evidence": "laut Publisher-Landingpage doi.org/10.1145/1234"
+}
+```
+
+Antwort:
+
+```json
+{
+  "paper_id": "aaaa0001",
+  "applied_fields": ["authors", "venue"],
+  "previous": { "authors": [], "venue": "" },
+  "record": {
+    "origin": "manual",
+    "title": "",
+    "authors": ["Anna Beispiel", "Bert Muster"],
+    "year": 0,
+    "venue": "ACM SIGCOMM",
+    "doi": "",
+    "arxiv_id": "",
+    "url": "",
+    "confidence": "strong",
+    "evidence": "laut Publisher-Landingpage doi.org/10.1145/1234"
+  },
+  "log_path": "data/corrections_log.md",
+  "effective_after": "python -m scripts.ingest"
+}
+```

@@ -20,6 +20,7 @@ research-graphrag/
 │  ├─ funktionsweise.md          # Konzept & Abläufe (Mermaid), Einstieg in die Modul-Dokus
 │  ├─ roadmap-historie.md        # Archiv der abgeschlossenen Phasen 0–7 (nicht fortgeschrieben)
 │  ├─ vscode-integration.md
+│  ├─ docx-mcp-integration.md    # Bedienanleitung: Zusammenspiel mit dem separaten MCP-Server docx-mcp
 │  ├─ online-recherche.md        # Bedienanleitung des Online-Modus (Phase 9 / S1)
 │  ├─ repository-structure.md    # dieses Dokument
 │  ├─ documentation-standards.md

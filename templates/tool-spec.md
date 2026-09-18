@@ -64,3 +64,19 @@ Struktur und Bedeutung der Rückgabe (Felder, Typen, Pflichtfelder). Beispiel al
 
 - Verweis auf `tests/mcp_server/test_<tool_name>.py`.
 - Geplante Contract-, Funktions- und Fehler-/Edge-Case-Tests (Kurzliste).
+
+## 10. Beispiel
+
+Mindestens ein konkretes Anfrage-/Antwort-Paar (nicht nur das abstrakte Schema aus Abschnitt 2/3) – die Kategorie, die empirisch für die Zuverlässigkeit von Agenten-Tool-Aufrufen am wichtigsten ist (Hasan et al., *„MCP Tool Descriptions Are Smelly"*, arXiv:2602.14878; vgl. [CONTRIBUTING.md](../CONTRIBUTING.md) Prinzip 5-Analogon in `docx-mcp`). Bevorzugt real erzeugt gegen den Testindex aus `tests/mcp_server/conftest.py`, nicht nur illustrativ, damit `tests/mcp_server/test_spec_examples.py` es als Regression prüfen kann. Eine gekürzte Fassung gehört zusätzlich in die `description` des Tools in `server.py`, da der aufrufende Agent zur Aufrufzeit **diese** sieht, nicht die Spezifikation.
+
+Anfrage:
+
+```json
+{ "beispiel_param": "…" }
+```
+
+Antwort:
+
+```json
+{ "feld": "…" }
+```
