@@ -160,6 +160,23 @@
         "year": 2025
       }
     ],
+    "01b44252fa9afbe4": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Mark Harwardt",
+          "Martin Prause"
+        ],
+        "confidence": "strong",
+        "doi": "10.1007/978-3-658-50907-1",
+        "evidence": "Crossref-Metadaten zu DOI 10.1007/978-3-658-50907-1 (api.crossref.org) sowie Impressum/Copyright-Seite des PDFs (Springer Gabler, ein Imprint der Springer Fachmedien Wiesbaden GmbH, 2026, ISBN 978-3-658-50906-4 / eBook 978-3-658-50907-1, Reihe 'Digitaler Wandel - kompakte Impulse fuer Wissenschaft und Praxis'); online recherchiert am 2026-09-19.",
+        "origin": "manual",
+        "title": "Digitale Transformation durch KI: Ein Leitfaden für den erfolgreichen Einsatz von Künstlicher Intelligenz in Unternehmen",
+        "url": "https://doi.org/10.1007/978-3-658-50907-1",
+        "venue": "Springer Gabler, Wiesbaden",
+        "year": 2026
+      }
+    ],
     "0208b92fe358754e": [
       {
         "arxiv_id": "",
@@ -1211,6 +1228,22 @@
         "url": "https://arxiv.org/pdf/2310.01798",
         "venue": "arXiv (Cornell University)",
         "year": 2023
+      }
+    ],
+    "15fb6c1f2c9f6404": [
+      {
+        "arxiv_id": "",
+        "authors": [
+          "Andrea Herrmann"
+        ],
+        "confidence": "strong",
+        "doi": "10.1007/978-3-658-35460-2",
+        "evidence": "Crossref-Metadaten zu DOI 10.1007/978-3-658-35460-2 (api.crossref.org) sowie Impressum/Copyright-Seite des PDFs (Springer Vieweg, ein Imprint der Springer Fachmedien Wiesbaden GmbH, 2022, ISBN 978-3-658-35459-6 / eBook 978-3-658-35460-2); online recherchiert am 2026-09-19.",
+        "origin": "manual",
+        "title": "Grundlagen der Anforderungsanalyse: Standardkonformes Requirements Engineering",
+        "url": "https://doi.org/10.1007/978-3-658-35460-2",
+        "venue": "Springer Vieweg, Wiesbaden",
+        "year": 2022
       }
     ],
     "1675c2dcd5ecaef4": [
