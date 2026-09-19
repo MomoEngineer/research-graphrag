@@ -308,6 +308,46 @@ async def test_correct_paper_metadata_unknown_paper_yields_not_found_envelope(
 
 
 @pytest.mark.anyio
+async def test_correct_paper_metadata_clear_fields_marks_field_explicitly_empty(
+    index_db: Path,
+) -> None:
+    """clear_fields (ADR 0040) meldet das Feld als geändert und markiert es in cleared_fields."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool(
+            "correct_paper_metadata",
+            {
+                "paper_id": "aaaa0001",
+                "evidence": "arXiv-ID gehört zu einem Fremdpaper",
+                "clear_fields": ["arxiv_id"],
+            },
+        )
+    assert result.isError is False
+    payload = _structured(result)
+    assert payload["applied_fields"] == ["arxiv_id"]
+    assert payload["record"]["arxiv_id"] == ""
+    assert payload["record"]["cleared_fields"] == ["arxiv_id"]
+
+
+@pytest.mark.anyio
+async def test_correct_paper_metadata_field_set_and_cleared_at_once_is_invalid(
+    index_db: Path,
+) -> None:
+    """Ein Feld gleichzeitig setzen und leeren -> strukturierter invalid_input-Fehler."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool(
+            "correct_paper_metadata",
+            {
+                "paper_id": "aaaa0001",
+                "doi": "10.1/x",
+                "clear_fields": ["doi"],
+                "evidence": "Beleg",
+            },
+        )
+    assert result.isError is True
+    assert _structured(result)["error"]["code"] == "invalid_input"
+
+
+@pytest.mark.anyio
 async def test_search_results_carry_external_identifiers(index_db: Path) -> None:
     """Jeder Chunk-Beleg trägt die extern auflösbaren Identifikatoren seines Papers."""
     async with client_session(mcp) as client:

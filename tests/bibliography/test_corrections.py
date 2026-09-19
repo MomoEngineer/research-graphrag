@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from research_graphrag.bibliography.corrections import (
+    CLEARED_MARKER,
     EFFECTIVE_AFTER,
     LOG_NAME,
     apply_manual_correction,
@@ -129,6 +130,128 @@ def test_second_correction_of_same_field_overwrites_it(tmp_path: Path) -> None:
 
     assert result.record.doi == "neu"
     assert result.previous == {"doi": "alt"}
+
+
+def test_clear_fields_marks_a_field_as_explicitly_empty(tmp_path: Path) -> None:
+    """clear_fields setzt den leeren Wert und markiert das Feld in cleared_fields (ADR 0040)."""
+    db = _index(tmp_path)
+    metadata_path, data_dir = _paths(tmp_path)
+
+    result = apply_manual_correction(
+        db,
+        metadata_path,
+        data_dir,
+        "aaaa1111",
+        {},
+        "arXiv-ID gehört zu einem im Volltext zitierten Fremdpaper",
+        clear_fields=["arxiv_id"],
+    )
+
+    assert result.applied_fields == ("arxiv_id",)
+    assert result.previous == {"arxiv_id": ""}
+    assert result.record.arxiv_id == ""
+    assert result.record.cleared_fields == frozenset({"arxiv_id"})
+    assert result.record.confidence == CONFIDENCE_STRONG
+
+    stored = load_records(metadata_path)[0]
+    assert stored.cleared_fields == frozenset({"arxiv_id"})
+
+    log_text = result.log_path.read_text(encoding="utf-8")
+    assert f"`arxiv_id`: (leer) → {CLEARED_MARKER}" in log_text
+
+
+def test_clearing_a_previously_set_field_overwrites_its_value(tmp_path: Path) -> None:
+    """Ein zuvor gesetzter Wert wird beim Leeren durch den leeren Wert ersetzt."""
+    db = _index(tmp_path)
+    metadata_path, data_dir = _paths(tmp_path)
+
+    apply_manual_correction(
+        db, metadata_path, data_dir, "aaaa1111", {"arxiv_id": "2406.12934"}, "Beleg 1"
+    )
+    result = apply_manual_correction(
+        db, metadata_path, data_dir, "aaaa1111", {}, "Beleg 2", clear_fields=["arxiv_id"]
+    )
+
+    assert result.previous == {"arxiv_id": "2406.12934"}
+    assert result.record.arxiv_id == ""
+    assert result.record.cleared_fields == frozenset({"arxiv_id"})
+
+
+def test_setting_a_cleared_field_again_leaves_cleared_fields(tmp_path: Path) -> None:
+    """Ein später tatsächlich gesetzter Wert verlässt cleared_fields wieder."""
+    db = _index(tmp_path)
+    metadata_path, data_dir = _paths(tmp_path)
+
+    apply_manual_correction(
+        db, metadata_path, data_dir, "aaaa1111", {}, "Beleg 1", clear_fields=["arxiv_id"]
+    )
+    result = apply_manual_correction(
+        db, metadata_path, data_dir, "aaaa1111", {"arxiv_id": "2401.00001"}, "Beleg 2"
+    )
+
+    assert result.record.arxiv_id == "2401.00001"
+    assert result.record.cleared_fields == frozenset()
+
+
+def test_clear_fields_can_combine_with_setting_other_fields_in_one_call(tmp_path: Path) -> None:
+    """Ein Aufruf darf gleichzeitig Felder setzen und andere explizit leeren."""
+    db = _index(tmp_path)
+    metadata_path, data_dir = _paths(tmp_path)
+
+    result = apply_manual_correction(
+        db,
+        metadata_path,
+        data_dir,
+        "aaaa1111",
+        {"doi": "10.1145/3696410"},
+        "Beleg",
+        clear_fields=["arxiv_id"],
+    )
+
+    assert result.applied_fields == ("arxiv_id", "doi")
+    assert result.record.doi == "10.1145/3696410"
+    assert result.record.arxiv_id == ""
+    assert result.record.cleared_fields == frozenset({"arxiv_id"})
+
+
+def test_cleared_fields_accumulate_and_persist_across_unrelated_corrections(tmp_path: Path) -> None:
+    """Ein späterer, unbeteiligter Korrektur-Aufruf verwirft cleared_fields nicht."""
+    db = _index(tmp_path)
+    metadata_path, data_dir = _paths(tmp_path)
+
+    apply_manual_correction(
+        db, metadata_path, data_dir, "aaaa1111", {}, "Beleg 1", clear_fields=["arxiv_id"]
+    )
+    result = apply_manual_correction(
+        db, metadata_path, data_dir, "aaaa1111", {"venue": "ACM SIGCOMM"}, "Beleg 2"
+    )
+
+    assert result.record.venue == "ACM SIGCOMM"
+    assert result.record.cleared_fields == frozenset({"arxiv_id"})
+
+
+@pytest.mark.parametrize(
+    ("fields", "clear_fields", "evidence"),
+    [
+        ({}, (), "Beleg"),
+        ({"doi": "10.1/x"}, ["doi"], "Beleg"),
+        ({}, ["unbekanntes_feld"], "Beleg"),
+    ],
+)
+def test_invalid_clear_field_requests_raise_invalid_input(
+    tmp_path: Path, fields: dict[str, object], clear_fields: list[str], evidence: str
+) -> None:
+    """Widersprüchliche oder leere clear_fields-Angaben werden vor jedem Schreiben abgelehnt."""
+    db = _index(tmp_path)
+    metadata_path, data_dir = _paths(tmp_path)
+
+    with pytest.raises(DomainError) as excinfo:
+        apply_manual_correction(
+            db, metadata_path, data_dir, "aaaa1111", fields, evidence, clear_fields=clear_fields
+        )
+
+    assert excinfo.value.code is ErrorCode.INVALID_INPUT
+    assert load_records(metadata_path) == ()
 
 
 def test_authors_field_round_trips_as_a_list(tmp_path: Path) -> None:

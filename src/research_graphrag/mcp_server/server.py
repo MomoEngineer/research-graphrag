@@ -25,7 +25,10 @@ Grundsätze (docs/adr/0009-mcp-server-stdio-phase5.md):
   Pfad; ``correct_paper_metadata`` ist das erste **schreibende** Tool (schreibt ausschließlich
   die ``manual``-Herkunft nach ``metadata/paper_metadata.json``, wirksam erst beim nächsten
   Ingest, append-only protokolliert in ``data/corrections_log.md``,
-  docs/adr/0039-correction-tool-and-pdf-file-access.md).
+  docs/adr/0039-correction-tool-and-pdf-file-access.md). Über ``clear_fields`` kann ein Feld
+  **explizit als leer bestätigt** werden, statt nur "nie gesetzt" zu sein – das verhindert, dass
+  eine niedrigerrangige, falsche Herkunft in der Auflösungskette durchscheint
+  (docs/adr/0040-explicit-field-clearing.md).
 """
 
 from __future__ import annotations
@@ -377,20 +380,26 @@ def get_reference_tool(paper_id: str) -> dict[str, Any]:
 
 @mcp.tool(
     name="correct_paper_metadata",
-    title="Metadaten-Korrektur (manual-Herkunft, ADR 0039)",
+    title="Metadaten-Korrektur (manual-Herkunft, ADR 0039/0040)",
     description=(
         "Korrigiert bibliografische Metadaten eines Papers (title/authors/year/venue/doi/"
         "arxiv_id/url) mit hoechster Herkunfts-Prioritaet 'manual'. Mindestens ein Feld-"
-        "Parameter UND ein nicht-leerer Beleg (evidence) sind Pflicht. Ein vorhandener "
-        "manual-Record wird gemerged (bereits gesetzte, hier nicht uebergebene Felder bleiben "
-        "erhalten). Schreibt nach metadata/paper_metadata.json (git-versioniert) und "
-        "protokolliert jeden Aufruf append-only in data/corrections_log.md. WICHTIG: Die "
-        "Korrektur wirkt NICHT sofort - get_paper/get_reference/answer_question zeigen sie "
-        "erst nach dem naechsten 'python -m scripts.ingest'-Lauf (siehe `effective_after` in "
-        "der Antwort). "
+        "Parameter ODER clear_fields UND ein nicht-leerer Beleg (evidence) sind Pflicht. Ein "
+        "vorhandener manual-Record wird gemerged (bereits gesetzte, hier nicht uebergebene "
+        "Felder bleiben erhalten). clear_fields markiert Feldnamen als EXPLIZIT leer (statt "
+        "nur 'nie geprueft') - so scheint eine niedrigerrangige, falsche Herkunft (z. B. ein "
+        "per Regex extrahierter Fehltreffer) nicht mehr durch; ein Feld darf nicht gleichzeitig "
+        "gesetzt und in clear_fields stehen. Schreibt nach metadata/paper_metadata.json "
+        "(git-versioniert) und protokolliert jeden Aufruf append-only in "
+        "data/corrections_log.md. WICHTIG: Die Korrektur wirkt NICHT sofort - "
+        "get_paper/get_reference/answer_question zeigen sie erst nach dem naechsten "
+        "'python -m scripts.ingest'-Lauf (siehe `effective_after` in der Antwort). "
         'Beispiel: paper_id="aaaa0001", venue="ACM SIGCOMM", evidence="laut Publisher-Landingpage" '
         '→ applied_fields=["venue"], record.origin="manual", '
-        'effective_after="python -m scripts.ingest".'
+        'effective_after="python -m scripts.ingest". '
+        'Beispiel (Leeren): paper_id="aaaa0001", clear_fields=["arxiv_id"], '
+        'evidence="arXiv-ID gehoert zu einem im Volltext zitierten Fremdpaper" → '
+        'applied_fields=["arxiv_id"], record.arxiv_id="", record.cleared_fields=["arxiv_id"].'
     ),
 )
 def correct_paper_metadata_tool(
@@ -403,6 +412,7 @@ def correct_paper_metadata_tool(
     doi: str | None = None,
     arxiv_id: str | None = None,
     url: str | None = None,
+    clear_fields: list[str] | None = None,
 ) -> dict[str, Any]:
     """Schreibt eine `manual`-Korrektur (siehe specs/correct_paper_metadata.md)."""
     fields: dict[str, Any] = {}
@@ -423,7 +433,13 @@ def correct_paper_metadata_tool(
 
     def produce() -> dict[str, Any]:
         return apply_manual_correction(
-            _index_path(), _metadata_path(), _data_dir(), paper_id, fields, evidence
+            _index_path(),
+            _metadata_path(),
+            _data_dir(),
+            paper_id,
+            fields,
+            evidence,
+            clear_fields=clear_fields or (),
         ).to_dict()
 
     return _guard("correct_paper_metadata", produce)  # type: ignore[return-value]

@@ -119,6 +119,11 @@ class MetadataRecord:
         url: Landing- oder Volltext-Link.
         confidence: Konfidenzstufe aus :data:`CONFIDENCES`.
         evidence: Nachvollziehbarer Beleg (z. B. ``"Übersicht.md Zeile A3"``).
+        cleared_fields: Felder, die diese Quelle **ausdrücklich** als leer bestätigt (nicht bloß
+            nie befüllt) – unterscheidet "geprüft: leer" von "nie geprüft", damit eine
+            niedrigerrangige Herkunft nicht durchscheint (docs/adr/0040-explicit-field-clearing.md).
+            Additiv: Ein Datensatz ohne diesen Schlüssel in der Speicherform liefert ein leeres
+            Frozenset – das bisherige Verhalten, unverändert.
     """
 
     paper_id: str
@@ -132,13 +137,25 @@ class MetadataRecord:
     url: str = ""
     confidence: str = CONFIDENCE_NONE
     evidence: str = ""
+    cleared_fields: frozenset[str] = frozenset()
 
     def value_of(self, name: str) -> Any:
         """Liefert den Wert eines Feldes aus :data:`METADATA_FIELDS`."""
         return getattr(self, name)
 
     def has(self, name: str) -> bool:
-        """``True``, wenn das Feld einen belastbaren (nicht-leeren) Wert trägt."""
+        """``True``, wenn das Feld einen belastbaren Wert trägt oder explizit geleert wurde.
+
+        Ein in :attr:`cleared_fields` genanntes Feld gilt auch dann als "diese Quelle hat eine
+        Aussage", wenn sein Wert leer ist – das unterscheidet "geprüft: leer" von "nie geprüft"
+        und lässt eine niedrigerrangige Herkunft nicht mehr durchscheinen
+        (docs/adr/0040-explicit-field-clearing.md). Diese Methode ist die **einzige** Stelle, an
+        der beide Aufrufer (:mod:`research_graphrag.bibliography.resolve` für die
+        Präzedenzauflösung, :func:`research_graphrag.online.metadata.filter_pending` für die
+        "noch offen?"-Prüfung vor einer Online-Auflösung) dieselbe Semantik erhalten.
+        """
+        if name in self.cleared_fields:
+            return True
         value = self.value_of(name)
         if isinstance(value, str):
             return bool(value.strip())
@@ -159,14 +176,21 @@ class MetadataRecord:
             "url": self.url,
             "confidence": self.confidence,
             "evidence": self.evidence,
+            "cleared_fields": sorted(self.cleared_fields),
         }
 
     @classmethod
     def from_dict(cls, paper_id: str, payload: Mapping[str, Any]) -> MetadataRecord:
-        """Liest einen Datensatz aus seiner Speicherform (fehlende Felder bleiben leer)."""
+        """Liest einen Datensatz aus seiner Speicherform (fehlende Felder bleiben leer).
+
+        ``cleared_fields`` fehlt in jeder vor ADR 0040 geschriebenen Datei; das ist bewusst
+        gleichwertig zu einem leeren Frozenset (kein Feld ist explizit geleert) – keine
+        Migration nötig.
+        """
         authors = payload.get("authors") or ()
         if isinstance(authors, str):
             authors = (authors,)
+        cleared_fields = payload.get("cleared_fields") or ()
         return cls(
             paper_id=paper_id,
             origin=str(payload.get("origin", ORIGIN_MANUAL)),
@@ -179,6 +203,7 @@ class MetadataRecord:
             url=str(payload.get("url", "")),
             confidence=str(payload.get("confidence", CONFIDENCE_NONE)),
             evidence=str(payload.get("evidence", "")),
+            cleared_fields=frozenset(str(name) for name in cleared_fields),
         )
 
 

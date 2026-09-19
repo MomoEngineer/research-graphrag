@@ -51,6 +51,10 @@ aufrufende Agent selbst (kein serverseitiges LLM-Sampling, siehe
 > append-only protokolliert in `data/corrections_log.md`). Die Korrektur wirkt **nicht sofort**
 > in den übrigen Tools – erst nach dem nächsten `python -m scripts.ingest`-Lauf, ausgewiesen als
 > `effective_after` in der Antwort ([ADR 0039](../../../docs/adr/0039-correction-tool-and-pdf-file-access.md)).
+> Über `clear_fields` kann ein Feld **explizit als leer bestätigt** werden, statt nur "nie
+> gesetzt" zu sein – so scheint eine niedrigerrangige, falsche Herkunft (z. B. ein
+> Regex-Fehltreffer) nicht mehr durch die Auflösungskette durch
+> ([ADR 0040](../../../docs/adr/0040-explicit-field-clearing.md)).
 
 > Code-Walkthroughs werden – wie in Phase 4 – nur für nicht-triviale Tools verlangt; die hier
 > registrierten Tools sind dünne Wrapper um die getestete Kernlogik und daher **spec-only**
@@ -116,4 +120,5 @@ python -m pytest tests/mcp_server
   [ADR 0005](../../../docs/adr/0005-graphrag-index-backend-open.md) (Index-Backend),
   [ADR 0037](../../../docs/adr/0037-mcp-tool-response-size-ceiling.md) (Antwort-Größen-Obergrenze),
   [ADR 0039](../../../docs/adr/0039-correction-tool-and-pdf-file-access.md) (Korrektur-Tool &
-  PDF-Datei-Zugriff).
+  PDF-Datei-Zugriff), [ADR 0040](../../../docs/adr/0040-explicit-field-clearing.md) (explizites
+  Leeren eines `manual`-Feldes).

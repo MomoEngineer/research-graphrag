@@ -153,3 +153,12 @@ Beide Bedürfnisse treffen auf bestehende, bewusst gesetzte Leitplanken:
 - **Folgeentscheidungen:** Eine Korrektur-Fähigkeit für extrahierten Volltext/Chunk-Text bleibt
   ein offener, eigenständiger Folge-ADR. Eine Live-Wirkung ohne Re-Ingest wäre ebenfalls ein
   eigener, separat zu rechtfertigender Bruch mit „Index als einzige Lesequelle".
+
+## Nachtrag (2026-09-19)
+
+Die in Abschnitt 5 dieser Entscheidung genannte Grenze *„Kein Zurücksetzen/Löschen eines Feldes
+auf dieser Schnittstelle […] Ein vollständiger Rückbau bleibt der Handbearbeitung von
+`metadata/paper_metadata.json` vorbehalten"* wird durch
+[ADR 0040](0040-explicit-field-clearing.md) **aufgehoben**: `correct_paper_metadata` erlaubt
+seither über den Parameter `clear_fields`, ein Feld ausdrücklich als leer zu bestätigen (statt
+nur „nie gesetzt"), ohne die versionierte Datei von Hand zu editieren.

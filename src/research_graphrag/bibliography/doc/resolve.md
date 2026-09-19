@@ -5,7 +5,7 @@
 | **Modul** | `src/research_graphrag/bibliography/resolve.py` |
 | **Paket** | `bibliography` – zitierfähige Metadaten |
 | **Phase** | 12 / K1 |
-| **Grundlagen** | [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md) |
+| **Grundlagen** | [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md), [ADR 0040](../../../../docs/adr/0040-explicit-field-clearing.md) |
 
 ---
 
@@ -42,6 +42,17 @@ Die Quellen sind **komplementär**, nicht konkurrierend: Die kuratierte Übersic
 Publisher-DOI, aber weder Autoren noch Venue; die Online-Auflösung kennt beides, nennt aber oft
 nur den Preprint-DOI. Eine datensatzweise Auswahl müsste sich für eine Hälfte entscheiden und
 die andere verwerfen.
+
+### "Leer" heißt nicht immer "keine Meinung" (ADR 0040)
+
+Der Schritt "alle noch leeren Felder füllen" fragt nicht den rohen Feldwert ab, sondern
+`MetadataRecord.has(name)`. Ein Feld in `cleared_fields` liefert dort `True`, obwohl sein Wert
+leer ist – die Quelle hat das Feld **geprüft** und ausdrücklich als leer bestätigt, statt es nie
+befüllt zu haben. Ohne diese Unterscheidung würde ein leeres `manual`-Feld wie "keine Meinung"
+behandelt und die Auflösung fiele auf eine niedrigerrangige, ggf. falsche Herkunft zurück (der
+Auslöser war eine per Regex extrahierte arXiv-ID, die tatsächlich einem im Volltext zitierten
+anderen Paper gehörte). Dieses Modul selbst ändert sich dadurch **nicht** – die neue Semantik
+lebt vollständig in `MetadataRecord.has()`.
 
 ### Nur wer beiträgt, beeinflusst die Konfidenz
 

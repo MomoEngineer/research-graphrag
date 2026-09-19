@@ -57,6 +57,43 @@ def test_correction_is_invisible_until_the_next_ingest(make_pdf: MakePdf, tmp_pa
     assert after.metadata.origins["doi"] == "manual"
 
 
+def test_explicit_clear_survives_reingest_and_outranks_extracted(
+    make_pdf: MakePdf, tmp_path: Path
+) -> None:
+    """Ein per clear_fields geleertes Feld gewinnt nach dem Re-Ingest gegen extracted (ADR 0040).
+
+    Regressionstest für den in ADR 0040 gemessenen Fall: Eine per Regex extrahierte arXiv-ID
+    (hier durch eine im Volltext eingebettete Kennung simuliert) ist ein Fehltreffer; erst ein
+    expliziter ``clear_fields``-Aufruf verhindert, dass sie nach dem Re-Ingest weiterhin gewinnt.
+    """
+    make_pdf(
+        ["this work builds on a related preprint arxiv:2406.12934 cited in the body text"],
+        "papers/a.pdf",
+    )
+    papers = tmp_path / "papers"
+    data = tmp_path / "data"
+    metadata = tmp_path / "metadata" / "paper_metadata.json"
+    index = data / "index" / "index.sqlite"
+
+    ingest(papers, data)
+    paper_id = _single_paper_id(data)
+
+    apply_manual_correction(
+        index,
+        metadata,
+        data,
+        paper_id,
+        {},
+        "arXiv-ID gehört zu einem im Volltext zitierten Fremdpaper, nicht zu diesem Dokument",
+        clear_fields=["arxiv_id"],
+    )
+    ingest(papers, data, metadata_file=metadata)
+
+    after = get_reference(index, paper_id)
+    assert after.metadata.arxiv_id == ""
+    assert after.metadata.origins["arxiv_id"] == "manual"
+
+
 def test_reingest_without_new_pdf_still_picks_up_the_correction(
     make_pdf: MakePdf, tmp_path: Path
 ) -> None:

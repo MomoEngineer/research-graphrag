@@ -5,7 +5,7 @@
 | **Modul** | `src/research_graphrag/bibliography/model.py` |
 | **Paket** | `bibliography` – zitierfähige Metadaten |
 | **Phase** | 12 / K1 |
-| **Grundlagen** | [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md) |
+| **Grundlagen** | [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md), [ADR 0040](../../../../docs/adr/0040-explicit-field-clearing.md) |
 
 ---
 
@@ -60,6 +60,17 @@ Identifikator: Zwei Paper desselben Erstautors und Jahres bekommen denselben Sch
 arXiv vor URL**. `preferred_url` folgt derselben Reihenfolge und ist der Link, der in der
 Literaturangabe erscheint.
 
+### Explizites Leeren: `has()` und `cleared_fields` (ADR 0040)
+
+`MetadataRecord.has(name)` beantwortet "hat diese Quelle eine Aussage zu diesem Feld?" – das ist
+**nicht** dasselbe wie "ist der Wert nicht leer": Ein in `cleared_fields` genanntes Feld gilt auch
+mit leerem Wert als "hat eine Aussage" (`True`), weil die Quelle das Feld ausdrücklich als leer
+**bestätigt** hat, statt es nie geprüft zu haben. Ohne diese Unterscheidung würde
+`resolve.resolve_metadata` ein leeres `manual`-Feld wie "keine Meinung" behandeln und auf eine
+niedrigerrangige, ggf. falsche Herkunft zurückfallen. `cleared_fields` ist additiv (Default
+leeres Frozenset) – ein Datensatz ohne diesen Schlüssel in der Speicherform verhält sich exakt
+wie vor ADR 0040.
+
 ### Warum keine feldweise Konfidenz
 
 `PaperMetadata` trägt **eine** Konfidenz, nicht eine je Feld. Sie ist die **niedrigste** der
@@ -87,6 +98,8 @@ Das Modul kennt weder Dateien noch Netz noch Index – es ist reine Datenhaltung
 | Namenspräfixe (`van`, `de`) | zählen als Vorname – dokumentierte Grenze |
 | `authors` als einzelne Zeichenkette in der Speicherform | wird zu einem Tupel normalisiert |
 | unbekannte Herkunft in `origin` | kein Fehler; die Auflösung reiht sie hinten ein |
+| `cleared_fields` fehlt in der Speicherform (jede Datei vor ADR 0040) | leeres Frozenset – unverändertes altes Verhalten |
+| Feld in `cleared_fields`, aber mit einem (widersprüchlich) nicht-leeren Wert | `has()` liefert `True` unabhängig vom Wert; die Erzeugung eines solchen Widerspruchs verhindert `corrections.py`, nicht dieses Modul |
 
 ## 6. Determinismus
 

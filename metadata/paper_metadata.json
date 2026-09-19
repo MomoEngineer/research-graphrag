@@ -8,6 +8,7 @@
           "P. Mohan",
           "Tram Truong-Huu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2402.04515",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2402.04515",
@@ -28,6 +29,7 @@
           "Thomas Thüm",
           "Gunter Saake"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/2970276.2970322",
         "evidence": "OpenAlex über doi:10.1145/2970276.2970322",
@@ -50,6 +52,7 @@
           "Yu-Xiong Wang",
           "Vikram Adve"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2507.13290",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2507.13290",
@@ -68,6 +71,7 @@
           "Yuanyuan Li",
           "Xijin Tang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3746252.3760904",
         "evidence": "OpenAlex über doi:10.1145/3746252.3760904",
@@ -89,6 +93,7 @@
           "Anna Goldie",
           "Christopher D. Manning"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2401.18059",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2401.18059",
@@ -109,6 +114,7 @@
           "Jeffrey S. Foster",
           "Adam Porter"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/2950290.2950311",
         "evidence": "OpenAlex über doi:10.1145/2950290.2950311",
@@ -130,6 +136,7 @@
           "Craswell, Nick",
           "Lin, Jimmy"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2504.15068",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2504.15068",
@@ -150,6 +157,7 @@
           "Ray‐Guang Cheng",
           "Edwin K. P. Chong"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2507.14230",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2507.14230",
@@ -167,9 +175,12 @@
           "Mark Harwardt",
           "Martin Prause"
         ],
+        "cleared_fields": [
+          "arxiv_id"
+        ],
         "confidence": "strong",
         "doi": "10.1007/978-3-658-50907-1",
-        "evidence": "Crossref-Metadaten zu DOI 10.1007/978-3-658-50907-1 (api.crossref.org) sowie Impressum/Copyright-Seite des PDFs (Springer Gabler, ein Imprint der Springer Fachmedien Wiesbaden GmbH, 2026, ISBN 978-3-658-50906-4 / eBook 978-3-658-50907-1, Reihe 'Digitaler Wandel - kompakte Impulse fuer Wissenschaft und Praxis'); online recherchiert am 2026-09-19.",
+        "evidence": "Crossref-Metadaten zu DOI 10.1007/978-3-658-50907-1 (api.crossref.org) sowie Impressum/Copyright-Seite des PDFs (Springer Gabler, ein Imprint der Springer Fachmedien Wiesbaden GmbH, 2026, ISBN 978-3-658-50906-4 / eBook 978-3-658-50907-1, Reihe 'Digitaler Wandel - kompakte Impulse fuer Wissenschaft und Praxis'); online recherchiert am 2026-09-19.; arXiv-ID 2406.12934 stammt aus einem Regex-Fehltreffer der Extraktion: Sie gehoert zu einem im Volltext des Buchs zitierten Fremdpaper, nicht zum Buch selbst (gedrucktes Werk bzw. eBook bei Springer Gabler ohne eigene arXiv-ID). Explizit als leer bestaetigt (ADR 0040).",
         "origin": "manual",
         "title": "Digitale Transformation durch KI: Ein Leitfaden für den erfolgreichen Einsatz von Künstlicher Intelligenz in Unternehmen",
         "url": "https://doi.org/10.1007/978-3-658-50907-1",
@@ -185,6 +196,7 @@
           "Tamay Besiroglu",
           "Anson T. Y. Ho"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.2139/ssrn.4814445",
         "evidence": "OpenAlex über doi:10.2139/ssrn.4814445 (Identifikator lokal nicht belegt)",
@@ -203,6 +215,7 @@
           "Yu Wang",
           "Julian McAuley"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2507.05257",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2507.05257",
@@ -225,6 +238,7 @@
           "Zhi Jin",
           "Ge Li"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2508.00083",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2508.00083",
@@ -242,6 +256,7 @@
           "Mihir Athale",
           "Vishal Vaddina"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1109/llm4code66737.2025.00026",
         "evidence": "OpenAlex über doi:10.1109/LLM4Code66737.2025.00026",
@@ -268,6 +283,7 @@
           "Heng Ji",
           "Jiaxuan You"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "",
         "evidence": "OpenAlex über Titel-Ähnlichkeit 1.00",
@@ -286,6 +302,7 @@
           "Loris D’Antoni",
           "Aditya Akella"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3009837.3009845",
         "evidence": "OpenAlex über doi:10.1145/3009837.3009845",
@@ -305,6 +322,7 @@
           "Zhichao Zhou",
           "Xiapu Luo"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2307.00588",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2307.00588",
@@ -325,6 +343,7 @@
           "Sil, Avirup",
           "Hannaneh Hajishirzi"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2310.11511",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2310.11511 (Identifikator lokal nicht belegt)",
@@ -345,6 +364,7 @@
           "Lei Song",
           "Jiang Bian"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2501.11551",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2501.11551",
@@ -365,6 +385,7 @@
           "Shi Han",
           "Dongmei Zhang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3616855.3635752",
         "evidence": "OpenAlex über doi:10.1145/3616855.3635752",
@@ -385,6 +406,7 @@
           "Haohan Wang",
           "Yu-Xiong Wang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2310.04406",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2310.04406",
@@ -408,6 +430,7 @@
           "Zhenyu Li",
           "Xinhai Xu"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.18653/v1/2025.findings-acl.1169",
         "evidence": "OpenAlex über doi:10.18653/v1/2025.findings-acl.1169 (Identifikator lokal nicht belegt)",
@@ -427,6 +450,7 @@
           "Marin Orlić",
           "A Garc a"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2606.28348",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2606.28348",
@@ -448,6 +472,7 @@
           "Kai‐Wei Chang",
           "Yu Dong"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2410.10813",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2410.10813",
@@ -471,6 +496,7 @@
           "Zhi Jin",
           "Qianxiang Wang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3691620.3695054",
         "evidence": "OpenAlex über doi:10.1145/3691620.3695054",
@@ -489,6 +515,7 @@
           "Jonathan Halcrow",
           "Bryan Perozzi"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2310.04560",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2310.04560",
@@ -505,6 +532,7 @@
         "authors": [
           "Sheroz Shaikh"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2606.21553",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2606.21553",
@@ -535,6 +563,7 @@
           "Dandan Tu",
           "Jeff Z. Pan"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.18653/v1/2025.findings-acl.624",
         "evidence": "OpenAlex über doi:10.18653/v1/2025.findings-acl.624 (Identifikator lokal nicht belegt)",
@@ -557,6 +586,7 @@
           "Bodong Shang",
           "Shoufeng Wang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1109/tccn.2026.3658750",
         "evidence": "OpenAlex über doi:10.1109/tccn.2026.3658750",
@@ -575,6 +605,7 @@
           "Maliheh Izadi",
           "Arie van Deursen"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3597503.3639133",
         "evidence": "OpenAlex über doi:10.1145/3597503.3639133",
@@ -595,6 +626,7 @@
           "Xiaolei Si",
           "Karthik Narasimhan"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2506.07982",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2506.07982",
@@ -613,6 +645,7 @@
           "Abhilasha Mangal",
           "Shivam R Solanki"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2404.07220",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2404.07220",
@@ -629,6 +662,7 @@
         "authors": [
           "Terence Parr"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1145/988672.988703",
         "evidence": "OpenAlex über doi:10.1145/988672.988703 (Identifikator lokal nicht belegt)",
@@ -646,6 +680,7 @@
           "F. Taghiyev",
           "A. Aslanbayli"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2512.10789",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2512.10789",
@@ -670,6 +705,7 @@
           "Ennan Zhai",
           "Zishuo Ding"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3750022.3750459",
         "evidence": "OpenAlex über doi:10.1145/3750022.3750459",
@@ -691,6 +727,7 @@
           "Е. П. Маслов",
           "Ivan Oseledets"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2511.08274",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2511.08274",
@@ -712,6 +749,7 @@
           "Juntao Tan",
           "Yongfeng Zhang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2502.12110",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2502.12110",
@@ -737,6 +775,7 @@
           "Xin Peng",
           "Yiling Lou"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2308.01861",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2308.01861",
@@ -758,6 +797,7 @@
           "Mani Srivastava",
           "Prashant Shenoy"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "",
         "evidence": "OpenAlex über Titel-Ähnlichkeit 1.00",
@@ -789,6 +829,7 @@
           "Vijay Aski",
           "Ranveer Chandra"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2401.08406",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2401.08406 (Identifikator lokal nicht belegt)",
@@ -809,6 +850,7 @@
           "Nikolaos Tsantalis",
           "Shin Hwei Tan"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3747289",
         "evidence": "OpenAlex über doi:10.1145/3747289",
@@ -826,6 +868,7 @@
           "Rahman, Imranur",
           "Md Rayhanur Rahman"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2510.08610",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2510.08610",
@@ -847,6 +890,7 @@
           "Xi Zhu",
           "Ji He"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2607.16269",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2607.16269",
@@ -865,6 +909,7 @@
           "Robert Tibshirani",
           "Jerome H. Friedman"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1007/978-0-387-84858-7",
         "evidence": "OpenAlex über doi:10.1007/978-0-387-84858-7 (Identifikator lokal nicht belegt)",
@@ -888,6 +933,7 @@
           "Oana Cocarascu",
           "Arpit Mittal"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2106.05707",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2106.05707 (Identifikator lokal nicht belegt)",
@@ -907,6 +953,7 @@
           "Maryam Hafeez",
           "Syed Ali Raza Zaidi"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2507.03608",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2507.03608",
@@ -925,6 +972,7 @@
           "Aaron Gember-Jacobson",
           "Nick Feamster"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2411.14283",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2411.14283",
@@ -945,6 +993,7 @@
           "Alan Tang",
           "George Varghese"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3772356.3772402",
         "evidence": "OpenAlex über doi:10.1145/3772356.3772402",
@@ -969,6 +1018,7 @@
           "Qi Qi",
           "Jianxin Liao"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1109/tase.2025.3610906",
         "evidence": "OpenAlex über doi:10.1109/tase.2025.3610906",
@@ -990,6 +1040,7 @@
           "Louis Powell",
           "Merouane Debbah"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2604.06209",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2604.06209",
@@ -1011,6 +1062,7 @@
           "Jacques Klein",
           "Tegawendé F. Bissyandé"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2509.18790",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2509.18790",
@@ -1033,6 +1085,7 @@
           "J. Liang",
           "Bingsheng He"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2408.09955",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2408.09955 (Identifikator lokal nicht belegt)",
@@ -1053,6 +1106,7 @@
           "Yu Su",
           "Yu Su"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.52202/079017-1902",
         "evidence": "OpenAlex über doi:10.52202/079017-1902",
@@ -1076,6 +1130,7 @@
           "Jinsung Yoon",
           "Tomas Pfister"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2605.29054",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2605.29054",
@@ -1093,6 +1148,7 @@
           "Abdelkader Mekrache",
           "Adlen Ksentini"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1109/netsoft60951.2024.10588881",
         "evidence": "OpenAlex über doi:10.1109/netsoft60951.2024.10588881",
@@ -1111,6 +1167,7 @@
           "Oğuz Caymazer",
           "Daniel Großmann"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.3390/electronics14112102",
         "evidence": "OpenAlex über doi:10.3390/electronics14112102",
@@ -1129,6 +1186,7 @@
           "Moataz Chouchen",
           "Ali Ouni"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3643916.3644439",
         "evidence": "OpenAlex über doi:10.1145/3643916.3644439",
@@ -1151,6 +1209,7 @@
           "Daniel Katz",
           "Νικόλαος Αλέτρας"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2110.00976",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2110.00976 (Identifikator lokal nicht belegt)",
@@ -1175,6 +1234,7 @@
           "Min Zhang",
           "Danshi Wang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2411.00473",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2411.00473",
@@ -1198,6 +1258,7 @@
           "Debbah, Merouane",
           "Nikaein, Navid"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2508.09197",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2508.09197",
@@ -1220,6 +1281,7 @@
           "Xinying Song",
           "Denny Zhou"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2310.01798",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2310.01798",
@@ -1236,6 +1298,7 @@
         "authors": [
           "Andrea Herrmann"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1007/978-3-658-35460-2",
         "evidence": "Crossref-Metadaten zu DOI 10.1007/978-3-658-35460-2 (api.crossref.org) sowie Impressum/Copyright-Seite des PDFs (Springer Vieweg, ein Imprint der Springer Fachmedien Wiesbaden GmbH, 2022, ISBN 978-3-658-35459-6 / eBook 978-3-658-35460-2); online recherchiert am 2026-09-19.",
@@ -1255,6 +1318,7 @@
           "Soren Dunn",
           "Lingming Zhang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3715754",
         "evidence": "OpenAlex über doi:10.1145/3715754",
@@ -1279,6 +1343,7 @@
           "Ranveer Chandra",
           "Srikanth Kandula"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3626111.3628183",
         "evidence": "OpenAlex über doi:10.1145/3626111.3628183",
@@ -1312,6 +1377,7 @@
           "Mehdi Bennis",
           "Merouane Debbah"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2604.06882",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2604.06882",
@@ -1329,6 +1395,7 @@
           "Yan Feng",
           "Xudong Pan"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3774904.3792462",
         "evidence": "OpenAlex über doi:10.1145/3774904.3792462",
@@ -1347,6 +1414,7 @@
           "Louis M. Rose",
           "Dimitrios S. Kolovos"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1007/s10270-018-0666-5",
         "evidence": "OpenAlex über doi:10.1007/s10270-018-0666-5",
@@ -1367,6 +1435,7 @@
           "Tim Sturge",
           "Jamie Taylor"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1145/1376616.1376746",
         "evidence": "OpenAlex über doi:10.1145/1376616.1376746 (Identifikator lokal nicht belegt)",
@@ -1390,6 +1459,7 @@
           "Zhihong Zhang",
           "Jinsong Su"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.18653/v1/2026.acl-long.1738",
         "evidence": "OpenAlex über doi:10.18653/v1/2026.acl-long.1738",
@@ -1411,6 +1481,7 @@
           "Yuchen Liu",
           "Dongkuan Xu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2305.18323",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2305.18323",
@@ -1430,6 +1501,7 @@
           "Zhang, Liang",
           "Linjian Mo"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2508.07575",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2508.07575",
@@ -1448,6 +1520,7 @@
           "Dean Allemang",
           "Bryon Jacob"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2311.07509",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2311.07509",
@@ -1466,6 +1539,7 @@
           "Amirmohammad Pasdar",
           "Van-Thuan Pham"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2512.05358",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2512.05358",
@@ -1486,6 +1560,7 @@
           "Nitya Nadgir",
           "Arvind Narayanan"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2407.01502",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2407.01502 (Identifikator lokal nicht belegt)",
@@ -1504,6 +1579,7 @@
           "Yuki Ito",
           "Haruhisa Nozue"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1109/icc59461.2026.11587622",
         "evidence": "OpenAlex über doi:10.1109/icc59461.2026.11587622",
@@ -1527,6 +1603,7 @@
           "Chowdhery, Aakanksha",
           "Zhou, Denny"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2203.11171",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2203.11171",
@@ -1547,6 +1624,7 @@
           "Panupong Pasupat",
           "Ming‐Wei Chang"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2002.08909",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2002.08909 (Identifikator lokal nicht belegt)",
@@ -1566,6 +1644,7 @@
           "Ioannis Protogeros",
           "Laurent Vanbever"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2606.06212",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2606.06212",
@@ -1585,6 +1664,7 @@
           "Xin Wang",
           "Joseph E. Gonzalez"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2305.15334",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2305.15334",
@@ -1605,6 +1685,7 @@
           "Nicholas Meade",
           "Siva Reddy"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2307.16877",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2307.16877 (Identifikator lokal nicht belegt)",
@@ -1621,6 +1702,7 @@
         "authors": [
           "Haoxian Chen"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3672199.3673889",
         "evidence": "OpenAlex über doi:10.1145/3672199.3673889",
@@ -1642,6 +1724,7 @@
           "Edwin K. P. Chong",
           "Ray‐Guang Cheng"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2606.20574",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2606.20574",
@@ -1666,6 +1749,7 @@
           "B. Ashok",
           "Shashank Shet"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2309.12499",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2309.12499",
@@ -1685,6 +1769,7 @@
           "Yaroslav Zharov",
           "Timofey Bryksin"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2406.04464",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2406.04464",
@@ -1705,6 +1790,7 @@
           "Benedikt Stroebl",
           "Arvind Narayanan"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2409.11363",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2409.11363",
@@ -1725,6 +1811,7 @@
           "Weijia Bian",
           "Weiguo Zheng"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2412.15272",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2412.15272",
@@ -1743,6 +1830,7 @@
           "Yan Pang",
           "Tianhao Wang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2605.27825",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2605.27825",
@@ -1770,6 +1858,7 @@
           "Lilian Weng",
           "Aleksander Mądry"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2410.07095",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2410.07095",
@@ -1793,6 +1882,7 @@
           "Qinggang Zhang",
           "Xiao Huang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2510.10114",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2510.10114",
@@ -1811,6 +1901,7 @@
           "Yuhan Wu",
           "Wei Hu"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2405.19782",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2405.19782 (Identifikator lokal nicht belegt)",
@@ -1851,6 +1942,7 @@
           "Yujing Zhang",
           "Gustavo Hernández Ábrego"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2305.10403",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2305.10403 (Identifikator lokal nicht belegt)",
@@ -1884,6 +1976,7 @@
           "H. Niewiadomski",
           "Torsten Hoefler"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2504.02670",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2504.02670",
@@ -1909,6 +2002,7 @@
           "Bo Tang",
           "Chenyang Xi"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2405.16933",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2405.16933",
@@ -1928,6 +2022,7 @@
           "Ali Tizghadam",
           "Alberto Leon‐Garcia"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.23919/cnsm59352.2023.10327837",
         "evidence": "OpenAlex über doi:10.23919/cnsm59352.2023.10327837",
@@ -1949,6 +2044,7 @@
           "James Glass",
           "Helen Meng"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2410.18415",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2410.18415",
@@ -1972,6 +2068,7 @@
           "Lingpeng Kong",
           "Xipeng Qiu"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2307.11088",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2307.11088 (Identifikator lokal nicht belegt)",
@@ -1990,6 +2087,7 @@
           "Nithin Chitta",
           "Rajesh Sundaresan"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.23919/cnsm62983.2024.10814407",
         "evidence": "OpenAlex über doi:10.23919/cnsm62983.2024.10814407",
@@ -2012,6 +2110,7 @@
           "Yu‐Qing Ni",
           "Zhoujun Li"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.18653/v1/2025.findings-acl.373",
         "evidence": "OpenAlex über doi:10.18653/v1/2025.findings-acl.373",
@@ -2035,6 +2134,7 @@
           "Kouji Kozaki",
           "Yūji Matsumoto"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1162/tacl.a.615",
         "evidence": "OpenAlex über doi:10.1162/TACL.a.615",
@@ -2059,6 +2159,7 @@
           "Stephen Jay Gould",
           "Anton van den Hengel"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1109/cvpr.2018.00387",
         "evidence": "OpenAlex über doi:10.1109/cvpr.2018.00387 (Identifikator lokal nicht belegt)",
@@ -2078,6 +2179,7 @@
           "Mueen Uddin",
           "Usman Khalil"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2403.13721",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2403.13721",
@@ -2098,6 +2200,7 @@
           "Jitendra Padhye",
           "David Walker"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1145/3140587.3062367",
         "evidence": "OpenAlex über doi:10.1145/3140587.3062367 (Identifikator lokal nicht belegt)",
@@ -2117,6 +2220,7 @@
           "Laurent Vanbever",
           "Petar Veličković"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.52202/068431-0053",
         "evidence": "OpenAlex über doi:10.52202/068431-0053",
@@ -2136,6 +2240,7 @@
           "Daniel Fried",
           "Graham Neubig"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.18653/v1/2023.findings-emnlp.89",
         "evidence": "OpenAlex über doi:10.18653/v1/2023.findings-emnlp.89 (Identifikator lokal nicht belegt)",
@@ -2156,6 +2261,7 @@
           "Bogdan Vasilescu",
           "Brad A. Myers"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3597503.3639187",
         "evidence": "OpenAlex über doi:10.1145/3597503.3639187",
@@ -2180,6 +2286,7 @@
           "Bodong Shang",
           "Dusit Niyato"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1109/mcom.001.2500533",
         "evidence": "OpenAlex über doi:10.1109/mcom.001.2500533",
@@ -2196,6 +2303,7 @@
         "authors": [
           "Ali Kheradmand"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3373360.3380831",
         "evidence": "OpenAlex über doi:10.1145/3373360.3380831",
@@ -2217,6 +2325,7 @@
           "Canini, Marco",
           "Jiang, Dingde"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2512.16381",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2512.16381",
@@ -2239,6 +2348,7 @@
           "Zhicheng Dou",
           "Tiejun Huang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3696410.3714805",
         "evidence": "OpenAlex über doi:10.1145/3696410.3714805",
@@ -2257,6 +2367,7 @@
           "Zachary Kingston",
           "Lydia E. Kavraki"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1109/icra55743.2025.11127555",
         "evidence": "OpenAlex über doi:10.1109/icra55743.2025.11127555",
@@ -2276,6 +2387,7 @@
           "Fabio Massacci",
           "Katja Tuma"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3639478.3643534",
         "evidence": "OpenAlex über doi:10.1145/3639478.3643534",
@@ -2313,6 +2425,7 @@
           "Slav Petrov",
           "Kellie Webster"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2212.08037",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2212.08037 (Identifikator lokal nicht belegt)",
@@ -2329,6 +2442,7 @@
         "authors": [
           "Kimberly A. Neuendorf"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "",
         "evidence": "OpenAlex über Titel-Ähnlichkeit 1.00",
@@ -2357,6 +2471,7 @@
           "Zhewei Wei",
           "Ji-Rong Wen"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1007/s11704-024-40231-1",
         "evidence": "OpenAlex über doi:10.1007/s11704-024-40231-1 (Identifikator lokal nicht belegt)",
@@ -2377,6 +2492,7 @@
           "Ibrahim Hokelek",
           "Hakan Ali Çırpan"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2606.01222",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2606.01222",
@@ -2411,6 +2527,7 @@
           "Zhiyuan Liu",
           "Maosong Sun"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2307.16789",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2307.16789",
@@ -2431,6 +2548,7 @@
           "Danius Michaelides",
           "Heather Packer"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1109/tse.2017.2659745",
         "evidence": "OpenAlex über doi:10.1109/TSE.2017.2659745",
@@ -2450,6 +2568,7 @@
           "Luke Zettlemoyer",
           "Hannaneh Hajishirzi"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.1911.03868",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.1911.03868",
@@ -2474,6 +2593,7 @@
           "Qi Qi",
           "Jianxin Liao"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1109/tase.2025.3610906",
         "evidence": "OpenAlex über doi:10.1109/tase.2025.3610906",
@@ -2502,6 +2622,7 @@
           "Yan Xu",
           "Pascale Fung"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2302.04023",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2302.04023 (Identifikator lokal nicht belegt)",
@@ -2525,6 +2646,7 @@
           "Adam Wierman",
           "Shangding Gu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2602.03794",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2602.03794",
@@ -2541,6 +2663,7 @@
         "authors": [
           "Yuanhang Li"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2604.07264",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2604.07264",
@@ -2559,6 +2682,7 @@
           "Yu Sun",
           "Chang-ai Sun"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2604.27692",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2604.27692",
@@ -2579,6 +2703,7 @@
           "Miltiadis Allamanis",
           "Marc Brockschmidt"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.1909.09436",
         "evidence": "OpenAlex über doi:10.48550/arxiv.1909.09436 (Identifikator lokal nicht belegt)",
@@ -2599,6 +2724,7 @@
           "Dmitrii Khizbullin",
           "Bernard Ghanem"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.52202/075280-2264",
         "evidence": "OpenAlex über doi:10.52202/075280-2264",
@@ -2621,6 +2747,7 @@
           "Tommaso Melodia",
           "Michele Polese"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2504.11233",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2504.11233",
@@ -2641,6 +2768,7 @@
           "Avraham Shinnar",
           "Sinha, Saurabh"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2412.02883",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2412.02883 (Identifikator lokal nicht belegt)",
@@ -2671,6 +2799,7 @@
           "Ningyu Zhang",
           "Huajun Chen"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2402.05391",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2402.05391 (Identifikator lokal nicht belegt)",
@@ -2689,6 +2818,7 @@
           "Peeyush Kumar",
           "Yunqing Li"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2412.15235",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2412.15235",
@@ -2710,6 +2840,7 @@
           "S. Kevin Zhou",
           "Jianliang Xu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.14778/3748191.3748194",
         "evidence": "OpenAlex über doi:10.14778/3748191.3748194",
@@ -2731,6 +2862,7 @@
           "M. Fischer",
           "Florian Tramèr"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.52202/079017-2636",
         "evidence": "OpenAlex über doi:10.52202/079017-2636",
@@ -2758,6 +2890,7 @@
           "Toby Drane",
           "Young Joo Park"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2501.17195",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2501.17195 (Identifikator lokal nicht belegt)",
@@ -2783,6 +2916,7 @@
           "Ye, Wei",
           "Huang, Fei"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2510.24563",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2510.24563",
@@ -2802,6 +2936,7 @@
           "Kristian Georgiev",
           "Aleksander Mądry"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2409.00729",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2409.00729",
@@ -2820,6 +2955,7 @@
           "Ahmad Al‐Hammouri",
           "Omar Y. Al-Jarrah"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1007/s00521-025-11193-7",
         "evidence": "OpenAlex über doi:10.1007/s00521-025-11193-7",
@@ -2838,6 +2974,7 @@
           "Davide Maiorca",
           "Giorgio Giacinto"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1145/3799796",
         "evidence": "OpenAlex über doi:10.1145/3799796 (Identifikator lokal nicht belegt)",
@@ -2857,6 +2994,7 @@
           "Thiago Emmanuel Pereira",
           "João Brunet"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2505.01568",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2505.01568",
@@ -2878,6 +3016,7 @@
           "Óscar González de Dios",
           "José Manuel Rivas-Moscoso"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2406.12602",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2406.12602",
@@ -2897,6 +3036,7 @@
           "Xinyi Wang",
           "William W. Cohen"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2211.12588",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2211.12588 (Identifikator lokal nicht belegt)",
@@ -2915,6 +3055,7 @@
           "Ali Chouman",
           "Abdallah Shami"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2403.02238",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2403.02238",
@@ -2934,6 +3075,7 @@
           "Battou, Abdella",
           "Bensalem, Saddek"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2509.22834",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2509.22834",
@@ -2951,6 +3093,7 @@
           "Patrice Béchard",
           "Orlando Marquez Ayala"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2404.08189",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2404.08189 (Identifikator lokal nicht belegt)",
@@ -2991,6 +3134,7 @@
           "Scott Gray",
           "Benjamin Chess"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2005.14165",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2005.14165 (Identifikator lokal nicht belegt)",
@@ -3009,6 +3153,7 @@
           "Nithin Chitta",
           "Rajesh Sundaresan"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.23919/cnsm62983.2024.10814407",
         "evidence": "OpenAlex über doi:10.23919/cnsm62983.2024.10814407",
@@ -3032,6 +3177,7 @@
           "Yan Zhang",
           "Siliang Tang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2408.08921",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2408.08921",
@@ -3058,6 +3204,7 @@
           "Maliheh Izadi",
           "Timofey Bryksin"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2406.11612",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2406.11612",
@@ -3081,6 +3228,7 @@
           "Huzefa Rangwala",
           "Christos Faloutsos"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2412.16311",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2412.16311",
@@ -3102,6 +3250,7 @@
           "Kevogo, Dennis",
           "Guo, Weisi"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2503.11933",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2503.11933",
@@ -3123,6 +3272,7 @@
           "Hakim Hacid",
           "Flora D. Salim"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2505.13994",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2505.13994",
@@ -3147,6 +3297,7 @@
           "Jiannong Cao",
           "Xiao Huang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2508.06105",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2508.06105",
@@ -3170,6 +3321,7 @@
           "Xiaofei Wang",
           "Meikang Qiu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2608.01538",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2608.01538",
@@ -3191,6 +3343,7 @@
           "Son Nguyen",
           "Hieu Dinh Vo"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2409.15204",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2409.15204",
@@ -3231,6 +3384,7 @@
           "Yue Wu",
           "Dingli Yu"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2412.08905",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2412.08905 (Identifikator lokal nicht belegt)",
@@ -3250,6 +3404,7 @@
           "Laurent Vanbever",
           "Martin Vechev"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "",
         "evidence": "OpenAlex über Titel-Ähnlichkeit 1.00",
@@ -3290,6 +3445,7 @@
           "Bogdonoff, Lenny",
           "Boiko, Oleg"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.4230/lipics.cosit.2024.11",
         "evidence": "OpenAlex über Titel-Ähnlichkeit 1.00",
@@ -3311,6 +3467,7 @@
           "Camille Salinesi",
           "Sahin Albayrak"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1145/nnnnnnn.nnnnnnn",
         "evidence": "OpenAlex über doi:10.1145/nnnnnnn.nnnnnnn (Identifikator lokal nicht belegt)",
@@ -3330,6 +3487,7 @@
           "Yongmin Li",
           "Zhi Jin"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2305.06599",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2305.06599 (Identifikator lokal nicht belegt)",
@@ -3349,6 +3507,7 @@
           "Yin Cai",
           "Hongwei Feng"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2606.00655",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2606.00655",
@@ -3366,6 +3525,7 @@
           "Arthur Capozzi",
           "Dirk Helbing"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2605.18770",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2605.18770",
@@ -3382,6 +3542,7 @@
         "authors": [
           "Li, Haiyang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2508.02998",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2508.02998",
@@ -3401,6 +3562,7 @@
           "Sharad Malik",
           "Vikram Kaul"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1007/s10922-008-9108-y",
         "evidence": "OpenAlex über doi:10.1007/s10922-008-9108-y",
@@ -3420,6 +3582,7 @@
           "Lingxiao Jiang",
           "Laura Wynter"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2606.11976",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2606.11976",
@@ -3440,6 +3603,7 @@
           "Linchao Zhu",
           "Yi Yang"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2406.05720",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2406.05720 (Identifikator lokal nicht belegt)",
@@ -3458,6 +3622,7 @@
           "Eunseok Lee",
           "Seungmin Oh"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48448/hsp0-9w87",
         "evidence": "OpenAlex über doi:10.48448/hsp0-9w87 (Identifikator lokal nicht belegt)",
@@ -3480,6 +3645,7 @@
           "M Jain",
           "Joji Philip"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1109/iccworkshops63917.2026.11586230",
         "evidence": "OpenAlex über doi:10.1109/iccworkshops63917.2026.11586230 (Identifikator lokal nicht belegt)",
@@ -3504,6 +3670,7 @@
           "Xiong, Hui",
           "Guo, Jian"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2509.22009",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2509.22009",
@@ -3522,6 +3689,7 @@
           "David Zook",
           "Yannis Smaragdakis"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1016/j.scico.2008.09.007",
         "evidence": "OpenAlex über doi:10.1016/j.scico.2008.09.007",
@@ -3541,6 +3709,7 @@
           "Sophia Zorek",
           "Chris Jermaine"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2505.21514",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2505.21514",
@@ -3562,6 +3731,7 @@
           "David Walker",
           "Steve Zdancewic"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3341699",
         "evidence": "OpenAlex über doi:10.1145/3341699",
@@ -3579,6 +3749,7 @@
           "Koushik Chakraborty",
           "Koyel Guha"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2604.14220",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2604.14220",
@@ -3605,6 +3776,7 @@
           "Quoc V. Le",
           "Charles Sutton"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2108.07732",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2108.07732 (Identifikator lokal nicht belegt)",
@@ -3625,6 +3797,7 @@
           "Christian Kästner",
           "Sven Apel"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3280986",
         "evidence": "OpenAlex über doi:10.1145/3280986",
@@ -3648,6 +3821,7 @@
           "Mao, Jiaxin",
           "Guo, Jian"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2407.10805",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2407.10805",
@@ -3670,6 +3844,7 @@
           "Yuhang Wang",
           "Xinyun Zhang"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48448/h07d-bx45",
         "evidence": "OpenAlex über doi:10.48448/h07d-bx45 (Identifikator lokal nicht belegt)",
@@ -3688,6 +3863,7 @@
           "Canwen Xu",
           "Julian McAuley"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2306.03091",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2306.03091",
@@ -3710,6 +3886,7 @@
           "Jiang, Xuhui",
           "Guo, Jian"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2410.22353",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2410.22353",
@@ -3728,6 +3905,7 @@
           "Jemin Lee",
           "Tony Q. S. Quek"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "",
         "evidence": "arXiv-Feed über arxiv:2608.06789",
@@ -3747,6 +3925,7 @@
           "Singhal, Aryan",
           "Dutta, Debojyoti"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2509.25257",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2509.25257",
@@ -3765,6 +3944,7 @@
           "Thomas Reps",
           "David Binkley"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1145/960116.53994",
         "evidence": "OpenAlex über doi:10.1145/960116.53994 (Identifikator lokal nicht belegt)",
@@ -3788,6 +3968,7 @@
           "Michael Shieh",
           "Wenmeng Zhou"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.18653/v1/2025.naacl-long.7",
         "evidence": "OpenAlex über doi:10.18653/v1/2025.naacl-long.7",
@@ -3811,6 +3992,7 @@
           "Luo Si",
           "Yongbin Li"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2210.12674",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2210.12674 (Identifikator lokal nicht belegt)",
@@ -3829,6 +4011,7 @@
           "Dung Manh Nguyen",
           "Nghi D. Q. Bui"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2406.11927",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2406.11927",
@@ -3851,6 +4034,7 @@
           "Daniel Kroening",
           "Ang Chen"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2510.20211",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2510.20211",
@@ -3869,6 +4053,7 @@
           "Krész, Miklós",
           "Hajdu, László"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2512.15922",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2512.15922",
@@ -3886,6 +4071,7 @@
           "Will Crichton",
           "Shriram Krishnamurthi"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3632865",
         "evidence": "OpenAlex über doi:10.1145/3632865",
@@ -3907,6 +4093,7 @@
           "Wang, Yu",
           "Tang, Jiliang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2503.13804",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2503.13804",
@@ -3933,6 +4120,7 @@
           "Dennis Cai",
           "Ennan Zhai"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2401.06786",
         "evidence": "PDF-Titelseite (Autoren) + arXiv abs/2401.06786 geprüft 2026-08-30; ersetzt Fehlauflösung auf PaLM 2 Technical Report (2305.10403), siehe docs/adr/0025-citable-paper-metadata.md",
@@ -3957,6 +4145,7 @@
           "Ennan Zhai",
           "Dennis Cai"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2401.06786",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2401.06786",
@@ -3976,6 +4165,7 @@
           "Harshvardhan Singh",
           "Lucy Moys"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2606.04397",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2606.04397",
@@ -3994,6 +4184,7 @@
           "Guha, Arjun",
           "Brun, Yuriy"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.1709.05366",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.1709.05366",
@@ -4016,6 +4207,7 @@
           "Dan Grossman",
           "Zachary Tatlock"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3385412.3386012",
         "evidence": "OpenAlex über doi:10.1145/3385412.3386012",
@@ -4037,6 +4229,7 @@
           "Nagarajan Natarajan",
           "Amit Sharma"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2410.20753",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2410.20753",
@@ -4061,6 +4254,7 @@
           "Yuchi Ma",
           "Zibin Zheng"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2503.20589",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2503.20589",
@@ -4087,6 +4281,7 @@
           "Quoc V. Le",
           "Charles Sutton"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2108.07732",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2108.07732 (Identifikator lokal nicht belegt)",
@@ -4108,6 +4303,7 @@
           "Klaus Ostermann",
           "Thorsten Berger"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1145/2076021.2048128",
         "evidence": "OpenAlex über doi:10.1145/2076021.2048128 (Identifikator lokal nicht belegt)",
@@ -4127,6 +4323,7 @@
           "Santosh S. Vempala",
           "Edwin Zhang"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1038/s41586-026-10549-w",
         "evidence": "OpenAlex über doi:10.1038/s41586-026-10549-w (Identifikator lokal nicht belegt)",
@@ -4152,6 +4349,7 @@
           "Xiao Zhang",
           "Zhen Cai"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2504.03137",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2504.03137",
@@ -4174,6 +4372,7 @@
           "Bodong Shang",
           "Shoufeng Wang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1109/tccn.2026.3658750",
         "evidence": "OpenAlex über doi:10.1109/tccn.2026.3658750",
@@ -4192,6 +4391,7 @@
           "Oscar M. Caicedo",
           "Nelson L. S. Da Fonseca"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "",
         "evidence": "arXiv-Feed über arxiv:2512.02861",
@@ -4217,6 +4417,7 @@
           "Junhao Liu",
           "Min Yang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2406.18294",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2406.18294",
@@ -4235,6 +4436,7 @@
           "Yepeng Ding",
           "Tohru Kondo"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2604.09678",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2604.09678",
@@ -4254,6 +4456,7 @@
           "Teng, Fei",
           "Chen, Lei"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2511.05549",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2511.05549",
@@ -4275,6 +4478,7 @@
           "Gong Chen",
           "Shirui Pan"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2410.13080",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2410.13080",
@@ -4297,6 +4501,7 @@
           "Xiaofeng Wang",
           "Zheng Li"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3626772.3661370",
         "evidence": "OpenAlex über doi:10.1145/3626772.3661370",
@@ -4315,6 +4520,7 @@
           "Ruben Opdebeeck",
           "Coen De Roover"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1109/msr59073.2023.00078",
         "evidence": "OpenAlex über doi:10.1109/msr59073.2023.00078",
@@ -4333,6 +4539,7 @@
           "Christoph Treude",
           "David Lo"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1145/3712003",
         "evidence": "OpenAlex über doi:10.1145/3712003 (Identifikator lokal nicht belegt)",
@@ -4352,6 +4559,7 @@
           "Yuyao Wang",
           "Lingming Zhang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2305.01210",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2305.01210",
@@ -4374,6 +4582,7 @@
           "T.H. Tse",
           "Zhi Quan Zhou"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3143561",
         "evidence": "OpenAlex über doi:10.1145/3143561",
@@ -4414,6 +4623,7 @@
           "Logesh Kumar Umapathi",
           "Jianguo Zhu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2305.06161",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2305.06161",
@@ -4443,6 +4653,7 @@
           "Zhu, Yuqi",
           "Chongyang Tao"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2504.10046",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2504.10046",
@@ -4464,6 +4675,7 @@
           "Noah A. Smith",
           "Lewis, Mike"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2210.03350",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2210.03350 (Identifikator lokal nicht belegt)",
@@ -4483,6 +4695,7 @@
           "Vinay Setty",
           "Avishek Anand"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2308.16753",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2308.16753 (Identifikator lokal nicht belegt)",
@@ -4507,6 +4720,7 @@
           "Baixuan Xu",
           "Tianshi Zheng"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48448/9j2k-0544",
         "evidence": "OpenAlex über doi:10.48448/9j2k-0544 (Identifikator lokal nicht belegt)",
@@ -4531,6 +4745,7 @@
           "Hongming Zhang",
           "Dong Yu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2410.14684",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2410.14684",
@@ -4552,6 +4767,7 @@
           "Zhuo Li",
           "Zhi Jin"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3695991",
         "evidence": "OpenAlex über doi:10.1145/3695991",
@@ -4579,6 +4795,7 @@
           "Yuval Elovici",
           "Rami Puzis"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2407.08249",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2407.08249",
@@ -4599,6 +4816,7 @@
           "Zhiyuan Liu",
           "Maosong Sun"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2506.09542",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2506.09542",
@@ -4617,6 +4835,7 @@
           "Mostafa Elhoushi",
           "Alvin Cheung"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2401.03003",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2401.03003",
@@ -4636,6 +4855,7 @@
           "Rang Li",
           "Wenbo Fu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3696410.3714748",
         "evidence": "OpenAlex über doi:10.1145/3696410.3714748",
@@ -4652,6 +4872,7 @@
         "authors": [
           "Michael Y. Galperin"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1093/nar/gkj162",
         "evidence": "OpenAlex über doi:10.1093/nar/gkj162 (Identifikator lokal nicht belegt)",
@@ -4670,6 +4891,7 @@
           "Bernardo Lopo Tavares",
           "Francisco Belo"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2511.05991",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2511.05991",
@@ -4690,6 +4912,7 @@
           "Yang, Cehao",
           "Qi, Yiyan"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2510.24749",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2510.24749",
@@ -4713,6 +4936,7 @@
           "Jiang, Shanshan",
           "Dong, Bin"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2303.16421",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2303.16421 (Identifikator lokal nicht belegt)",
@@ -4731,6 +4955,7 @@
           "Luyu Gao",
           "Jamie Callan"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2502.07067",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2502.07067",
@@ -4760,6 +4985,7 @@
           "Sui Huang",
           "Sergio E. Baranzini"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1093/bioinformatics/btae560",
         "evidence": "OpenAlex über doi:10.1093/bioinformatics/btae560",
@@ -4800,6 +5026,7 @@
           "Dacheng Tao",
           "Philip S. Yu"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2503.21460",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2503.21460 (Identifikator lokal nicht belegt)",
@@ -4821,6 +5048,7 @@
           "James H. Thorne",
           "Edward Choi"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2305.06590",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2305.06590",
@@ -4847,6 +5075,7 @@
           "Dan Roth",
           "Bing Xiang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2310.11248",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2310.11248",
@@ -4864,6 +5093,7 @@
           "Mukund Raghothaman",
           "Abhishek Udupa"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.1405.5590",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.1405.5590",
@@ -4904,6 +5134,7 @@
           "Urvashi Bhattacharyya",
           "Terry Yue Zhuo"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2301.03988",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2301.03988 (Identifikator lokal nicht belegt)",
@@ -4931,6 +5162,7 @@
           "Jessica C. Kissinger",
           "A. H. Paterson"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1145/3460210.3493578",
         "evidence": "OpenAlex über Titel-Ähnlichkeit 1.00",
@@ -4953,6 +5185,7 @@
           "Huang, Xiao",
           "Jinsong Su"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2506.05690",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2506.05690",
@@ -4980,6 +5213,7 @@
           "Aggarwal, Charu C.",
           "Jiliang Tang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2502.11371",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2502.11371",
@@ -5020,6 +5254,7 @@
           "Simon Osindero",
           "Karen Simonyan"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2112.04426",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2112.04426 (Identifikator lokal nicht belegt)",
@@ -5046,6 +5281,7 @@
           "Douwe Kiela",
           "Barlas Oğuz"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2009.12756",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2009.12756",
@@ -5065,6 +5301,7 @@
           "Su-Yin Yang",
           "Chunyan Miao"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2502.04413",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2502.04413",
@@ -5085,6 +5322,7 @@
           "Sil, Avirup",
           "Hannaneh Hajishirzi"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2310.11511",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2310.11511 (Identifikator lokal nicht belegt)",
@@ -5104,6 +5342,7 @@
           "Daniel J. Arp",
           "Konrad Rieck"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1109/sp.2014.44",
         "evidence": "OpenAlex über doi:10.1109/SP.2014.44",
@@ -5126,6 +5365,7 @@
           "Williamson, GJ",
           "Bowman, DMJS"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.6084/m9",
         "evidence": "OpenAlex über doi:10.6084/m9",
@@ -5146,6 +5386,7 @@
           "Jiaxing Shen",
           "Xingwei Wang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2403.09369",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2403.09369",
@@ -5166,6 +5407,7 @@
           "Martin Potthast",
           "Matthias Hagen"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3731120.3744601",
         "evidence": "OpenAlex über doi:10.1145/3731120.3744601",
@@ -5198,6 +5440,7 @@
           "Sandy Pentland",
           "Sara Hooker"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2310.16787",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2310.16787",
@@ -5225,6 +5468,7 @@
           "Alan Wee‐Chung Liew",
           "Pan, Shirui"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2509.24276",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2509.24276",
@@ -5250,6 +5494,7 @@
           "Le Sun",
           "Yongbin Li"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2410.08815",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2410.08815",
@@ -5271,6 +5516,7 @@
           "Chen Ling",
           "Liang Zhao"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.18653/v1/2025.findings-naacl.232",
         "evidence": "OpenAlex über doi:10.18653/v1/2025.findings-naacl.232",
@@ -5291,6 +5537,7 @@
           "Sil, Avirup",
           "Hannaneh Hajishirzi"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2310.11511",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2310.11511 (Identifikator lokal nicht belegt)",
@@ -5314,6 +5561,7 @@
           "Tong Xiao",
           "Jingbo Zhu"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1109/icassp55912.2026.11460992",
         "evidence": "OpenAlex über doi:10.1109/icassp55912.2026.11460992 (Identifikator lokal nicht belegt)",
@@ -5336,6 +5584,7 @@
           "Paulo Barros",
           "Marcelo d’Amorim"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/2491411.2491459",
         "evidence": "OpenAlex über doi:10.1145/2491411.2491459",
@@ -5357,6 +5606,7 @@
           "Jiapu Wang",
           "Xindong Wu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2306.08302",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2306.08302",
@@ -5374,6 +5624,7 @@
           "Manie Tadayon",
           "Mayank Gupta"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2603.22340",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2603.22340",
@@ -5399,6 +5650,7 @@
           "Luke Zettlemoyer",
           "Lewis, Mike"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2204.05999",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2204.05999",
@@ -5420,6 +5672,7 @@
           "Zhifeng Shen",
           "Xing Sun"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48448/ga43-n541",
         "evidence": "OpenAlex über doi:10.48448/ga43-n541 (Identifikator lokal nicht belegt)",
@@ -5439,6 +5692,7 @@
           "Siyuan Liu",
           "Qiaoyu Tan"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2604.09666",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2604.09666",
@@ -5458,6 +5712,7 @@
           "Fatemeh Mohammadi",
           "Harshit J. Motwani"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2209.03602",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2209.03602",
@@ -5479,6 +5734,7 @@
           "Anoop Deoras",
           "Laurent Callot"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3786583.3786898",
         "evidence": "OpenAlex über doi:10.1145/3786583.3786898",
@@ -5498,6 +5754,7 @@
           "Hsiang−Shang Ko",
           "Zhenjiang Hu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2001.02031",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2001.02031",
@@ -5520,6 +5777,7 @@
           "Yuchi Ma",
           "Zibin Zheng"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2407.19487",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2407.19487",
@@ -5553,6 +5811,7 @@
           "Yinglong Xia",
           "Jiliang Tang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2501.00309",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2501.00309",
@@ -5577,6 +5836,7 @@
           "Maurice van Keulen",
           "Christin Seifert"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2201.08164",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2201.08164",
@@ -5596,6 +5856,7 @@
           "Mostafa Elhoushi",
           "Alvin Cheung"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2403.04814",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2403.04814",
@@ -5615,6 +5876,7 @@
           "Tuure Tuunanen",
           "Amit K. Shukla"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1007/s43681-025-00965-5",
         "evidence": "OpenAlex über doi:10.1007/s43681-025-00965-5",
@@ -5632,6 +5894,7 @@
           "Prakhar Sharma",
           "Vinod Yegneswaran"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3626111.3628205",
         "evidence": "OpenAlex über doi:10.1145/3626111.3628205",
@@ -5651,6 +5914,7 @@
           "Peilin Tao",
           "Tao Feng"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3728725.3728742",
         "evidence": "OpenAlex über doi:10.1145/3728725.3728742",
@@ -5671,6 +5935,7 @@
           "Quanqing Xu",
           "Chuanhui Yang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2507.08445",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2507.08445",
@@ -5711,6 +5976,7 @@
           "Dan Roth",
           "Bing Xiang"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2210.14868",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2210.14868 (Identifikator lokal nicht belegt)",
@@ -5734,6 +6000,7 @@
           "Jaroslaw Szlichta",
           "Morteza Zihayat"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1007/s10791-020-09379-9",
         "evidence": "OpenAlex über doi:10.1007/s10791-020-09379-9 (Identifikator lokal nicht belegt)",
@@ -5756,6 +6023,7 @@
           "Katja Hose",
           "Tomer Sagi"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1007/978-3-032-19099-4_23",
         "evidence": "OpenAlex über doi:10.1007/978-3-032-19099-4_23",
@@ -5775,6 +6043,7 @@
           "Jason Weston",
           "Aslı Çelikyılmaz"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2310.05029",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2310.05029 (Identifikator lokal nicht belegt)",
@@ -5798,6 +6067,7 @@
           "Xing Sun",
           "Xiao Huang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2506.02404",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2506.02404",
@@ -5819,6 +6089,7 @@
           "Gong Chen",
           "Shirui Pan"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2502.01113",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2502.01113",
@@ -5839,6 +6110,7 @@
           "Xin Peng",
           "Yiling Lou"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2406.10018",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2406.10018",
@@ -5859,6 +6131,7 @@
           "Ahmed E. Hassan",
           "Ali Mesbah"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2511.11012",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2511.11012",
@@ -5884,6 +6157,7 @@
           "Ambrosio Blanco",
           "Shuai Ma"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2009.10297",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2009.10297",
@@ -5901,6 +6175,7 @@
           "Weixi Tong",
           "Tianyi Zhang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.18653/v1/2024.emnlp-main.1118",
         "evidence": "OpenAlex über doi:10.18653/v1/2024.emnlp-main.1118",
@@ -5918,6 +6193,7 @@
           "Mahdi Farzandway",
           "Fatemeh Ghassemi"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2605.13491",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2605.13491",
@@ -5938,6 +6214,7 @@
           "Lin F. Yang",
           "Anton Tsitsulin"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2405.18414",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2405.18414",
@@ -5961,6 +6238,7 @@
           "Feiyu Xiong",
           "Wentao Zhang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.18653/v1/2026.acl-long.201",
         "evidence": "OpenAlex über doi:10.18653/v1/2026.acl-long.201",
@@ -5979,6 +6257,7 @@
           "De Pascalis, Michele",
           "Pradella, Matteo"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2206.10344",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2206.10344",
@@ -5998,6 +6277,7 @@
           "Abdella Battou",
           "Bensalem, Saddek"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2411.13773",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2411.13773",
@@ -6029,6 +6309,7 @@
           "Amir Yazdanbakhsh",
           "Peter Clark"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2303.17651",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2303.17651",
@@ -6048,6 +6329,7 @@
           "Benjamin Van Durme",
           "Daniel Khashabi"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2604.01432",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2604.01432",
@@ -6069,6 +6351,7 @@
           "Gabriel Synnaeve",
           "Sida I. Wang"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2401.03065",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2401.03065 (Identifikator lokal nicht belegt)",
@@ -6089,6 +6372,7 @@
           "Xilin Liu",
           "Yuchi Ma"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1609/aaai.v40i19.38619",
         "evidence": "OpenAlex über doi:10.1609/aaai.v40i19.38619",
@@ -6112,6 +6396,7 @@
           "Lingpeng Kong",
           "Xipeng Qiu"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2307.11088",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2307.11088 (Identifikator lokal nicht belegt)",
@@ -6132,6 +6417,7 @@
           "Hima Patel",
           "Ruchi Mahindru"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2605.15425",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2605.15425",
@@ -6159,6 +6445,7 @@
           "Wei Ye",
           "Shikun Zhang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2408.16498",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2408.16498",
@@ -6180,6 +6467,7 @@
           "Carlo Luschi",
           "Daniel Justus"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2603.28773",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2603.28773",
@@ -6198,6 +6486,7 @@
           "Melody Yu",
           "Sucheer Maddury"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2402.08956",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2402.08956",
@@ -6216,6 +6505,7 @@
           "Emil Vatai",
           "Mohamed Wahib"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2505.12621",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2505.12621",
@@ -6235,6 +6525,7 @@
           "Mark Harman",
           "Meng Wang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2308.02828",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2308.02828",
@@ -6253,6 +6544,7 @@
           "Matan Eyal",
           "Michael Elhadad"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.1801.07704",
         "evidence": "OpenAlex über doi:10.48550/arxiv.1801.07704 (Identifikator lokal nicht belegt)",
@@ -6276,6 +6568,7 @@
           "Shen, Ying",
           "Yu, Philip S."
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2510.25694",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2510.25694",
@@ -6302,6 +6595,7 @@
           "Meng, Yu",
           "Han, Jiawei"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2404.07103",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2404.07103",
@@ -6318,6 +6612,7 @@
         "authors": [
           "Ahmed Lekssays"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3786165.3788441",
         "evidence": "OpenAlex über doi:10.1145/3786165.3788441",
@@ -6337,6 +6632,7 @@
           "Tien N. Nguyen",
           "Nghi D. Q. Bui"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1109/forge66646.2025.00009",
         "evidence": "OpenAlex über doi:10.1109/FORGE66646.2025.00009",
@@ -6355,6 +6651,7 @@
           "Lei Xu",
           "André Teves Aquino Gonçalves de Freitas"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2601.04859",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2601.04859",
@@ -6376,6 +6673,7 @@
           "Jieping Ye",
           "Hui Xiong"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2410.23875",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2410.23875",
@@ -6395,6 +6693,7 @@
           "Xin Xia",
           "Xiaohu Yang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2406.03283",
         "evidence": "arXiv abs/2406.03283v2 (eingereicht 21.11.2025, 26 Seiten) geprüft 2026-08-30; ersetzt Fehlauflösung auf Cerise (10.1145/3623510), siehe docs/adr/0025-citable-paper-metadata.md",
@@ -6415,6 +6714,7 @@
           "Dominique Devriese",
           "Lars Birkedal"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3623510",
         "evidence": "DBLP/Digital Library cross-checked with DOI 10.1145/3623510",
@@ -6435,6 +6735,7 @@
           "Dejan Kostić",
           "Marco Chiesa"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2309.06342",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2309.06342",
@@ -6459,6 +6760,7 @@
           "Yin, Di",
           "Sun, Xing"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2508.19855",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2508.19855",
@@ -6479,6 +6781,7 @@
           "Sizhe Zhou",
           "Yu Su"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2502.14802",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2502.14802",
@@ -6501,6 +6804,7 @@
           "Kaiwen Chi",
           "Yong Cui"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2501.08760",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2501.08760",
@@ -6520,6 +6824,7 @@
           "Alexandra Mendes",
           "João F. Ferreira"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2504.08678",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2504.08678",
@@ -6539,6 +6844,7 @@
           "Yong Li",
           "Quanming Yao"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2406.01145",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2406.01145",
@@ -6557,6 +6863,7 @@
           "Ana-Maria Ghiran",
           "Robert Andrei Buchmann"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1007/s10270-025-01297-y",
         "evidence": "OpenAlex über doi:10.1007/s10270-025-01297-y",
@@ -6578,6 +6885,7 @@
           "Zhou, Lanzhi",
           "Yaping Lu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2510.16302",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2510.16302",
@@ -6600,6 +6908,7 @@
           "Jun Zhang",
           "Rui Wang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2406.06572",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2406.06572",
@@ -6621,6 +6930,7 @@
           "Wenhu Chen",
           "Jimmy Lin"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2412.14457",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2412.14457",
@@ -6643,6 +6953,7 @@
           "Zheng Zhang",
           "Liang Zhao"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2501.15067",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2501.15067",
@@ -6662,6 +6973,7 @@
           "Yun Zhu",
           "Zhen-Hua Ling"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2401.15884",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2401.15884",
@@ -6683,6 +6995,7 @@
           "Vladimir Ivanov",
           "Israel Adewuyi"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2505.04406",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2505.04406",
@@ -6701,6 +7014,7 @@
           "Aditya Nannapaneni",
           "Juan Pablo De la Cruz Weinstein"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2606.23915",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2606.23915",
@@ -6723,6 +7037,7 @@
           "Wai Lam",
           "Mo Yu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2512.23959",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2512.23959",
@@ -6740,6 +7055,7 @@
           "Yannick Assogba",
           "Donghao Ren"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2407.21049",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2407.21049",
@@ -6760,6 +7076,7 @@
           "Rajiv Gupta",
           "Ashish Kundu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2603.29109",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2603.29109",
@@ -6780,6 +7097,7 @@
           "K. K. He",
           "Xiang Li"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2505.24226",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2505.24226",
@@ -6807,6 +7125,7 @@
           "Wenbo Su",
           "Bo Zheng"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2406.14550",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2406.14550 (Identifikator lokal nicht belegt)",
@@ -6826,6 +7145,7 @@
           "Joo-Kyung Kim",
           "Hyunwoo J. Kim"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2410.09350",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2410.09350",
@@ -6842,6 +7162,7 @@
         "authors": [
           "Qizhi Wang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2602.23372",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2602.23372",
@@ -6858,6 +7179,7 @@
         "authors": [
           "Manideep Reddy Chinthareddy"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2601.08773",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2601.08773",
@@ -6879,6 +7201,7 @@
           "Bowen Li",
           "Chengjun Mao"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2601.11144",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2601.11144",
@@ -6898,6 +7221,7 @@
           "Laurent Vanbever",
           "Martin Vechev"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "",
         "evidence": "OpenAlex über Titel-Ähnlichkeit 1.00",
@@ -6915,6 +7239,7 @@
           "Jeonghee Ahn",
           "Hye Ok Park"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.5977/jkasne.2023.29.3.234",
         "evidence": "OpenAlex über doi:10.5977/jkasne.2023.29.3.234 (Identifikator lokal nicht belegt)",
@@ -6934,6 +7259,7 @@
           "Maarten de Rijke",
           "Avishek Anand"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3731120.3744592",
         "evidence": "OpenAlex über doi:10.1145/3731120.3744592",
@@ -6950,6 +7276,7 @@
         "authors": [
           "René Haberland"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "",
         "evidence": "Autor aus PDF-Titelseite entnommen (arXiv:1906.08369v1, Saint Petersburg State University; urspr. Diplomarbeit TU Dresden 2007, empfohlen von Prof. Bratchikov I.L. am 7.4.2008), 2026-08-14",
@@ -6972,6 +7299,7 @@
           "Dawei Yin",
           "Xueqi Cheng"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3767695.3769505",
         "evidence": "OpenAlex über doi:10.1145/3767695.3769505",
@@ -6989,6 +7317,7 @@
           "Costas Mavromatis",
           "George Karypis"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2405.20139",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2405.20139 (Identifikator lokal nicht belegt)",
@@ -7013,6 +7342,7 @@
           "Heung‐Yeung Shum",
           "Jian Guo"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2307.07697",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2307.07697",
@@ -7036,6 +7366,7 @@
           "Tat‐Seng Chua",
           "Qing Li"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3637528.3671470",
         "evidence": "OpenAlex über doi:10.1145/3637528.3671470",
@@ -7061,6 +7392,7 @@
           "Koushik Sen",
           "Ion Stoica"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2403.07974",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2403.07974",
@@ -7085,6 +7417,7 @@
           "Giorgos Stamou",
           "Michalis Vazirgiannis"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2410.19494",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2410.19494",
@@ -7103,6 +7436,7 @@
           "Alham Fikri Aji",
           "Amir Saffari"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2306.04136",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2306.04136",
@@ -7123,6 +7457,7 @@
           "Jacques Klein",
           "Tegawendé F. Bissyandé"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2509.18761",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2509.18761",
@@ -7144,6 +7479,7 @@
           "Pasquali, Stefano",
           "Mehta, Dhagash"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2408.04948",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2408.04948",
@@ -7162,6 +7498,7 @@
           "Muhammad Muneeb Ahmed",
           "Walid Gomaa"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2501.06625",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2501.06625",
@@ -7180,6 +7517,7 @@
           "Marius Hauser",
           "Justus Bogner"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1109/cain58948.2023.00035",
         "evidence": "OpenAlex über doi:10.1109/CAIN58948.2023.00035",
@@ -7202,6 +7540,7 @@
           "Cheng Yang",
           "Chuan Shi"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3690624.3709256",
         "evidence": "OpenAlex über doi:10.1145/3690624.3709256",
@@ -7231,6 +7570,7 @@
           "Bangyu Xiang",
           "Xiaobing Xu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2601.19494",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2601.19494",
@@ -7251,6 +7591,7 @@
           "Wolfram Schulte",
           "Milos Gligoric"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3786583.3786905",
         "evidence": "OpenAlex über doi:10.1145/3786583.3786905",
@@ -7271,6 +7612,7 @@
           "Yuanman Li",
           "Wei Hu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.18653/v1/2025.naacl-long.449",
         "evidence": "OpenAlex über doi:10.18653/v1/2025.naacl-long.449",
@@ -7308,6 +7650,7 @@
           "Slav Petrov",
           "Kellie Webster"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2212.08037",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2212.08037 (Identifikator lokal nicht belegt)",
@@ -7331,6 +7674,7 @@
           "Shi, Chuan",
           "Yang, Cheng"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2502.14902",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2502.14902 (Identifikator lokal nicht belegt)",
@@ -7352,6 +7696,7 @@
           "Rhea Mathew",
           "Amar Viswanathan Kannan"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2507.03226",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2507.03226",
@@ -7386,6 +7731,7 @@
           "Wenguang Chen",
           "Jun Zhou"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2409.13731",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2409.13731",
@@ -7405,6 +7751,7 @@
           "Zhiyu Fan",
           "Abhik Roychoudhury"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3650212.3680384",
         "evidence": "OpenAlex über doi:10.1145/3650212.3680384",
@@ -7426,6 +7773,7 @@
           "Daniel Campos",
           "Jimmy Lin"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2603.09891",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2603.09891",
@@ -7446,6 +7794,7 @@
           "Liu, Zheng",
           "Zhong, Weiwei"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.6084/m9.figshare",
         "evidence": "OpenAlex über doi:10.6084/m9.figshare",
@@ -7464,6 +7813,7 @@
           "Tien‐Yueh Fung",
           "Daniel DeLaurentis"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1002/sys.70012",
         "evidence": "OpenAlex über doi:10.1002/sys.70012",
@@ -7484,6 +7834,7 @@
           "Luciana Lourdes Silva",
           "M Helena Garcia Tnia S Morais Andreia Valente"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2606.15828",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2606.15828",
@@ -7500,6 +7851,7 @@
         "authors": [
           "Christian Kästner"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.1706.09357",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.1706.09357",
@@ -7518,6 +7870,7 @@
           "Sree Harsha Tanneru",
           "Himabindu Lakkaraju"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2402.04614",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2402.04614 (Identifikator lokal nicht belegt)",
@@ -7538,6 +7891,7 @@
           "Tianwei Zhang",
           "Yang Liu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2508.05970",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2508.05970",
@@ -7555,6 +7909,7 @@
           "Guido Giunti",
           "Colin P. Doherty"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.2196/48949",
         "evidence": "OpenAlex über doi:10.2196/48949",
@@ -7575,6 +7930,7 @@
           "Tu Ao",
           "Chao Huang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2410.05779",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2410.05779",
@@ -7594,6 +7950,7 @@
           "Kang Liu",
           "Jun Zhao"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2406.17231",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2406.17231 (Identifikator lokal nicht belegt)",
@@ -7614,6 +7971,7 @@
           "Christian Wende",
           "Marcel Böhme"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1145/1837852.1621624",
         "evidence": "OpenAlex über doi:10.1145/1837852.1621624 (Identifikator lokal nicht belegt)",
@@ -7639,6 +7997,7 @@
           "Chunhua Yang",
           "Zhao Zhao"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2505.15701",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2505.15701",
@@ -7661,6 +8020,7 @@
           "Yang Liu",
           "Xin Peng"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2401.06391",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2401.06391",
@@ -7683,6 +8043,7 @@
           "Pan Zhou",
           "Lichao Sun"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2404.15639",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2404.15639 (Identifikator lokal nicht belegt)",
@@ -7701,6 +8062,7 @@
           "Aaron Weiss",
           "Arjun Guha"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/2908080.2908083",
         "evidence": "OpenAlex über doi:10.1145/2908080.2908083",
@@ -7723,6 +8085,7 @@
           "Menolascina, Filippo",
           "Grau, Vicente"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2408.04187",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2408.04187",
@@ -7742,6 +8105,7 @@
           "Weihuan Min",
           "Li Kuang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3643916.3644420",
         "evidence": "OpenAlex über doi:10.1145/3643916.3644420",
@@ -7763,6 +8127,7 @@
           "Wei, Jiayi",
           "Wu, Tongshuang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2506.15655",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2506.15655",
@@ -7785,6 +8150,7 @@
           "Huan Sun",
           "Dongdong Chen"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2510.01003",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2510.01003",
@@ -7804,6 +8170,7 @@
           "Benjamin Hoffman",
           "Laurent Vanbever"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2604.22513",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2604.22513",
@@ -7824,6 +8191,7 @@
           "Sanjit A. Seshia",
           "Vijay Saraswat"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1145/1168919.1168907",
         "evidence": "OpenAlex über doi:10.1145/1168919.1168907 (Identifikator lokal nicht belegt)",
@@ -7848,6 +8216,7 @@
           "Jian–Guang Lou",
           "Weizhu Chen"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.18653/v1/2023.emnlp-main.151",
         "evidence": "OpenAlex über doi:10.18653/v1/2023.emnlp-main.151",
@@ -7866,6 +8235,7 @@
           "Tao Feng",
           "Jiaxuan You"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2410.11001",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2410.11001",
@@ -7886,6 +8256,7 @@
           "Nuno Moniz",
           "Nitesh V. Chawla"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.18653/v1/2026.findings-acl.565",
         "evidence": "OpenAlex über doi:10.18653/v1/2026.findings-acl.565 (Identifikator lokal nicht belegt)",
@@ -7908,6 +8279,7 @@
           "Jerry Tworek",
           "Mark Chen"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2207.14255",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2207.14255",
@@ -7928,6 +8300,7 @@
           "Tegawendé F. Bissyandé",
           "Jacques Klein"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.18653/v1/2024.acl-short.3",
         "evidence": "OpenAlex über doi:10.18653/v1/2024.acl-short.3",
@@ -7951,6 +8324,7 @@
           "Shi, Chuan",
           "Yang, Cheng"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2502.14902",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2502.14902 (Identifikator lokal nicht belegt)",
@@ -7973,6 +8347,7 @@
           "Dominique Devriese",
           "Lars Birkedal"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3623510",
         "evidence": "DBLP/Digital Library cross-checked with DOI 10.1145/3623510",
@@ -7992,6 +8367,7 @@
           "Prémkumar Dévanbu",
           "Earl T. Barr"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3597503.3639183",
         "evidence": "OpenAlex über doi:10.1145/3597503.3639183",
@@ -8015,6 +8391,7 @@
           "Hannaneh Hajishirzi",
           "Wen-tau Yih"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2211.09260",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2211.09260 (Identifikator lokal nicht belegt)",
@@ -8038,6 +8415,7 @@
           "Chen, Hongzhi",
           "Cheng, James"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2503.10150",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2503.10150",
@@ -8060,6 +8438,7 @@
           "Karthik Narasimhan",
           "Ofir Press"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2405.15793",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2405.15793",
@@ -8080,6 +8459,7 @@
           "Jack Ryan",
           "Daniel Chalef"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2501.13956",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2501.13956",
@@ -8096,6 +8476,7 @@
         "authors": [
           "Xinyi Huang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2604.10516",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2604.10516",
@@ -8113,6 +8494,7 @@
           "Soneya Binta Hossain",
           "Matthew B. Dwyer"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2405.03786",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2405.03786",
@@ -8130,6 +8512,7 @@
           "Yubo Huang",
           "Guosun Zeng"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3627673.3679659",
         "evidence": "OpenAlex über doi:10.1145/3627673.3679659",
@@ -8151,6 +8534,7 @@
           "Nagai, Takashi",
           "Okano, Kozo"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2511.17948",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2511.17948",
@@ -8171,6 +8555,7 @@
           "Ruoying He",
           "Dongkuan Xu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2506.19967",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2506.19967",
@@ -8192,6 +8577,7 @@
           "Craswell, Nick",
           "Lin, Jimmy"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2504.15205",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2504.15205",
@@ -8212,6 +8598,7 @@
           "Shun Song",
           "Hui Li"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.18653/v1/2025.emnlp-main.1187",
         "evidence": "OpenAlex über doi:10.18653/v1/2025.emnlp-main.1187",
@@ -8232,6 +8619,7 @@
           "Ratul Mahajan",
           "David Walker"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2209.12870",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2209.12870",
@@ -8251,6 +8639,7 @@
           "Jamie P. McCusker",
           "Kavitha Srinivas"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1609/aaai.v36i4.20363",
         "evidence": "OpenAlex über doi:10.1609/AAAI.V36I4.20363",
@@ -8271,6 +8660,7 @@
           "Pierre Holat",
           "Thierry Charnois"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2404.12491",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2404.12491",
@@ -8293,6 +8683,7 @@
           "Hongyu Zhang",
           "Zibin Zheng"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2406.06918",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2406.06918",
@@ -8309,6 +8700,7 @@
         "authors": [
           "Sumit Gulwani"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.1145/1926385.1926423",
         "evidence": "OpenAlex über doi:10.1145/1926385.1926423 (Identifikator lokal nicht belegt)",
@@ -8329,6 +8721,7 @@
           "Sil, Avirup",
           "Hannaneh Hajishirzi"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2310.11511",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2310.11511 (Identifikator lokal nicht belegt)",
@@ -8349,6 +8742,7 @@
           "Todd Millstein",
           "George Varghese"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3626111.3628194",
         "evidence": "OpenAlex über doi:10.1145/3626111.3628194",
@@ -8370,6 +8764,7 @@
           "Vamse Kumar Subbiah",
           "Corey Feld"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2605.06635",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2605.06635",
@@ -8387,6 +8782,7 @@
           "Mohannad Alhanahnah",
           "Yazan Boshmaf"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2405.20455",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2405.20455",
@@ -8405,6 +8801,7 @@
           "Triet Huynh Minh Le",
           "Muhammad Ali Babar"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2502.02009",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2502.02009",
@@ -8445,6 +8842,7 @@
           "Parul Chopra",
           "Dai, Xiyang"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2404.14219",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2404.14219 (Identifikator lokal nicht belegt)",
@@ -8465,6 +8863,7 @@
           "Brandon Paulsen",
           "Daniel Kroening"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2412.08035",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2412.08035",
@@ -8484,6 +8883,7 @@
           "Gorka Zárate",
           "Ana I. Torre-Bastida"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3643788.3648014",
         "evidence": "OpenAlex über doi:10.1145/3643788.3648014",
@@ -8512,6 +8912,7 @@
           "Yan Xu",
           "Pascale Fung"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2302.04023",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2302.04023 (Identifikator lokal nicht belegt)",
@@ -8530,6 +8931,7 @@
           "Christoph Treude",
           "David Lo"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2404.04834",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2404.04834",
@@ -8552,6 +8954,7 @@
           "Ofir Press",
           "Karthik Narasimhan"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2310.06770",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2310.06770 (Identifikator lokal nicht belegt)",
@@ -8571,6 +8974,7 @@
           "Yu Chen",
           "Guyue Liu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2504.14959",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2504.14959",
@@ -8593,6 +8997,7 @@
           "Matthew S. Tschantz",
           "Chen Xiao"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1016/j.scico.2007.01.015",
         "evidence": "OpenAlex über doi:10.1016/j.scico.2007.01.015",
@@ -8614,6 +9019,7 @@
           "Ratul Mahajan",
           "Todd Millstein"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3603269.3604866",
         "evidence": "OpenAlex über doi:10.1145/3603269.3604866",
@@ -8632,6 +9038,7 @@
           "Shiqi Zhang",
           "Xiaokui Xiao"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3711896.3737012",
         "evidence": "OpenAlex über doi:10.1145/3711896.3737012",
@@ -8650,6 +9057,7 @@
           "Ferreira, Joao",
           "Mendes, Alexandra"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.5281/zenodo.15061764",
         "evidence": "OpenAlex über doi:10.5281/zenodo.15061764",
@@ -8667,6 +9075,7 @@
           "Maksim Ivanov",
           "Abhijay Rana"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2605.26321",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2605.26321",
@@ -8691,6 +9100,7 @@
           "Li, Jia",
           "Shi, Lin"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2502.17139",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2502.17139",
@@ -8714,6 +9124,7 @@
           "Xavier Bresson",
           "Bryan Hooi"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.52202/079017-4224",
         "evidence": "OpenAlex über doi:10.52202/079017-4224",
@@ -8746,6 +9157,7 @@
           "Xiong, Caiming",
           "Wang, Huan"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2509.09614",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2509.09614",
@@ -8766,6 +9178,7 @@
           "Mei, Qiaozhu",
           "Bendersky, Michael"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2407.16833",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2407.16833",
@@ -8785,6 +9198,7 @@
           "Amar Prakash Azad",
           "Pushpak Bhattacharyya"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2308.03638",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2308.03638 (Identifikator lokal nicht belegt)",
@@ -8808,6 +9222,7 @@
           "Disha Ahuja",
           "Vidya Sagar Ravipati"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2606.25656",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2606.25656",
@@ -8829,6 +9244,7 @@
           "Fei Huang",
           "Yongbin Li"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2406.01422",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2406.01422",
@@ -8851,6 +9267,7 @@
           "Nan Duan",
           "Weizhu Chen"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2305.11738",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2305.11738",
@@ -8871,6 +9288,7 @@
           "Veselin Raychev",
           "Martin Vechev"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2602.11988",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2602.11988",
@@ -8887,6 +9305,7 @@
         "authors": [
           "Sylvana Kroop"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2502.11199",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2502.11199",
@@ -8905,6 +9324,7 @@
           "Sharma, Roshnee",
           "Hariharan Subramani"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2509.10769",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2509.10769",
@@ -8945,6 +9365,7 @@
           "Zhu, Jian",
           "Zhuo, Terry Yue"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2402.19173",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2402.19173",
@@ -8963,6 +9384,7 @@
           "Antonio Vergari",
           "Shay B. Cohen"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2408.11081",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2408.11081 (Identifikator lokal nicht belegt)",
@@ -8984,6 +9406,7 @@
           "Qinggang Zhang",
           "Jinsong Su"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2606.00610",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2606.00610",
@@ -9006,6 +9429,7 @@
           "Karthik Narasimhan",
           "Yuan Cao"
         ],
+        "cleared_fields": [],
         "confidence": "weak",
         "doi": "10.48550/arxiv.2210.03629",
         "evidence": "OpenAlex über doi:10.48550/arxiv.2210.03629 (Identifikator lokal nicht belegt)",
@@ -9026,6 +9450,7 @@
           "Peng, Rui",
           "Wang, Jinzhuo"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2502.06472",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2502.06472",
@@ -9049,6 +9474,7 @@
           "Kenan Kamel A Alghythee",
           "Philip S. Yu"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2512.09148",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2512.09148",
@@ -9066,6 +9492,7 @@
           "Shubham Ugare",
           "Satish Chandra"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2603.01896",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2603.01896",
@@ -9088,6 +9515,7 @@
           "Wang, Yu",
           "Tang, Jiliang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2509.25530",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2509.25530",
@@ -9115,6 +9543,7 @@
           "Yi Chang",
           "Huang, Xiao"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2501.13958",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2501.13958",
@@ -9135,6 +9564,7 @@
           "Bo Tang",
           "Jinyang Li"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2504.02112",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2504.02112",
@@ -9152,6 +9582,7 @@
           "Shahin, Ramy",
           "Chechik, Marsha"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.1912.03854",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.1912.03854",
@@ -9171,6 +9602,7 @@
           "Mostafa Elhoushi",
           "Sida Wang"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2506.00204",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2506.00204",
@@ -9195,6 +9627,7 @@
           "Liang, Shuang",
           "Qin, Ke"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2603.14828",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2603.14828",
@@ -9215,6 +9648,7 @@
           "Dimitris Mitropoulos",
           "Zhendong Su"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3689799",
         "evidence": "OpenAlex über doi:10.1145/3689799",
@@ -9235,6 +9669,7 @@
           "Rafael Pires",
           "de Vos, Martijn"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2603.02345",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2603.02345",
@@ -9256,6 +9691,7 @@
           "Yafang Wang",
           "Gerhard Weikum"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3331184.3331252",
         "evidence": "OpenAlex über doi:10.1145/3331184.3331252",
@@ -9278,6 +9714,7 @@
           "Ofir Press",
           "Karthik Narasimhan"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2310.06770",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2310.06770",
@@ -9299,6 +9736,7 @@
           "Martin Gysi",
           "John Kenneth d'Souza"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2604.18233",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2604.18233",
@@ -9315,6 +9753,7 @@
         "authors": [
           "Prakhar Khatri"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2607.27250",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2607.27250",
@@ -9336,6 +9775,7 @@
           "Dejan Kostić",
           "Marco Chiesa"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.1145/3656296",
         "evidence": "OpenAlex über doi:10.1145/3656296",
@@ -9361,6 +9801,7 @@
           "Hankyu Moon",
           "Seungjai Min"
         ],
+        "cleared_fields": [],
         "confidence": "strong",
         "doi": "10.48550/arxiv.2605.18775",
         "evidence": "OpenAlex über arxiv:10.48550/arXiv.2605.18775",

@@ -5,7 +5,7 @@
 | **Modul** | `src/research_graphrag/bibliography/corrections.py` |
 | **Paket** | `bibliography` – zitierfähige Metadaten |
 | **Phase** | – (ADR-getrieben, außerhalb der Roadmap-Phasenzählung) |
-| **Grundlagen** | [ADR 0039](../../../../docs/adr/0039-correction-tool-and-pdf-file-access.md), [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md), [ADR 0026](../../../../docs/adr/0026-online-metadata-resolution.md) |
+| **Grundlagen** | [ADR 0039](../../../../docs/adr/0039-correction-tool-and-pdf-file-access.md), [ADR 0040](../../../../docs/adr/0040-explicit-field-clearing.md), [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md), [ADR 0026](../../../../docs/adr/0026-online-metadata-resolution.md) |
 
 ---
 
@@ -20,24 +20,25 @@ die eigentliche Persistenz bleibt vollständig in [store](store.md).
 
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
-| `apply_manual_correction` | Funktion | Paper-ID + Felder + Beleg → `CorrectionResult` |
+| `apply_manual_correction` | Funktion | Paper-ID + Felder + Beleg (+ `clear_fields`) → `CorrectionResult` |
 | `CorrectionResult` | Dataclass | Ergebnis mit `to_dict()` |
 | `LOG_NAME` | Konstante | Dateiname des append-only Protokolls (`corrections_log.md`) |
 | `EFFECTIVE_AFTER` | Konstante | Fester Hinweistext, wann eine Korrektur wirkt |
+| `CLEARED_MARKER` | Konstante | Protokoll-Vermerk für ein explizit geleertes Feld (ADR 0040) |
 
 ## 3. Ablauf
 
 ```mermaid
 flowchart TD
-    A["paper_id, fields, evidence"] --> V1{"paper_id leer<br/>oder im Index<br/>unbekannt?"}
+    A["paper_id, fields,<br/>clear_fields, evidence"] --> V1{"paper_id leer<br/>oder im Index<br/>unbekannt?"}
     V1 -- ja --> E1["invalid_input / not_found"]
-    V1 -- nein --> V2{"fields gültig?<br/>(bekannt, nicht leer,<br/>Jahr plausibel)"}
+    V1 -- nein --> V2{"fields/clear_fields gültig?<br/>(bekannt, kein Feld in beiden,<br/>mind. eines gesetzt, Jahr plausibel)"}
     V2 -- nein --> E2["invalid_input"]
     V2 -- ja --> V3{"evidence leer?"}
     V3 -- ja --> E3["invalid_input"]
     V3 -- nein --> L["load_records<br/>(manual + resolved aller Paper)"]
     L --> M["vorhandenen manual-Record<br/>dieses Papers suchen"]
-    M --> MERGE["Basiswerte + fields<br/>(nur übergebene Felder überschreiben)<br/>evidence anhängen"]
+    M --> MERGE["Basiswerte + fields<br/>(nur übergebene Felder überschreiben);<br/>clear_fields auf leeren Wert setzen<br/>und cleared_fields fortschreiben;<br/>evidence anhängen"]
     MERGE --> S["upsert_records + save_records<br/>(atomar, deterministisch)"]
     S --> LOG["append_section →<br/>data/corrections_log.md"]
     LOG --> R["CorrectionResult"]
@@ -49,6 +50,18 @@ flowchart TD
 den in diesem Modul vorgeschalteten Merge-Schritt würde eine zweite Korrektur an einem anderen
 Feld die erste stillschweigend löschen. `apply_manual_correction` lädt deshalb den vorhandenen
 Record, überschreibt nur die übergebenen Felder und behält alle anderen unverändert bei.
+
+### Explizites Leeren statt bloßer Abwesenheit (ADR 0040)
+
+Ein über `clear_fields` genanntes Feld wird auf seinen feldtyp-korrekten leeren Wert gesetzt
+(`""`/`()`/`0`) **und** in `MetadataRecord.cleared_fields` aufgenommen – das unterscheidet
+„geprüft: hat wirklich keinen Wert" von „nie geprüft". Ohne diese Unterscheidung würde
+`bibliography.resolve.resolve_metadata` (über `MetadataRecord.has()`) weiterhin auf eine
+niedrigerrangige, ggf. falsche Herkunft (typisch: ein per Regex extrahierter Fehltreffer)
+zurückfallen, obwohl `manual` bereits geprüft hat. `cleared_fields` wird über Aufrufe hinweg
+fortgeschrieben: Ein Feld verlässt die Menge erst wieder, wenn es in einem **späteren** Aufruf
+tatsächlich **gesetzt** wird (`new_cleared = (previous_cleared - set(fields)) | set(clear_fields)`).
+Ein Feld darf pro Aufruf nicht gleichzeitig gesetzt und geleert werden (`invalid_input`).
 
 ### Zwei Nachvollziehbarkeits-Spuren
 
@@ -87,8 +100,9 @@ flowchart LR
 | leere `paper_id` | `invalid_input` |
 | Index-Datei fehlt | `not_found` |
 | `paper_id` im Index unbekannt | `not_found` |
-| kein Feld-Parameter gesetzt | `invalid_input` |
-| unbekannter Feldname | `invalid_input` |
+| weder ein Feld-Parameter noch `clear_fields` gesetzt | `invalid_input` |
+| unbekannter Feldname (in `fields` oder `clear_fields`) | `invalid_input` |
+| Feld gleichzeitig gesetzt **und** in `clear_fields` | `invalid_input` |
 | Text-Feld nach `strip()` leer | `invalid_input` |
 | leere Autorenliste | `invalid_input` |
 | `year` außerhalb `1000..aktuelles Jahr + 1` | `invalid_input` |
@@ -108,8 +122,9 @@ append-only Protokollen (`metadata_log.md`, `references_log.md`).
 
 - **Nur die sieben bibliografischen Felder** aus `bibliography.model.METADATA_FIELDS` – kein
   Volltext-/Chunk-Text, kein Kuratierungsurteil (siehe ADR 0039, Alternativen).
-- **Kein Zurücksetzen/Löschen eines Feldes** über diese Schnittstelle; nur Überschreiben. Ein
-  vollständiger Rückbau bleibt der Handbearbeitung von `metadata/paper_metadata.json`
-  vorbehalten (git-versioniert).
+- **Kein vollständiges Entfernen** eines `manual`-Records oder eines Feldes aus der
+  Speicherform; ein Feld kann überschrieben oder (seit ADR 0040) über `clear_fields` explizit
+  auf leer gesetzt werden, aber nicht aus dem Record getilgt werden. Ein vollständiger Rückbau
+  bleibt der Handbearbeitung von `metadata/paper_metadata.json` vorbehalten (git-versioniert).
 - **Keine sofortige Wirkung** auf `get_paper`/`get_reference`/`answer_question` – siehe
   `EFFECTIVE_AFTER`.

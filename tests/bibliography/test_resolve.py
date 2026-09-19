@@ -101,6 +101,40 @@ def test_a_source_without_own_contribution_does_not_lower_the_confidence() -> No
     assert resolved.confidence == CONFIDENCE_STRONG
 
 
+def test_manual_explicit_clear_wins_over_a_lower_precedence_value() -> None:
+    """Ein explizit geleertes manual-Feld gewinnt gegen einen (falschen) extrahierten Wert."""
+    resolved = resolve_metadata(
+        "p1",
+        [
+            _record(
+                ORIGIN_MANUAL,
+                arxiv_id="",
+                cleared_fields=frozenset({"arxiv_id"}),
+                confidence=CONFIDENCE_STRONG,
+            ),
+            _record(ORIGIN_EXTRACTED, arxiv_id="2406.12934"),
+        ],
+    )
+
+    assert resolved.arxiv_id == ""
+    assert resolved.origins["arxiv_id"] == ORIGIN_MANUAL
+    assert resolved.confidence == CONFIDENCE_STRONG
+
+
+def test_manual_empty_field_without_explicit_clear_still_falls_through() -> None:
+    """Ohne ``cleared_fields`` bleibt ein leeres manual-Feld "keine Meinung" (Regression)."""
+    resolved = resolve_metadata(
+        "p1",
+        [
+            _record(ORIGIN_MANUAL, arxiv_id="", confidence=CONFIDENCE_STRONG),
+            _record(ORIGIN_EXTRACTED, arxiv_id="2406.12934"),
+        ],
+    )
+
+    assert resolved.arxiv_id == "2406.12934"
+    assert resolved.origins["arxiv_id"] == ORIGIN_EXTRACTED
+
+
 def test_unknown_origin_is_ranked_last_but_still_used() -> None:
     """Ein unbekannter Herkunftsname verdrängt keine bekannte Quelle, geht aber nicht verloren."""
     resolved = resolve_metadata(

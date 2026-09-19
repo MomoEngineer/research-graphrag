@@ -187,4 +187,27 @@ async def test_correct_paper_metadata_example(index_db: Path) -> None:
     assert "paper_id" not in payload["record"]
     assert payload["record"]["origin"] == "manual"
     assert payload["record"]["venue"] == "ACM SIGCOMM"
+    assert payload["record"]["cleared_fields"] == []
     assert payload["effective_after"] == "python -m scripts.ingest"
+
+
+@pytest.mark.anyio
+async def test_correct_paper_metadata_clear_example(index_db: Path) -> None:
+    """specs/correct_paper_metadata.md Abschnitt 10.2: arxiv_id explizit leeren (ADR 0040)."""
+    async with client_session(mcp) as client:
+        result = await client.call_tool(
+            "correct_paper_metadata",
+            {
+                "paper_id": "aaaa0001",
+                "clear_fields": ["arxiv_id"],
+                "evidence": (
+                    "arXiv-ID gehoert zu einem im Volltext zitierten Fremdpaper, "
+                    "nicht zu diesem Buch"
+                ),
+            },
+        )
+    payload = _structured(result)
+    assert payload["applied_fields"] == ["arxiv_id"]
+    assert payload["previous"] == {"arxiv_id": ""}
+    assert payload["record"]["arxiv_id"] == ""
+    assert payload["record"]["cleared_fields"] == ["arxiv_id"]

@@ -94,7 +94,11 @@ nennen Tausende).
 Die Auswahl stammt aus dem **Index**, das Ergebnis geht in eine **Datei** – und wirksam wird es
 erst beim nächsten Ingest. Ohne diesen Filter würde ein zweiter Lauf vor dem nächsten Ingest
 exakt dieselben Paper erneut abfragen. Der Filter vergleicht die fehlenden Felder des Ziels mit
-dem, was ein gespeicherter `resolved`- oder `manual`-Datensatz bereits abdeckt.
+dem, was ein gespeicherter `resolved`- oder `manual`-Datensatz bereits abdeckt – über
+`MetadataRecord.has()`, dieselbe Methode, die auch die Präzedenzauflösung nutzt. Ein Feld, das
+über `correct_paper_metadata`s `clear_fields` **explizit als leer bestätigt** wurde (ADR 0040,
+[bibliography/doc/model.md](../../bibliography/doc/model.md)), gilt deshalb ebenfalls als
+"abgedeckt": Ein bereits geprüftes, absichtlich leeres Feld wird nicht erneut online abgefragt.
 
 ## 4. Zusammenspiel
 

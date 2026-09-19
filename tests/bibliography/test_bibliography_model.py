@@ -10,6 +10,7 @@ from research_graphrag.bibliography.model import (
     CONFIDENCE_WEAK,
     ORIGIN_CURATED,
     ORIGIN_EXTRACTED,
+    ORIGIN_MANUAL,
     MetadataRecord,
     PaperMetadata,
     empty_metadata,
@@ -45,6 +46,42 @@ def test_record_has_reports_only_non_empty_fields() -> None:
     assert record.has("year") is False
     assert record.has("doi") is True
     assert record.value_of("title") == "Ein Titel"
+
+
+def test_has_returns_true_for_an_explicitly_cleared_empty_field() -> None:
+    """Ein in ``cleared_fields`` genanntes Feld gilt als "hat eine Aussage" (ADR 0040)."""
+    record = MetadataRecord(
+        paper_id="p1",
+        origin=ORIGIN_EXTRACTED,
+        arxiv_id="",
+        doi="",
+        cleared_fields=frozenset({"arxiv_id"}),
+    )
+
+    assert record.has("arxiv_id") is True
+    assert record.has("doi") is False
+    assert record.value_of("arxiv_id") == ""
+
+
+def test_record_round_trip_keeps_cleared_fields() -> None:
+    """``cleared_fields`` übersteht die Speicherform unverändert, sortiert serialisiert."""
+    record = MetadataRecord(
+        paper_id="p1",
+        origin=ORIGIN_MANUAL,
+        cleared_fields=frozenset({"arxiv_id", "venue"}),
+    )
+
+    payload = record.to_dict()
+    assert payload["cleared_fields"] == ["arxiv_id", "venue"]
+    assert MetadataRecord.from_dict("p1", payload) == record
+
+
+def test_record_from_dict_tolerates_a_missing_cleared_fields_key() -> None:
+    """Eine vor ADR 0040 geschriebene Zeile ohne ``cleared_fields`` bleibt gültig."""
+    record = MetadataRecord.from_dict("p1", {"origin": "manual", "arxiv_id": ""})
+
+    assert record.cleared_fields == frozenset()
+    assert record.has("arxiv_id") is False
 
 
 def test_record_round_trip_keeps_every_field() -> None:

@@ -60,12 +60,24 @@ Ein Eintrag der Herkunft `manual` überschreibt alles andere. Format:
         "arxiv_id": "",
         "url": "",
         "confidence": "strong",
-        "evidence": "von Hand geprüft am 2026-08-05"
+        "evidence": "von Hand geprüft am 2026-08-05",
+        "cleared_fields": []
       }
     ]
   }
 }
 ```
+
+`cleared_fields` (additiv, seit [ADR 0040](../docs/adr/0040-explicit-field-clearing.md); ein
+fehlender Schlüssel gilt als leere Liste) nennt Felder, die **ausdrücklich als leer bestätigt**
+wurden, statt nur nie befüllt zu sein. Ein leeres `arxiv_id` ohne diesen Vermerk bedeutet für die
+Auflösung "diese Quelle hat keine Meinung dazu" – die Kette fällt dann auf `curated`/`resolved`/
+`extracted` zurück. Steht `"arxiv_id"` dagegen in `cleared_fields`, gewinnt die leere `manual`-
+Aussage: nützlich, wenn eine niedrigerrangige Herkunft (typisch `extracted`, ein
+Regex-Fehltreffer) sonst einen falschen Wert beisteuern würde. Über das MCP-Tool
+`correct_paper_metadata` setzt man das mit dem Parameter `clear_fields` (siehe
+[specs/correct_paper_metadata.md](../src/research_graphrag/mcp_server/specs/correct_paper_metadata.md));
+von Hand genügt der Listeneintrag im JSON.
 
 Nach dem Bearbeiten `python -m scripts.ingest` ausführen – erst dann wirkt die Änderung im Index.
 

@@ -1,4 +1,4 @@
-"""Korrektur bibliografischer Metadaten in der Herkunft ``manual`` (ADR 0039).
+"""Korrektur bibliografischer Metadaten in der Herkunft ``manual`` (ADR 0039, ADR 0040).
 
 Erstes schreibendes Werkzeug der MCP-Oberfläche: Ein Aufruf ergänzt oder überschreibt einzelne
 Felder des ``manual``-Records eines Papers in ``metadata/paper_metadata.json`` – der bereits
@@ -12,6 +12,14 @@ Ein vorhandener ``manual``-Record desselben Papers wird vor dem Schreiben gelade
 ``(paper_id, "manual")``-Record ersetzt) eine frühere Korrektur an einem anderen Feld
 stillschweigend löschen.
 
+Neben dem Setzen eines Wertes (``fields``) kann ein Feld auch **explizit geleert** werden
+(``clear_fields``, ADR 0040-explicit-field-clearing.md): Das markiert das Feld in
+:attr:`~research_graphrag.bibliography.model.MetadataRecord.cleared_fields` als "geprüft: hat
+wirklich keinen Wert" statt "nie geprüft" – eine niedrigerrangige, ggf. falsche Herkunft
+(typischerweise ``extracted``) scheint dann nicht mehr durch die feldweise Auflösung
+(:mod:`research_graphrag.bibliography.resolve`) durch. Ein Feld darf pro Aufruf nicht gleichzeitig
+gesetzt und geleert werden.
+
 Wirksam wird eine Korrektur **nicht sofort**: ``get_paper``/``get_reference``/``answer_question``
 lesen bibliografische Daten ausschließlich aus der im Index gebauten Tabelle ``paper_metadata``,
 die erst der nächste ``python -m scripts.ingest``-Lauf neu aus dieser Datei baut – dieselbe
@@ -23,6 +31,7 @@ Verzögerung wie beim bestehenden ``python -m scripts.resolve_metadata``
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -44,6 +53,9 @@ LOG_NAME = "corrections_log.md"
 EFFECTIVE_AFTER = "python -m scripts.ingest"
 """Fester Hinweis in jeder Antwort: Wann eine Korrektur in den übrigen Werkzeugen sichtbar wird."""
 
+CLEARED_MARKER = "(explizit geleert)"
+"""Protokoll-Vermerk für ein über ``clear_fields`` explizit geleertes Feld (ADR 0040)."""
+
 _MIN_YEAR = 1000
 _TEXT_FIELDS = ("title", "venue", "doi", "arxiv_id", "url")
 _LOG_VALUE_LIMIT = 300
@@ -52,9 +64,11 @@ _LOG_HEADER = (
     "# Korrekturen",
     "",
     "Append-only Protokoll von `correct_paper_metadata` (docs/adr/0039-correction-tool-and-"
-    "pdf-file-access.md). Jeder Eintrag nennt die geänderten Felder samt altem und neuem Wert",
-    "sowie den angegebenen Beleg. Wirksam wird eine Korrektur erst mit dem nächsten",
-    "`python -m scripts.ingest`-Lauf.",
+    "pdf-file-access.md, docs/adr/0040-explicit-field-clearing.md). Jeder Eintrag nennt die",
+    "geänderten Felder samt altem und neuem Wert (oder dem Vermerk "
+    f"`{CLEARED_MARKER}`, wenn ein Feld",
+    "über `clear_fields` explizit auf leer gesetzt wurde) sowie den angegebenen Beleg. Wirksam",
+    "wird eine Korrektur erst mit dem nächsten `python -m scripts.ingest`-Lauf.",
     "",
 )
 
@@ -96,15 +110,26 @@ def _validate_known_paper(db_path: Path, paper_id: str) -> None:
         raise DomainError(ErrorCode.NOT_FOUND, f"Paper nicht gefunden: {paper_id}")
 
 
-def _validate_fields(fields: dict[str, Any]) -> None:
-    """Prüft Feldnamen und -werte der angeforderten Korrektur."""
-    if not fields:
+def _validate_request(fields: dict[str, Any], clear_fields: Sequence[str]) -> None:
+    """Prüft Feldnamen und -werte der angeforderten Korrektur (Setzen **und** explizites Leeren)."""
+    if not fields and not clear_fields:
         raise DomainError(
-            ErrorCode.INVALID_INPUT, "Mindestens ein Korrekturfeld muss angegeben werden."
+            ErrorCode.INVALID_INPUT,
+            "Mindestens ein Korrekturfeld (setzen oder über clear_fields explizit leeren) "
+            "muss angegeben werden.",
+        )
+    overlap = set(fields) & set(clear_fields)
+    if overlap:
+        raise DomainError(
+            ErrorCode.INVALID_INPUT,
+            f"Feld(er) gleichzeitig gesetzt und geleert: {', '.join(sorted(overlap))}.",
         )
     for name in fields:
         if name not in METADATA_FIELDS:
             raise DomainError(ErrorCode.INVALID_INPUT, f"Unbekanntes Feld: {name}.")
+    for name in clear_fields:
+        if name not in METADATA_FIELDS:
+            raise DomainError(ErrorCode.INVALID_INPUT, f"Unbekanntes Feld in clear_fields: {name}.")
 
     for name in _TEXT_FIELDS:
         if name in fields and not str(fields[name]).strip():
@@ -133,14 +158,33 @@ def _base_values(current: MetadataRecord | None) -> dict[str, Any]:
     return {name: current.value_of(name) for name in METADATA_FIELDS}
 
 
+def _empty_value_for(name: str) -> Any:
+    """Der typkorrekte "leere" Wert eines Feldes für ein explizites Leeren (``clear_fields``)."""
+    if name == "year":
+        return 0
+    if name == "authors":
+        return ()
+    return ""
+
+
 def _render_entry(
-    timestamp: str, paper_id: str, fields: dict[str, Any], previous: dict[str, Any], evidence: str
+    timestamp: str,
+    paper_id: str,
+    fields: dict[str, Any],
+    clear_fields: Sequence[str],
+    previous: dict[str, Any],
+    evidence: str,
 ) -> list[str]:
     """Rendert einen Protokoll-Eintrag (siehe :data:`_LOG_HEADER`)."""
     lines = [f"## {timestamp} · `{paper_id}`", ""]
-    for name in sorted(fields):
+    cleared = set(clear_fields)
+    for name in sorted(set(fields) | cleared):
         old = escape_markdown(str(previous[name]), limit=_LOG_VALUE_LIMIT) or "(leer)"
-        new = escape_markdown(str(fields[name]), limit=_LOG_VALUE_LIMIT)
+        new = (
+            CLEARED_MARKER
+            if name in cleared
+            else escape_markdown(str(fields[name]), limit=_LOG_VALUE_LIMIT)
+        )
         lines.append(f"- `{name}`: {old} → {new}")
     lines.append(f"- Beleg: {escape_markdown(evidence, limit=_LOG_VALUE_LIMIT)}")
     lines.append("")
@@ -154,6 +198,7 @@ def apply_manual_correction(
     paper_id: str,
     fields: dict[str, Any],
     evidence: str,
+    clear_fields: Sequence[str] = (),
 ) -> CorrectionResult:
     """Schreibt eine ``manual``-Korrektur für ein Paper (siehe specs/correct_paper_metadata.md).
 
@@ -165,19 +210,26 @@ def apply_manual_correction(
         fields: Zu setzende Felder, beschränkt auf
             :data:`~research_graphrag.bibliography.model.METADATA_FIELDS`.
         evidence: Nicht-leerer Beleg für die Korrektur.
+        clear_fields: Felder, die **explizit als leer bestätigt** werden sollen (ADR 0040) –
+            markiert das Feld in
+            :attr:`~research_graphrag.bibliography.model.MetadataRecord.cleared_fields`, statt
+            nur seinen Wert zu setzen. Ein Feld darf nicht gleichzeitig in ``fields`` und
+            ``clear_fields`` stehen. Wird dasselbe Feld in einem späteren Aufruf **gesetzt**,
+            verlässt es ``cleared_fields`` wieder.
 
     Returns:
-        Ein :class:`CorrectionResult` mit den geänderten Feldern, ihren vorherigen Werten und
-        dem vollständigen, jetzt gespeicherten ``manual``-Record.
+        Ein :class:`CorrectionResult` mit den geänderten Feldern (gesetzt oder geleert), ihren
+        vorherigen Werten und dem vollständigen, jetzt gespeicherten ``manual``-Record.
 
     Raises:
         DomainError: ``invalid_input`` bei leerer ``paper_id``/``evidence``, keinem, einem
-            unbekannten oder einem ungültigen Feld; ``not_found``, wenn der Index fehlt oder
-            ``paper_id`` unbekannt ist (siehe docs/error-model.md).
+            unbekannten oder einem ungültigen Feld, oder einem Feld, das gleichzeitig gesetzt
+            und geleert werden soll; ``not_found``, wenn der Index fehlt oder ``paper_id``
+            unbekannt ist (siehe docs/error-model.md).
     """
     resolved_db = Path(db_path)
     _validate_known_paper(resolved_db, paper_id)
-    _validate_fields(fields)
+    _validate_request(fields, clear_fields)
     if not evidence.strip():
         raise DomainError(ErrorCode.INVALID_INPUT, "Leerer Beleg (evidence).")
 
@@ -188,9 +240,16 @@ def apply_manual_correction(
     )
 
     base = _base_values(current_manual)
-    previous = {name: (list(base[name]) if name == "authors" else base[name]) for name in fields}
+    touched = set(fields) | set(clear_fields)
+    previous = {name: (list(base[name]) if name == "authors" else base[name]) for name in touched}
 
     merged = {**base, **fields}
+    for name in clear_fields:
+        merged[name] = _empty_value_for(name)
+
+    previous_cleared = current_manual.cleared_fields if current_manual is not None else frozenset()
+    new_cleared = (previous_cleared - set(fields)) | set(clear_fields)
+
     merged_evidence = evidence.strip()
     if current_manual is not None and current_manual.evidence.strip():
         merged_evidence = f"{current_manual.evidence.strip()}; {merged_evidence}"
@@ -207,6 +266,7 @@ def apply_manual_correction(
         url=str(merged["url"]),
         confidence=CONFIDENCE_STRONG,
         evidence=merged_evidence,
+        cleared_fields=frozenset(new_cleared),
     )
 
     save_records(resolved_metadata, upsert_records(existing, [new_record]))
@@ -214,13 +274,13 @@ def apply_manual_correction(
     timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     log_path = append_section(
         Path(data_dir) / LOG_NAME,
-        _render_entry(timestamp, paper_id, fields, previous, evidence.strip()),
+        _render_entry(timestamp, paper_id, fields, clear_fields, previous, evidence.strip()),
         _LOG_HEADER,
     )
 
     return CorrectionResult(
         paper_id=paper_id,
-        applied_fields=tuple(sorted(fields)),
+        applied_fields=tuple(sorted(touched)),
         previous=previous,
         record=new_record,
         log_path=log_path,
