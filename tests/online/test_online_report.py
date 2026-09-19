@@ -6,6 +6,7 @@ Diensten und dürfen die Struktur des Berichts nicht verändern.
 
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 
 import pytest
@@ -25,6 +26,7 @@ from research_graphrag.online.report import (
     DiscoveryReport,
     append_report,
     append_resolutions,
+    append_section,
     escape_markdown,
     render_report,
     render_resolutions,
@@ -242,6 +244,39 @@ def test_append_adds_second_run(tmp_path: Path) -> None:
 
     content = target.read_text(encoding="utf-8")
     assert content.count("## Lauf ") == 2
+
+
+def test_concurrent_appends_do_not_crash_on_a_shared_temp_path(tmp_path: Path) -> None:
+    """Nahezu gleichzeitige Schreibversuche kollidieren nicht mehr auf einem festen ``*.tmp``.
+
+    Vor der Härtung (ADR 0039, Nachtrag) teilten sich alle Aufrufe denselben
+    ``<name>.tmp``-Pfad: Der zuerst fertige ``os.replace`` verschob ihn weg, ein zweiter, fast
+    gleichzeitiger Aufruf traf dann mit seinem eigenen ``os.replace`` ins Leere
+    (``FileNotFoundError``) – genau der Fehler, den ``correct_paper_metadata`` als generischen,
+    nicht diagnostizierbaren ``internal_error`` auslieferte. ``tempfile.mkstemp`` macht das
+    strukturell unmöglich; welcher Schreibversuch inhaltlich gewinnt (letzter Stand), bleibt
+    bewusst ungeprüft (siehe store.md, Abschnitt 7).
+    """
+    target = tmp_path / "corrections_log.md"
+    barrier = threading.Barrier(8)
+    errors: list[BaseException] = []
+
+    def write(index: int) -> None:
+        barrier.wait()
+        try:
+            append_section(target, [f"Eintrag {index}"], ["# Kopf", ""])
+        except BaseException as exc:  # noqa: BLE001 - jede Ausnahme ist hier ein Testfehlschlag
+            errors.append(exc)
+
+    threads = [threading.Thread(target=write, args=(i,)) for i in range(8)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert errors == []
+    assert target.is_file()
+    assert list(tmp_path.glob("*.tmp")) == []
 
 
 def test_store_raw_writes_one_file_per_source(tmp_path: Path) -> None:

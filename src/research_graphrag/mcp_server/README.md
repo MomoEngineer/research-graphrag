@@ -81,6 +81,21 @@ Siehe [docs/vscode-integration.md](../../../docs/vscode-integration.md) – `com
 **venv-Interpreter** (`${workspaceFolder}/.venv/Scripts/python.exe`), `cwd` auf die
 Repository-Wurzel.
 
+## Einbindung in Claude Code
+
+Über [`.mcp.json`](../../../.mcp.json) im Repository-Wurzelverzeichnis. `command` zeigt auf den
+**venv-Interpreter** (`${CLAUDE_PROJECT_DIR}/.venv/Scripts/python.exe`).
+
+> **Kein `cwd` im stdio-Server-Schema von Claude Code.** Anders als `.vscode/mcp.json` kennt das
+> `mcpServers`-Format von Claude Code kein `cwd`-Feld – ohne weitere Vorkehrung würde der
+> Serverprozess das Arbeitsverzeichnis des aufrufenden Claude-Code-Prozesses erben, das **nicht**
+> notwendig die Repository-Wurzel ist. `RESEARCH_GRAPHRAG_INDEX`/`_METADATA`/`_DATA` werden in
+> `.mcp.json` deshalb **alle drei** explizit auf absolute, `${CLAUDE_PROJECT_DIR}`-basierte Pfade
+> gesetzt statt sich auf die cwd-relativen Defaults zu verlassen – sonst würde insbesondere
+> `correct_paper_metadata` still in ein falsches Verzeichnis schreiben (beobachtet als
+> nicht-diagnostizierbarer `internal_error`, seit ADR 0039 (Nachtrag 2026-09-19) mit
+> Exception-Typ/-Meldung im Antworttext).
+
 ## Konfiguration (Umgebungsvariablen)
 
 | Variable | Zweck | Pflicht | Default |

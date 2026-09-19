@@ -33,7 +33,7 @@ flowchart TD
     A["save_records"] --> B["nach paper_id und Herkunfts-Vorrang sortieren"]
     B --> C["je paper_id gruppieren"]
     C --> D["json.dumps mit sort_keys + indent"]
-    D --> E["write_bytes in *.tmp"]
+    D --> E["eindeutige *.tmp-Datei anlegen (tempfile.mkstemp)"]
     E --> F["os.replace auf das Ziel"]
     F --> G["finally: *.tmp entfernen"]
 ```
@@ -96,4 +96,9 @@ schreiben byte-identisch – auch bei umgekehrter Eingabereihenfolge.
 - **Keine Historie.** Ein Upsert überschreibt; wer den Verlauf braucht, findet ihn in
   `data/metadata_log.md` und in der Versionsverwaltung.
 - **Keine Sperren.** Zwei gleichzeitige Läufe können sich überschreiben (der letzte gewinnt);
-  bei einem persönlichen Werkzeug ist das akzeptabel.
+  bei einem persönlichen Werkzeug ist das akzeptabel. Seit ADR 0039 (Nachtrag 2026-09-19) trägt
+  jeder Schreibversuch eine **eindeutige** Temporärdatei (`tempfile.mkstemp` statt eines festen
+  `<name>.tmp`): Zwei fast gleichzeitige Aufrufe von `correct_paper_metadata` (z. B. ohne Warten
+  auf die erste Antwort abgeschickt) stürzen dadurch nicht mehr ab, weil der zweite sonst ins
+  Leere replaced hätte, nachdem der erste seine gemeinsame Temporärdatei bereits weggeschoben
+  hatte – am „letzter gewinnt"-Verhalten selbst ändert das nichts.

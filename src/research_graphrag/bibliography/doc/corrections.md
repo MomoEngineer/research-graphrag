@@ -40,8 +40,10 @@ flowchart TD
     L --> M["vorhandenen manual-Record<br/>dieses Papers suchen"]
     M --> MERGE["Basiswerte + fields<br/>(nur übergebene Felder überschreiben);<br/>clear_fields auf leeren Wert setzen<br/>und cleared_fields fortschreiben;<br/>evidence anhängen"]
     MERGE --> S["upsert_records + save_records<br/>(atomar, deterministisch)"]
-    S --> LOG["append_section →<br/>data/corrections_log.md"]
-    LOG --> R["CorrectionResult"]
+    S -- OSError --> E4["internal_error<br/>mit Exception-Typ/-Meldung"]
+    S -- ok --> LOG["append_section →<br/>data/corrections_log.md"]
+    LOG -- OSError --> E5["internal_error<br/>(manual-Record bereits gespeichert)"]
+    LOG -- ok --> R["CorrectionResult"]
 ```
 
 ### Merge statt Ersetzen
@@ -107,9 +109,15 @@ flowchart LR
 | leere Autorenliste | `invalid_input` |
 | `year` außerhalb `1000..aktuelles Jahr + 1` | `invalid_input` |
 | leeres/fehlendes `evidence` | `invalid_input` |
+| `metadata_path` nicht schreibbar (Sperre, Rechte, falsches Arbeitsverzeichnis) | `internal_error` (mit Exception-Typ/-Meldung, `details.metadata_path`) |
+| `data/corrections_log.md` nicht schreibbar, `manual`-Record aber bereits gespeichert | `internal_error` (mit Exception-Typ/-Meldung, `details.log_path`; Antworttext weist auf den bereits gespeicherten Record hin) |
 
-Alle Prüfungen laufen **vor** jedem Schreibzugriff – ein ungültiger Aufruf hinterlässt weder eine
-Änderung an `metadata/paper_metadata.json` noch einen Protokoll-Eintrag.
+Alle Validierungen laufen **vor** jedem Schreibzugriff – ein ungültiger Aufruf hinterlässt weder
+eine Änderung an `metadata/paper_metadata.json` noch einen Protokoll-Eintrag. Ein OS-Schreibfehler
+kann dagegen **nach** dem ersten der beiden Schreibzugriffe auftreten (siehe Tabelle) – anders als
+bei der generischen Absicherung in `mcp_server.server._guard` liefert dieser anerkannte Fehlerfall
+Exception-Typ und -Meldung mit, statt in einer nichtssagenden Meldung zu verschwinden (Analogie zu
+`extraction.pdf.extract_pdf`).
 
 ## 6. Determinismus
 
@@ -128,3 +136,10 @@ append-only Protokollen (`metadata_log.md`, `references_log.md`).
   bleibt der Handbearbeitung von `metadata/paper_metadata.json` vorbehalten (git-versioniert).
 - **Keine sofortige Wirkung** auf `get_paper`/`get_reference`/`answer_question` – siehe
   `EFFECTIVE_AFTER`.
+- **Kein Lock über den ganzen Lade-Merge-Schreib-Zyklus.** Zwei nahezu gleichzeitige Korrekturen
+  desselben Papers können sich weiterhin überschreiben (der letzte gewinnt, siehe
+  `store.md`, Abschnitt 7) – bei einem persönlichen Werkzeug bewusst akzeptiert. Seit ADR 0039
+  (Nachtrag 2026-09-19) führt das aber nicht mehr zum Absturz: `store.save_records` und
+  `online.report.append_section` nutzen je Schreibversuch eine eindeutige Temporärdatei
+  (`tempfile.mkstemp`), sodass zwei Aufrufe ohne Warten auf die erste Antwort (z. B. vom
+  selben MCP-Client abgeschickt) einander nicht mehr die gemeinsame `*.tmp`-Datei wegziehen.

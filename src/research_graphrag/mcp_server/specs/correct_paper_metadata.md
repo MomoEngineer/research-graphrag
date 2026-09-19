@@ -119,6 +119,13 @@ ein per Regex extrahierter Fehltreffer) sonst weiter durchscheinen würde, weil 
   Liste; `year` außerhalb `1000..aktuelles Jahr + 1`; ein unbekannter Feldname in `clear_fields`;
   ein Feld gleichzeitig als Set-Parameter **und** in `clear_fields` angegeben.
 - `not_found`: Index-Datei fehlt **oder** `paper_id` ist im Index unbekannt.
+- `internal_error`: `metadata/paper_metadata.json` oder `data/corrections_log.md` sind nicht
+  schreibbar (gesperrte Datei, fehlende Schreibrechte, falsch konfiguriertes Arbeitsverzeichnis
+  des Server-Prozesses – siehe [ADR 0039](../../../../docs/adr/0039-correction-tool-and-pdf-file-access.md),
+  Nachtrag 2026-09-19). Anders als die generische Absicherung in `mcp_server.server._guard`
+  liefert diese Meldung Exception-Typ und -Text mit statt einer nichtssagenden Meldung. Scheitert
+  ausschließlich das Protokoll, ist der `manual`-Record bereits gespeichert – die Meldung weist
+  darauf hin.
 
 Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 
@@ -133,10 +140,14 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
 
 ## 8. Reproduzierbarkeit
 
-- Deterministisch: atomares Schreiben (Temporärdatei + `os.replace`), feste Feldreihenfolge,
-  sortierte Schlüssel (siehe `bibliography.store.save_records`). Kein Netz, kein Zufall.
+- Deterministisch: atomares Schreiben über `research_graphrag.atomic_write.atomic_write_bytes`
+  (Temporärdatei je Aufruf + `os.replace` mit Windows-Retry), feste Feldreihenfolge, sortierte
+  Schlüssel (siehe `bibliography.store.save_records`). Kein Netz, kein Zufall.
 - Der einzige nicht-deterministische Anteil ist der Zeitstempel im Protokoll
   (`data/corrections_log.md`), analog zu den bestehenden append-only Protokollen.
+- Zwei fast gleichzeitige Aufrufe (z. B. ohne Warten auf die erste Antwort abgeschickt) stürzen
+  seit ADR 0039 (Nachtrag 2026-09-19) nicht mehr ab; welcher Aufruf inhaltlich gewinnt, bleibt
+  „letzter Schreibversuch" (kein Lock über den Lade-Merge-Schreib-Zyklus).
 
 ## 9. Testabdeckung
 
@@ -144,9 +155,17 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
   Erhalt unveränderter Felder), explizites Leeren (`clear_fields`: markiert das Feld, wird durch
   ein späteres Setzen wieder verlassen, Protokoll-Vermerk `(explizit geleert)`), Validierung je
   Feldtyp (inkl. Widerspruch „gleichzeitig gesetzt und geleert"), Protokoll-Eintrag,
-  Determinismus eines zweiten identischen Aufrufs.
+  Determinismus eines zweiten identischen Aufrufs, `internal_error` mit Exception-Details bei
+  einem OS-Schreibfehler beim Speichern bzw. beim Protokollieren.
 - `tests/bibliography/test_resolve.py`: Ein `manual`-Record mit `cleared_fields` gewinnt mit
   leerem Wert gegen eine niedrigerrangige Herkunft mit echtem (falschem) Wert.
+- `tests/bibliography/test_bibliography_store.py`,
+  `tests/online/test_online_report.py`: Acht nahezu gleichzeitige Schreibversuche auf dieselbe
+  Zieldatei stürzen nicht ab (`test_concurrent_saves_do_not_crash_on_a_shared_temp_path`,
+  `test_concurrent_appends_do_not_crash_on_a_shared_temp_path`).
+- `tests/test_atomic_write.py`: Retry-Verhalten von `atomic_write_bytes` isoliert (Erfolg nach
+  transienter `PermissionError`, Fehlschlag nach Erschöpfung der Versuche, kein Retry bei anderen
+  `OSError`-Unterklassen).
 - `tests/mcp_server/test_server.py`: Tool-Contract über einen In-Memory-Client (Erfolg +
   Fehler-Envelope je Fehlerfall, inkl. `clear_fields`-Widerspruch).
 

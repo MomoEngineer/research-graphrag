@@ -6,7 +6,9 @@
       "args": ["-m", "research_graphrag.mcp_server"],
       "env": {
         "RESEARCH_GRAPHRAG_LOG_LEVEL": "INFO",
-        "RESEARCH_GRAPHRAG_INDEX": "${CLAUDE_PROJECT_DIR}/data/index/index.sqlite"
+        "RESEARCH_GRAPHRAG_INDEX": "${CLAUDE_PROJECT_DIR}/data/index/index.sqlite",
+        "RESEARCH_GRAPHRAG_METADATA": "${CLAUDE_PROJECT_DIR}/metadata/paper_metadata.json",
+        "RESEARCH_GRAPHRAG_DATA": "${CLAUDE_PROJECT_DIR}/data"
       }
     }
   }

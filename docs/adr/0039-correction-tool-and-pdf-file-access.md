@@ -162,3 +162,58 @@ auf dieser Schnittstelle […] Ein vollständiger Rückbau bleibt der Handbearbe
 [ADR 0040](0040-explicit-field-clearing.md) **aufgehoben**: `correct_paper_metadata` erlaubt
 seither über den Parameter `clear_fields`, ein Feld ausdrücklich als leer zu bestätigen (statt
 nur „nie gesetzt"), ohne die versionierte Datei von Hand zu editieren.
+
+## Nachtrag (2026-09-19, zweiter Eintrag): Drei Härtungen nach einem nicht-diagnostizierbaren `correct_paper_metadata`-Fehler
+
+Ein Aufruf schlug zweimal mit dem generischen `internal_error` aus `mcp_server.server._guard`
+fehl (dessen Text bewusst keine Details preisgibt, siehe dessen Modul-Doku), ohne dass der
+aufrufende Client (Claude Code) den zugrunde liegenden Fehler erkennen konnte. Die Untersuchung
+(isolierte Reproduktion der exakten Nutzlast gegen den echten Index, sowie ein direkter
+MCP-Client-Test des Servers **ohne** `cwd`) deckte drei unabhängige Schwachstellen auf, von denen
+mindestens die erste am wahrscheinlichsten zutraf:
+
+1. **`.mcp.json` (Claude Code) setzte `RESEARCH_GRAPHRAG_METADATA`/`_DATA` nicht.** Anders als
+   `.vscode/mcp.json` kennt Claude Codes `mcpServers`-Schema kein `cwd`-Feld (bestätigt gegen die
+   offizielle Claude-Code-Dokumentation) – der Serverprozess erbt daher das Arbeitsverzeichnis des
+   aufrufenden Claude-Code-Prozesses, nicht notwendig die Repository-Wurzel. Mit nur
+   `RESEARCH_GRAPHRAG_INDEX` explizit gesetzt (absolut, daher unempfindlich gegen die cwd)
+   funktionierten alle lesenden Werkzeuge anstandslos, während `correct_paper_metadata` über die
+   cwd-relativen Defaults von `RESEARCH_GRAPHRAG_METADATA`/`_DATA`
+   (`metadata/paper_metadata.json` bzw. `data`) **in ein anderes Verzeichnis schrieb** – im
+   günstigen Fall silent (neue Ordner an falscher Stelle, reproduziert), im ungünstigen Fall mit
+   einem `OSError` (z. B. ein nicht anlegbares Verzeichnis), der bis zu dieser Härtung nicht von
+   der generischen `internal_error`-Meldung unterschieden werden konnte. **Fix:** `.mcp.json`
+   setzt jetzt alle drei Umgebungsvariablen explizit und absolut
+   (`${CLAUDE_PROJECT_DIR}`-basiert), symmetrisch zum bereits gesetzten
+   `RESEARCH_GRAPHRAG_INDEX`.
+2. **OS-Schreibfehler beim Speichern wurden nicht anerkannt, sondern generisch maskiert.** Anders
+   als der bereits bestehende Lesepfad (`extraction.pdf.extract_pdf` fängt `OSError` gezielt ab
+   und liefert `internal_error` **mit** Exception-Text) hatte der neue Schreibpfad in
+   `apply_manual_correction` keine eigene Behandlung für `OSError` beim Aufruf von
+   `store.save_records`/`online.report.append_section` – ein solcher Fehler fiel durch bis zum
+   generischen Catch-all in `_guard`, dessen Meldungstext bewusst keine Details trägt (Begründung:
+   ein **unerwarteter** Programmfehler könnte beliebige interne Zustände preisgeben). Ein
+   OS-Schreibfehler ist dagegen ein **erwarteter**, benannter Fall (Sperre, Rechte, fehlendes
+   Verzeichnis) – **Fix:** `apply_manual_correction` fängt `OSError` an beiden Schreibstellen
+   gezielt ab und liefert `internal_error` mit Exception-Typ, Exception-Text und dem betroffenen
+   Pfad in `details` (Analogie zu `extract_pdf`); `_guards` generische Absicherung für wirklich
+   unvorhergesehene Fehler bleibt bewusst unverändert.
+3. **Zwei fast gleichzeitige Schreibversuche teilten sich denselben Temporärpfad.**
+   `store.save_records` und `online.report.append_section` nutzten je einen festen
+   `<name>.tmp`-Pfad. Schickt ein Client zwei `correct_paper_metadata`-Aufrufe ohne Warten auf die
+   erste Antwort ab (technisch möglich, MCP serialisiert das nicht), können zwei nahezu
+   gleichzeitige Schreibversuche denselben Temporärpfad treffen: Der zuerst fertige
+   `os.replace()` verschiebt ihn weg, der zweite `os.replace()` träfe dann ins Leere
+   (`FileNotFoundError`) – wieder nur als generischer `internal_error` sichtbar gewesen. **Fix:**
+   Beide Funktionen ziehen jetzt über `tempfile.mkstemp` eine **eindeutige** Temporärdatei je
+   Aufruf. Das bereits dokumentierte, akzeptierte „letzter gewinnt"-Verhalten bei echten
+   inhaltlichen Konflikten (kein Lock über den ganzen Lade-Merge-Schreib-Zyklus, siehe
+   [`store.md`](../../src/research_graphrag/bibliography/doc/store.md), Abschnitt 7) ändert sich
+   dadurch **nicht** – behoben ist ausschließlich der Absturz, nicht das Nebenläufigkeits-Update.
+
+Welche der drei Ursachen den ursprünglichen Fehlerbericht auslöste, ließ sich ohne den echten
+Server-Traceback zum Zeitpunkt des Vorfalls nicht mehr abschließend zurückverfolgen (stderr-Log
+lag nicht vor) – (1) ist am plausibelsten, weil sie als einzige beide beobachteten Aufrufe (zwei
+verschiedene `paper_id`s, gleicher generischer Fehler) ohne Sonderannahme erklärt. Alle drei
+Fixes sind unabhängig voneinander korrekt und werden deshalb gemeinsam übernommen; (2) macht jeden
+künftigen Fall dieser Art beim nächsten Auftreten selbst-diagnostizierend.

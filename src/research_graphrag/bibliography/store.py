@@ -6,18 +6,20 @@ und extern aufgelöste Zitationsdaten sich aus den PDFs nicht rekonstruieren las
 (docs/adr/0025-citable-paper-metadata.md, Punkt 1).
 
 Geschrieben wird **deterministisch** (sortierte Schlüssel, feste Feldreihenfolge, ``\\n`` als
-Zeilenende auch unter Windows) und **atomar** (Temporärdatei + :func:`os.replace`) – damit ein
-abgebrochener Lauf keine halbe Datei hinterlässt und ein erneuter Lauf byte-identisch schreibt.
+Zeilenende auch unter Windows) und **atomar** über
+:func:`research_graphrag.atomic_write.atomic_write_bytes` (Temporärdatei + ``os.replace`` mit
+Windows-Retry) – damit ein abgebrochener Lauf keine halbe Datei hinterlässt, ein erneuter Lauf
+byte-identisch schreibt und zwei nahezu gleichzeitige Schreibversuche nicht abstürzen.
 """
 
 from __future__ import annotations
 
 import json
-import os
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
+from research_graphrag.atomic_write import atomic_write_bytes
 from research_graphrag.bibliography.model import ORIGIN_PRECEDENCE, MetadataRecord
 from research_graphrag.errors import DomainError, ErrorCode
 
@@ -128,14 +130,12 @@ def save_records(path: str | Path, records: Iterable[MetadataRecord]) -> int:
 
     file_path = Path(path)
     file_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_path = file_path.with_name(file_path.name + ".tmp")
-    try:
-        # write_bytes statt write_text: verhindert die Windows-Umsetzung von \n auf \r\n und
-        # hält die Datei damit über Plattformen hinweg byte-identisch.
-        tmp_path.write_bytes(text.encode("utf-8"))
-        os.replace(tmp_path, file_path)
-    finally:
-        tmp_path.unlink(missing_ok=True)
+    # write als Bytes (nicht write_text): verhindert die Windows-Umsetzung von \n auf \r\n und
+    # hält die Datei damit über Plattformen hinweg byte-identisch. atomic_write_bytes schließt
+    # zusätzlich die Absturzgefahr zweier nahezu gleichzeitiger Schreibversuche (z. B. zwei
+    # correct_paper_metadata-Aufrufe ohne Warten auf die erste Antwort) – siehe dessen Modul-Doku
+    # (ADR 0039, Nachtrag).
+    atomic_write_bytes(file_path, text.encode("utf-8"))
     return len(ordered)
 
 

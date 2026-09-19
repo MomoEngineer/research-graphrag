@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+import research_graphrag.bibliography.corrections as corrections_module
 from research_graphrag.bibliography.corrections import (
     CLEARED_MARKER,
     EFFECTIVE_AFTER,
@@ -402,3 +403,55 @@ def test_missing_index_raises_not_found(tmp_path: Path) -> None:
         )
 
     assert excinfo.value.code is ErrorCode.NOT_FOUND
+
+
+def test_os_error_while_saving_metadata_is_reported_with_exception_details(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Ein OS-Schreibfehler beim Speichern wird als internal_error **mit** Details gemeldet.
+
+    Anders als der generische Catch-all in ``mcp_server.server._guard`` (dessen Text bewusst
+    keine Details preisgibt) ist ein Schreibfehler hier ein **erwarteter** Fall – analog zum
+    OS-Lesefehler in ``extraction.pdf.extract_pdf`` (ADR 0039, Nachtrag 2026-09-19).
+    """
+    db = _index(tmp_path)
+    metadata_path, data_dir = _paths(tmp_path)
+
+    def _boom(*_args: object, **_kwargs: object) -> None:
+        raise PermissionError("Zugriff verweigert (Test)")
+
+    monkeypatch.setattr(corrections_module, "save_records", _boom)
+
+    with pytest.raises(DomainError) as excinfo:
+        apply_manual_correction(db, metadata_path, data_dir, "aaaa1111", {"doi": "x"}, "Beleg")
+
+    assert excinfo.value.code is ErrorCode.INTERNAL_ERROR
+    assert "PermissionError" in excinfo.value.message
+    assert "Zugriff verweigert (Test)" in excinfo.value.message
+    assert excinfo.value.details["metadata_path"] == str(metadata_path)
+
+
+def test_os_error_while_writing_the_log_mentions_the_already_saved_record(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Scheitert nur das Protokoll, bleibt der bereits gespeicherte manual-Record erkennbar."""
+    db = _index(tmp_path)
+    metadata_path, data_dir = _paths(tmp_path)
+
+    def _boom(*_args: object, **_kwargs: object) -> None:
+        raise OSError("Datei gesperrt (Test)")
+
+    monkeypatch.setattr(corrections_module, "append_section", _boom)
+
+    with pytest.raises(DomainError) as excinfo:
+        apply_manual_correction(db, metadata_path, data_dir, "aaaa1111", {"doi": "x"}, "Beleg")
+
+    assert excinfo.value.code is ErrorCode.INTERNAL_ERROR
+    assert "OSError" in excinfo.value.message
+    assert "Datei gesperrt (Test)" in excinfo.value.message
+    assert str(metadata_path) in excinfo.value.message
+    assert excinfo.value.details["log_path"] == str(data_dir / LOG_NAME)
+    # Der manual-Record wurde trotz des Protokoll-Fehlers bereits gespeichert.
+    stored = load_records(metadata_path)
+    assert len(stored) == 1
+    assert stored[0].doi == "x"

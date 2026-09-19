@@ -56,7 +56,7 @@ flowchart TD
     G -- ja --> I["Bytes unverändert übernehmen"]
     H --> J["Temporärdatei schreiben"]
     I --> J
-    J --> K["os.replace"]
+    J --> K["atomic_write.atomic_write_bytes<br/>(eindeutige Temporärdatei + os.replace mit Retry)"]
 ```
 
 ### Fremder Text ist Eingabe, keine Formatierung
@@ -81,8 +81,11 @@ einhalten – und dann als Klartext in Backticks, nicht als Markdown-Link.
 `write_text` würde unter Windows alle Zeilenenden auf CRLF drehen und damit jede vorhandene Zeile
 verändern. Der Bericht wächst über viele Läufe; ein Verfahren, das bei jedem Lauf die ganze Datei
 umschreibt, macht Änderungen unlesbar. Deshalb dasselbe Muster wie bei `Übersicht.md`:
-vorhandene Bytes übernehmen, Zeilenende erkennen, über eine Temporärdatei mit `os.replace`
-schreiben.
+vorhandene Bytes übernehmen, Zeilenende erkennen, über
+[`atomic_write.atomic_write_bytes`](../../doc/atomic_write.md) schreiben (geteilt mit
+`bibliography.store.save_records`, ADR 0039 Nachtrag): eindeutige Temporärdatei je Aufruf plus
+`os.replace` mit kurzem Retry gegen eine gemessene, transiente `PermissionError` bei
+konkurrierenden Schreibversuchen auf dieselbe Zieldatei.
 
 ### Was der Bericht ausweist
 
@@ -101,9 +104,11 @@ Logik). Schreibt ausschließlich unterhalb von `data/`.
 
 ## 5. Fehler und Grenzfälle
 
-Das Modul wirft keine fachlichen Fehler; Dateisystemfehler werden nicht abgefangen. Ein Lauf ohne
-Treffer wird ausdrücklich als solcher vermerkt statt einen leeren Abschnitt zu erzeugen. Bricht
-das Schreiben ab, bleibt der bisherige Bericht dank `os.replace` unversehrt, und die
+Das Modul wirft keine fachlichen Fehler; eine `OSError` aus `atomic_write_bytes` wird **nicht**
+abgefangen, sondern an den Aufrufer weitergereicht (`bibliography.corrections` übersetzt sie beim
+Korrektur-Protokoll in einen `internal_error` mit Exception-Details, ADR 0039 Nachtrag). Ein Lauf
+ohne Treffer wird ausdrücklich als solcher vermerkt statt einen leeren Abschnitt zu erzeugen.
+Bricht das Schreiben ab, bleibt der bisherige Bericht dank `os.replace` unversehrt, und die
 Temporärdatei wird entfernt.
 
 ## 6. Determinismus

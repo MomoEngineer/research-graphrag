@@ -26,6 +26,12 @@ die erst der nächste ``python -m scripts.ingest``-Lauf neu aus dieser Datei bau
 Verzögerung wie beim bestehenden ``python -m scripts.resolve_metadata``
 (docs/adr/0026-online-metadata-resolution.md). Jeder Aufruf wird zusätzlich append-only in
 ``data/corrections_log.md`` protokolliert (Muster aus :mod:`research_graphrag.online.report`).
+
+Ein OS-Schreibfehler beim Speichern (gesperrte Datei, fehlende Schreibrechte, falsch
+konfiguriertes Arbeitsverzeichnis des MCP-Server-Prozesses) wird als ``internal_error`` **mit**
+Exception-Typ und -Meldung gemeldet, statt in der nichtssagenden generischen Absicherung von
+``mcp_server.server._guard`` zu verschwinden – derselbe Grundsatz wie beim OS-Lesefehler in
+:func:`research_graphrag.extraction.pdf.extract_pdf` (ADR 0039, Nachtrag 2026-09-19).
 """
 
 from __future__ import annotations
@@ -225,7 +231,13 @@ def apply_manual_correction(
         DomainError: ``invalid_input`` bei leerer ``paper_id``/``evidence``, keinem, einem
             unbekannten oder einem ungültigen Feld, oder einem Feld, das gleichzeitig gesetzt
             und geleert werden soll; ``not_found``, wenn der Index fehlt oder ``paper_id``
-            unbekannt ist (siehe docs/error-model.md).
+            unbekannt ist; ``internal_error`` mit Exception-Typ und -Meldung im Text, wenn
+            ``metadata_path`` oder das Protokoll unter ``data_dir`` nicht schreibbar sind (z. B.
+            gesperrte Datei, fehlende Schreibrechte, nicht existierendes Verzeichnis wegen eines
+            falsch konfigurierten Arbeitsverzeichnisses) – anders als der generische Catch-all in
+            ``mcp_server.server._guard`` ist dieser Fall **erwartet** (Analogie zu
+            :func:`research_graphrag.extraction.pdf.extract_pdf`) und liefert deshalb Details
+            statt einer nichtssagenden Meldung (siehe docs/error-model.md).
     """
     resolved_db = Path(db_path)
     _validate_known_paper(resolved_db, paper_id)
@@ -269,14 +281,30 @@ def apply_manual_correction(
         cleared_fields=frozenset(new_cleared),
     )
 
-    save_records(resolved_metadata, upsert_records(existing, [new_record]))
+    try:
+        save_records(resolved_metadata, upsert_records(existing, [new_record]))
+    except OSError as exc:
+        raise DomainError(
+            ErrorCode.INTERNAL_ERROR,
+            f"Korrektur nicht speicherbar ({type(exc).__name__}): {exc}",
+            {"metadata_path": str(resolved_metadata)},
+        ) from exc
 
     timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    log_path = append_section(
-        Path(data_dir) / LOG_NAME,
-        _render_entry(timestamp, paper_id, fields, clear_fields, previous, evidence.strip()),
-        _LOG_HEADER,
-    )
+    log_target = Path(data_dir) / LOG_NAME
+    try:
+        log_path = append_section(
+            log_target,
+            _render_entry(timestamp, paper_id, fields, clear_fields, previous, evidence.strip()),
+            _LOG_HEADER,
+        )
+    except OSError as exc:
+        raise DomainError(
+            ErrorCode.INTERNAL_ERROR,
+            f"Korrektur-Protokoll nicht schreibbar ({type(exc).__name__}): {exc}. Der "
+            f"manual-Record in {resolved_metadata} wurde bereits gespeichert.",
+            {"log_path": str(log_target)},
+        ) from exc
 
     return CorrectionResult(
         paper_id=paper_id,

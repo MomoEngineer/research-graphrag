@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import threading
 from pathlib import Path
 
 import pytest
@@ -75,6 +76,35 @@ def test_no_temporary_file_remains(tmp_path: Path) -> None:
     save_records(target, [_record("p1", ORIGIN_MANUAL, "Titel")])
 
     assert list(tmp_path.iterdir()) == [target]
+
+
+def test_concurrent_saves_do_not_crash_on_a_shared_temp_path(tmp_path: Path) -> None:
+    """Nahezu gleichzeitige ``save_records``-Aufrufe kollidieren nicht mehr auf einem festen
+    ``*.tmp``-Pfad (ADR 0039, Nachtrag) – siehe die analoge Begründung in
+    ``test_online_report.test_concurrent_appends_do_not_crash_on_a_shared_temp_path``. Relevant,
+    weil ein MCP-Client zwei ``correct_paper_metadata``-Aufrufe ohne Warten auf die erste Antwort
+    abschicken kann.
+    """
+    target = tmp_path / "paper_metadata.json"
+    barrier = threading.Barrier(8)
+    errors: list[BaseException] = []
+
+    def write(index: int) -> None:
+        barrier.wait()
+        try:
+            save_records(target, [_record(f"p{index}", ORIGIN_MANUAL, f"Titel {index}")])
+        except BaseException as exc:  # noqa: BLE001 - jede Ausnahme ist hier ein Testfehlschlag
+            errors.append(exc)
+
+    threads = [threading.Thread(target=write, args=(i,)) for i in range(8)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert errors == []
+    assert target.is_file()
+    assert list(tmp_path.glob("*.tmp")) == []
 
 
 def test_missing_file_is_not_an_error(tmp_path: Path) -> None:

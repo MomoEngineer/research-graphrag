@@ -30,6 +30,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from research_graphrag.atomic_write import atomic_write_bytes
+
 from .candidates import Candidate, KnownCandidate
 from .download import DownloadOutcome, describe_outcome
 from .metadata import Resolution
@@ -252,8 +254,10 @@ def append_section(target: Path, lines: Sequence[str], header: Sequence[str]) ->
 
     Existiert die Datei noch nicht, wird sie mit der Kopfzeile angelegt. Bestehender Inhalt wird
     **binär** übernommen, damit vorhandene Zeilenenden unverändert bleiben; geschrieben wird
-    über eine Temporärdatei mit :func:`os.replace`, damit ein Abbruch nichts Halbfertiges
-    hinterlässt (Muster aus docs/adr/0010-drop-in-workflow-and-qa-phase6.md).
+    atomar über :func:`research_graphrag.atomic_write.atomic_write_bytes` (Temporärdatei +
+    ``os.replace`` mit Windows-Retry), damit ein Abbruch nichts Halbfertiges hinterlässt (Muster
+    aus docs/adr/0010-drop-in-workflow-and-qa-phase6.md) und zwei nahezu gleichzeitige
+    Schreibversuche nicht abstürzen (ADR 0039, Nachtrag).
 
     Args:
         target: Zieldatei des Berichts.
@@ -271,12 +275,7 @@ def append_section(target: Path, lines: Sequence[str], header: Sequence[str]) ->
     elif not existing.endswith((b"\n", b"\r")):
         existing += newline
     payload = newline.join(line.encode("utf-8") for line in lines) + newline
-    tmp_path = target.with_name(target.name + ".tmp")
-    try:
-        tmp_path.write_bytes(existing + payload)
-        os.replace(tmp_path, target)
-    finally:
-        tmp_path.unlink(missing_ok=True)
+    atomic_write_bytes(target, existing + payload)
     return target
 
 
