@@ -96,9 +96,15 @@ schreiben byte-identisch – auch bei umgekehrter Eingabereihenfolge.
 - **Keine Historie.** Ein Upsert überschreibt; wer den Verlauf braucht, findet ihn in
   `data/metadata_log.md` und in der Versionsverwaltung.
 - **Keine Sperren.** Zwei gleichzeitige Läufe können sich überschreiben (der letzte gewinnt);
-  bei einem persönlichen Werkzeug ist das akzeptabel. Seit ADR 0039 (Nachtrag 2026-09-19) trägt
-  jeder Schreibversuch eine **eindeutige** Temporärdatei (`tempfile.mkstemp` statt eines festen
-  `<name>.tmp`): Zwei fast gleichzeitige Aufrufe von `correct_paper_metadata` (z. B. ohne Warten
-  auf die erste Antwort abgeschickt) stürzen dadurch nicht mehr ab, weil der zweite sonst ins
-  Leere replaced hätte, nachdem der erste seine gemeinsame Temporärdatei bereits weggeschoben
-  hatte – am „letzter gewinnt"-Verhalten selbst ändert das nichts.
+  bei einem persönlichen Werkzeug ist das akzeptabel. Seit ADR 0039 (Nachtrag 2026-09-19)
+  delegiert `save_records` das eigentliche Schreiben an
+  [`atomic_write.atomic_write_bytes`](../../doc/atomic_write.md), das zwei Absturzursachen
+  konkurrierender Schreibversuche schließt: eine **eindeutige** Temporärdatei je Aufruf statt
+  eines festen `<name>.tmp` (sonst träfe ein zweiter, fast gleichzeitiger Aufruf mit seinem
+  `os.replace` ins Leere, nachdem der erste seine – dann gemeinsame – Temporärdatei bereits
+  weggeschoben hätte) **und** einen kurzen Retry gegen eine gemessene, transiente
+  `PermissionError`, wenn zwei `os.replace`-Aufrufe **dieselbe Zieldatei** treffen (eindeutige
+  Quelle allein reicht dafür nicht). Bemessen für die realistische Gleichzeitigkeit weniger
+  Aufrufe eines einzigen MCP-Clients, nicht für beliebig viele (siehe Modul-Doku von
+  `atomic_write` für die gemessenen Grenzwerte) – am „letzter gewinnt"-Verhalten selbst ändert
+  das nichts.

@@ -119,9 +119,11 @@ ein per Regex extrahierter Fehltreffer) sonst weiter durchscheinen würde, weil 
   Liste; `year` außerhalb `1000..aktuelles Jahr + 1`; ein unbekannter Feldname in `clear_fields`;
   ein Feld gleichzeitig als Set-Parameter **und** in `clear_fields` angegeben.
 - `not_found`: Index-Datei fehlt **oder** `paper_id` ist im Index unbekannt.
-- `internal_error`: `metadata/paper_metadata.json` oder `data/corrections_log.md` sind nicht
-  schreibbar (gesperrte Datei, fehlende Schreibrechte, falsch konfiguriertes Arbeitsverzeichnis
-  des Server-Prozesses – siehe [ADR 0039](../../../../docs/adr/0039-correction-tool-and-pdf-file-access.md),
+- `internal_error`: `metadata/paper_metadata.json` ist beim Laden des bestehenden `manual`-Records
+  (vor dem Merge) nicht lesbar, **oder** `metadata/paper_metadata.json`/`data/corrections_log.md`
+  sind beim Schreiben nicht schreibbar (gesperrte Datei, fehlende Schreibrechte, falsch
+  konfiguriertes Arbeitsverzeichnis des Server-Prozesses – siehe
+  [ADR 0039](../../../../docs/adr/0039-correction-tool-and-pdf-file-access.md),
   Nachtrag 2026-09-19). Anders als die generische Absicherung in `mcp_server.server._guard`
   liefert diese Meldung Exception-Typ und -Text mit statt einer nichtssagenden Meldung. Scheitert
   ausschließlich das Protokoll, ist der `manual`-Record bereits gespeichert – die Meldung weist
@@ -156,7 +158,8 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
   ein späteres Setzen wieder verlassen, Protokoll-Vermerk `(explizit geleert)`), Validierung je
   Feldtyp (inkl. Widerspruch „gleichzeitig gesetzt und geleert"), Protokoll-Eintrag,
   Determinismus eines zweiten identischen Aufrufs, `internal_error` mit Exception-Details bei
-  einem OS-Schreibfehler beim Speichern bzw. beim Protokollieren.
+  einem OS-Lesefehler beim Laden der bestehenden Metadaten bzw. einem OS-Schreibfehler beim
+  Speichern oder beim Protokollieren.
 - `tests/bibliography/test_resolve.py`: Ein `manual`-Record mit `cleared_fields` gewinnt mit
   leerem Wert gegen eine niedrigerrangige Herkunft mit echtem (falschem) Wert.
 - `tests/bibliography/test_bibliography_store.py`,
@@ -167,7 +170,9 @@ Kategorien gemäß [docs/error-model.md](../../../../docs/error-model.md).
   transienter `PermissionError`, Fehlschlag nach Erschöpfung der Versuche, kein Retry bei anderen
   `OSError`-Unterklassen).
 - `tests/mcp_server/test_server.py`: Tool-Contract über einen In-Memory-Client (Erfolg +
-  Fehler-Envelope je Fehlerfall, inkl. `clear_fields`-Widerspruch).
+  Fehler-Envelope je Fehlerfall, inkl. `clear_fields`-Widerspruch und – end-to-end bis zum
+  Client-Envelope – `internal_error` mit Exception-Typ/-Text und `details` bei einem
+  OS-Schreibfehler).
 
 ## 10. Beispiele
 

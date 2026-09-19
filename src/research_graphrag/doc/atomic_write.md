@@ -55,6 +55,19 @@ dabei reproduzierbar 2–4 von 8 Versuchen fehl). Ein knapper Retry (`_REPLACE_A
 Retry traten über mehrere Wiederholungen **keine** Fehlschläge mehr auf. Der letzte Versuch reicht
 eine fortbestehende `PermissionError` unverändert weiter, statt sie zu verschlucken.
 
+**Der Retry ist eine bemessene, keine unbedingte Absicherung.** Eine ergänzende Messung mit mehr
+Gleichzeitigkeit zeigt die Grenze: Bei 16–32 parallelen Schreibversuchen blieb die Fehlerquote bei
+0, bei 50 parallelen Versuchen scheiterte 1 von 50, bei 100 waren es 7 von 100 (jeweils
+`PermissionError` nach Erschöpfung der 5 Versuche). Für den tatsächlichen Anwendungsfall – ein
+MCP-Client, der im schlechtesten Fall zwei bis wenige `correct_paper_metadata`-Aufrufe ohne
+Warten abschickt, nicht Dutzende – ist die gewählte Bemessung reichlich; ein größeres
+`_REPLACE_ATTEMPTS` für einen praktisch nicht auftretenden Grad an Gleichzeitigkeit wäre für ein
+persönliches Werkzeug mit einem einzigen Nutzer unverhältnismäßig (right-sized, CONTRIBUTING.md).
+Bleiben die Versuche dennoch erschöpft, ist das Verhalten unverändert zu vor diesem Nachtrag: Die
+`PermissionError` wird weitergereicht und von `bibliography.corrections` in einen
+diagnostizierbaren `internal_error` übersetzt statt in einem stillen oder nichtssagenden Fehler
+zu enden.
+
 ### Warum kein echtes Lock
 
 Eine echte Sperre über den ganzen Lade-Merge-Schreib-Zyklus (nicht nur über den finalen

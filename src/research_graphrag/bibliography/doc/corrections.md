@@ -37,7 +37,8 @@ flowchart TD
     V2 -- ja --> V3{"evidence leer?"}
     V3 -- ja --> E3["invalid_input"]
     V3 -- nein --> L["load_records<br/>(manual + resolved aller Paper)"]
-    L --> M["vorhandenen manual-Record<br/>dieses Papers suchen"]
+    L -- OSError --> E4L["internal_error<br/>mit Exception-Typ/-Meldung"]
+    L -- ok --> M["vorhandenen manual-Record<br/>dieses Papers suchen"]
     M --> MERGE["Basiswerte + fields<br/>(nur übergebene Felder überschreiben);<br/>clear_fields auf leeren Wert setzen<br/>und cleared_fields fortschreiben;<br/>evidence anhängen"]
     MERGE --> S["upsert_records + save_records<br/>(atomar, deterministisch)"]
     S -- OSError --> E4["internal_error<br/>mit Exception-Typ/-Meldung"]
@@ -109,19 +110,21 @@ flowchart LR
 | leere Autorenliste | `invalid_input` |
 | `year` außerhalb `1000..aktuelles Jahr + 1` | `invalid_input` |
 | leeres/fehlendes `evidence` | `invalid_input` |
+| `metadata_path` nicht lesbar (Sperre, Rechte) beim Laden vor dem Merge | `internal_error` (mit Exception-Typ/-Meldung, `details.metadata_path`) |
 | `metadata_path` nicht schreibbar (Sperre, Rechte, falsches Arbeitsverzeichnis) | `internal_error` (mit Exception-Typ/-Meldung, `details.metadata_path`) |
 | `data/corrections_log.md` nicht schreibbar, `manual`-Record aber bereits gespeichert | `internal_error` (mit Exception-Typ/-Meldung, `details.log_path`; Antworttext weist auf den bereits gespeicherten Record hin) |
 
-Alle Validierungen laufen **vor** jedem Schreibzugriff – ein ungültiger Aufruf hinterlässt weder
-eine Änderung an `metadata/paper_metadata.json` noch einen Protokoll-Eintrag. Ein OS-Schreibfehler
-kann dagegen **nach** dem ersten der beiden Schreibzugriffe auftreten (siehe Tabelle) – anders als
-bei der generischen Absicherung in `mcp_server.server._guard` liefert dieser anerkannte Fehlerfall
-Exception-Typ und -Meldung mit, statt in einer nichtssagenden Meldung zu verschwinden (Analogie zu
-`extraction.pdf.extract_pdf`).
+Alle Validierungen laufen **vor** jedem Datei-Zugriff – ein ungültiger Aufruf hinterlässt weder
+eine Änderung an `metadata/paper_metadata.json` noch einen Protokoll-Eintrag. Ein OS-Fehler kann
+dagegen **während** der drei Datei-Zugriffe auftreten (Lesen vor dem Merge, zwei Schreibzugriffe
+danach, siehe Tabelle) – anders als bei der generischen Absicherung in `mcp_server.server._guard`
+liefert dieser anerkannte Fehlerfall Exception-Typ und -Meldung mit, statt in einer
+nichtssagenden Meldung zu verschwinden (Analogie zu `extraction.pdf.extract_pdf`).
 
 ## 6. Determinismus
 
-Atomares Schreiben (Temporärdatei + `os.replace`, geerbt von `bibliography.store.save_records`),
+Atomares Schreiben über `atomic_write.atomic_write_bytes` (Temporärdatei je Aufruf + `os.replace`
+mit Windows-Retry, geerbt von `bibliography.store.save_records`/`online.report.append_section`),
 feste Feldreihenfolge, sortierte Schlüssel. Der einzige nicht-deterministische Anteil ist der
 Zeitstempel im Protokoll-Eintrag (`data/corrections_log.md`), analog zu den bestehenden
 append-only Protokollen (`metadata_log.md`, `references_log.md`).
@@ -140,6 +143,10 @@ append-only Protokollen (`metadata_log.md`, `references_log.md`).
   desselben Papers können sich weiterhin überschreiben (der letzte gewinnt, siehe
   `store.md`, Abschnitt 7) – bei einem persönlichen Werkzeug bewusst akzeptiert. Seit ADR 0039
   (Nachtrag 2026-09-19) führt das aber nicht mehr zum Absturz: `store.save_records` und
-  `online.report.append_section` nutzen je Schreibversuch eine eindeutige Temporärdatei
-  (`tempfile.mkstemp`), sodass zwei Aufrufe ohne Warten auf die erste Antwort (z. B. vom
-  selben MCP-Client abgeschickt) einander nicht mehr die gemeinsame `*.tmp`-Datei wegziehen.
+  `online.report.append_section` schreiben über
+  [`atomic_write.atomic_write_bytes`](../../doc/atomic_write.md), das je Schreibversuch eine
+  eindeutige Temporärdatei zieht (schließt die `FileNotFoundError`, wenn zwei Aufrufe ohne Warten
+  auf die erste Antwort dieselbe Temporärdatei getroffen hätten) **und** einen kurzen Retry gegen
+  eine gemessene, transiente `PermissionError` von `os.replace` auf dieselbe Zieldatei unternimmt
+  (bemessen für wenige, nicht für beliebig viele gleichzeitige Aufrufe – siehe dessen Modul-Doku
+  für die gemessenen Grenzwerte).

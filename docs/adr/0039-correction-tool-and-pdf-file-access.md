@@ -186,34 +186,60 @@ mindestens die erste am wahrscheinlichsten zutraf:
    setzt jetzt alle drei Umgebungsvariablen explizit und absolut
    (`${CLAUDE_PROJECT_DIR}`-basiert), symmetrisch zum bereits gesetzten
    `RESEARCH_GRAPHRAG_INDEX`.
-2. **OS-Schreibfehler beim Speichern wurden nicht anerkannt, sondern generisch maskiert.** Anders
-   als der bereits bestehende Lesepfad (`extraction.pdf.extract_pdf` fängt `OSError` gezielt ab
-   und liefert `internal_error` **mit** Exception-Text) hatte der neue Schreibpfad in
-   `apply_manual_correction` keine eigene Behandlung für `OSError` beim Aufruf von
-   `store.save_records`/`online.report.append_section` – ein solcher Fehler fiel durch bis zum
-   generischen Catch-all in `_guard`, dessen Meldungstext bewusst keine Details trägt (Begründung:
-   ein **unerwarteter** Programmfehler könnte beliebige interne Zustände preisgeben). Ein
-   OS-Schreibfehler ist dagegen ein **erwarteter**, benannter Fall (Sperre, Rechte, fehlendes
-   Verzeichnis) – **Fix:** `apply_manual_correction` fängt `OSError` an beiden Schreibstellen
-   gezielt ab und liefert `internal_error` mit Exception-Typ, Exception-Text und dem betroffenen
-   Pfad in `details` (Analogie zu `extract_pdf`); `_guards` generische Absicherung für wirklich
-   unvorhergesehene Fehler bleibt bewusst unverändert.
-3. **Zwei fast gleichzeitige Schreibversuche teilten sich denselben Temporärpfad.**
+2. **OS-Lese-/Schreibfehler in `apply_manual_correction` wurden nicht anerkannt, sondern
+   generisch maskiert.** Anders als der bereits bestehende Lesepfad an anderer Stelle im System
+   (`extraction.pdf.extract_pdf` fängt `OSError` gezielt ab und liefert `internal_error` **mit**
+   Exception-Text) hatte `apply_manual_correction` keine eigene Behandlung für `OSError` an
+   seinen **drei** Datei-Zugriffsstellen: dem `load_records`-Aufruf vor dem Merge (liest den
+   bestehenden `manual`-Record) sowie den beiden Schreibzugriffen
+   (`store.save_records`/`online.report.append_section`) – ein Fehler an jeder dieser Stellen
+   fiel durch bis zum generischen Catch-all in `_guard`, dessen Meldungstext bewusst keine
+   Details trägt (Begründung: ein **unerwarteter** Programmfehler könnte beliebige interne
+   Zustände preisgeben). Ein OS-Lese-/Schreibfehler ist dagegen ein **erwarteter**, benannter Fall
+   (Sperre, Rechte, fehlendes Verzeichnis) – **Fix:** `apply_manual_correction` fängt `OSError` an
+   allen drei Stellen gezielt ab und liefert `internal_error` mit Exception-Typ, Exception-Text
+   und dem betroffenen Pfad in `details` (Analogie zu `extract_pdf`); `_guards` generische
+   Absicherung für wirklich unvorhergesehene Fehler bleibt bewusst unverändert.
+3. **Zwei fast gleichzeitige Schreibversuche teilten sich denselben Temporärpfad – und selbst mit
+   eindeutigem Pfad kann `os.replace` auf dieselbe Zieldatei transient scheitern.**
    `store.save_records` und `online.report.append_section` nutzten je einen festen
    `<name>.tmp`-Pfad. Schickt ein Client zwei `correct_paper_metadata`-Aufrufe ohne Warten auf die
    erste Antwort ab (technisch möglich, MCP serialisiert das nicht), können zwei nahezu
    gleichzeitige Schreibversuche denselben Temporärpfad treffen: Der zuerst fertige
    `os.replace()` verschiebt ihn weg, der zweite `os.replace()` träfe dann ins Leere
-   (`FileNotFoundError`) – wieder nur als generischer `internal_error` sichtbar gewesen. **Fix:**
-   Beide Funktionen ziehen jetzt über `tempfile.mkstemp` eine **eindeutige** Temporärdatei je
-   Aufruf. Das bereits dokumentierte, akzeptierte „letzter gewinnt"-Verhalten bei echten
-   inhaltlichen Konflikten (kein Lock über den ganzen Lade-Merge-Schreib-Zyklus, siehe
+   (`FileNotFoundError`) – wieder nur als generischer `internal_error` sichtbar gewesen. Eine
+   Nachmessung mit acht parallelen Schreibversuchen auf **eine** eindeutige Temporärdatei je
+   Aufruf zeigte zusätzlich: Das allein genügt nicht – zwei nahezu gleichzeitige `os.replace`-
+   Aufrufe auf **dieselbe Zieldatei** scheiterten reproduzierbar bei 2–4 von 8 Versuchen mit
+   `PermissionError` (`[WinError 5]`), weil ein anderer, ebenfalls gerade ersetzender Aufruf die
+   Zieldatei im selben Moment kurz hält. **Fix:** Ein neues, geteiltes Modul
+   [`atomic_write.py`](../../src/research_graphrag/atomic_write.py)
+   (Modul-Doku: [`atomic_write.md`](../../src/research_graphrag/doc/atomic_write.md)) bündelt für
+   beide Funktionen eine **eindeutige** Temporärdatei je Aufruf (`tempfile.mkstemp`, schließt die
+   `FileNotFoundError`) **und** einen knappen Retry auf genau diese `PermissionError`
+   (5 Versuche, 50 ms Abstand). Eine erweiterte Messung (16/32/50/100 parallele Schreibversuche)
+   zeigt die Grenze dieses Retries ehrlich: 0 Fehlschläge bis 32, 1 von 50, 7 von 100 – für den
+   tatsächlichen Anwendungsfall (wenige, nicht Dutzende gleichzeitige Aufrufe eines einzigen
+   MCP-Clients) reichlich bemessen, aber bewusst **kein** unbedingtes Versprechen. Bleiben die
+   Versuche erschöpft, greift weiterhin Fix (2): eine diagnostizierbare `internal_error`-Meldung
+   statt eines stillen oder nichtssagenden Fehlers. Das bereits dokumentierte, akzeptierte
+   „letzter gewinnt"-Verhalten bei echten inhaltlichen Konflikten (kein Lock über den ganzen
+   Lade-Merge-Schreib-Zyklus, siehe
    [`store.md`](../../src/research_graphrag/bibliography/doc/store.md), Abschnitt 7) ändert sich
-   dadurch **nicht** – behoben ist ausschließlich der Absturz, nicht das Nebenläufigkeits-Update.
+   dadurch **nicht** – behoben ist der Absturz, nicht das Nebenläufigkeits-Update.
 
 Welche der drei Ursachen den ursprünglichen Fehlerbericht auslöste, ließ sich ohne den echten
 Server-Traceback zum Zeitpunkt des Vorfalls nicht mehr abschließend zurückverfolgen (stderr-Log
 lag nicht vor) – (1) ist am plausibelsten, weil sie als einzige beide beobachteten Aufrufe (zwei
-verschiedene `paper_id`s, gleicher generischer Fehler) ohne Sonderannahme erklärt. Alle drei
-Fixes sind unabhängig voneinander korrekt und werden deshalb gemeinsam übernommen; (2) macht jeden
-künftigen Fall dieser Art beim nächsten Auftreten selbst-diagnostizierend.
+verschiedene `paper_id`s, gleicher generischer Fehler) ohne Sonderannahme erklärt; (3) ist am
+solidesten **empirisch belegt**, weil die `PermissionError`-Rennbedingung reproduzierbar gemessen
+wurde, statt nur plausibel zu sein. Alle drei Fixes sind unabhängig voneinander korrekt und werden
+deshalb gemeinsam übernommen; (2) macht jeden künftigen Fall dieser Art beim nächsten Auftreten
+selbst-diagnostizierend.
+
+**Abschließend verifiziert:** Nach allen drei Fixes wurden exakt die beiden ursprünglich
+fehlgeschlagenen Nutzlasten (Paper `396a0fadeb4cd40f`, `730f1a9f38d16689`) end-to-end gegen einen
+echten, per `stdio` gestarteten Serverprozess ohne `cwd` (wie unter (1) beschrieben) erneut
+gesendet – gegen eine isolierte Kopie von `metadata/paper_metadata.json`/`data/`, nicht gegen den
+Produktivbestand. Beide Aufrufe liefern jetzt `isError = false` mit den erwarteten
+`applied_fields` und einem Protokoll-Eintrag in `corrections_log.md`.

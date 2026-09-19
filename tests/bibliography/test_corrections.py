@@ -405,6 +405,34 @@ def test_missing_index_raises_not_found(tmp_path: Path) -> None:
     assert excinfo.value.code is ErrorCode.NOT_FOUND
 
 
+def test_os_error_while_reading_existing_metadata_is_reported_with_exception_details(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Ein OS-Lesefehler beim Laden der bestehenden Metadaten wird ebenfalls **mit** Details gemeldet.
+
+    Nicht nur der Schreibfehler ist abgedeckt: Der Merge-Schritt liest ``metadata_path`` vor jedem
+    Schreiben, damit kann ein Lesefehler (z. B. eine gesperrte Datei) genauso auftreten wie ein
+    Schreibfehler (ADR 0039, Nachtrag 2026-09-19).
+    """
+    db = _index(tmp_path)
+    metadata_path, data_dir = _paths(tmp_path)
+
+    def _boom(*_args: object, **_kwargs: object) -> None:
+        raise PermissionError("Zugriff verweigert beim Lesen (Test)")
+
+    monkeypatch.setattr(corrections_module, "load_records", _boom)
+
+    with pytest.raises(DomainError) as excinfo:
+        apply_manual_correction(db, metadata_path, data_dir, "aaaa1111", {"doi": "x"}, "Beleg")
+
+    assert excinfo.value.code is ErrorCode.INTERNAL_ERROR
+    assert "PermissionError" in excinfo.value.message
+    assert "Zugriff verweigert beim Lesen (Test)" in excinfo.value.message
+    assert excinfo.value.details["metadata_path"] == str(metadata_path)
+    # Nichts wurde geschrieben - der Lesefehler trat vor jedem Schreibzugriff auf.
+    assert not metadata_path.exists()
+
+
 def test_os_error_while_saving_metadata_is_reported_with_exception_details(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

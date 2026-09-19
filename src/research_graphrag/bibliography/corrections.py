@@ -232,9 +232,10 @@ def apply_manual_correction(
             unbekannten oder einem ungültigen Feld, oder einem Feld, das gleichzeitig gesetzt
             und geleert werden soll; ``not_found``, wenn der Index fehlt oder ``paper_id``
             unbekannt ist; ``internal_error`` mit Exception-Typ und -Meldung im Text, wenn
-            ``metadata_path`` oder das Protokoll unter ``data_dir`` nicht schreibbar sind (z. B.
-            gesperrte Datei, fehlende Schreibrechte, nicht existierendes Verzeichnis wegen eines
-            falsch konfigurierten Arbeitsverzeichnisses) – anders als der generische Catch-all in
+            ``metadata_path`` nicht lesbar oder nicht schreibbar ist, oder das Protokoll unter
+            ``data_dir`` nicht schreibbar ist (z. B. gesperrte Datei, fehlende Schreibrechte,
+            nicht existierendes Verzeichnis wegen eines falsch konfigurierten
+            Arbeitsverzeichnisses) – anders als der generische Catch-all in
             ``mcp_server.server._guard`` ist dieser Fall **erwartet** (Analogie zu
             :func:`research_graphrag.extraction.pdf.extract_pdf`) und liefert deshalb Details
             statt einer nichtssagenden Meldung (siehe docs/error-model.md).
@@ -246,7 +247,14 @@ def apply_manual_correction(
         raise DomainError(ErrorCode.INVALID_INPUT, "Leerer Beleg (evidence).")
 
     resolved_metadata = Path(metadata_path)
-    existing = load_records(resolved_metadata)
+    try:
+        existing = load_records(resolved_metadata)
+    except OSError as exc:
+        raise DomainError(
+            ErrorCode.INTERNAL_ERROR,
+            f"Bestehende Metadaten nicht lesbar ({type(exc).__name__}): {exc}",
+            {"metadata_path": str(resolved_metadata)},
+        ) from exc
     current_manual = next(
         (r for r in existing if r.paper_id == paper_id and r.origin == ORIGIN_MANUAL), None
     )

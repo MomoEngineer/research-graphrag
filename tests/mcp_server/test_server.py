@@ -30,6 +30,7 @@ from mcp.types import (
     TextContent,
 )
 
+import research_graphrag.bibliography.corrections as corrections_module
 from research_graphrag.extraction.pdf import CanonicalPaper
 from research_graphrag.indexing.tfidf_index import build_index
 from research_graphrag.mcp_server import server as server_module
@@ -305,6 +306,37 @@ async def test_correct_paper_metadata_unknown_paper_yields_not_found_envelope(
         )
     assert result.isError is True
     assert _structured(result)["error"]["code"] == "not_found"
+
+
+@pytest.mark.anyio
+async def test_correct_paper_metadata_os_error_yields_internal_error_with_details(
+    index_db: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Ein OS-Schreibfehler kommt end-to-end als internal_error **mit** Details beim Client an.
+
+    Anders als der generische Catch-all in ``_guard`` (dessen Meldung bewusst keine Details
+    preisgibt) ist ein Schreibfehler in ``apply_manual_correction`` ein **erwarteter** Fall: Die
+    Funktion übersetzt ihn selbst in eine ``DomainError`` mit Exception-Typ/-Text, die ``_guard``
+    über den ``except DomainError``-Zweig durchreicht – nicht über den generischen Catch-all
+    (ADR 0039, Nachtrag 2026-09-19).
+    """
+
+    def _boom(*_args: object, **_kwargs: object) -> None:
+        raise PermissionError("Zugriff verweigert (Test)")
+
+    monkeypatch.setattr(corrections_module, "save_records", _boom)
+
+    async with client_session(mcp) as client:
+        result = await client.call_tool(
+            "correct_paper_metadata",
+            {"paper_id": "aaaa0001", "doi": "10.1/x", "evidence": "Beleg"},
+        )
+    assert result.isError is True
+    envelope = _structured(result)["error"]
+    assert envelope["code"] == "internal_error"
+    assert "PermissionError" in envelope["message"]
+    assert "Zugriff verweigert (Test)" in envelope["message"]
+    assert "metadata_path" in envelope["details"]
 
 
 @pytest.mark.anyio
