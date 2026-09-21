@@ -35,6 +35,7 @@ data/*
 # Lokale Symlinks auf externes Datenverzeichnis (maschinenspezifischer Pfad)
 /data
 /papers
+/metadata
 
 # Betriebssystem
 Thumbs.db
