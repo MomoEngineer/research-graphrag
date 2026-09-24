@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/extraction/refstub.py` |
 | **Paket** | `extraction` – Quelldatei zu Canonical JSON |
-| **Phase** | 13 / R2 |
-| **Grundlagen** | [ADR 0030](../../../../docs/adr/0030-reference-entries-in-corpus-phase13.md) · [ADR 0029](../../../../docs/adr/0029-reference-stub-resolution-phase13.md) · [ADR 0006](../../../../docs/adr/0006-canonical-model-phase2-scope.md) |
+| **Phase** | 13 / R2, erweitert in 17 / A2 |
+| **Grundlagen** | [ADR 0030](../../../../docs/adr/0030-reference-entries-in-corpus-phase13.md) · [ADR 0029](../../../../docs/adr/0029-reference-stub-resolution-phase13.md) · [ADR 0006](../../../../docs/adr/0006-canonical-model-phase2-scope.md) · [ADR 0041](../../../../docs/adr/0041-author-identity-and-schema.md) |
 
 ---
 
@@ -19,7 +19,9 @@ ohne Gegenwert.
 Das Modul ist zugleich die **einzige Definitionsstelle des Stub-Formats**: Konstanten und Leser
 leben hier, der schreibende Online-Lauf
 ([`online/references.py`](../../online/doc/references.md)) importiert sie. Wer ein Format schreibt
-und wer es liest, teilen sich damit eine Wahrheit.
+und wer es liest, teilen sich damit eine Wahrheit. *Nachtrag Phase 17 / A2:* Tatsächlich
+definierte der Schreiber Endung, Formatversion und Dokumentart bis dahin noch einmal selbst. Seit
+ADR 0041 importiert er sie wirklich von hier.
 
 ## 2. Öffentliche Schnittstelle
 
@@ -28,8 +30,8 @@ und wer es liest, teilen sich damit eine Wahrheit.
 | `extract_stub` | Funktion | Datei → `CanonicalPaper` (der reguläre Weg) |
 | `parse_stub` | Funktion | Rohbytes → `ReferenceStub` (Formatprüfung und Bereinigung) |
 | `canonical_from_stub` | Funktion | Werte → `CanonicalPaper` (netzfrei, dateisystemfrei) |
-| `ReferenceStub` | Dataclass | der geprüfte Inhalt einer Stub-Datei |
-| `STUB_SUFFIX` / `STUB_SCHEMA_VERSION` | Konstanten | Endung und Formatversion |
+| `ReferenceStub` | Dataclass | der geprüfte Inhalt einer Stub-Datei; `bibliography` liefert ihn als `SourceBibliography` |
+| `STUB_SUFFIX` / `STUB_SCHEMA_VERSION` | Konstanten | Endung und Formatversion (`0.2.0` seit Phase 17 / A2) |
 | `ABSTRACT_SECTION_TITLE` | Konstante | Titel der einzigen Section |
 | `MAX_TITLE_CHARS` / `MAX_ABSTRACT_CHARS` | Konstanten | Längengrenzen fremder Eingaben |
 
@@ -46,10 +48,23 @@ flowchart TD
     F -- nein --> E
     F -- ja --> G["Werte bereinigen<br/>einzeilig · druckbar · begrenzt"]
     G --> H["canonical_from_stub"]
-    H --> I["1 Section (abstract)<br/>1 Chunk: Titel + Abstract<br/>page 0 · n_pages 0"]
+    H --> I["1 Section (abstract)<br/>1 Chunk: Titel + Abstract<br/>page 0 · n_pages 0<br/>+ bibliography (Titel, Autoren samt Kennung, Jahr, Venue)"]
     I --> J{"Abstract da?"}
     J -- nein --> K["reference_without_abstract"]
 ```
+
+### Bibliografie der Datei (Phase 17 / A2)
+
+Bis Phase 17 gingen Autoren, Jahr, Venue und URL der Stub-Datei hier verloren. Das Canonical trug
+nur die Identifikatoren, und im Index kamen 5 von 366 Autorenlisten an, und zwar nur über einen
+nachträglichen Auflösungslauf (Roadmap Phase 17, Befund 2). Jetzt reicht der Adapter die Angaben als
+`SourceBibliography` an das Canonical weiter. [`metadata_index`](../../indexing/doc/metadata_index.md)
+macht daraus einen `resolved`-Datensatz.
+
+Format **0.2.0** ergänzt je Autor `author_ids` (OpenAlex) und `author_orcids`, positionsgleich zu
+`authors`. Der Leser prüft jede Kennung. Fällt beim Bereinigen ein leerer Name heraus, wäre die
+Zuordnung verschoben; dann entfallen die Kennungen ganz. Eine 0.1.0-Datei ist eine gültige
+0.2.0-Datei ohne Kennungen, und die Version wird bewusst nicht geprüft.
 
 ### Drei gesetzte Eigenschaften
 

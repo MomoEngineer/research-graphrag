@@ -91,7 +91,19 @@ def test_collects_the_declared_sources(workspace: Path, tmp_path: Path) -> None:
     assert "papers/Zweites (RAG) Über Ähnlichkeit.pdf" in paths
     for name in SOURCE_FILES:
         assert name in paths
-    assert set(SOURCE_DIRECTORIES) == {"papers"}
+    assert set(SOURCE_DIRECTORIES) == {"papers", "metadata/llm_answers"}
+
+
+def test_the_llm_answers_of_the_worklist_are_backed_up(workspace: Path, tmp_path: Path) -> None:
+    """Phase 17 / A1: Die LLM-Antworten sind aus keiner Quelle rekonstruierbar (ADR 0042)."""
+    answers = workspace / "metadata" / "llm_answers"
+    answers.mkdir(parents=True, exist_ok=True)
+    (answers / "20260924T100000Z.json").write_text('{"antworten": []}', encoding="utf-8")
+
+    report = create_backup(workspace, tmp_path / "sicherung")
+
+    paths = {item.relative_path for item in report.items}
+    assert "metadata/llm_answers/20260924T100000Z.json" in paths
 
 
 def test_derived_artefacts_are_never_backed_up(workspace: Path, tmp_path: Path) -> None:

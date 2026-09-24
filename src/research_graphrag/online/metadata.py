@@ -20,9 +20,10 @@ Zeichenketten gelten als nicht vertrauenswürdige Eingabe und werden vor der Üb
 from __future__ import annotations
 
 import json
-from collections.abc import Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 from urllib.parse import quote
 
 from ..bibliography.model import (
@@ -31,7 +32,21 @@ from ..bibliography.model import (
     CONFIDENCE_WEAK,
     ORIGIN_MANUAL,
     ORIGIN_RESOLVED,
+    AuthorIdentity,
     MetadataRecord,
+    PaperReview,
+    Rejection,
+    normalize_openalex_author_id,
+    normalize_orcid,
+)
+from ..bibliography.titlepage import (
+    VERDICT_CONFIRMED,
+    VERDICT_FOREIGN,
+    Calibration,
+    TitlePageCheck,
+    is_rejected,
+    rejection_for,
+    upgrade,
 )
 from ..errors import DomainError, ErrorCode
 from ..indexing.citation_graph import normalize_title
@@ -74,6 +89,9 @@ MATCH_ARXIV = "arxiv"
 MATCH_TITLE = "title"
 """Belegart: Titel-Suche mit Ähnlichkeitsprüfung."""
 
+HTTP_TOO_MANY_REQUESTS = 429
+"""Statuscode für ein erschöpftes Kontingent: Die Auflösung eines Papers bricht dann ab."""
+
 
 @dataclass(frozen=True)
 class ResolutionTarget:
@@ -112,6 +130,9 @@ class Resolution:
         match: Belegart (:data:`MATCH_DOI`, :data:`MATCH_ARXIV`, :data:`MATCH_TITLE`) oder leer.
         note: Klartext-Begründung – auch (und gerade) im Misserfolgsfall.
         raw: Rohantworten des Laufs für die Ablage.
+        rejected: In **diesem** Lauf über den Seite-1-Beleg verworfene Treffer; der Aufrufer
+            speichert sie als Ablehnungsvermerk (ADR 0042).
+        check: Seite-1-Beleg des übernommenen Treffers; ``None``, wenn nicht geprüft wurde.
     """
 
     target: ResolutionTarget
@@ -119,6 +140,8 @@ class Resolution:
     match: str = ""
     note: str = ""
     raw: tuple[SourceResult, ...] = ()
+    rejected: tuple[Rejection, ...] = ()
+    check: TitlePageCheck | None = None
 
     @property
     def resolved(self) -> bool:
@@ -172,8 +195,42 @@ def parse_openalex_work(payload: bytes) -> Candidate | None:
     return candidates[0] if candidates else None
 
 
-def authors_of(payload: bytes) -> tuple[str, ...]:
-    """Liest die Autorennamen aus einer OpenAlex-Antwort (Einzelwerk **oder** Trefferliste)."""
+def authorships_of_work(work: Mapping[str, Any]) -> tuple[AuthorIdentity, ...]:
+    """Liest die Autorennennungen **eines** OpenAlex-Werks samt Personenkennung.
+
+    Übernommen werden der ``display_name`` in der Schreibweise der Quelle, ``author.id`` und
+    ``author.orcid``. Beide Kennungen werden geprüft; eine ungültige ergibt einen leeren Wert
+    (docs/adr/0041-author-identity-and-schema.md). Nennungen ohne Namen entfallen. Die Liste
+    endet bei :data:`MAX_AUTHORS`.
+
+    Öffentlich, weil der Nachtrag aus den abgelegten Rohantworten dieselbe Lesart braucht
+    (Roadmap Phase 17 / A2, Punkt 3) – zwei Lesarten wären zwei Wahrheiten.
+    """
+    identities: list[AuthorIdentity] = []
+    for entry in work.get("authorships") or []:
+        if not isinstance(entry, dict):
+            continue
+        raw_author = entry.get("author")
+        author: Mapping[str, Any] = raw_author if isinstance(raw_author, dict) else {}
+        name = _clean(str(author.get("display_name") or ""), limit=200)
+        if not name:
+            continue
+        identities.append(
+            AuthorIdentity(
+                name=name,
+                openalex_id=normalize_openalex_author_id(author.get("id")),
+                orcid=normalize_orcid(author.get("orcid")),
+            )
+        )
+    return tuple(identities[:MAX_AUTHORS])
+
+
+def authorships_of(payload: bytes) -> tuple[AuthorIdentity, ...]:
+    """Liest die Autorennennungen aus einer OpenAlex-Antwort (Einzelwerk **oder** Trefferliste).
+
+    Bei einer Trefferliste zählt das erste Werk mit mindestens einer Nennung – dieselbe Regel wie
+    vor Phase 17 für die Namen allein.
+    """
     try:
         data = json.loads(payload.decode("utf-8", errors="replace"))
     except json.JSONDecodeError:
@@ -184,15 +241,28 @@ def authors_of(payload: bytes) -> tuple[str, ...]:
     for work in works or []:
         if not isinstance(work, dict):
             continue
-        names = [
-            _clean(str((entry.get("author") or {}).get("display_name") or ""), limit=200)
-            for entry in work.get("authorships") or []
-            if isinstance(entry, dict)
-        ]
-        filled = [name for name in names if name]
-        if filled:
-            return tuple(filled[:MAX_AUTHORS])
+        identities = authorships_of_work(work)
+        if identities:
+            return identities
     return ()
+
+
+def authors_of(payload: bytes) -> tuple[str, ...]:
+    """Liest die Autorennamen aus einer OpenAlex-Antwort (Einzelwerk **oder** Trefferliste)."""
+    return tuple(identity.name for identity in authorships_of(payload))
+
+
+def author_identifier_lists(
+    identities: Sequence[AuthorIdentity],
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Zerlegt Nennungen in positionsgleiche Listen aus OpenAlex-IDs und ORCIDs.
+
+    Eine Liste ohne einen einzigen Wert wird leer geliefert – so bleibt die Speicherform eines
+    Datensatzes ohne Kennung unverändert (docs/adr/0041-author-identity-and-schema.md).
+    """
+    ids = tuple(identity.openalex_id for identity in identities)
+    orcids = tuple(identity.orcid for identity in identities)
+    return (ids if any(ids) else (), orcids if any(orcids) else ())
 
 
 def venue_of(payload: bytes) -> str:
@@ -224,12 +294,16 @@ def _record_from(
     confidence: str,
     evidence: str,
 ) -> MetadataRecord:
-    """Baut den Datensatz der Herkunft ``resolved`` aus einem Treffer."""
+    """Baut den Datensatz der Herkunft ``resolved`` aus einem Treffer (samt Personenkennung)."""
+    identities = authorships_of(payload)
+    author_ids, author_orcids = author_identifier_lists(identities)
     return MetadataRecord(
         paper_id=target.paper_id,
         origin=ORIGIN_RESOLVED,
         title=_clean(candidate.title),
-        authors=authors_of(payload),
+        authors=tuple(identity.name for identity in identities),
+        author_ids=author_ids,
+        author_orcids=author_orcids,
         year=candidate.year,
         venue=venue_of(payload),
         doi=_clean(candidate.doi, limit=200),
@@ -449,37 +523,109 @@ def filter_pending(
     )
 
 
-def resolve_target(client: HttpClient, target: ResolutionTarget) -> Resolution:
+Verifier = Callable[[MetadataRecord], "TitlePageCheck | None"]
+"""Prüft einen Treffer gegen die Titelseite; ``None`` heißt „nicht prüfbar“ (kein PDF)."""
+
+
+def skip_settled(
+    targets: Sequence[ResolutionTarget], reviews: Mapping[str, PaperReview]
+) -> tuple[ResolutionTarget, ...]:
+    """Blendet Paper mit ausgewiesenem Prüfstatus aus (etwa „nicht auflösbar“).
+
+    Den Status setzt ein Mensch mit Grund (docs/adr/0042-title-page-evidence-and-rejections.md).
+    Ein Auflösungslauf fragt ein solches Paper deshalb nicht erneut ab; wer es doch will, hebt den
+    Status zuvor auf.
+    """
+    return tuple(
+        target
+        for target in targets
+        if not (target.paper_id in reviews and reviews[target.paper_id].status)
+    )
+
+
+def resolve_target(
+    client: HttpClient,
+    target: ResolutionTarget,
+    *,
+    rejections: Sequence[Rejection] = (),
+    verify: Verifier | None = None,
+    calibration: Calibration | None = None,
+    today: str = "",
+) -> Resolution:
     """Löst die Metadaten **eines** Papers auf.
+
+    Seit Phase 17 / A1 durchläuft jeder Treffer zwei Prüfungen, bevor er übernommen wird
+    (docs/adr/0042-title-page-evidence-and-rejections.md):
+
+    1. **Ablehnungsvermerk:** Ein früher verworfener Treffer (gleiche DOI, arXiv-ID oder
+       gleicher Titel) wird übersprungen, und der nächste Weg wird versucht.
+    2. **Seite-1-Beleg** (nur mit ``verify``): Ist der Treffer laut kalibriertem Beleg fremd, wird
+       er verworfen und als neuer Vermerk zurückgegeben. Ist er bestätigt, wird er ``strong``.
+       Sonst bleibt er, wie er ist. Neue ``weak``-Einträge entstehen so nicht mehr unbemerkt,
+       weil der Befund in ``check`` mitkommt.
 
     Args:
         client: Injizierter Transport-Port (die einzige Stelle mit Netzzugriff).
         target: Das aufzulösende Paper samt lokal bekannter Angaben.
+        rejections: Die gespeicherten Ablehnungsvermerke **dieses** Papers.
+        verify: Prüft einen Treffer gegen die Titelseite; ``None`` schaltet die Prüfung ab.
+        calibration: Schwellen des Belegs; ``None`` = die geltende Kalibrierung.
+        today: Datum für neue Vermerke (ISO); der Aufrufer legt es fest (Determinismus).
 
     Returns:
         Eine :class:`Resolution`; ohne Beleg ist ``record`` ``None`` und ``note`` nennt den Grund.
     """
     collected: list[SourceResult] = []
     notes: list[str] = []
+    known = list(rejections)
+    new_rejections: list[Rejection] = []
     for attempt in (_by_identifier, _by_title, _by_arxiv_feed):
         result = attempt(client, target)
         if result is None:
             continue
         collected.extend(result.raw)
-        if result.resolved:
-            return Resolution(
-                target=result.target,
-                record=result.record,
-                match=result.match,
-                note=result.note,
-                raw=tuple(collected),
-            )
-        if result.note:
-            notes.append(result.note)
+        if any(source.status == HTTP_TOO_MANY_REQUESTS for source in result.raw):
+            # Kontingent erschöpft: kein weiterer Weg – jede Abfrage verbrauchte nur noch Kontingent
+            # ohne Aussicht auf Antwort (Phase 17 / A2, Punkt 4).
+            notes.append("Kontingent erschöpft (HTTP 429)")
+            break
+        record = result.record
+        if record is None:
+            if result.note:
+                notes.append(result.note)
+            continue
+        if is_rejected(record, known):
+            notes.append(f"{result.note}: Treffer laut Ablehnungsvermerk verworfen")
+            continue
+        check = verify(record) if verify is not None else None
+        verdict = check.verdict(calibration) if check is not None else ""
+        if check is not None and verdict == VERDICT_FOREIGN:
+            rejection = rejection_for(record, check, today)
+            known.append(rejection)
+            new_rejections.append(rejection)
+            notes.append(f"{result.note}: {rejection.reason}")
+            continue
+        if check is not None and verdict == VERDICT_CONFIRMED:
+            record = upgrade(record, check)
+        return Resolution(
+            target=result.target,
+            record=record,
+            match=result.match,
+            note=result.note,
+            raw=tuple(collected),
+            rejected=tuple(new_rejections),
+            check=check,
+        )
     if notes:
         note = "; ".join(notes)
     elif collected:
         note = "kein belastbarer Treffer"
     else:
         note = "keine Abfragemöglichkeit (kein Titel, kein Identifikator)"
-    return Resolution(target=target, record=None, note=note, raw=tuple(collected))
+    return Resolution(
+        target=target,
+        record=None,
+        note=note,
+        raw=tuple(collected),
+        rejected=tuple(new_rejections),
+    )

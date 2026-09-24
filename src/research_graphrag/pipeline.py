@@ -21,9 +21,14 @@ from pathlib import Path
 
 from research_graphrag.bibliography.store import metadata_path
 from research_graphrag.errors import DomainError, ErrorCode
-from research_graphrag.extraction.model import SCHEMA_VERSION, read_schema_version
+from research_graphrag.extraction.model import (
+    SCHEMA_VERSION,
+    has_source_bibliography,
+    read_schema_version,
+)
 from research_graphrag.extraction.pdf import CanonicalPaper, extract_pdf
 from research_graphrag.extraction.refstub import STUB_SUFFIX, extract_stub
+from research_graphrag.indexing.author_index import AuthorBuildReport, build_author_index
 from research_graphrag.indexing.citation_graph import CitationBuildReport, build_citation_graph
 from research_graphrag.indexing.graph_index import GraphBuildReport, build_graph
 from research_graphrag.indexing.metadata_index import MetadataBuildReport, build_metadata_index
@@ -51,6 +56,22 @@ class IngestReport:
     n_with_identifier: int = 0
     n_citable: int = 0
     n_weak_metadata: int = 0
+    n_full_texts: int = 0
+    n_full_with_strong_authors: int = 0
+    n_with_author_ids: int = 0
+    n_from_stubs: int = 0
+    n_author_rows: int = 0
+    n_persons: int = 0
+    n_identified_persons: int = 0
+    author_name_search: str = ""
+    n_author_skipped: int = 0
+
+    @property
+    def author_coverage(self) -> float:
+        """Anteil der Volltexte mit Autoren aus ``strong``-Datensätzen (Roadmap Phase 17 / A0)."""
+        if not self.n_full_texts:
+            return 0.0
+        return self.n_full_with_strong_authors / self.n_full_texts
 
 
 def _load_manifest(path: Path) -> dict[str, dict[str, str]]:
@@ -91,15 +112,25 @@ def _remove_stale_canonical(
         (canonical_dir / f"{old_paper_id}.json").unlink(missing_ok=True)
 
 
-def _can_skip(entry: dict[str, str] | None, sha256: str, canonical_dir: Path) -> bool:
-    """Prüft, ob eine PDF unverändert **und** mit aktuellem Schema bereits extrahiert ist."""
+def _can_skip(
+    entry: dict[str, str] | None, sha256: str, canonical_dir: Path, *, stub: bool = False
+) -> bool:
+    """Prüft, ob eine Quelle unverändert **und** mit aktuellem Schema bereits extrahiert ist.
+
+    Für einen Referenz-Eintrag (``stub=True``) muss das Canonical zusätzlich seine
+    Bibliografie tragen. Ein vor Phase 17 gelesener Stub wird dadurch **einmalig** neu gelesen.
+    Das kostet nur Millisekunden, während eine Anhebung der Schema-Version jedes PDF neu
+    extrahieren ließe (docs/adr/0041-author-identity-and-schema.md).
+    """
     if entry is None or entry["sha256"] != sha256:
         return False
     canonical_file = canonical_dir / f"{entry['paper_id']}.json"
     if not canonical_file.is_file():
         return False
     try:
-        return read_schema_version(canonical_file) == SCHEMA_VERSION
+        if read_schema_version(canonical_file) != SCHEMA_VERSION:
+            return False
+        return not stub or has_source_bibliography(canonical_file)
     except (json.JSONDecodeError, OSError, KeyError):
         return False
 
@@ -158,7 +189,7 @@ def _build_index_atomically(
     *,
     overview_path: Path | None = None,
     metadata_file: Path | None = None,
-) -> tuple[int, GraphBuildReport, CitationBuildReport, MetadataBuildReport]:
+) -> tuple[int, GraphBuildReport, CitationBuildReport, MetadataBuildReport, AuthorBuildReport]:
     """Baut Index, Graph, Zitationskanten **und** Metadaten in eine Temporärdatei; ersetzt atomar.
 
     Der MCP-Server liest den Index pro Anfrage frisch (On-Read, siehe
@@ -178,8 +209,9 @@ def _build_index_atomically(
             überspringt sie.
 
     Returns:
-        Tupel aus indexierten Chunks, :class:`GraphBuildReport`, :class:`CitationBuildReport`
-        und :class:`MetadataBuildReport`.
+        Tupel aus indexierten Chunks, :class:`GraphBuildReport`, :class:`CitationBuildReport`,
+        :class:`MetadataBuildReport` und – seit Phase 17 / A3 – :class:`AuthorBuildReport`
+        (Personenebene, docs/adr/0043-author-index-and-person-tools.md).
     """
     tmp_path = index_path.with_name(index_path.name + ".tmp")
     try:
@@ -189,10 +221,11 @@ def _build_index_atomically(
         metadata_report = build_metadata_index(
             papers, tmp_path, overview_path=overview_path, metadata_file=metadata_file
         )
+        author_report = build_author_index(tmp_path)
         os.replace(tmp_path, index_path)
     finally:
         tmp_path.unlink(missing_ok=True)
-    return indexed_chunks, graph_report, citation_report, metadata_report
+    return indexed_chunks, graph_report, citation_report, metadata_report, author_report
 
 
 def forget_source(data_dir: str | Path, filename: str) -> bool:
@@ -275,14 +308,13 @@ def ingest(
     for source in sources:
         sha256 = hashlib.sha256(source.read_bytes()).hexdigest()
         entry = manifest.get(source.name)
-        if _can_skip(entry, sha256, canonical_dir):
+        is_stub = source.suffix.lower() == STUB_SUFFIX
+        if _can_skip(entry, sha256, canonical_dir, stub=is_stub):
             skipped += 1
             continue
         # Der Dokumenttyp entscheidet allein die Endung – ein Referenz-Eintrag wird nativ
         # gelesen, nicht per Heuristik aus einer synthetischen PDF zurückgewonnen.
-        paper = (
-            extract_stub(source) if source.suffix.lower() == STUB_SUFFIX else extract_pdf(source)
-        )
+        paper = extract_stub(source) if is_stub else extract_pdf(source)
         _remove_stale_canonical(canonical_dir, manifest, source.name, entry, paper.paper_id)
         paper.save_json(canonical_dir / f"{paper.paper_id}.json")
         manifest[source.name] = {"sha256": sha256, "paper_id": paper.paper_id}
@@ -296,9 +328,13 @@ def ingest(
             ErrorCode.INVALID_INPUT, "Keine Canonical-Paper vorhanden (papers/ leer?)."
         )
 
-    indexed_chunks, graph_report, citation_report, metadata_report = _build_index_atomically(
-        papers, index_path, overview_path=overview, metadata_file=metadata
-    )
+    (
+        indexed_chunks,
+        graph_report,
+        citation_report,
+        metadata_report,
+        author_report,
+    ) = _build_index_atomically(papers, index_path, overview_path=overview, metadata_file=metadata)
     _write_quality_report(papers, data_path)
     return IngestReport(
         extracted=extracted,
@@ -315,4 +351,13 @@ def ingest(
         n_with_identifier=metadata_report.n_with_identifier,
         n_citable=metadata_report.n_citable,
         n_weak_metadata=metadata_report.n_weak,
+        n_full_texts=metadata_report.n_full_texts,
+        n_full_with_strong_authors=metadata_report.n_full_with_strong_authors,
+        n_with_author_ids=metadata_report.n_with_author_ids,
+        n_from_stubs=metadata_report.n_from_stubs,
+        n_author_rows=author_report.n_rows,
+        n_persons=author_report.n_persons,
+        n_identified_persons=author_report.n_identified,
+        author_name_search=author_report.name_search,
+        n_author_skipped=author_report.n_skipped,
     )

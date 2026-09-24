@@ -153,3 +153,12 @@ eine zweite überschreibende Operation. Der Weg wird stattdessen in
 > ([ADR 0034](0034-decommission-uebersicht-and-inflow-stop-rule-phase15.md)). `Übersicht.md`
 > bleibt im Sicherungsumfang, obwohl sie ihre Rolle als aktive Senke verloren hat – als
 > historischer Stand trägt sie weiterhin Kontext, den keine andere Quelle hält.
+
+## Nachtrag (2026-09-24, Phase 17 / A1): LLM-Antworten der Metadaten-Arbeitsliste
+
+Der Sicherungsumfang umfasst zusätzlich das Verzeichnis `metadata/llm_answers/`. Dort liegen die
+unverändert abgelegten LLM-Antworten der Metadaten-Arbeitsliste
+([ADR 0042](0042-title-page-evidence-and-rejections.md)). Sie sind aus keiner Quelle
+rekonstruierbar. Die Arbeitslisten selbst (`data/worklists/`) bleiben draußen, denn sie entstehen
+jederzeit neu. Die Ablehnungsvermerke liegen in `metadata/paper_metadata.json`, die ohnehin
+gesichert wird.

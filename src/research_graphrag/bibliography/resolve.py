@@ -37,6 +37,38 @@ def _ordered(records: Iterable[MetadataRecord]) -> list[MetadataRecord]:
     )
 
 
+IDENTITY_ORIGIN_KEY = "author_ids"
+"""Schlüssel in ``origins``, der die Herkunft der Personenkennungen ausweist (ADR 0041)."""
+
+
+def _identities_for(
+    authors: tuple[str, ...],
+    author_source: MetadataRecord | None,
+    ordered: Sequence[MetadataRecord],
+) -> tuple[tuple[str, ...], tuple[str, ...], str]:
+    """Bestimmt die Personenkennungen zur gewonnenen Autorenliste.
+
+    Die Kennungen reisen **mit** der Namensliste: Zuerst gelten die des Datensatzes, der
+    ``authors`` gewonnen hat. Trägt er keine, darf ein anderer Datensatz sie liefern, aber **nur**,
+    wenn seine Namensliste Position für Position identisch ist. So erhält etwa ein
+    Referenz-Eintrag die Kennungen aus einer Rohantwort (Nachtrag, A2, Punkt 3), ohne dass je
+    eine Kennung an einen fremden Namen gerät (docs/adr/0041-author-identity-and-schema.md).
+
+    Returns:
+        ``(author_ids, author_orcids, Herkunft der Kennungen)``; ohne Kennung ``((), (), "")``.
+    """
+    if not authors:
+        return (), (), ""
+    candidates = [author_source] if author_source is not None else []
+    candidates += [record for record in ordered if record is not author_source]
+    for record in candidates:
+        if record is None or record.authors != authors:
+            continue
+        if record.author_ids or record.author_orcids:
+            return record.author_ids, record.author_orcids, record.origin
+    return (), (), ""
+
+
 def resolve_metadata(paper_id: str, records: Sequence[MetadataRecord]) -> PaperMetadata:
     """Führt die Datensätze eines Papers zu einem zitierfähigen Datensatz zusammen.
 
@@ -55,6 +87,7 @@ def resolve_metadata(paper_id: str, records: Sequence[MetadataRecord]) -> PaperM
     values: dict[str, Any] = {}
     origins: dict[str, str] = {}
     contributing: list[str] = []
+    author_source: MetadataRecord | None = None
     for record in _ordered(relevant):
         contributed = False
         for name in METADATA_FIELDS:
@@ -63,8 +96,16 @@ def resolve_metadata(paper_id: str, records: Sequence[MetadataRecord]) -> PaperM
             values[name] = record.value_of(name)
             origins[name] = record.origin
             contributed = True
+            if name == "authors":
+                author_source = record
         if contributed:
             contributing.append(record.confidence)
+
+    author_ids, author_orcids, id_origin = _identities_for(
+        tuple(values.get("authors", ()) or ()), author_source, _ordered(relevant)
+    )
+    if id_origin:
+        origins[IDENTITY_ORIGIN_KEY] = id_origin
 
     return PaperMetadata(
         paper_id=paper_id,
@@ -77,6 +118,8 @@ def resolve_metadata(paper_id: str, records: Sequence[MetadataRecord]) -> PaperM
         url=str(values.get("url", "")),
         origins=origins,
         confidence=lowest_confidence(contributing),
+        author_ids=author_ids,
+        author_orcids=author_orcids,
     )
 
 

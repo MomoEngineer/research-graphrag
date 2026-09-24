@@ -9,9 +9,11 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 > als einzige Ausnahme von dieser Regel – sie war die unmittelbare Grundlage von Phase 14 und
 > bleibt aus Kontinuitätsgründen an Ort und Stelle, auch nachdem Phase 14 selbst archiviert ist.
 > **Aktiver Plan (seit 2026-09-24): [Phase 16 – Antwortzeit: Weg B (FTS5)](#phase-16--antwortzeit-weg-b-fts5)
-> und [Phase 17 – Autoren als Rechercheebene](#phase-17--autoren-als-rechercheebene)**, beide
-> geplant und noch nicht begonnen; [A1](#a1--weak--strong-jede-literaturangabe-belegt-vorziehbar)
-> ist ausdrücklich **vor** Phase 16 ausführbar, weil er falsche Literaturangaben korrigiert.
+> und [Phase 17 – Autoren als Rechercheebene](#phase-17--autoren-als-rechercheebene)**. Phase 16
+> ist geplant und noch nicht begonnen; Phase 17 ist **in Arbeit** (seit 2026-09-24,
+> [Umsetzungsblock](#umsetzung-stand-und-reihenfolge)).
+> [A1](#a1--weak--strong-jede-literaturangabe-belegt-vorziehbar) ist ausdrücklich **vor**
+> Phase 16 ausführbar, weil er falsche Literaturangaben korrigiert.
 > Bis dahin abgeschlossen: Phase 15 (Skalierung, [Statusblock](docs/roadmap-historie.md#g0--alles-hinterfragen-und-messen-zwingend-zuerst))
 > und Phase 14 (Referenz-Ernte, [Statusblock](docs/roadmap-historie.md#e0--alles-hinterfragen-und-messen-zwingend-zuerst))
 > sind beide abgeschlossen; Phase 14 **entfällt in der geplanten Form** – E0 fand einen
@@ -1038,7 +1040,10 @@ _Modell-Tipp: Claude Sonnet 5._
 
 ## Phase 17 – Autoren als Rechercheebene
 
-> **Status: geplant (2026-09-24), nicht begonnen.** Die folgenden Befunde stammen aus einer
+> **Status: in Arbeit (seit 2026-09-24).** Umsetzungsstand und Reihenfolge stehen im
+> [Umsetzungsblock](#umsetzung-stand-und-reihenfolge) direkt unter den Festlegungen.
+>
+> Die folgenden Befunde stammen aus einer
 > Planungsmessung: Wegwerf-Skripte, kein Produktivcode, Live-Index nur lesend, Bestand **3.579
 > Paper** (3.213 Volltexte, 366 Referenz-Einträge). Wie bei S0 und R0 entsteht dafür bewusst
 > **kein ADR**, weil die Planung nichts baut; ADRs folgen bei der Umsetzung.
@@ -1124,6 +1129,38 @@ Jeder Beleg trägt dieselbe Provenienz wie überall sonst. Arbeitsgruppen werden
 | **Lieber ein MCP-Tool zu viel als zu wenig.** | Das ist eine Nutzervorgabe. Jede Fähigkeit bekommt ein eigenes, scharf abgegrenztes Tool, und die Contracts der bestehenden Tools ändern sich nur additiv. Das Gegengewicht ist belegt: Mit wachsender Tool-Zahl sinken Genauigkeit und Anteil korrekter Tool-Aufrufe (Jia et al. 2025, OSWorld-MCP, arXiv:2510.24563, S. 9), und die Tool-Metadaten landen bei jeder Interaktion erneut im Kontext (Hasan et al. 2026, arXiv:2602.14878, S. 3). Die Antwort darauf ist die Handprobe zur Tool-Wahl in [A6](#a6--wirkung-sichern), nicht der Verzicht auf Tools. |
 | **Netzzugriff nur im separaten Lauf.** | Auflösung und Nachtrag bleiben manuell startbare Skripte außerhalb der Agent-Reichweite ([ADR 0026](docs/adr/0026-online-metadata-resolution.md)). Die Personen-Tools lesen ausschließlich den Index. |
 
+### Umsetzung: Stand und Reihenfolge
+
+Festgelegt mit dem Nutzer am 2026-09-24, **vor** dem ersten Code:
+
+- **Messen am realen Bestand bleibt lokal.** Der Korpus verlässt die Arbeitsumgebung nicht. Die
+  A0-Messungen laufen als Wegwerf-Messpaket beim Nutzer, die Ergebnisse fließen danach in diesen
+  Block und in die Konstanten ein.
+- **Gebaut wird die Mechanik, scharfgeschaltet wird sie erst nach der Kalibrierung.** Alles, was
+  eine A0-Zahl braucht, ist parametrisiert und steht bis dahin auf dem Rückfall des jeweiligen
+  Abbruchkriteriums. Beispiel: Die automatische Aufwertung aus A1 bleibt aus, bis A0, Punkt 3,
+  eine Schwelle ohne falsch-positive Aufwertung liefert. So nimmt der Bau keine Messung vorweg.
+- **Reihenfolge gegenüber Phase 16:** A3 legt seine kleine Trigramm-Tabelle für Namen **schon
+  jetzt** an. Die Kostenschwellen aus F0 betreffen den Chunk-Index mit rund 225.000 Chunks, nicht
+  eine Namenstabelle. Die Entschärfung von FTS5-Anfragen entsteht dabei an **einer** gemeinsamen
+  Stelle, die F2 übernimmt. **A5 wartet auf F2**, denn nur die Phrasensuche über `chunks` hängt an
+  den F0-Schwellen.
+- **Schwelle der Personen-Handprobe (A0, Punkt 4), fixiert vor dem Bau von A4:** Je Person gilt
+  ein Recall von mindestens **0,9** und **0 Fehltreffer** bei Identitäten mit Kennung (OpenAlex
+  oder ORCID). Bestanden ist die Handprobe, wenn mindestens **8 von 10** Personen diese Bedingung
+  erfüllen.
+
+| Unterphase | Stand | Beleg |
+| --- | --- | --- |
+| A0 | Festlegungen fixiert. **Messpaket übergeben** (Wegwerf, außerhalb des Repos, nur lesend – am Mini-Korpus per Prüfsumme belegt): Abdeckung inkl. Stub-Lücke, Nachtrag und Laufbedarf, Identität, Kalibrierliste samt Auswertung, Sammelabfrage-Probe, Handproben-Vorlage und seit A4 die Auswertung der Handprobe gegen `search_authors`/`get_author` (Recall, Fehltreffer, nur über Namensidentität erreichbare Paper). **Messung am realen Bestand steht aus** | dieser Block |
+| A2, Punkte 1–2 | **umgesetzt:** Die Stub-Lücke ist im Code lokalisiert und geschlossen, die Personenkennung wird additiv gespeichert, und jeder Ingest weist die Autoren-Abdeckung aus. Die Wirkung am realen Bestand steht noch aus und wird beim nächsten Ingest gemessen | [ADR 0041](docs/adr/0041-author-identity-and-schema.md) |
+| A1 | **Mechanik umgesetzt, noch nicht scharfgeschaltet:** Seite-1-Beleg, Ablehnungsvermerk (atomar in derselben Metadatendatei), Triage (`scripts.verify_metadata`), LLM-Arbeitsliste (`scripts.metadata_worklist`), Status „nicht auflösbar“ bis in `get_reference`; `resolve_metadata` spielt keinen verworfenen Treffer zurück. **Präzisiert:** Die Ablehnung verlangt zusätzlich, dass kaum ein Autor auf S. 1 steht (7 Planungsfälle „Titel fehlt, Autoren stehen“); beide Schwellen kalibriert A0, Punkt 3, bis dahin wird nur gemessen | [ADR 0042](docs/adr/0042-title-page-evidence-and-rejections.md) |
+| A2, Punkte 3–5 | **Punkte 3 und 4 umgesetzt:** Nachtrag der Kennungen aus `data/online_raw/` ohne Netz (`scripts.backfill_author_ids`, nur bei identischer Namensliste, Konflikte ausgewiesen); Auflösungslauf fortsetzbar (Zwischenstand alle zehn Paper und bei Abbruch, Halt bei HTTP 429). **Offen bis A0:** Sammelabfragen (erst messen) und Punkt 5, `MAX_AUTHORS`; die Kürzung auf 25 bleibt bis zur Messung | [ADR 0041, Nachtrag](docs/adr/0041-author-identity-and-schema.md#nachtrag-2026-09-24-a2-punkte-3-bis-5) |
+| A3 | **umgesetzt:** `paper_authors` nur aus `strong`-Datensätzen, Personenschlüssel Kennung vor Name, Trigramm-Namenssuche mit getestetem Rückfallweg, gemeinsame FTS5-Entschärfung (`indexing/fts.py`) für F2; kein Retrieval-Modus berührt | [ADR 0043](docs/adr/0043-author-index-and-person-tools.md) |
+| A4 | **umgesetzt:** vier Werkzeuge nach Spezifikation (`search_authors`, `get_author`, `search_author_papers` als Basic-Suche mit Paper-Filter, `get_author_citations`), jede Antwort mit `coverage`, Mehrdeutigkeit als Kandidatenliste, CLI `scripts.authors`; Contract-, Funktions- und Fehlertests. **Offen:** die Handprobe aus A0, Punkt 4 am realen Bestand | [ADR 0043, Nachtrag](docs/adr/0043-author-index-and-person-tools.md#nachtrag-2026-09-24-umsetzung-von-a4) |
+| A6 | **Doku und Sicherung umgesetzt:** Specs, Modul-Doku, features, funktionsweise, README-Anleitung zum Arbeitslisten-Weg, ADRs 0041–0043; `metadata/llm_answers/` im Sicherungsumfang. `--check` sollte 0 Abweichungen melden, denn kein Suchmodus, keine Wertung und keine Chunk- oder Community-Bildung wurde geändert; der Fingerprint (Schema, Paper, Chunks, Communities) bleibt gleich. Am Prüfkorpus nachgewiesen: Nach dem Upgrade sind Chunks, Graphen und Kanten bitgleich, und alle Suchmodi liefern dieselben Ergebnisse. **Offen, nur beim Nutzer ausführbar:** `--check` gegen beide Baselines nach dem nächsten Ingest und die Handprobe zur Tool-Wahl im realen Client (Vorlage [eval/personen-toolwahl.md](eval/personen-toolwahl.md)) | [README](README.md#workflow-schwach-belegte-zitierdaten-klären-arbeitslisten-weg) |
+| A5 | wartet auf Phase 16 / F2 | – |
+
 ### A0 – Abdeckung, Identität und `weak`-Triage messen (zwingend zuerst, mit Abbruchkriterium)
 _Modell-Tipp: Claude Opus 5.5._
 
@@ -1145,7 +1182,9 @@ _Modell-Tipp: Claude Opus 5.5._
    in der Stichprobe. Ein fälschlich `strong` ist schlimmer als ein ehrliches `weak`.
 4. **Handprobe.** Der Nutzer benennt 10 für die Masterarbeit relevante Personen, und die erwarteten
    Paperlisten werden von Hand erstellt. Gezählt werden Treffer und Fehltreffer. Die Schwelle für
-   A4 wird hier **vor** dem Bau fixiert.
+   A4 wird hier **vor** dem Bau fixiert. *Fixiert am 2026-09-24* (siehe
+   [Umsetzungsblock](#umsetzung-stand-und-reihenfolge)): Recall ≥ 0,9 und 0 Fehltreffer je Person
+   mit Kennung, bestanden bei mindestens 8 von 10 Personen.
 
 *Abbruchkriterien:*
 

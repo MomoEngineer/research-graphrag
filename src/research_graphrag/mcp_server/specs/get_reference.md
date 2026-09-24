@@ -11,7 +11,7 @@
 | Feld | Wert |
 | --- | --- |
 | **Tool-Name** | `get_reference` |
-| **Version** | `0.1.0` |
+| **Version** | `0.3.0` |
 | **Capability-Schicht** | Katalog / Zitation (siehe README.md) |
 | **Status** | Implementiert (Phase 12 / K1) |
 
@@ -58,6 +58,11 @@ Ergänzt `get_paper`: Dieses beschreibt das Dokument (Umfang, Abschnitte, Leit-S
     "origins": { "title": "curated", "doi": "curated", "authors": "resolved" },
     "confidence": "strong",
     "citable": true,
+    "author_identities": [
+      { "name": "Anna Beispiel", "openalex_id": "A5023888391", "orcid": "0000-0002-1825-0097", "person_key": "A5023888391", "identity": "openalex" },
+      { "name": "Bert Muster", "openalex_id": "", "orcid": "", "person_key": "name:bert muster", "identity": "name" }
+    ],
+    "review": null,
     "harvard": "Beispiel, A. and Muster, B. (2023) 'Titel', Venue. Available at: https://doi.org/10.…",
     "apa": "Beispiel, A., & Muster, B. (2023). Titel. Venue. https://doi.org/10.…",
     "in_text": { "harvard": "(Beispiel and Muster, 2023)", "apa": "(Beispiel & Muster, 2023)" }
@@ -69,6 +74,19 @@ Ergänzt `get_paper`: Dieses beschreibt das Dokument (Umfang, Abschnitte, Leit-S
 
 - `origins` weist **je Feld** die Herkunft aus (`manual` > `curated` > `resolved` > `extracted`).
 - `confidence` ist die **niedrigste** Konfidenz der beteiligten Quellen (`strong`/`weak`/`none`).
+- `author_identities` (seit Version 0.2.0, additiv, [ADR 0041](../../../../docs/adr/0041-author-identity-and-schema.md)):
+  je Autor positionsgleich zu `authors` der Name in der Schreibweise der Quelle, die OpenAlex-Autor-ID
+  und die ORCID (leer = unbekannt), der **Personenschlüssel** (`person_key`: OpenAlex-ID, sonst
+  `orcid:<ORCID>`, sonst ausdrücklich `name:<normalisiert>`; leer ohne Kennung und ohne
+  lateinisch verwertbaren Namen) und der Identitätsstatus
+  (`openalex`/`orcid`/`name`). Die Kennungen stammen stets aus **derselben** Quelle wie die Namen;
+  `identity = "name"` ist ausdrücklich **keine** bestätigte Identität. Trägt die gewonnene
+  Namensliste selbst keine Kennung, darf sie ein anderer Datensatz mit **identischer** Namensliste
+  liefern; `origins.author_ids` nennt dann deren Herkunft (fehlt, wenn es keine Kennung gibt).
+- `review` (seit Version 0.3.0, additiv, [ADR 0042](../../../../docs/adr/0042-title-page-evidence-and-rejections.md)):
+  `null` oder der **ausgewiesene Prüfstatus** `{"status": "unresolvable", "reason": "…"}`. Ein
+  schwach belegter Datensatz mit diesem Status ist ausdrücklich als „nicht auflösbar“ ausgewiesen
+  (Grund vom Menschen gesetzt), statt still `weak` zu bleiben.
 - `missing` nennt fehlende Pflichtfelder (`title`, `authors`, `year`); `note` erklärt sie im
   Klartext und nennt den Weg zur Ergänzung. Bei vollständigem Datensatz sind beide leer.
 
@@ -145,6 +163,8 @@ Antwort:
     "origins": { "arxiv_id": "extracted", "doi": "extracted", "title": "extracted", "year": "extracted" },
     "confidence": "weak",
     "citable": false,
+    "author_identities": [],
+    "review": null,
     "harvard": "aaaa0001 (2024) Available at: https://doi.org/10.1145/1234",
     "apa": "aaaa0001. (2024). https://doi.org/10.1145/1234",
     "in_text": { "harvard": "(aaaa0001, 2024)", "apa": "(aaaa0001, 2024)" }

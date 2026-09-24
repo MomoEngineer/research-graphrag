@@ -10,6 +10,7 @@ import pytest
 
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.indexing.graph_index import load_communities
+from research_graphrag.indexing.metadata_index import load_paper_metadata
 from research_graphrag.pipeline import ingest
 from research_graphrag.retrieval.basic import search_basic
 from research_graphrag.retrieval.citations import get_citations
@@ -186,3 +187,69 @@ def test_ingest_reextracts_on_schema_upgrade(make_pdf: MakePdf, tmp_path: Path) 
 
     assert report.extracted == 1
     assert report.skipped == 0
+
+
+def _write_stub(folder: Path, name: str) -> Path:
+    """Legt einen Referenz-Eintrag (Format 0.2.0) mit Autoren samt Kennung ab."""
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / name
+    payload = {
+        "schema_version": "0.2.0",
+        "document_kind": "reference",
+        "requested": "doi:10.1145/1376616.1376629",
+        "title": "Towards Identity Anonymization on Graphs",
+        "authors": ["Kun Liu", "Evimaria Terzi"],
+        "author_ids": ["A1111", ""],
+        "author_orcids": [],
+        "year": 2008,
+        "venue": "Proceedings of SIGMOD",
+        "doi": "10.1145/1376616.1376629",
+        "source": "OpenAlex",
+        "abstract": "Graph anonymization keeps structural utility while hiding identities.",
+    }
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
+def test_a_stub_read_before_phase17_is_reread_once_but_pdfs_are_not(
+    make_pdf: MakePdf, tmp_path: Path
+) -> None:
+    """Nur Stubs ohne Bibliografie werden nachgelesen – kein PDF, kein Versionssprung (ADR 0041)."""
+    make_pdf(["stable content for the stub upgrade test"], "papers/a.pdf")
+    papers = tmp_path / "papers"
+    data = tmp_path / "data"
+    _write_stub(papers, "Towards Identity Anonymization on Graphs.refjson")
+    ingest(papers, data)
+
+    for canonical in (data / "canonical").glob("*.json"):
+        obj = json.loads(canonical.read_text(encoding="utf-8"))
+        obj.pop("bibliography", None)
+        canonical.write_text(json.dumps(obj), encoding="utf-8")
+
+    upgraded = ingest(papers, data)
+    settled = ingest(papers, data)
+
+    assert (upgraded.extracted, upgraded.skipped) == (1, 1)
+    assert (settled.extracted, settled.skipped) == (0, 2)
+
+
+def test_ingest_brings_the_stub_authors_into_the_index(tmp_path: Path) -> None:
+    """Ende zu Ende: Autoren und Kennungen eines Referenz-Eintrags erreichen den Index."""
+    papers = tmp_path / "papers"
+    data = tmp_path / "data"
+    _write_stub(papers, "Towards Identity Anonymization on Graphs.refjson")
+
+    report = ingest(papers, data)
+    (item,) = load_paper_metadata(data / "index" / "index.sqlite").values()
+
+    assert (report.n_from_stubs, report.n_with_author_ids, report.n_full_texts) == (1, 1, 0)
+    assert report.author_coverage == 0.0
+    assert (report.n_author_rows, report.n_persons, report.n_identified_persons) == (2, 2, 1)
+    assert report.author_name_search == "fts5-trigram"
+    assert report.n_author_skipped == 0
+
+    assert item.authors == ("Kun Liu", "Evimaria Terzi")
+    assert [entry.person_key for entry in item.author_identities] == [
+        "A1111",
+        "name:evimaria terzi",
+    ]

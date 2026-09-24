@@ -246,3 +246,81 @@ def test_canonical_from_stub_is_pure(tmp_path: Path) -> None:
     assert paper.paper_id == "deadbeef"
     assert paper.chunks[0].chunk_id == "deadbeef-c0001"
     assert paper.sections[0].section_id == "deadbeef-s0001"
+
+
+# --------------------------------------------------------------------------------------
+# Bibliografie der Stub-Datei (Phase 17 / A2, ADR 0041)
+# --------------------------------------------------------------------------------------
+
+_ORCID = "0000-0002-1825-0097"
+
+
+def test_the_bibliography_reaches_the_canonical(tmp_path: Path) -> None:
+    """Befund 2: Autoren, Jahr, Venue und URL gingen hier verloren – jetzt reisen sie mit."""
+    paper = extract_stub(
+        _write(
+            tmp_path,
+            schema_version="0.2.0",
+            author_ids=["https://openalex.org/A5023888391", ""],
+            author_orcids=["", f"https://orcid.org/{_ORCID}"],
+        )
+    )
+
+    bibliography = paper.bibliography
+    assert bibliography is not None
+    assert bibliography.title == _TITLE
+    assert bibliography.authors == ("Anna Beispiel", "Bert Muster")
+    assert bibliography.author_ids == ("A5023888391", "")
+    assert bibliography.author_orcids == ("", _ORCID)
+    assert (bibliography.year, bibliography.venue) == (2008, "Proceedings of SIGMOD")
+    assert bibliography.source == "OpenAlex"
+    assert bibliography.requested == "doi:10.1145/1376616.1376629"
+
+
+def test_a_format_010_stub_is_read_without_identifiers(tmp_path: Path) -> None:
+    """Eine 0.1.0-Datei ist eine gültige 0.2.0-Datei ohne Kennungen."""
+    bibliography = extract_stub(_write(tmp_path)).bibliography
+
+    assert bibliography is not None
+    assert bibliography.authors == ("Anna Beispiel", "Bert Muster")
+    assert bibliography.author_ids == ()
+    assert bibliography.author_orcids == ()
+
+
+def test_identifiers_are_dropped_when_a_name_falls_out() -> None:
+    """Entfällt ein leerer Name, wäre die Zuordnung verschoben – die Kennungen entfallen ganz."""
+    stub = parse_stub(
+        json.dumps(
+            _payload(
+                authors=["Anna Beispiel", "   ", "Bert Muster"], author_ids=["A1234", "", "A5678"]
+            )
+        ).encode()
+    )
+
+    assert stub.authors == ("Anna Beispiel", "Bert Muster")
+    assert stub.author_ids == ()
+
+
+def test_the_bibliography_survives_the_canonical_round_trip(tmp_path: Path) -> None:
+    """Das Canonical JSON trägt die Angaben, damit der Index sie ohne Stub-Datei kennt."""
+    paper = extract_stub(_write(tmp_path, author_ids=["A1234", ""]))
+    path = tmp_path / "canonical.json"
+    paper.save_json(path)
+
+    assert CanonicalPaper.load_json(path) == paper
+
+
+def test_a_full_text_canonical_carries_no_bibliography_key() -> None:
+    """PDF-Canonicals bleiben byte-identisch zur Form vor Phase 17."""
+    paper = CanonicalPaper.from_dict(
+        {
+            "paper_id": "abc123",
+            "source_uri": "file:///papers/Alt.pdf",
+            "source_sha256": "0" * 64,
+            "n_pages": 3,
+            "chunks": [],
+        }
+    )
+
+    assert paper.bibliography is None
+    assert "bibliography" not in paper.to_dict()

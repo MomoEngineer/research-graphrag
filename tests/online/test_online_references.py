@@ -560,3 +560,65 @@ def test_a_second_run_neither_queries_nor_writes(tmp_path: Path) -> None:
     assert pending == []
     assert settled[0].reason == REASON_STUB_EXISTS
     assert len(client.urls) == queries_after_first
+
+
+# --------------------------------------------------------------------------------------
+# Personenkennung im Stub (Format 0.2.0, Phase 17 / A2, ADR 0041)
+# --------------------------------------------------------------------------------------
+
+_ORCID = "0000-0002-1825-0097"
+
+
+def test_a_new_stub_carries_the_identifiers_parallel_to_the_names() -> None:
+    """Format 0.2.0 schreibt OpenAlex-ID und ORCID positionsgleich zu den Autoren."""
+    payload = build_stub(
+        _request(),
+        title=_TITLE,
+        authors=["Anna Beispiel", "Bert Muster"],
+        author_ids=["A5023888391", ""],
+        author_orcids=["", _ORCID],
+    )
+
+    assert STUB_SCHEMA_VERSION == "0.2.0"
+    assert payload["author_ids"] == ["A5023888391", ""]
+    assert payload["author_orcids"] == ["", _ORCID]
+
+
+def test_an_identifier_leaves_together_with_its_cleaned_away_name() -> None:
+    """Fällt ein Name bei der Bereinigung heraus, darf seine Kennung nicht verrutschen."""
+    payload = build_stub(
+        _request(),
+        title=_TITLE,
+        authors=["Anna Beispiel", "\u0000", "Bert Muster"],
+        author_ids=["A1111", "A2222", "A3333"],
+    )
+
+    assert payload["authors"] == ["Anna Beispiel", "Bert Muster"]
+    assert payload["author_ids"] == ["A1111", "A3333"]
+
+
+def test_mismatched_identifier_lists_are_written_empty() -> None:
+    """Passt die Länge nicht zur Namensliste, ist die Zuordnung nicht belegbar."""
+    payload = build_stub(
+        _request(), title=_TITLE, authors=["Anna Beispiel", "Bert Muster"], author_ids=["A1111"]
+    )
+
+    assert payload["author_ids"] == []
+    assert payload["author_orcids"] == []
+
+
+def test_the_openalex_lookup_writes_identifiers_into_the_stub(tmp_path: Path) -> None:
+    """Ende zu Ende: Die Kennungen der Antwort erreichen die geschriebene Stub-Datei."""
+    work = json.loads(_work())
+    work["authorships"] = [
+        {"author": {"id": "https://openalex.org/A5023888391", "display_name": "Anna Beispiel"}},
+        {"author": {"display_name": "Bert Muster", "orcid": f"https://orcid.org/{_ORCID}"}},
+    ]
+    client = _FakeClient(openalex=json.dumps(work).encode())
+
+    outcome = process(client, _request(KIND_DOI, _DOI), tmp_path)
+
+    assert outcome.path is not None
+    written = json.loads(outcome.path.read_text(encoding="utf-8"))
+    assert written["author_ids"] == ["A5023888391", ""]
+    assert written["author_orcids"] == ["", _ORCID]

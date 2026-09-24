@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/pipeline.py` |
 | **Paket** | Top-Level – Orchestrierung |
-| **Phase** | 0b (eingeführt), 6 (atomarer Swap), 7 / A2 (Zitationsgraph), 12 / K1 (Zitierdaten), 13 / R2 (zweiter Dokumenttyp) |
-| **Grundlagen** | [ADR 0005](../../../docs/adr/0005-graphrag-index-backend-open.md), [ADR 0010](../../../docs/adr/0010-drop-in-workflow-and-qa-phase6.md), [ADR 0011](../../../docs/adr/0011-intra-corpus-citation-graph-phase7.md) |
+| **Phase** | 0b (eingeführt), 6 (atomarer Swap), 7 / A2 (Zitationsgraph), 12 / K1 (Zitierdaten), 13 / R2 (zweiter Dokumenttyp), 17 / A2 (Stub-Bibliografie, Autoren-Abdeckung), 17 / A3 (Personenebene) |
+| **Grundlagen** | [ADR 0005](../../../docs/adr/0005-graphrag-index-backend-open.md), [ADR 0010](../../../docs/adr/0010-drop-in-workflow-and-qa-phase6.md), [ADR 0011](../../../docs/adr/0011-intra-corpus-citation-graph-phase7.md), [ADR 0041](../../../docs/adr/0041-author-identity-and-schema.md), [ADR 0043](../../../docs/adr/0043-author-index-and-person-tools.md) |
 
 ---
 
@@ -25,7 +25,7 @@ Neubau schließt Inkonsistenzen aus.
 | --- | --- | --- |
 | `ingest` | Funktion | Führt den gesamten Lauf aus und liefert die Zählwerte |
 | `forget_source` | Funktion | Vergisst eine nicht mehr vorhandene Korpus-Datei (Manifest-Eintrag und verwaistes Canonical) |
-| `IngestReport` | Dataclass | Zählwerte: extrahiert, übersprungen, Chunks, Flags, Graph, Zitationen, Zitierdaten |
+| `IngestReport` | Dataclass | Zählwerte: extrahiert, übersprungen, Chunks, Flags, Graph, Zitationen, Zitierdaten, seit Phase 17 die Autoren-Abdeckung (`author_coverage`) und die Personenebene (Personen, Nennungen, Art der Namenssuche, Nennungen ohne Personenschlüssel) |
 | `OVERVIEW_FILENAME` | Konstante | Dateiname der kuratierten Übersicht (Quelle der Herkunft `curated`) |
 
 ## 3. Ablauf
@@ -35,7 +35,7 @@ flowchart TD
     A["papers/ prüfen"] --> B["Manifest laden"]
     B --> C["je PDF, alphabetisch"]
     C --> D["SHA-256 bilden"]
-    D --> E{"_can_skip:<br/>Hash gleich UND Canonical da<br/>UND Schema aktuell?"}
+    D --> E{"_can_skip:<br/>Hash gleich UND Canonical da<br/>UND Schema aktuell<br/>(Stub: UND Bibliografie da)?"}
     E -- ja --> F["skipped++"]
     E -- nein --> G["extract_pdf"]
     G --> H["_remove_stale_canonical"]
@@ -62,6 +62,12 @@ Verzeichnis löschen muss. Genau so wurden Chunking-Verfeinerung und Textnormali
 
 Lesefehler beim Prüfen der Version führen zu „nicht überspringbar": Im Zweifel wird neu
 extrahiert.
+
+**Vierte Bedingung, nur für Referenz-Einträge (Phase 17 / A2):** Das Canonical eines Stubs muss
+den Schlüssel `bibliography` tragen. Ein vor Phase 17 gelesener Stub wird dadurch **einmalig**
+neu gelesen, und das dauert Millisekunden. Eine Anhebung der Schema-Version hätte denselben Zweck
+erfüllt, aber jedes PDF neu extrahieren lassen, obwohl sich für PDFs nichts ändert
+([ADR 0041](../../../docs/adr/0041-author-identity-and-schema.md)).
 
 ### Warum veraltete Canonical-Dateien entfernt werden
 

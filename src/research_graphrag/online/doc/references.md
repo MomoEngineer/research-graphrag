@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/online/references.py` |
 | **Paket** | `online` – Netzzugang hinter einem Port |
-| **Phase** | 13 / R1 |
-| **Grundlagen** | [ADR 0029](../../../../docs/adr/0029-reference-stub-resolution-phase13.md) · [ADR 0026](../../../../docs/adr/0026-online-metadata-resolution.md) · [ADR 0020](../../../../docs/adr/0020-online-candidate-search-phase9.md) · [ADR 0019](../../../../docs/adr/0019-corpus-intake-new-papers-phase8.md) |
+| **Phase** | 13 / R1, erweitert in 17 / A2 |
+| **Grundlagen** | [ADR 0029](../../../../docs/adr/0029-reference-stub-resolution-phase13.md) · [ADR 0026](../../../../docs/adr/0026-online-metadata-resolution.md) · [ADR 0020](../../../../docs/adr/0020-online-candidate-search-phase9.md) · [ADR 0019](../../../../docs/adr/0019-corpus-intake-new-papers-phase8.md) · [ADR 0041](../../../../docs/adr/0041-author-identity-and-schema.md) |
 
 ---
 
@@ -34,7 +34,8 @@ Das Modul schreibt **nie** nach `papers/`. Der Weg in den Korpus führt ausschli
 | `ACTION_WRITTEN` / `ACTION_SKIPPED` / `ACTION_UNRESOLVED` / `ACTION_INVALID` | Konstanten | Ergebnisarten |
 | `REASON_IN_CORPUS` / `REASON_STUB_EXISTS` / `REASON_QUARANTINED` / `REASON_DUPLICATE_LINE` | Konstanten | Gründe des Überspringens |
 | `KIND_DOI` / `KIND_ARXIV` | Konstanten | Kennungsarten |
-| `REFERENCE_LIST_NAME` / `STUB_SUFFIX` / `STUB_SCHEMA_VERSION` / `DOCUMENT_KIND_REFERENCE` | Konstanten | Dateinamen und Formatversion |
+| `REFERENCE_LIST_NAME` | Konstante | Dateiname der Kennungsliste |
+| `STUB_SUFFIX` / `STUB_SCHEMA_VERSION` / `DOCUMENT_KIND_REFERENCE` | Konstanten (importiert) | Endung, Formatversion und Dokumentart – definiert in [`extraction/refstub`](../../extraction/doc/refstub.md) bzw. `extraction/model` |
 | `REFERENCE_FIELDS` / `DEFAULT_LIMIT` / `MAX_ABSTRACT_CHARS` / `MAX_URL_CHARS` | Konstanten | Abfrage- und Bereinigungsgrenzen |
 | `MAX_TITLE_SLUG_CHARS` / `MAX_ID_SLUG_CHARS` / `TITLE_SLUG_WORDS` / `COLON_PREFIX_WORDS` | Konstanten | Grenzen der Namensbildung |
 
@@ -105,6 +106,14 @@ Feed einspringt.
 Der Titelteil entsteht über eine **Whitelist** (`a`–`z`, `0`–`9`) aus dem Titel der Antwort; ein
 kurzer Vorspann vor dem Doppelpunkt gilt als System-/Modellname. Ein fremder Wert kann den Namen
 dadurch weder verlassen noch verlängern. Die Kennung bleibt der eindeutige Anker.
+
+### Personenkennung im Stub (Format 0.2.0, Phase 17 / A2)
+
+`build_stub` schreibt je Autor `author_ids` (OpenAlex) und `author_orcids`, positionsgleich zu
+`authors` ([ADR 0041](../../../../docs/adr/0041-author-identity-and-schema.md)). Entfällt ein Name
+bei der Bereinigung, entfällt seine Kennung mit ihm. Passt eine übergebene Liste nicht zur
+Namensliste, wird sie leer geschrieben. Die Formatkonstanten stammen seit ADR 0041 aus dem
+lesenden Adapter; vorher waren sie hier dupliziert.
 
 ## 4. Sicherheit
 

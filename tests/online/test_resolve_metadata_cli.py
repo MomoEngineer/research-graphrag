@@ -9,8 +9,20 @@ from urllib.parse import quote
 import pytest
 from scripts import resolve_metadata
 
-from research_graphrag.bibliography.model import ORIGIN_MANUAL, ORIGIN_RESOLVED, MetadataRecord
-from research_graphrag.bibliography.store import load_records, save_records
+from research_graphrag.bibliography.model import (
+    ORIGIN_MANUAL,
+    ORIGIN_RESOLVED,
+    REVIEW_UNRESOLVABLE,
+    MetadataRecord,
+    Rejection,
+)
+from research_graphrag.bibliography.store import (
+    add_rejection,
+    load_records,
+    load_reviews,
+    save_records,
+    set_review_status,
+)
 from research_graphrag.extraction.model import SECTION_KIND_BODY, Section
 from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
 from research_graphrag.indexing.metadata_index import build_metadata_index
@@ -209,3 +221,164 @@ def test_missing_index_is_reported_as_a_domain_error(
 
     assert code == 1
     assert "[resolve] Fehler [not_found]" in capsys.readouterr().out
+
+
+# --------------------------------------------------------------------------------------
+# Phase 17 / A1: Ablehnungsvermerk und Prüfstatus (ADR 0042)
+# --------------------------------------------------------------------------------------
+
+
+class _OpenAlexOnly(_FakeClient):
+    """Wie ``_FakeClient``, aber der arXiv-Feed kennt das Werk nicht (HTTP 404)."""
+
+    def get(self, url: str, *, accept: str = "*/*") -> HttpResponse:
+        if "arxiv.org" in url:
+            self.urls.append(url)
+            return HttpResponse(status=404, headers={}, body=b"")
+        return super().get(url, accept=accept)
+
+
+def test_a_second_run_does_not_bring_back_a_rejected_hit(
+    workspace: tuple[Path, Path, Path], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Die Akzeptanz aus A1: Ein verworfener Treffer wird nicht wieder eingespielt."""
+    db, data, store = workspace
+    rejection = Rejection(
+        doi=f"10.48550/arxiv.{_ARXIV}", title=_TITLE, reason="Fremd-Paper", date="2026-09-24"
+    )
+    save_records(store, [], reviews=add_rejection({}, "aaaa0001", rejection))
+    monkeypatch.setattr(resolve_metadata, "create_client", lambda **_kwargs: _OpenAlexOnly())
+
+    code = _run(["--index", str(db), "--data", str(data), "--metadaten", str(store)])
+
+    assert code == 0
+    assert load_records(store) == ()
+    assert load_reviews(store)["aaaa0001"].rejections == (rejection,)
+    log = (data / "metadata_log.md").read_text(encoding="utf-8")
+    assert "Ablehnungsvermerk verworfen" in log
+
+
+def test_a_paper_marked_unresolvable_is_not_queried(
+    workspace: tuple[Path, Path, Path],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Ein ausgewiesener Status wird respektiert – keine erneute Abfrage."""
+    db, data, store = workspace
+    save_records(
+        store, [], reviews=set_review_status({}, "aaaa0001", REVIEW_UNRESOLVABLE, "nur Poster")
+    )
+    client = _FakeClient()
+    monkeypatch.setattr(resolve_metadata, "create_client", lambda **_kwargs: client)
+
+    code = _run(["--index", str(db), "--data", str(data), "--metadaten", str(store)])
+
+    assert code == 0
+    assert client.urls == []
+    assert "Nichts aufzulösen" in capsys.readouterr().out
+
+
+# --------------------------------------------------------------------------------------
+# Phase 17 / A2, Punkt 4: fortsetzbarer Lauf
+# --------------------------------------------------------------------------------------
+
+_TITLES = (
+    "Graph Retrieval for Scientific Corpora at Scale",
+    "Benchmarking Retrieval Pipelines in Practice Today",
+    "Hybrid Ranking with Reciprocal Rank Fusion Revisited",
+)
+
+
+@pytest.fixture
+def three_papers(tmp_path: Path) -> tuple[Path, Path, Path]:
+    """Index mit drei Papern ohne Autoren – je eine DOI-Abfrage pro Paper."""
+    papers = [
+        _paper(f"p{index}", title, {"doi": f"10.1145/{index}000"})
+        for index, title in enumerate(_TITLES, start=1)
+    ]
+    data = tmp_path / "data"
+    db = data / "index" / "index.sqlite"
+    build_index(papers, db)
+    build_metadata_index(papers, db)
+    return db, data, tmp_path / "metadata" / "paper_metadata.json"
+
+
+class _ScriptedClient:
+    """Antwortet der Reihe nach: Werk, dann ein vorgegebenes Verhalten ab der n-ten Abfrage."""
+
+    def __init__(self, *, fail_from: int, status: int = 200, error: Exception | None = None):
+        self.urls: list[str] = []
+        self._fail_from = fail_from
+        self._status = status
+        self._error = error
+
+    def get(self, url: str, *, accept: str = "*/*") -> HttpResponse:
+        self.urls.append(url)
+        if len(self.urls) >= self._fail_from:
+            if self._error is not None:
+                raise self._error
+            return HttpResponse(status=self._status, headers={}, body=b"{}")
+        work = dict(_WORK, title=_TITLES[0], doi="https://doi.org/10.1145/1000")
+        return HttpResponse(status=200, headers={}, body=json.dumps(work).encode())
+
+
+def test_the_run_stops_at_an_exhausted_quota_and_keeps_its_progress(
+    three_papers: tuple[Path, Path, Path],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """HTTP 429 hält den Lauf an; das bis dahin Erreichte ist gespeichert."""
+    db, data, store = three_papers
+    client = _ScriptedClient(fail_from=2, status=429)
+    monkeypatch.setattr(resolve_metadata, "create_client", lambda **_kwargs: client)
+
+    code = _run(["--index", str(db), "--data", str(data), "--metadaten", str(store)])
+
+    assert code == 0
+    assert [record.paper_id for record in load_records(store)] == ["p1"]
+    assert len(client.urls) == 2
+    assert "Kontingent erschöpft" in capsys.readouterr().out
+
+
+def test_a_failure_mid_run_keeps_the_progress(
+    three_papers: tuple[Path, Path, Path],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Ein Netzfehler beim zweiten Paper lässt das erste gespeichert – der Lauf ist fortsetzbar."""
+    from research_graphrag.errors import DomainError, ErrorCode
+
+    db, data, store = three_papers
+    client = _ScriptedClient(
+        fail_from=2, error=DomainError(ErrorCode.DEPENDENCY_ERROR, "Verbindung abgebrochen")
+    )
+    monkeypatch.setattr(resolve_metadata, "create_client", lambda **_kwargs: client)
+
+    code = _run(["--index", str(db), "--data", str(data), "--metadaten", str(store)])
+
+    assert code == 1
+    assert [record.paper_id for record in load_records(store)] == ["p1"]
+    assert "Bis dahin gespeichert: 1 Paper" in capsys.readouterr().out
+
+
+def test_the_intermediate_state_is_saved_every_few_papers(
+    three_papers: tuple[Path, Path, Path], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Auch ohne Abbruch entsteht der Zwischenstand in Etappen."""
+    db, data, store = three_papers
+    saves: list[int] = []
+    original = resolve_metadata.save_records
+
+    def _counting_save(*args: object, **kwargs: object) -> int:
+        saves.append(1)
+        return original(*args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(resolve_metadata, "SAVE_EVERY", 1)
+    monkeypatch.setattr(resolve_metadata, "save_records", _counting_save)
+    monkeypatch.setattr(
+        resolve_metadata, "create_client", lambda **_kwargs: _ScriptedClient(fail_from=99)
+    )
+
+    _run(["--index", str(db), "--data", str(data), "--metadaten", str(store)])
+
+    assert len(saves) == 4  # je Paper einmal, dazu der Abschluss

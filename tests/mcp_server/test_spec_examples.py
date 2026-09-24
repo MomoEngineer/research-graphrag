@@ -121,6 +121,8 @@ async def test_get_reference_example(index_db: Path) -> None:
     assert payload["missing"] == ["authors"]
     assert payload["reference"]["doi"] == "10.1145/1234"
     assert payload["reference"]["harvard"].startswith("aaaa0001 (2024)")
+    assert payload["reference"]["author_identities"] == []
+    assert payload["reference"]["review"] is None
 
 
 @pytest.mark.anyio

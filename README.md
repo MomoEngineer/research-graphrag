@@ -335,6 +335,60 @@ ausführen. Er dedupliziert aber nur über Dateiname und Hash – ein inhaltsgle
 anderem Namen würde doppelt indiziert. `python -m scripts.update_overview` verweigert seit G4
 den Lauf ohne `--force` (Retirement-Hinweis auf `metadata/curation.json`).
 
+## Workflow: schwach belegte Zitierdaten klären (Arbeitslisten-Weg)
+
+Ein Datensatz mit Konfidenz `weak` kann ein **fremdes** Paper beschreiben. Seine Autoren fehlen
+deshalb auf der Personenebene, bis er geklärt ist. Die Klärung läuft in zwei Stufen, erst ohne,
+dann mit einem LLM. Grundsatz: **Das LLM schlägt vor, das Skript prüft**
+([ADR 0042](docs/adr/0042-title-page-evidence-and-rejections.md)).
+
+1. **Stand ansehen:** `python -m scripts.metadata_worklist stand` zählt die offen schwach
+   belegten Paper.
+2. **Erst ohne LLM prüfen:** `python -m scripts.verify_metadata --dry-run`, danach ohne
+   `--dry-run`. Der Lauf prüft jeden gespeicherten Treffer gegen die Titelseite des lokalen PDFs:
+   Bestätigt heißt `strong`, ein fremdes Paper wird entfernt und mit einem Ablehnungsvermerk
+   gesperrt. Kein Netz. Welche Paper schwach belegt sind, liest der Lauf aus dem **Index**, also
+   im Stand des letzten `python -m scripts.ingest`.
+3. **Arbeitsliste erzeugen:** `python -m scripts.metadata_worklist export` (optional
+   `--limit 50`). Unter `data/worklists/<Zeitstempel>/` entstehen `arbeitsliste.md` und
+   `arbeitsliste.json`. Die Markdown-Datei enthält den Auftrag an das LLM und je Paper Dateiname,
+   gespeicherten Datensatz und einen Auszug der Titelseite. Der Auszug ist als **Fremdtext**
+   markiert, Anweisungen darin werden nicht befolgt.
+4. **LLM fragen:** `arbeitsliste.md` an Copilot oder Claude geben. Die Antwort ist eine
+   JSON-Datei mit genau einer Angabe je Paper, sonst nichts:
+
+   ```json
+   {"antworten": [
+     {"paper_id": "0123456789abcdef", "doi": "10.1145/1234567.1234568"},
+     {"paper_id": "fedcba9876543210", "arxiv_id": "2401.00001"},
+     {"paper_id": "00aa11bb22cc33dd", "title": "Der exakte Titel des Werks"}
+   ]}
+   ```
+
+   Keine Autoren, kein Jahr, keine Venue: Diese Werte liefert nie das LLM. Ist es unsicher,
+   lässt es das Paper weg.
+5. **Antwort prüfen:** `python -m scripts.metadata_worklist import antwort.json --dry-run` prüft
+   nur das Format, ohne Netz und ohne zu schreiben. Ungültige Einträge werden einzeln benannt.
+6. **Übernehmen:** `python -m scripts.metadata_worklist import antwort.json` (benötigt Netz). Das
+   Skript löst jeden Vorschlag über OpenAlex bzw. arXiv auf und übernimmt ihn **nur**, wenn Titel
+   und Autoren des Treffers auf Seite 1 des PDFs stehen. Das Ergebnis steht in
+   `data/metadata_log.md`, getrennt nach „übernommen“, „nicht bestätigt“, „nicht aufgelöst“ und
+   „nicht prüfbar“. Die LLM-Antwort wird unter `metadata/llm_answers/` abgelegt. Sie ist aus
+   keiner Quelle rekonstruierbar und deshalb Teil der Sicherung.
+7. **Den Rest ausweisen:** Was sich nicht klären lässt, bekommt einen Status mit Grund, statt
+   still schwach zu bleiben:
+   `python -m scripts.metadata_worklist markieren <paper_id> --grund "nur als Buchkapitel ohne DOI"`
+   (zurücknehmen mit `--aufheben`). Die Paper-ID muss im Index stehen; ein Tippfehler wird
+   abgewiesen, statt einen verwaisten Status zu schreiben. `get_reference` und `get_paper` zeigen
+   den Status als `review`.
+8. **Wirksam machen:** `python -m scripts.ingest`. Erst dann sehen die Werkzeuge die
+   Änderungen, und die Personenebene nimmt die neu belegten Autoren auf.
+
+> **Vor der Kalibrierung misst der Seite-1-Beleg nur.** Solange A0, Punkt 3 die beiden Schwellen
+> nicht aus einer Handprüfung abgeleitet hat, bestätigt und verwirft er nichts
+> (`bibliography/titlepage.py`, `CALIBRATION`). Die Schritte 2 und 6 ändern bis dahin keinen
+> Datensatz. Format prüfen (Schritt 5) und Paper ausweisen (Schritt 7) gehen schon jetzt.
+
 ## Fragetypen → Suchmodus
 
 > Diese Tabelle ist der **Contract des Query-Routers**: Aus ihr leitet das Router-Gold-Set seine
@@ -480,6 +534,13 @@ python -m scripts.citations <paper_id>
 python -m scripts.cite <paper_id>
 python -m scripts.cite <paper_id> --stil apa
 
+# 3b3. Personen im Korpus (Phase 17 / A4): Kandidaten → Profil, Suche in ihren Papern, Zitationen
+#      Jede Ausgabe nennt die Abdeckung: nur Paper mit belegten Zitierdaten tragen Autoren
+python -m scripts.authors suchen "Asai"
+python -m scripts.authors profil <person_key>
+python -m scripts.authors paper <person_key> "retrieval augmented generation"
+python -m scripts.authors zitationen <person_key>
+
 # 3c. (optional) Belege nummeriert über die LLM-Bridge aufbereiten
 #     (CLI hat offline kein Modell → sichtbarer Noop-Fallback, Belege bleiben vollständig)
 python -m scripts.ask "Welche Datensätze werden genutzt?" --synthese
@@ -497,6 +558,21 @@ python -m scripts.discover --seed <paper_id> --seit 2023
 python -m scripts.resolve_metadata --dry-run
 python -m scripts.resolve_metadata --limit 50
 
+# 3e1. Personenkennungen (OpenAlex/ORCID) aus den Rohantworten nachtragen – ohne Netz (ADR 0041)
+python -m scripts.backfill_author_ids --dry-run
+python -m scripts.backfill_author_ids
+
+# 3e2. Schwach belegte Zitierdaten klären (Phase 17 / A1, ADR 0042)
+#      Seite-1-Beleg gegen das lokale PDF (kein Netz); vor der Kalibrierung aus A0 nur Messung
+python -m scripts.verify_metadata --dry-run
+python -m scripts.verify_metadata
+#      Rest über die LLM-Arbeitsliste: das LLM liefert nur Kennung oder Titel, das Skript prüft
+python -m scripts.metadata_worklist stand
+python -m scripts.metadata_worklist export
+python -m scripts.metadata_worklist import antwort.json --dry-run
+python -m scripts.metadata_worklist import antwort.json
+python -m scripts.metadata_worklist markieren <paper_id> --grund "nur als Buchkapitel ohne DOI"
+
 # 3f. (optional, benötigt Netz) Paper ohne Volltext über DOI/arXiv-ID erfassen
 #     Liest new_papers/referenzen.txt und legt je Kennung eine Stub-Datei *.refjson im
 #     Eingangsordner ab (Titel, Autoren, Jahr, Venue, Abstract) – kein Volltext-Download.
@@ -507,7 +583,7 @@ python -m scripts.resolve_references
 #    (Agent-Modus) die bereitgestellten Werkzeuge aufrufen
 ```
 
-Der MCP-Server stellt u. a. Werkzeuge bereit wie `search_local`, `search_global`, `search_drift`, `search_basic`, `get_paper`, `get_citations`, `get_reference` und `list_topics` – jeweils mit Quellenangaben. **Jeder** Beleg trägt seit Phase 12 zusätzlich die extern auflösbaren `identifiers` (DOI/arXiv/URL) und einen `citation_key`; die **fertige Literaturangabe** in Harvard und APA liefern `get_reference`, `get_paper` und der `references`-Block von `answer_question` ([ADR 0025](docs/adr/0025-citable-paper-metadata.md)). Dazu kommt `answer_question`: ein Aufruf, der den Modus selbst wählt und **nummerierte Belege** mit Zitier-Contract liefert (optional per `synthesize = true` vom Client-Modell formuliert). Wählt der Router den Modus (`mode = "auto"`, Default), weist die Antwort unter `routing` aus, **warum** – mit Konfidenzstufe und auslösenden Signalen ([ADR 0017](docs/adr/0017-router-hardening-phase7.md)). Zwei weitere Werkzeuge ergänzen das Portfolio ([ADR 0039](docs/adr/0039-correction-tool-and-pdf-file-access.md)): `get_paper_file` liefert den lokalen Dateipfad des Original-PDFs (kein Dateiinhalt) und `correct_paper_metadata` korrigiert bibliografische Metadaten als `manual`-Herkunft – als erstes **schreibendes** Werkzeug, wirksam erst nach dem nächsten `python -m scripts.ingest`.
+Der MCP-Server stellt u. a. Werkzeuge bereit wie `search_local`, `search_global`, `search_drift`, `search_basic`, `get_paper`, `get_citations`, `get_reference` und `list_topics` – jeweils mit Quellenangaben. **Jeder** Beleg trägt seit Phase 12 zusätzlich die extern auflösbaren `identifiers` (DOI/arXiv/URL) und einen `citation_key`; die **fertige Literaturangabe** in Harvard und APA liefern `get_reference`, `get_paper` und der `references`-Block von `answer_question` ([ADR 0025](docs/adr/0025-citable-paper-metadata.md)). Dazu kommt `answer_question`: ein Aufruf, der den Modus selbst wählt und **nummerierte Belege** mit Zitier-Contract liefert (optional per `synthesize = true` vom Client-Modell formuliert). Wählt der Router den Modus (`mode = "auto"`, Default), weist die Antwort unter `routing` aus, **warum** – mit Konfidenzstufe und auslösenden Signalen ([ADR 0017](docs/adr/0017-router-hardening-phase7.md)). Zwei weitere Werkzeuge ergänzen das Portfolio ([ADR 0039](docs/adr/0039-correction-tool-and-pdf-file-access.md)): `get_paper_file` liefert den lokalen Dateipfad des Original-PDFs (kein Dateiinhalt) und `correct_paper_metadata` korrigiert bibliografische Metadaten als `manual`-Herkunft – als erstes **schreibendes** Werkzeug, wirksam erst nach dem nächsten `python -m scripts.ingest`. Seit Phase 17 / A4 sind **Personen** eine eigene Rechercheebene ([ADR 0043](docs/adr/0043-author-index-and-person-tools.md)): `search_authors` findet zu einem Namen die Personen-Kandidaten samt Personenschlüssel (mehrdeutige Namen werden ausgewiesen, nie still zusammengeführt), `get_author` liefert Paper, Communities und direkte Mitautoren, `search_author_papers` sucht nur in den Papern der Person, und `get_author_citations` zeigt, wer sie im Korpus zitiert und wen sie zitiert. Jede dieser Antworten weist aus, wie viele Volltexte belegte Autoren tragen.
 
 ## Qualitätssicherung (pragmatisch)
 
