@@ -31,6 +31,7 @@ from research_graphrag.online.metadata import (
     MAX_AUTHORS,
     ResolutionTarget,
     authors_of,
+    authorships_of,
     filter_pending,
     openalex_id_url,
     openalex_title_url,
@@ -454,3 +455,85 @@ def test_pending_filter_keeps_targets_without_missing_fields() -> None:
     target = _target(missing=())
 
     assert filter_pending([target], []) == (target,)
+
+
+# --------------------------------------------------------------------------------------
+# Personenkennung aus den authorships (Phase 17 / A2, ADR 0041)
+# --------------------------------------------------------------------------------------
+
+_ORCID = "0000-0002-1825-0097"
+
+
+def _identified_work() -> dict[str, object]:
+    """Ein Werk, dessen Autoren OpenAlex-ID und teils ORCID tragen – wie in echten Antworten."""
+    work = _work()
+    work["authorships"] = [
+        {
+            "author": {
+                "id": "https://openalex.org/A5023888391",
+                "display_name": "Anna Beispiel",
+                "orcid": f"https://orcid.org/{_ORCID}",
+            },
+            "raw_author_name": "A. Beispiel",
+        },
+        {"author": {"id": "https://openalex.org/W1", "display_name": "Bert Muster", "orcid": None}},
+    ]
+    return work
+
+
+def test_authorships_carry_checked_identifiers() -> None:
+    """ID und ORCID werden gelesen und geprüft; eine Werk-ID am Autor wird verworfen."""
+    identities = authorships_of(json.dumps(_identified_work()).encode())
+
+    assert [entry.name for entry in identities] == ["Anna Beispiel", "Bert Muster"]
+    assert [entry.openalex_id for entry in identities] == ["A5023888391", ""]
+    assert [entry.orcid for entry in identities] == [_ORCID, ""]
+
+
+def test_a_resolved_record_stores_the_identifiers_parallel_to_the_names() -> None:
+    """Der Auflösungslauf speichert die Kennungen additiv neben den Namen."""
+    client = _FakeClient(by_id=json.dumps(_identified_work()).encode())
+
+    record = resolve_target(client, _target()).record
+
+    assert record is not None
+    assert record.authors == ("Anna Beispiel", "Bert Muster")
+    assert record.author_ids == ("A5023888391", "")
+    assert record.author_orcids == (_ORCID, "")
+
+
+def test_a_record_without_any_identifier_keeps_the_old_form() -> None:
+    """Ohne Kennung bleiben beide Listen leer – die Speicherform ändert sich nicht."""
+    client = _FakeClient(by_id=json.dumps(_work()).encode())
+
+    record = resolve_target(client, _target()).record
+
+    assert record is not None
+    assert (record.author_ids, record.author_orcids) == ((), ())
+    assert "author_ids" not in record.to_dict()
+
+
+def test_the_arxiv_feed_supplies_names_but_no_identifiers() -> None:
+    """Der arXiv-Feed kennt keine Personenkennung – der Datensatz weist das nicht falsch aus."""
+    client = _FakeClient(arxiv=_ARXIV_FEED)
+
+    record = resolve_target(client, _target(doi="", title="", arxiv_id=_ARXIV)).record
+
+    assert record is not None
+    assert record.authors == ("Anna Beispiel", "Bert Muster")
+    assert record.author_ids == ()
+
+
+def test_malformed_authorships_are_skipped_not_fatal() -> None:
+    """Fremde Antworten können kaputte Einträge tragen – sie entfallen, der Rest bleibt."""
+    work = _work()
+    work["authorships"] = [
+        "kein Objekt",
+        {"author": None},
+        {"author": {"display_name": "  "}},
+        {"author": {"display_name": "Anna Beispiel", "id": 17}},
+    ]
+
+    identities = authorships_of(json.dumps(work).encode())
+
+    assert [(entry.name, entry.openalex_id) for entry in identities] == [("Anna Beispiel", "")]

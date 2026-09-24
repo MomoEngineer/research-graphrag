@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from collections.abc import Sequence
 from pathlib import Path
@@ -18,10 +19,12 @@ from research_graphrag.bibliography.model import (
     ORIGIN_RESOLVED,
     MetadataRecord,
 )
+from research_graphrag.bibliography.resolve import resolve_all
 from research_graphrag.bibliography.store import save_records
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.model import SECTION_KIND_BODY, SECTION_KIND_REFERENCES, Section
 from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
+from research_graphrag.extraction.refstub import canonical_from_stub, parse_stub
 from research_graphrag.indexing.metadata_index import (
     METADATA_SCHEMA_VERSION,
     build_metadata_index,
@@ -29,6 +32,7 @@ from research_graphrag.indexing.metadata_index import (
     extracted_records,
     load_paper_metadata,
     metadata_for,
+    stub_records,
     year_from_arxiv,
 )
 from research_graphrag.indexing.tfidf_index import build_index
@@ -357,3 +361,133 @@ def test_build_is_deterministic(tmp_path: Path) -> None:
     build_metadata_index(list(reversed(papers)), db)
 
     assert load_paper_metadata(db) == first
+
+
+# --------------------------------------------------------------------------------------
+# Referenz-Einträge und Personenkennung (Phase 17 / A2, ADR 0041)
+# --------------------------------------------------------------------------------------
+
+
+def _stub_paper(paper_id: str = "cccc0001", **overrides: object) -> CanonicalPaper:
+    """Baut das Canonical eines Referenz-Eintrags über den echten Stub-Adapter."""
+    payload: dict[str, object] = {
+        "schema_version": "0.2.0",
+        "document_kind": "reference",
+        "requested": "doi:10.1145/1376616.1376629",
+        "title": "Towards Identity Anonymization on Graphs",
+        "authors": ["Kun Liu", "Evimaria Terzi"],
+        "author_ids": ["A1111", "A2222"],
+        "author_orcids": [],
+        "year": 2008,
+        "venue": "Proceedings of SIGMOD",
+        "doi": "10.1145/1376616.1376629",
+        "arxiv_id": "",
+        "url": "",
+        "source": "OpenAlex",
+        "abstract": "Ein Abstract.",
+    }
+    payload.update(overrides)
+    stub = parse_stub(json.dumps(payload).encode())
+    return canonical_from_stub(
+        stub,
+        paper_id=paper_id,
+        source_uri=f"file:///papers/{paper_id}.refjson",
+        source_sha256="f" * 64,
+    )
+
+
+def test_a_reference_entry_contributes_a_strong_resolved_record() -> None:
+    """Die Stub-Datei wurde über die eigene Kennung aufgelöst – ihr Datensatz ist ``strong``."""
+    (record,) = stub_records([_stub_paper(), _paper("aaaa0001", _TITLE_A)])
+
+    assert record.origin == ORIGIN_RESOLVED
+    assert record.confidence == CONFIDENCE_STRONG
+    assert record.authors == ("Kun Liu", "Evimaria Terzi")
+    assert record.author_ids == ("A1111", "A2222")
+    assert record.doi == "10.1145/1376616.1376629"
+    assert record.evidence == "Referenz-Eintrag über doi:10.1145/1376616.1376629, OpenAlex"
+
+
+def test_the_stub_authors_reach_the_index_with_their_identifiers(tmp_path: Path) -> None:
+    """Befund 2 ist geschlossen: Autoren und Kennungen kommen ohne Netzzugriff im Index an."""
+    papers = [_stub_paper(), _paper("aaaa0001", _TITLE_A)]
+    db = _index(tmp_path, papers)
+
+    report = build_metadata_index(papers, db)
+    item = load_paper_metadata(db)["cccc0001"]
+
+    assert item.authors == ("Kun Liu", "Evimaria Terzi")
+    assert item.author_ids == ("A1111", "A2222")
+    assert item.year == 2008
+    assert item.confidence == CONFIDENCE_STRONG
+    assert item.is_citable()
+    assert report.n_from_stubs == 1
+    assert report.n_with_author_ids == 1
+
+
+def test_the_stub_outranks_a_stored_resolved_record_of_the_same_entry(tmp_path: Path) -> None:
+    """Die Stub-Datei beschreibt den Eintrag; ein späterer Lauf ergänzt nur fehlende Felder."""
+    stored = MetadataRecord(
+        paper_id="cccc0001",
+        origin=ORIGIN_RESOLVED,
+        title="Ein fremder Titel aus einer Titel-Suche",
+        authors=("Jemand Anderes",),
+        venue="",
+        url="https://example.org/landing",
+        confidence=CONFIDENCE_WEAK,
+    )
+    metadata_file = tmp_path / "paper_metadata.json"
+    save_records(metadata_file, [stored])
+
+    records = collect_records([_stub_paper(venue="")], metadata_file=metadata_file)
+    resolved = resolve_all(records, ["cccc0001"])["cccc0001"]
+
+    assert resolved.authors == ("Kun Liu", "Evimaria Terzi")
+    assert resolved.url == "https://example.org/landing"
+
+
+def test_the_report_measures_the_author_coverage_of_full_texts(tmp_path: Path) -> None:
+    """Die Kennzahl des A0-Abbruchkriteriums: Volltexte mit Autoren aus ``strong``-Datensätzen."""
+    papers = [
+        _paper("aaaa0001", _TITLE_A),
+        _paper("bbbb0001", _TITLE_B),
+        _stub_paper(),
+    ]
+    metadata_file = tmp_path / "paper_metadata.json"
+    save_records(
+        metadata_file,
+        [
+            MetadataRecord(
+                paper_id="aaaa0001",
+                origin=ORIGIN_RESOLVED,
+                authors=("Anna Beispiel",),
+                confidence=CONFIDENCE_STRONG,
+            )
+        ],
+    )
+    db = _index(tmp_path, papers)
+
+    report = build_metadata_index(papers, db, metadata_file=metadata_file)
+
+    assert report.n_full_texts == 2
+    assert report.n_full_with_strong_authors == 1
+    assert report.author_coverage == pytest.approx(0.5)
+
+
+def test_an_index_from_before_the_identity_columns_stays_readable(tmp_path: Path) -> None:
+    """Ein Teilschema 0.1.0 liefert Metadaten ohne Kennungen statt eines Fehlers."""
+    papers = [_paper("aaaa0001", _TITLE_A)]
+    db = _index(tmp_path, papers)
+    build_metadata_index(papers, db)
+    connection = sqlite3.connect(str(db))
+    try:
+        connection.execute("ALTER TABLE paper_metadata DROP COLUMN author_ids")
+        connection.execute("ALTER TABLE paper_metadata DROP COLUMN author_orcids")
+        connection.commit()
+    finally:
+        connection.close()
+
+    item = load_paper_metadata(db)["aaaa0001"]
+
+    assert item.author_ids == ()
+    assert item.author_identities == ()

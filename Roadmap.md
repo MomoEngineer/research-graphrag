@@ -1150,6 +1150,15 @@ Festgelegt mit dem Nutzer am 2026-09-24, **vor** dem ersten Code:
   oder ORCID). Bestanden ist die Handprobe, wenn mindestens **8 von 10** Personen diese Bedingung
   erfüllen.
 
+| Unterphase | Stand | Beleg |
+| --- | --- | --- |
+| A0 | Festlegungen fixiert; Messpaket folgt nach der A1/A2-Mechanik, damit es genau den gebauten Seite-1-Beleg kalibriert | dieser Block |
+| A2, Punkte 1–2 | **umgesetzt:** Die Stub-Lücke ist im Code lokalisiert und geschlossen, die Personenkennung wird additiv gespeichert, und jeder Ingest weist die Autoren-Abdeckung aus. Die Wirkung am realen Bestand steht noch aus und wird beim nächsten Ingest gemessen | [ADR 0041](docs/adr/0041-author-identity-and-schema.md) |
+| A1 | offen | – |
+| A2, Punkte 3–5 | offen | – |
+| A3, A4, A6 | offen | – |
+| A5 | wartet auf Phase 16 / F2 | – |
+
 ### A0 – Abdeckung, Identität und `weak`-Triage messen (zwingend zuerst, mit Abbruchkriterium)
 _Modell-Tipp: Claude Opus 5.5._
 

@@ -46,6 +46,12 @@ def main() -> int:
         f"[ingest] Zitierdaten: mit Identifikator={report.n_with_identifier} "
         f"vollständig zitierfähig={report.n_citable} schwach belegt={report.n_weak_metadata}"
     )
+    print(
+        f"[ingest] Autoren: Volltexte mit Autoren aus strong-Datensätzen="
+        f"{report.n_full_with_strong_authors}/{report.n_full_texts} "
+        f"({report.author_coverage:.1%}) mit Personenkennung={report.n_with_author_ids} "
+        f"aus Referenz-Einträgen={report.n_from_stubs}"
+    )
     print(f"[ingest] Qualitätsreport: {Path(args.data) / 'quality_report.json'}")
     return 0
 

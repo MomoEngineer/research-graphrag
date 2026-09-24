@@ -7,7 +7,10 @@ Orchestrierung liegt in :mod:`research_graphrag.extraction.pdf`.
 
 Schema-Version **0.5.0**: Ein Paper trägt jetzt seine **Dokumentart** (:data:`DOCUMENT_KIND_FULL`
 für ein extrahiertes PDF, :data:`DOCUMENT_KIND_REFERENCE` für einen Referenz-Eintrag ohne
-Volltext, siehe docs/adr/0030-reference-entries-in-corpus-phase13.md). ``0.3.0 -> 0.4.0``: Die
+Volltext, siehe docs/adr/0030-reference-entries-in-corpus-phase13.md). Seit Phase 17 / A2 trägt
+ein Referenz-Eintrag zusätzlich seine :class:`SourceBibliography` – **additiv** und bewusst
+**ohne** Versionssprung, weil ein Sprung jedes PDF neu extrahieren ließe
+(docs/adr/0041-author-identity-and-schema.md). ``0.3.0 -> 0.4.0``: Die
 Struktur blieb unverändert, der **Inhalts-Contract** wurde geschärft –
 der Seitentext wird vor der Analyse normalisiert (Ligaturen repariert, Glyph-Artefakte entfernt)
 und die Überschriften-Erkennung verwirft Bibliografie-Zeilen (siehe
@@ -137,6 +140,74 @@ class Chunk:
 
 
 @dataclass(frozen=True)
+class SourceBibliography:
+    """Bibliografische Angaben, die die **Quelldatei selbst** mitbringt.
+
+    Heute trägt nur ein Referenz-Eintrag solche Angaben: Seine Stub-Datei wurde über die eigene
+    DOI bzw. arXiv-ID aufgelöst (docs/adr/0029-reference-stub-resolution-phase13.md). Ein PDF
+    liefert keine – Autoren werden aus dem PDF-Text bewusst **nicht** heuristisch gelesen
+    (Roadmap Phase 17, „Bewusst ausgeschlossen").
+
+    Additiv seit Phase 17 / A2 (docs/adr/0041-author-identity-and-schema.md), ohne Anhebung von
+    :data:`SCHEMA_VERSION`.
+
+    Attributes:
+        title: Titel in der Schreibweise der Quelle.
+        authors: Autoren in Nennreihenfolge (Schreibweise der Quelle).
+        author_ids: OpenAlex-Autor-IDs positionsgleich zu ``authors`` (leer = keine Angabe).
+        author_orcids: ORCIDs positionsgleich zu ``authors`` (leer = keine Angabe).
+        year: Erscheinungsjahr; ``0`` wenn unbekannt.
+        venue: Journal, Konferenz oder Verlag.
+        url: Landing- oder Volltext-Link.
+        source: Dienst, der die Angaben geliefert hat (z. B. ``"OpenAlex"``).
+        requested: Die angefragte Kennung (z. B. ``"doi:10.1145/…"``) – der Beleg.
+    """
+
+    title: str = ""
+    authors: tuple[str, ...] = ()
+    author_ids: tuple[str, ...] = ()
+    author_orcids: tuple[str, ...] = ()
+    year: int = 0
+    venue: str = ""
+    url: str = ""
+    source: str = ""
+    requested: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialisiert die Angaben (Teil des Canonical JSON)."""
+        return {
+            "title": self.title,
+            "authors": list(self.authors),
+            "author_ids": list(self.author_ids),
+            "author_orcids": list(self.author_orcids),
+            "year": self.year,
+            "venue": self.venue,
+            "url": self.url,
+            "source": self.source,
+            "requested": self.requested,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> SourceBibliography:
+        """Rekonstruiert die Angaben aus Canonical JSON (fehlende Felder bleiben leer)."""
+        return cls(
+            title=str(data.get("title", "")),
+            authors=tuple(str(name) for name in data.get("authors", [])),
+            author_ids=tuple(str(value) for value in data.get("author_ids", [])),
+            author_orcids=tuple(str(value) for value in data.get("author_orcids", [])),
+            year=int(data.get("year", 0) or 0),
+            venue=str(data.get("venue", "")),
+            url=str(data.get("url", "")),
+            source=str(data.get("source", "")),
+            requested=str(data.get("requested", "")),
+        )
+
+
+BIBLIOGRAPHY_KEY = "bibliography"
+"""Schlüssel der :class:`SourceBibliography` im Canonical JSON (nur bei Referenz-Einträgen)."""
+
+
+@dataclass(frozen=True)
 class CanonicalPaper:
     """Kanonische, serialisierbare Repräsentation eines extrahierten Papers."""
 
@@ -149,10 +220,15 @@ class CanonicalPaper:
     sections: tuple[Section, ...] = ()
     identifiers: Mapping[str, str] = field(default_factory=dict)
     document_kind: str = DOCUMENT_KIND_FULL
+    bibliography: SourceBibliography | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialisiert das Paper als Canonical-JSON-kompatibles Dict."""
-        return {
+        """Serialisiert das Paper als Canonical-JSON-kompatibles Dict.
+
+        ``bibliography`` erscheint nur, wenn die Quelldatei Angaben mitbringt. Ein PDF-Canonical
+        bleibt dadurch byte-identisch zur Form vor Phase 17.
+        """
+        payload: dict[str, Any] = {
             "schema_version": SCHEMA_VERSION,
             "paper_id": self.paper_id,
             "source_uri": self.source_uri,
@@ -164,6 +240,9 @@ class CanonicalPaper:
             "sections": [section.to_dict() for section in self.sections],
             "chunks": [chunk.to_dict() for chunk in self.chunks],
         }
+        if self.bibliography is not None:
+            payload[BIBLIOGRAPHY_KEY] = self.bibliography.to_dict()
+        return payload
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> CanonicalPaper:
@@ -171,6 +250,7 @@ class CanonicalPaper:
         chunks = tuple(Chunk.from_dict(entry) for entry in data["chunks"])
         sections = tuple(Section.from_dict(entry) for entry in data.get("sections", []))
         identifiers = {str(key): str(value) for key, value in data.get("identifiers", {}).items()}
+        bibliography = data.get(BIBLIOGRAPHY_KEY)
         return cls(
             paper_id=str(data["paper_id"]),
             source_uri=str(data["source_uri"]),
@@ -183,6 +263,11 @@ class CanonicalPaper:
             # Vor Schema 0.5.0 gab es nur Volltext-Dokumente; ein fehlendes Feld ist deshalb
             # eindeutig deutbar und kein Grund, ein Alt-Artefakt abzulehnen.
             document_kind=str(data.get("document_kind", DOCUMENT_KIND_FULL)),
+            bibliography=(
+                SourceBibliography.from_dict(bibliography)
+                if isinstance(bibliography, Mapping)
+                else None
+            ),
         )
 
     def save_json(self, path: str | Path) -> None:
@@ -209,3 +294,14 @@ def read_schema_version(path: str | Path) -> str:
     """
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     return str(data.get("schema_version", "0.1.0"))
+
+
+def has_source_bibliography(path: str | Path) -> bool:
+    """Prüft, ob ein Canonical JSON bereits den Schlüssel :data:`BIBLIOGRAPHY_KEY` trägt.
+
+    Dient der gezielten Nachextraktion von Referenz-Einträgen, die vor Phase 17 gelesen wurden
+    (docs/adr/0041-author-identity-and-schema.md). Diese Einträge sind billig neu zu lesen. Eine
+    Anhebung von :data:`SCHEMA_VERSION` würde dagegen **jedes** PDF neu extrahieren.
+    """
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    return BIBLIOGRAPHY_KEY in data

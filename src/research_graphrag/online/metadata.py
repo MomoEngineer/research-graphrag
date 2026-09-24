@@ -20,9 +20,10 @@ Zeichenketten gelten als nicht vertrauenswürdige Eingabe und werden vor der Üb
 from __future__ import annotations
 
 import json
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 from urllib.parse import quote
 
 from ..bibliography.model import (
@@ -31,7 +32,10 @@ from ..bibliography.model import (
     CONFIDENCE_WEAK,
     ORIGIN_MANUAL,
     ORIGIN_RESOLVED,
+    AuthorIdentity,
     MetadataRecord,
+    normalize_openalex_author_id,
+    normalize_orcid,
 )
 from ..errors import DomainError, ErrorCode
 from ..indexing.citation_graph import normalize_title
@@ -172,8 +176,42 @@ def parse_openalex_work(payload: bytes) -> Candidate | None:
     return candidates[0] if candidates else None
 
 
-def authors_of(payload: bytes) -> tuple[str, ...]:
-    """Liest die Autorennamen aus einer OpenAlex-Antwort (Einzelwerk **oder** Trefferliste)."""
+def authorships_of_work(work: Mapping[str, Any]) -> tuple[AuthorIdentity, ...]:
+    """Liest die Autorennennungen **eines** OpenAlex-Werks samt Personenkennung.
+
+    Übernommen werden der ``display_name`` in der Schreibweise der Quelle, ``author.id`` und
+    ``author.orcid``. Beide Kennungen werden geprüft; eine ungültige ergibt einen leeren Wert
+    (docs/adr/0041-author-identity-and-schema.md). Nennungen ohne Namen entfallen. Die Liste
+    endet bei :data:`MAX_AUTHORS`.
+
+    Öffentlich, weil der Nachtrag aus den abgelegten Rohantworten dieselbe Lesart braucht
+    (Roadmap Phase 17 / A2, Punkt 3) – zwei Lesarten wären zwei Wahrheiten.
+    """
+    identities: list[AuthorIdentity] = []
+    for entry in work.get("authorships") or []:
+        if not isinstance(entry, dict):
+            continue
+        raw_author = entry.get("author")
+        author: Mapping[str, Any] = raw_author if isinstance(raw_author, dict) else {}
+        name = _clean(str(author.get("display_name") or ""), limit=200)
+        if not name:
+            continue
+        identities.append(
+            AuthorIdentity(
+                name=name,
+                openalex_id=normalize_openalex_author_id(author.get("id")),
+                orcid=normalize_orcid(author.get("orcid")),
+            )
+        )
+    return tuple(identities[:MAX_AUTHORS])
+
+
+def authorships_of(payload: bytes) -> tuple[AuthorIdentity, ...]:
+    """Liest die Autorennennungen aus einer OpenAlex-Antwort (Einzelwerk **oder** Trefferliste).
+
+    Bei einer Trefferliste zählt das erste Werk mit mindestens einer Nennung – dieselbe Regel wie
+    vor Phase 17 für die Namen allein.
+    """
     try:
         data = json.loads(payload.decode("utf-8", errors="replace"))
     except json.JSONDecodeError:
@@ -184,15 +222,28 @@ def authors_of(payload: bytes) -> tuple[str, ...]:
     for work in works or []:
         if not isinstance(work, dict):
             continue
-        names = [
-            _clean(str((entry.get("author") or {}).get("display_name") or ""), limit=200)
-            for entry in work.get("authorships") or []
-            if isinstance(entry, dict)
-        ]
-        filled = [name for name in names if name]
-        if filled:
-            return tuple(filled[:MAX_AUTHORS])
+        identities = authorships_of_work(work)
+        if identities:
+            return identities
     return ()
+
+
+def authors_of(payload: bytes) -> tuple[str, ...]:
+    """Liest die Autorennamen aus einer OpenAlex-Antwort (Einzelwerk **oder** Trefferliste)."""
+    return tuple(identity.name for identity in authorships_of(payload))
+
+
+def author_identifier_lists(
+    identities: Sequence[AuthorIdentity],
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Zerlegt Nennungen in positionsgleiche Listen aus OpenAlex-IDs und ORCIDs.
+
+    Eine Liste ohne einen einzigen Wert wird leer geliefert – so bleibt die Speicherform eines
+    Datensatzes ohne Kennung unverändert (docs/adr/0041-author-identity-and-schema.md).
+    """
+    ids = tuple(identity.openalex_id for identity in identities)
+    orcids = tuple(identity.orcid for identity in identities)
+    return (ids if any(ids) else (), orcids if any(orcids) else ())
 
 
 def venue_of(payload: bytes) -> str:
@@ -224,12 +275,16 @@ def _record_from(
     confidence: str,
     evidence: str,
 ) -> MetadataRecord:
-    """Baut den Datensatz der Herkunft ``resolved`` aus einem Treffer."""
+    """Baut den Datensatz der Herkunft ``resolved`` aus einem Treffer (samt Personenkennung)."""
+    identities = authorships_of(payload)
+    author_ids, author_orcids = author_identifier_lists(identities)
     return MetadataRecord(
         paper_id=target.paper_id,
         origin=ORIGIN_RESOLVED,
         title=_clean(candidate.title),
-        authors=authors_of(payload),
+        authors=tuple(identity.name for identity in identities),
+        author_ids=author_ids,
+        author_orcids=author_orcids,
         year=candidate.year,
         venue=venue_of(payload),
         doi=_clean(candidate.doi, limit=200),

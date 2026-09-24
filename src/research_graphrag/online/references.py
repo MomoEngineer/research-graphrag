@@ -38,8 +38,14 @@ from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 
-from ..bibliography.model import ascii_fold
+from ..bibliography.model import ascii_fold, normalize_openalex_author_id, normalize_orcid
 from ..errors import DomainError, ErrorCode
+
+# Das Stub-Format hat **eine** Definitionsstelle: den lesenden Adapter. Der Schreiber übernimmt
+# Endung, Formatversion und Dokumentart von dort, damit beide Seiten nie auseinanderlaufen
+# (docs/adr/0041-author-identity-and-schema.md; vorher war die Version hier dupliziert).
+from ..extraction.model import DOCUMENT_KIND_REFERENCE
+from ..extraction.refstub import STUB_SCHEMA_VERSION, STUB_SUFFIX
 from ..intake import QUARANTINE_DIR, CorpusView
 from .candidates import SOURCE_ARXIV, SOURCE_OPENALEX
 from .metadata import (
@@ -47,7 +53,8 @@ from .metadata import (
     MAX_AUTHORS,
     MAX_FIELD_CHARS,
     METADATA_FIELDS,
-    authors_of,
+    author_identifier_lists,
+    authorships_of,
     fetch_openalex_url,
     openalex_id_url,
     parse_openalex_work,
@@ -60,15 +67,6 @@ _logger = logging.getLogger(__name__)
 
 REFERENCE_LIST_NAME = "referenzen.txt"
 """Dateiname der kuratierten Kennungsliste unterhalb des Eingangsordners."""
-
-STUB_SUFFIX = ".refjson"
-"""Endung der Stub-Dateien – eigen, damit ``*.pdf``-Globs unberührt bleiben."""
-
-STUB_SCHEMA_VERSION = "0.1.0"
-"""Version des Stub-Formats (eigenständig, unabhängig vom Canonical-Schema)."""
-
-DOCUMENT_KIND_REFERENCE = "reference"
-"""Dokumentart eines Referenz-Eintrags; wandert in R2 ins Canonical- und Index-Schema."""
 
 REFERENCE_FIELDS = f"{METADATA_FIELDS},abstract_inverted_index"
 """OpenAlex-Feldsatz der Referenz-Auflösung – wie bei den Zitationsdaten, plus Abstract."""
@@ -483,6 +481,8 @@ def build_stub(
     *,
     title: str,
     authors: Iterable[str] = (),
+    author_ids: Sequence[str] = (),
+    author_orcids: Sequence[str] = (),
     year: int = 0,
     venue: str = "",
     doi: str = "",
@@ -501,17 +501,32 @@ def build_stub(
     Zuweisung bleibt. ``abstract`` steht bewusst am Ende: Es ist das einzige Feld, das von Hand
     nachgetragen wird.
 
+    ``author_ids``/``author_orcids`` stehen positionsgleich zu ``authors`` (Format 0.2.0,
+    docs/adr/0041-author-identity-and-schema.md). Entfällt ein Name bei der Bereinigung, entfällt
+    seine Kennung mit ihm, damit die Zuordnung erhalten bleibt. Passen die Listen nicht zur
+    Namensliste, werden sie leer geschrieben.
+
     Returns:
         Den Datensatz als serialisierbares ``dict``.
     """
+    raw_names = list(authors)
+    ids = list(author_ids) if len(author_ids) == len(raw_names) else [""] * len(raw_names)
+    orcids = list(author_orcids) if len(author_orcids) == len(raw_names) else [""] * len(raw_names)
+    kept = [
+        (name, ids[position], orcids[position])
+        for position, name in enumerate(_clean(item, limit=200) for item in raw_names)
+        if name
+    ][:MAX_AUTHORS]
+    kept_ids = [normalize_openalex_author_id(value) for _, value, _ in kept]
+    kept_orcids = [normalize_orcid(value) for _, _, value in kept]
     return {
         "schema_version": STUB_SCHEMA_VERSION,
         "document_kind": DOCUMENT_KIND_REFERENCE,
         "requested": request.label,
         "title": _clean(title),
-        "authors": [name for name in (_clean(item, limit=200) for item in authors) if name][
-            :MAX_AUTHORS
-        ],
+        "authors": [name for name, _, _ in kept],
+        "author_ids": kept_ids if any(kept_ids) else [],
+        "author_orcids": kept_orcids if any(kept_orcids) else [],
         "year": year if year > 0 else 0,
         "venue": _clean(venue),
         "doi": _clean(doi, limit=200),
@@ -565,6 +580,8 @@ class ReferenceLookup:
         source_url: Tatsächlich abgerufene URL (Reproduzierbarkeit).
         raw: Rohantworten des Laufs für die Ablage.
         note: Klartext-Begründung, wenn etwas fehlt.
+        author_ids: OpenAlex-Autor-IDs positionsgleich zu ``authors`` (nur aus OpenAlex).
+        author_orcids: ORCIDs positionsgleich zu ``authors`` (nur aus OpenAlex).
     """
 
     title: str = ""
@@ -579,6 +596,8 @@ class ReferenceLookup:
     source_url: str = ""
     raw: tuple[SourceResult, ...] = ()
     note: str = ""
+    author_ids: tuple[str, ...] = ()
+    author_orcids: tuple[str, ...] = ()
 
 
 def _openalex_lookup(client: HttpClient, identifier: str) -> ReferenceLookup:
@@ -590,9 +609,13 @@ def _openalex_lookup(client: HttpClient, identifier: str) -> ReferenceLookup:
     candidate = parse_openalex_work(source.raw)
     if candidate is None:
         return ReferenceLookup(raw=(source,), note=f"OpenAlex kennt {identifier} nicht")
+    identities = authorships_of(source.raw)
+    author_ids, author_orcids = author_identifier_lists(identities)
     return ReferenceLookup(
         title=candidate.title,
-        authors=authors_of(source.raw),
+        authors=tuple(identity.name for identity in identities),
+        author_ids=author_ids,
+        author_orcids=author_orcids,
         year=candidate.year,
         venue=venue_of(source.raw),
         doi=candidate.doi,
@@ -702,6 +725,8 @@ def process(client: HttpClient, request: ReferenceRequest, inbox: Path) -> Refer
         request,
         title=found.title,
         authors=found.authors,
+        author_ids=found.author_ids,
+        author_orcids=found.author_orcids,
         year=found.year,
         venue=found.venue,
         doi=found.doi or (request.value if request.kind == KIND_DOI else ""),

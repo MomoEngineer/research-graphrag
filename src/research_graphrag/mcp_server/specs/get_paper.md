@@ -11,7 +11,7 @@
 | Feld | Wert |
 | --- | --- |
 | **Tool-Name** | `get_paper` |
-| **Version** | `0.2.0` |
+| **Version** | `0.3.0` |
 | **Capability-Schicht** | Katalog / Provenienz (siehe README.md) |
 | **Status** | Implementiert (Phase 5) |
 
@@ -55,6 +55,10 @@ Liefert die **Metadaten eines einzelnen Papers** anhand seiner stabilen `paper_i
     "origins": { "title": "curated", "authors": "resolved" },
     "confidence": "strong",
     "citable": true,
+    "author_identities": [
+      { "name": "Anna Beispiel", "openalex_id": "A5023888391", "orcid": "0000-0002-1825-0097", "person_key": "A5023888391", "identity": "openalex" },
+      { "name": "Bert Muster", "openalex_id": "", "orcid": "", "person_key": "name:bert muster", "identity": "name" }
+    ],
     "harvard": "Beispiel, A. and Muster, B. (2023) …",
     "apa": "Beispiel, A., & Muster, B. (2023). …",
     "in_text": { "harvard": "(Beispiel and Muster, 2023)", "apa": "(Beispiel & Muster, 2023)" }
@@ -67,6 +71,13 @@ Liefert die **Metadaten eines einzelnen Papers** anhand seiner stabilen `paper_i
 `document_kind` ist `full` (aus einem PDF extrahierter Volltext) oder `reference` (**Referenz-Eintrag ohne Volltext**). Bei `reference` sind `n_pages = 0`, `n_chunks = 1` und `sections = ["Abstract"]` **kein Befund**, sondern die vollständige Auskunft über ein Paper, dessen Volltext nicht beschaffbar war; die Literaturangabe in `reference` bleibt davon unberührt vollständig ([ADR 0031](../../../../docs/adr/0031-reference-contract-and-guardrail-phase13.md)).
 
 `reference` ist der **aufgelöste** bibliografische Datensatz samt fertiger Angabe in Harvard und APA. Er ist die **gleiche** Nutzlast wie das Feld `reference` von `get_reference`; dort kommen mit `missing` und `note` zusätzlich die Diagnose der fehlenden Pflichtfelder hinzu. `origins` weist je Feld die Herkunft aus (`manual` > `curated` > `resolved` > `extracted`), `confidence` die schwächste beitragende Quelle, `citable` die Vollständigkeit ([ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md)).
+
+- `author_identities` (seit Version 0.3.0, additiv, [ADR 0041](../../../../docs/adr/0041-author-identity-and-schema.md)):
+  je Autor positionsgleich zu `authors` der Name in der Schreibweise der Quelle, die OpenAlex-Autor-ID
+  und die ORCID (leer = unbekannt), der **Personenschlüssel** (`person_key`: OpenAlex-ID, sonst
+  `orcid:<ORCID>`, sonst ausdrücklich `name:<normalisiert>`) und der Identitätsstatus
+  (`openalex`/`orcid`/`name`). Die Kennungen stammen stets aus **derselben** Quelle wie die Namen;
+  `identity = "name"` ist ausdrücklich **keine** bestätigte Identität.
 
 ## 4. Annahmen und Vorbedingungen
 
@@ -135,6 +146,7 @@ Antwort:
     "origins": { "arxiv_id": "extracted", "doi": "extracted", "title": "extracted", "year": "extracted" },
     "confidence": "weak",
     "citable": false,
+    "author_identities": [],
     "harvard": "aaaa0001 (2024) Available at: https://doi.org/10.1145/1234",
     "apa": "aaaa0001. (2024). https://doi.org/10.1145/1234",
     "in_text": { "harvard": "(aaaa0001, 2024)", "apa": "(aaaa0001, 2024)" }

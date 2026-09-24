@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/bibliography/resolve.py` |
 | **Paket** | `bibliography` – zitierfähige Metadaten |
-| **Phase** | 12 / K1 |
-| **Grundlagen** | [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md), [ADR 0040](../../../../docs/adr/0040-explicit-field-clearing.md) |
+| **Phase** | 12 / K1, erweitert in 17 / A2 |
+| **Grundlagen** | [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md), [ADR 0040](../../../../docs/adr/0040-explicit-field-clearing.md), [ADR 0041](../../../../docs/adr/0041-author-identity-and-schema.md) |
 
 ---
 
@@ -61,6 +61,13 @@ haben. Eine schwach belegte Quelle, deren Werte ohnehin schon von einer stärker
 das Ergebnis nicht herunter. Ohne diese Regel wäre praktisch jeder Datensatz `weak`, weil die
 Extraktion immer den Dateinamen als Titel anbietet.
 
+### Personenkennungen reisen mit der Autorenliste (ADR 0041)
+
+`author_ids` und `author_orcids` sind **kein** eigenes Feld der Auflösung. Sie stammen immer aus
+dem Datensatz, der das Feld `authors` gewonnen hat. Überschreibt etwa eine `manual`-Korrektur die
+Autorenliste, entfallen die Kennungen der `resolved`-Quelle mit ihr. Eine Kennung kann so nie an
+einen Namen aus einer anderen Quelle geraten.
+
 ### Unbekannte Herkunft
 
 Ein Herkunftsname außerhalb von `ORIGIN_PRECEDENCE` wird **hinten** einsortiert (stabil nach
@@ -83,15 +90,16 @@ flowchart LR
 | --- | --- |
 | keine Datensätze | leerer `PaperMetadata`, Konfidenz `none` |
 | Datensätze anderer Paper in der Eingabe | werden ignoriert |
-| zwei Datensätze derselben Herkunft | beide werden gelesen (stabile Reihenfolge) |
+| zwei Datensätze derselben Herkunft | beide werden gelesen; je Feld gewinnt der **zuerst übergebene** (stabile Sortierung). Die Reihenfolge legt `indexing.metadata_index.collect_records` fest: Der Datensatz eines Referenz-Eintrags steht vor einem gespeicherten `resolved`-Datensatz desselben Papers |
 | Paper in `resolve_all` ohne Datensatz | erscheint mit leerem Datensatz im Ergebnis |
 
 Das Modul wirft **keine** `DomainError` – es hat keine Ein-/Ausgabe.
 
 ## 6. Determinismus
 
-Die Sortierung ist total (Vorrangindex, dann Herkunftsname); bei gleicher Eingabe entsteht immer
-dasselbe Ergebnis, unabhängig von der Reihenfolge der Datensätze.
+Die Sortierung erfolgt nach Vorrangindex, dann Herkunftsname, und ist stabil; bei gleicher Eingabe
+entsteht immer dasselbe Ergebnis. Die Reihenfolge der Datensätze wirkt nur **innerhalb** derselben
+Herkunft (siehe oben), und dort legt sie der Aufrufer deterministisch fest.
 
 ## 7. Grenzen
 

@@ -189,8 +189,18 @@ def test_metadata_to_dict_shape() -> None:
         "origins",
         "confidence",
         "citable",
+        "author_identities",
     }
     assert payload["citable"] is True
+    assert payload["author_identities"] == [
+        {
+            "name": "Anna Beispiel",
+            "openalex_id": "",
+            "orcid": "",
+            "person_key": "name:anna beispiel",
+            "identity": "name",
+        }
+    ]
     assert payload["origins"] == {"title": ORIGIN_CURATED, "doi": ORIGIN_EXTRACTED}
 
 

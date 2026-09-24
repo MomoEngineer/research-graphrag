@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/extraction/model.py` |
 | **Paket** | `extraction` – PDF zu Canonical JSON |
-| **Phase** | 2 (eingeführt), 7 / A3 + A5 (Schema geschärft), 13 / R2 (Dokumentart) |
-| **Grundlagen** | [ADR 0006](../../../../docs/adr/0006-canonical-model-phase2-scope.md), [ADR 0013](../../../../docs/adr/0013-chunking-refinement-phase7.md), [ADR 0015](../../../../docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md) |
+| **Phase** | 2 (eingeführt), 7 / A3 + A5 (Schema geschärft), 13 / R2 (Dokumentart), 17 / A2 (Bibliografie der Quelldatei) |
+| **Grundlagen** | [ADR 0006](../../../../docs/adr/0006-canonical-model-phase2-scope.md), [ADR 0013](../../../../docs/adr/0013-chunking-refinement-phase7.md), [ADR 0015](../../../../docs/adr/0015-noise-reduction-keywords-and-sections-phase7.md), [ADR 0041](../../../../docs/adr/0041-author-identity-and-schema.md) |
 
 ---
 
@@ -26,6 +26,9 @@ Index. Es enthält ausschließlich serialisierbare Datenstrukturen und hat **kei
 | `SECTION_KIND_FRONT` / `_ABSTRACT` / `_BODY` / `_REFERENCES` | Konstanten | Klassifikation eines Abschnitts |
 | `DOCUMENT_KIND_FULL` / `DOCUMENT_KIND_REFERENCE` | Konstanten | Dokumentart: Volltext bzw. Referenz-Eintrag ohne Volltext |
 | `read_schema_version` | Funktion | Liest nur die Schema-Version einer Datei (für die Upgrade-Erkennung) |
+| `SourceBibliography` | Dataclass | Bibliografische Angaben, die die Quelldatei selbst mitbringt (heute nur Referenz-Einträge) |
+| `BIBLIOGRAPHY_KEY` | Konstante | Schlüssel dieser Angaben im Canonical JSON |
+| `has_source_bibliography` | Funktion | Prüft, ob ein Canonical die Angaben trägt (gezielte Nachextraktion von Stubs) |
 
 > **`document_kind` ist bewusst kein Qualitäts-Flag.** Flags sind Befunde über *misslungene*
 > Extraktion; die Dokumentart ist eine **Eigenschaft des Dokuments**. Nur so können Retrieval,
@@ -33,6 +36,14 @@ Index. Es enthält ausschließlich serialisierbare Datenstrukturen und hat **kei
 > ([ADR 0030](../../../../docs/adr/0030-reference-entries-in-corpus-phase13.md)).
 > `from_dict` bleibt tolerant: Ein Alt-Artefakt ohne das Feld gilt als `full` – vor Schema 0.5.0
 > gab es nur Volltext-Dokumente.
+
+> **`bibliography` ist additiv, ohne Versionssprung** ([ADR 0041](../../../../docs/adr/0041-author-identity-and-schema.md)).
+> Ein Referenz-Eintrag trägt seine `SourceBibliography` (Titel, Autoren samt OpenAlex-ID/ORCID,
+> Jahr, Venue, URL, liefernder Dienst und angefragte Kennung). Ein PDF trägt keine: Autoren werden
+> aus dem PDF-Text bewusst nicht heuristisch gelesen. `to_dict` schreibt den Schlüssel nur, wenn er
+> gesetzt ist; ein PDF-Canonical bleibt dadurch byte-identisch. Eine Anhebung von
+> `SCHEMA_VERSION` hätte jedes PDF neu extrahieren lassen. Stattdessen liest die Pipeline nur Stubs
+> ohne den Schlüssel einmalig neu (`has_source_bibliography`).
 
 Jede Dataclass ist `frozen` und trägt `to_dict()` / `from_dict()`; `CanonicalPaper` zusätzlich
 `save_json()` / `load_json()`.
@@ -105,4 +116,5 @@ behandelt sie als „nicht überspringbar".
 - **Keine Referenz-Einträge als Objekte.** Der Referenzabschnitt ist Text; die Zitationskanten
   entstehen erst in `indexing/citation_graph.py`.
 - **Keine Migration.** Ein Schema-Wechsel wird durch Neu-Extraktion aufgelöst, nicht durch
-  Umschreiben bestehender Dateien.
+  Umschreiben bestehender Dateien. Eine additive Erweiterung, die nur einen Dokumenttyp betrifft
+  (`bibliography`), löst die Pipeline gezielt für diesen Typ auf, statt die Version anzuheben.

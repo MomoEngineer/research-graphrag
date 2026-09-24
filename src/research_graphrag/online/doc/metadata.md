@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/online/metadata.py` |
 | **Paket** | `online` – Netzzugang hinter einem Port |
-| **Phase** | 12 / K2 |
-| **Grundlagen** | [ADR 0026](../../../../docs/adr/0026-online-metadata-resolution.md) · [ADR 0020](../../../../docs/adr/0020-online-candidate-search-phase9.md) |
+| **Phase** | 12 / K2, erweitert in 17 / A2 |
+| **Grundlagen** | [ADR 0026](../../../../docs/adr/0026-online-metadata-resolution.md) · [ADR 0020](../../../../docs/adr/0020-online-candidate-search-phase9.md) · [ADR 0041](../../../../docs/adr/0041-author-identity-and-schema.md) |
 
 ---
 
@@ -27,6 +27,8 @@ Titel-Ähnlichkeit.
 | `Resolution` | Dataclass | Ergebnis inkl. Belegart, Begründung und Rohantworten |
 | `openalex_id_url` / `openalex_title_url` | Funktionen | Abfrage-URLs |
 | `parse_openalex_work` / `authors_of` / `venue_of` | Funktionen | Antwort-Auswertung |
+| `authorships_of` / `authorships_of_work` | Funktionen | Autorennennungen samt geprüfter OpenAlex-ID und ORCID (Phase 17 / A2) |
+| `author_identifier_lists` | Funktion | Nennungen → positionsgleiche Kennungslisten (leer, wenn keine Kennung vorliegt) |
 | `fetch_openalex_url` | Funktion | eine OpenAlex-URL abrufen (auch von der Referenz-Auflösung genutzt) |
 | `MATCH_DOI` / `MATCH_ARXIV` / `MATCH_TITLE` | Konstanten | Belegarten |
 | `METADATA_FIELDS` / `MAX_AUTHORS` / `MAX_FIELD_CHARS` / `TITLE_SEARCH_LIMIT` / `ARXIV_DOI_PREFIX` | Konstanten | Abfrage- und Bereinigungsgrenzen |
@@ -99,6 +101,15 @@ dem, was ein gespeicherter `resolved`- oder `manual`-Datensatz bereits abdeckt �
 über `correct_paper_metadata`s `clear_fields` **explizit als leer bestätigt** wurde (ADR 0040,
 [bibliography/doc/model.md](../../bibliography/doc/model.md)), gilt deshalb ebenfalls als
 "abgedeckt": Ein bereits geprüftes, absichtlich leeres Feld wird nicht erneut online abgefragt.
+
+### Personenkennung aus `authorships` (Phase 17 / A2)
+
+OpenAlex liefert je Autor neben `display_name` auch `author.id` und `author.orcid`. Bis Phase 17
+wurde nur der Name übernommen. Jetzt speichert `_record_from` beide Kennungen **positionsgleich** zu
+den Namen im Datensatz ([ADR 0041](../../../../docs/adr/0041-author-identity-and-schema.md)). Jede
+Kennung wird geprüft; eine ungültige wird leer. Der arXiv-Feed kennt keine Kennung, sein Datensatz
+bleibt ohne. `authorships_of_work` ist öffentlich, weil der Nachtrag aus den abgelegten
+Rohantworten dieselbe Lesart braucht.
 
 ## 4. Zusammenspiel
 

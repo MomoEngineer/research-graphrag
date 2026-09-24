@@ -55,6 +55,7 @@ def resolve_metadata(paper_id: str, records: Sequence[MetadataRecord]) -> PaperM
     values: dict[str, Any] = {}
     origins: dict[str, str] = {}
     contributing: list[str] = []
+    author_source: MetadataRecord | None = None
     for record in _ordered(relevant):
         contributed = False
         for name in METADATA_FIELDS:
@@ -63,8 +64,16 @@ def resolve_metadata(paper_id: str, records: Sequence[MetadataRecord]) -> PaperM
             values[name] = record.value_of(name)
             origins[name] = record.origin
             contributed = True
+            if name == "authors":
+                author_source = record
         if contributed:
             contributing.append(record.confidence)
+
+    # Die Personenkennungen reisen **mit** der Autorenliste, aus der sie stammen: Eine Kennung
+    # darf nie an einen Namen einer anderen Quelle geraten
+    # (docs/adr/0041-author-identity-and-schema.md).
+    author_ids = author_source.author_ids if author_source is not None else ()
+    author_orcids = author_source.author_orcids if author_source is not None else ()
 
     return PaperMetadata(
         paper_id=paper_id,
@@ -77,6 +86,8 @@ def resolve_metadata(paper_id: str, records: Sequence[MetadataRecord]) -> PaperM
         url=str(values.get("url", "")),
         origins=origins,
         confidence=lowest_confidence(contributing),
+        author_ids=author_ids,
+        author_orcids=author_orcids,
     )
 
 
