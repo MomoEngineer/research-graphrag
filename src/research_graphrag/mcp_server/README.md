@@ -21,6 +21,10 @@ aufrufende Agent selbst (kein serverseitiges LLM-Sampling, siehe
 | `list_topics` | Übersicht / Katalog | [specs/list_topics.md](specs/list_topics.md) |
 | `answer_question` | Antwort / Synthese | [specs/answer_question.md](specs/answer_question.md) |
 | `correct_paper_metadata` | Korrektur / Zitation (**schreibend**) | [specs/correct_paper_metadata.md](specs/correct_paper_metadata.md) |
+| `search_authors` | Personen – Name → Personenschlüssel | [specs/search_authors.md](specs/search_authors.md) |
+| `get_author` | Personen – Profil | [specs/get_author.md](specs/get_author.md) |
+| `search_author_papers` | Personen / Retrieval – Suche in den Papern einer Person | [specs/search_author_papers.md](specs/search_author_papers.md) |
+| `get_author_citations` | Personen / Zitationsnetz | [specs/get_author_citations.md](specs/get_author_citations.md) |
 
 > **Sampling nur opt-in:** Alle Evidenz-Tools sind modellfrei. Ausschließlich `answer_question`
 > kann mit `synthesize = true` über **MCP-Sampling** eine Antwort vom **Client-Modell**
@@ -55,6 +59,12 @@ aufrufende Agent selbst (kein serverseitiges LLM-Sampling, siehe
 > gesetzt" zu sein – so scheint eine niedrigerrangige, falsche Herkunft (z. B. ein
 > Regex-Fehltreffer) nicht mehr durch die Auflösungskette durch
 > ([ADR 0040](../../../docs/adr/0040-explicit-field-clearing.md)).
+
+> **Personen-Tools weisen ihre Abdeckung aus:** Die Personenebene kennt nur die Autoren belegter
+> (`strong`) Zitierdaten. Jede Antwort von `search_authors`, `get_author`, `search_author_papers`
+> und `get_author_citations` trägt deshalb `coverage` (Volltexte mit Autoren / Volltexte gesamt,
+> Klartext in `note`). Ein mehrdeutiger Name ist kein Fehler, sondern eine Kandidatenliste mit
+> `ambiguous = true` ([ADR 0043](../../../docs/adr/0043-author-index-and-person-tools.md)).
 
 > Code-Walkthroughs werden – wie in Phase 4 – nur für nicht-triviale Tools verlangt; die hier
 > registrierten Tools sind dünne Wrapper um die getestete Kernlogik und daher **spec-only**

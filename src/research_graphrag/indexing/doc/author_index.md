@@ -22,7 +22,7 @@ Trigramm-Suche über die Namen. Die Personen-Werkzeuge aus A4 lesen ausschließl
 | --- | --- | --- |
 | `build_author_index` | Funktion | Tabelle und Namenssuche bauen (nach `build_metadata_index`, im atomaren Fenster) |
 | `author_rows` | Funktion | Zeilen aus den aufgelösten Metadaten ableiten (nur `strong`, deterministisch) |
-| `load_author_rows` | Funktion | Zeilen laden – alle oder gefiltert nach Personen/Papern |
+| `load_author_rows` | Funktion | Zeilen laden – alle oder gefiltert nach Personen, Papern bzw. Namensschlüsseln |
 | `search_name_keys` | Funktion | Namensschlüssel zu einer Namensanfrage (Trigramm, Rückfall: Durchsuchen) |
 | `author_coverage` | Funktion | `(Volltexte mit Autoren im Index, Volltexte gesamt)` – die ausgewiesene Lücke |
 | `has_author_index` | Funktion | trägt der Index die Personenebene? |

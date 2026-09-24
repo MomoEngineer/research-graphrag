@@ -480,6 +480,13 @@ python -m scripts.citations <paper_id>
 python -m scripts.cite <paper_id>
 python -m scripts.cite <paper_id> --stil apa
 
+# 3b3. Personen im Korpus (Phase 17 / A4): Kandidaten → Profil, Suche in ihren Papern, Zitationen
+#      Jede Ausgabe nennt die Abdeckung: nur Paper mit belegten Zitierdaten tragen Autoren
+python -m scripts.authors suchen "Asai"
+python -m scripts.authors profil <person_key>
+python -m scripts.authors paper <person_key> "retrieval augmented generation"
+python -m scripts.authors zitationen <person_key>
+
 # 3c. (optional) Belege nummeriert über die LLM-Bridge aufbereiten
 #     (CLI hat offline kein Modell → sichtbarer Noop-Fallback, Belege bleiben vollständig)
 python -m scripts.ask "Welche Datensätze werden genutzt?" --synthese
@@ -522,7 +529,7 @@ python -m scripts.resolve_references
 #    (Agent-Modus) die bereitgestellten Werkzeuge aufrufen
 ```
 
-Der MCP-Server stellt u. a. Werkzeuge bereit wie `search_local`, `search_global`, `search_drift`, `search_basic`, `get_paper`, `get_citations`, `get_reference` und `list_topics` – jeweils mit Quellenangaben. **Jeder** Beleg trägt seit Phase 12 zusätzlich die extern auflösbaren `identifiers` (DOI/arXiv/URL) und einen `citation_key`; die **fertige Literaturangabe** in Harvard und APA liefern `get_reference`, `get_paper` und der `references`-Block von `answer_question` ([ADR 0025](docs/adr/0025-citable-paper-metadata.md)). Dazu kommt `answer_question`: ein Aufruf, der den Modus selbst wählt und **nummerierte Belege** mit Zitier-Contract liefert (optional per `synthesize = true` vom Client-Modell formuliert). Wählt der Router den Modus (`mode = "auto"`, Default), weist die Antwort unter `routing` aus, **warum** – mit Konfidenzstufe und auslösenden Signalen ([ADR 0017](docs/adr/0017-router-hardening-phase7.md)). Zwei weitere Werkzeuge ergänzen das Portfolio ([ADR 0039](docs/adr/0039-correction-tool-and-pdf-file-access.md)): `get_paper_file` liefert den lokalen Dateipfad des Original-PDFs (kein Dateiinhalt) und `correct_paper_metadata` korrigiert bibliografische Metadaten als `manual`-Herkunft – als erstes **schreibendes** Werkzeug, wirksam erst nach dem nächsten `python -m scripts.ingest`.
+Der MCP-Server stellt u. a. Werkzeuge bereit wie `search_local`, `search_global`, `search_drift`, `search_basic`, `get_paper`, `get_citations`, `get_reference` und `list_topics` – jeweils mit Quellenangaben. **Jeder** Beleg trägt seit Phase 12 zusätzlich die extern auflösbaren `identifiers` (DOI/arXiv/URL) und einen `citation_key`; die **fertige Literaturangabe** in Harvard und APA liefern `get_reference`, `get_paper` und der `references`-Block von `answer_question` ([ADR 0025](docs/adr/0025-citable-paper-metadata.md)). Dazu kommt `answer_question`: ein Aufruf, der den Modus selbst wählt und **nummerierte Belege** mit Zitier-Contract liefert (optional per `synthesize = true` vom Client-Modell formuliert). Wählt der Router den Modus (`mode = "auto"`, Default), weist die Antwort unter `routing` aus, **warum** – mit Konfidenzstufe und auslösenden Signalen ([ADR 0017](docs/adr/0017-router-hardening-phase7.md)). Zwei weitere Werkzeuge ergänzen das Portfolio ([ADR 0039](docs/adr/0039-correction-tool-and-pdf-file-access.md)): `get_paper_file` liefert den lokalen Dateipfad des Original-PDFs (kein Dateiinhalt) und `correct_paper_metadata` korrigiert bibliografische Metadaten als `manual`-Herkunft – als erstes **schreibendes** Werkzeug, wirksam erst nach dem nächsten `python -m scripts.ingest`. Seit Phase 17 / A4 sind **Personen** eine eigene Rechercheebene ([ADR 0043](docs/adr/0043-author-index-and-person-tools.md)): `search_authors` findet zu einem Namen die Personen-Kandidaten samt Personenschlüssel (mehrdeutige Namen werden ausgewiesen, nie still zusammengeführt), `get_author` liefert Paper, Communities und direkte Mitautoren, `search_author_papers` sucht nur in den Papern der Person, und `get_author_citations` zeigt, wer sie im Korpus zitiert und wen sie zitiert. Jede dieser Antworten weist aus, wie viele Volltexte belegte Autoren tragen.
 
 ## Qualitätssicherung (pragmatisch)
 

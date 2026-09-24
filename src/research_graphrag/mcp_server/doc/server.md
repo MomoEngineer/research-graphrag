@@ -4,14 +4,14 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/mcp_server/server.py` |
 | **Paket** | `mcp_server` – MCP-Server über `stdio` |
-| **Phase** | 5 (eingeführt), 7 / A1 + A2 (zwei Werkzeuge ergänzt), 12 / K1 (`get_reference` ergänzt), ADR 0037 (Größen-Sicherheitsnetz, `list_topics`-Neuschnitt), ADR 0039 (`get_paper_file` + erstes schreibendes Werkzeug `correct_paper_metadata`) |
-| **Grundlagen** | [ADR 0009](../../../../docs/adr/0009-mcp-server-stdio-phase5.md), [ADR 0012](../../../../docs/adr/0012-llm-bridge-and-answer-synthesis-phase7.md), [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md), [ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md), [ADR 0039](../../../../docs/adr/0039-correction-tool-and-pdf-file-access.md) |
+| **Phase** | 5 (eingeführt), 7 / A1 + A2 (zwei Werkzeuge ergänzt), 12 / K1 (`get_reference` ergänzt), ADR 0037 (Größen-Sicherheitsnetz, `list_topics`-Neuschnitt), ADR 0039 (`get_paper_file` + erstes schreibendes Werkzeug `correct_paper_metadata`), 17 / A4 (vier Personen-Werkzeuge) |
+| **Grundlagen** | [ADR 0009](../../../../docs/adr/0009-mcp-server-stdio-phase5.md), [ADR 0012](../../../../docs/adr/0012-llm-bridge-and-answer-synthesis-phase7.md), [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md), [ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md), [ADR 0039](../../../../docs/adr/0039-correction-tool-and-pdf-file-access.md), [ADR 0043](../../../../docs/adr/0043-author-index-and-person-tools.md) |
 
 ---
 
 ## 1. Zweck
 
-Die **Außengrenze** des Systems: Hier werden elf Werkzeuge für GitHub Copilot registriert, hier
+Die **Außengrenze** des Systems: Hier werden fünfzehn Werkzeuge für GitHub Copilot registriert, hier
 werden Fehler in eine strukturierte Ausgabe übersetzt, und hier wird der `stdio`-Transport
 gestartet.
 
@@ -25,9 +25,14 @@ Der Server enthält **keine** Fachlogik. Jedes Werkzeug ist ein dünner Wrapper 
 | `mcp` | Objekt | Die FastMCP-Instanz mit den registrierten Werkzeugen |
 | `main` | Funktion | Startet den `stdio`-Transport |
 
-Die elf Werkzeuge: `search_basic`, `search_local`, `search_global`, `search_drift`, `get_paper`,
-`get_paper_file`, `get_citations`, `get_reference`, `answer_question`, `list_topics`,
-`correct_paper_metadata`. Ihre Verträge stehen in [`specs/`](../specs); die Werkzeugnamen werden
+Die fünfzehn Werkzeuge: `search_basic`, `search_local`, `search_global`, `search_drift`,
+`get_paper`, `get_paper_file`, `get_citations`, `get_reference`, `answer_question`, `list_topics`,
+`correct_paper_metadata` sowie die Personen-Werkzeuge `search_authors`, `get_author`,
+`search_author_papers` und `get_author_citations` (Wrapper um
+[`retrieval/authors`](../../retrieval/doc/authors.md),
+[ADR 0043](../../../../docs/adr/0043-author-index-and-person-tools.md)). Die Beschreibungen der
+Personen-Werkzeuge grenzen sich ausdrücklich gegen die Suchwerkzeuge und `get_citations` ab, damit
+die wachsende Werkzeugliste die Tool-Wahl nicht verschlechtert. Ihre Verträge stehen in [`specs/`](../specs); die Werkzeugnamen werden
 explizit gesetzt und weichen daher von den Python-Funktionsnamen ab.
 
 `get_paper_file` (Wrapper um [`retrieval/paper_file.get_paper_file`](../../retrieval/doc/paper_file.md))

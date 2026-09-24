@@ -268,10 +268,12 @@ def load_author_rows(
     *,
     person_keys: Iterable[str] | None = None,
     paper_ids: Iterable[str] | None = None,
+    name_keys: Iterable[str] | None = None,
 ) -> tuple[AuthorRow, ...]:
-    """Lädt Zeilen – alle, oder gefiltert nach Personen bzw. Papern.
+    """Lädt Zeilen – alle, oder gefiltert nach Personen, Papern bzw. Namensschlüsseln.
 
-    Ein Index ohne Personenebene liefert ein leeres Ergebnis (kein Fehler).
+    Mehrere Filter gelten zugleich. Ein leerer Filter ergibt ein leeres Ergebnis. Ein Index ohne
+    Personenebene liefert ebenfalls ein leeres Ergebnis (kein Fehler).
     """
     connection = _connect(db_path)
     try:
@@ -279,7 +281,11 @@ def load_author_rows(
             return ()
         clauses: list[str] = []
         params: list[str] = []
-        for column, values in (("person_key", person_keys), ("paper_id", paper_ids)):
+        for column, values in (
+            ("person_key", person_keys),
+            ("paper_id", paper_ids),
+            ("name_key", name_keys),
+        ):
             if values is None:
                 continue
             chosen = sorted(set(values))

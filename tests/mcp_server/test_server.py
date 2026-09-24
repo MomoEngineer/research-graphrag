@@ -48,6 +48,10 @@ _TOOLS = {
     "get_reference",
     "answer_question",
     "correct_paper_metadata",
+    "search_authors",
+    "get_author",
+    "search_author_papers",
+    "get_author_citations",
 }
 
 _SAMPLED_ANSWER = "Aufmerksamkeit ist der Kern der Architektur [1]."
@@ -64,7 +68,7 @@ def _structured(result: CallToolResult) -> dict[str, Any]:
 
 @pytest.mark.anyio
 async def test_list_tools_exposes_all_tools(index_db: Path) -> None:
-    """Der Server listet genau die elf zugesagten Tools."""
+    """Der Server listet genau die fünfzehn zugesagten Tools."""
     async with client_session(mcp) as client:
         listed = await client.list_tools()
     assert {tool.name for tool in listed.tools} == _TOOLS

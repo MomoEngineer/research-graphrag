@@ -302,11 +302,28 @@ beschreiben. Eine Person ist über ihre OpenAlex-ID bzw. ORCID bestimmt. Ohne Ke
 ausdrücklich den Schlüssel `name:…` und wird nie still mit einem Gleichnamigen zusammengeführt
 ([ADR 0043](adr/0043-author-index-and-person-tools.md)).
 
+Gelesen wird diese Sicht **nur von den vier Personen-Werkzeugen** (Phase 17 / A4), kein Suchmodus
+greift auf sie zu:
+
+```mermaid
+flowchart LR
+    N["Name"] --> SA["search_authors<br/>Kandidaten je Personenschlüssel"]
+    SA -- "person_key" --> GA["get_author<br/>Paper · Communities · Mitautoren"]
+    SA -- "person_key" --> SP["search_author_papers<br/>Basic nur in ihren Papern"]
+    SA -- "person_key" --> GC["get_author_citations<br/>wer zitiert, wen zitiert"]
+```
+
+Jede Antwort trägt einen `coverage`-Block: Wie viele Volltexte tragen belegte Autoren? Solange
+nicht alle Paper belegt sind, heißt „nicht gefunden“ nicht „nicht im Korpus“, und genau das steht
+dort im Klartext. Ein mehrdeutiger Name ergibt eine Kandidatenliste mit `ambiguous = true`, keinen
+Fehler.
+
 Vertiefung: [tfidf_index](../src/research_graphrag/indexing/doc/tfidf_index.md),
 [graph_index](../src/research_graphrag/indexing/doc/graph_index.md),
 [citation_graph](../src/research_graphrag/indexing/doc/citation_graph.md),
 [metadata_index](../src/research_graphrag/indexing/doc/metadata_index.md),
-[author_index](../src/research_graphrag/indexing/doc/author_index.md).
+[author_index](../src/research_graphrag/indexing/doc/author_index.md),
+[authors](../src/research_graphrag/retrieval/doc/authors.md).
 
 ---
 
@@ -658,7 +675,7 @@ erkennbar.
 | Top-Level | [errors](../src/research_graphrag/doc/errors.md) · [intake](../src/research_graphrag/doc/intake.md) · [keywords](../src/research_graphrag/doc/keywords.md) · [pipeline](../src/research_graphrag/doc/pipeline.md) |
 | `extraction/` | [model](../src/research_graphrag/extraction/doc/model.md) · [normalization](../src/research_graphrag/extraction/doc/normalization.md) · [structure](../src/research_graphrag/extraction/doc/structure.md) · [chunking](../src/research_graphrag/extraction/doc/chunking.md) · [quality](../src/research_graphrag/extraction/doc/quality.md) · [pdf](../src/research_graphrag/extraction/doc/pdf.md) · [refstub](../src/research_graphrag/extraction/doc/refstub.md) |
 | `indexing/` | [tfidf_index](../src/research_graphrag/indexing/doc/tfidf_index.md) · [bm25](../src/research_graphrag/indexing/doc/bm25.md) · [fusion](../src/research_graphrag/indexing/doc/fusion.md) · [graph_index](../src/research_graphrag/indexing/doc/graph_index.md) · [citation_graph](../src/research_graphrag/indexing/doc/citation_graph.md) · [metadata_index](../src/research_graphrag/indexing/doc/metadata_index.md) · [author_index](../src/research_graphrag/indexing/doc/author_index.md) · [fts](../src/research_graphrag/indexing/doc/fts.md) |
-| `retrieval/` | [basic](../src/research_graphrag/retrieval/doc/basic.md) · [local](../src/research_graphrag/retrieval/doc/local.md) · [global_search](../src/research_graphrag/retrieval/doc/global_search.md) · [drift](../src/research_graphrag/retrieval/doc/drift.md) · [router](../src/research_graphrag/retrieval/doc/router.md) · [provenance](../src/research_graphrag/retrieval/doc/provenance.md) · [paper](../src/research_graphrag/retrieval/doc/paper.md) · [citations](../src/research_graphrag/retrieval/doc/citations.md) · [reference](../src/research_graphrag/retrieval/doc/reference.md) |
+| `retrieval/` | [basic](../src/research_graphrag/retrieval/doc/basic.md) · [local](../src/research_graphrag/retrieval/doc/local.md) · [global_search](../src/research_graphrag/retrieval/doc/global_search.md) · [drift](../src/research_graphrag/retrieval/doc/drift.md) · [router](../src/research_graphrag/retrieval/doc/router.md) · [provenance](../src/research_graphrag/retrieval/doc/provenance.md) · [paper](../src/research_graphrag/retrieval/doc/paper.md) · [citations](../src/research_graphrag/retrieval/doc/citations.md) · [reference](../src/research_graphrag/retrieval/doc/reference.md) · [authors](../src/research_graphrag/retrieval/doc/authors.md) |
 | `generation/` | [provider](../src/research_graphrag/generation/doc/provider.md) · [synthesis](../src/research_graphrag/generation/doc/synthesis.md) · [evidence](../src/research_graphrag/generation/doc/evidence.md) · [answer](../src/research_graphrag/generation/doc/answer.md) |
 | `evaluation/` | [gold](../src/research_graphrag/evaluation/doc/gold.md) · [metrics](../src/research_graphrag/evaluation/doc/metrics.md) · [runner](../src/research_graphrag/evaluation/doc/runner.md) · [baseline](../src/research_graphrag/evaluation/doc/baseline.md) · [routing](../src/research_graphrag/evaluation/doc/routing.md) · [multihop](../src/research_graphrag/evaluation/doc/multihop.md) · [report](../src/research_graphrag/evaluation/doc/report.md) |
 | `overview/` | [drafts](../src/research_graphrag/overview/doc/drafts.md) |

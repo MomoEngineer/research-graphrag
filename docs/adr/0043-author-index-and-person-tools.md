@@ -86,7 +86,7 @@ Gemeinsame Regeln:
   Namensidentitäten werden **nie** still zusammengeführt:
   - Eine Person mit OpenAlex-ID und dieselbe Schreibweise ohne Kennung erscheinen als **zwei**
     Kandidaten.
-  - Beide Kandidaten tragen dann `ambiguous = true`.
+  - Die Antwort trägt dann `ambiguous = true`.
 - **Unbekannte Personen:** Ein unbekannter Name bzw. Personenschlüssel ergibt `not_found`, die
   Meldung nennt die Abdeckung.
 - **Keine Gruppenbildung:** `get_author` nennt nur direkte Mitautoren.
@@ -136,3 +136,35 @@ Person beschränkte Local-Variante wäre in Wahrheit Basic plus Rauschen.
   - Die Qualität der Personenebene hängt an der Abdeckung, also an A0 bis A2 am realen Bestand.
 - **Folgeentscheidungen:** A5 (`find_person_mentions`) nach F2. Nachtrag zu diesem ADR, falls die
   Handprobe Beschreibungen ändert.
+
+## Nachtrag (2026-09-24): Umsetzung von A4
+
+Die vier Werkzeuge sind nach den Spezifikationen unter
+[`mcp_server/specs/`](../../src/research_graphrag/mcp_server/specs) umgesetzt
+([retrieval/authors](../../src/research_graphrag/retrieval/doc/authors.md)). Beim Bau wurden fünf
+Punkte festgelegt, die die Entscheidung oben präzisieren:
+
+1. **Paper-Kurzangabe mit Quelle.** Die Paperlisten von `get_author` und
+   `get_author_citations` tragen zusätzlich die `source_uri`, wie jede andere Paper-Referenz der
+   Werkzeuge. Ohne sie wäre ein Paper ohne DOI und ohne Zitierdaten nur über eine interne ID
+   greifbar. `year` ist `null`, wenn das Jahr unbekannt ist, statt einer irreführenden `0`.
+2. **Kandidaten umfassen alle Schreibweisen.** Die Namenssuche liefert Namensschlüssel, daraus
+   entstehen Personenschlüssel, und erst dann werden **alle** Zeilen dieser Personen geladen. Die
+   Suche nach „Asai“ zählt so auch das Paper, auf dem dieselbe OpenAlex-ID als „Asai, Akari“
+   steht. Tragen die Nennungen einer Person verschiedene ORCIDs, steht die häufigste in der
+   Antwort.
+3. **Abdeckung im Klartext.** `coverage.note` benennt die Lücke mit Zahlen („Nur 4 von 6
+   Volltexten (67 %) tragen belegte Autoren …“) und sagt ausdrücklich, dass ein fehlender Treffer
+   nicht „nicht im Korpus“ bedeutet. Dieselbe Angabe steht in jeder `not_found`-Meldung. Ein
+   Index von vor A3 meldet stattdessen, dass `python -m scripts.ingest` die Personenebene baut.
+4. **Selbstzitate je Gegenüber.** `get_author_citations` fasst die Kanten je Gegenüber zusammen
+   (`via`, `methods`) und markiert mit `self`, wenn das Gegenüber selbst ein Paper der Person ist.
+   Sortiert wird nach der Zahl beteiligter eigener Paper.
+5. **Eine Faktenlage für alle Tests.** Funktions-, CLI- und Contract-Tests teilen den
+   Personen-Index `make_person_index` (`tests/conftest.py`). Er enthält bewusst eine gleichnamige
+   Namensidentität, einen nur `weak` belegten Datensatz derselben Person und einen Volltext ohne
+   Zitierdaten.
+
+**Offen:** Die Handprobe aus A0, Punkt 4 läuft am realen Bestand beim Nutzer (Schwelle: Recall
+≥ 0,9 und 0 Fehltreffer je Person mit Kennung, bestanden bei mindestens 8 von 10 Personen). Bis
+dahin ist die Akzeptanz von A4 nur für Spezifikation und Tests belegt.

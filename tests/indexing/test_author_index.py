@@ -143,6 +143,17 @@ def test_the_same_person_is_found_through_its_identifier(index_db: Path) -> None
     assert load_author_rows(index_db, person_keys=[]) == ()
 
 
+def test_rows_can_be_filtered_by_name_key(index_db: Path) -> None:
+    """Der Namensfilter findet alle Nennungen einer Schreibweise, Filter wirken zusammen."""
+    rows = load_author_rows(index_db, name_keys=["akari asai"])
+
+    assert [(row.paper_id, row.person_key) for row in rows] == [("p1", "A1111"), ("p2", "A1111")]
+    assert load_author_rows(index_db, name_keys=["akari asai"], paper_ids=["p2"])[0].name == (
+        "Akari Asai"
+    )
+    assert load_author_rows(index_db, name_keys=[]) == ()
+
+
 def test_the_build_is_versioned_and_deterministic(index_db: Path) -> None:
     """Zwei Bauten ergeben eine identische Tabelle (Akzeptanz A3)."""
     connection = sqlite3.connect(str(index_db))

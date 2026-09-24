@@ -54,13 +54,15 @@ Damit der Serverprozess die in der `.venv` verfügbaren Abhängigkeiten (mcp, sc
 
 > **Zitieren aus einem Treffer:** Jeder Beleg trägt `identifiers` (DOI/arXiv/URL) und einen `citation_key`; die fertige Angabe in **Harvard** und **APA** liefert `get_reference` bzw. der `references`-Block von `answer_question`. Ist ein Datensatz unvollständig, weisen `missing` und `note` das aus – fehlende Angaben werden nie geraten ([ADR 0025](adr/0025-citable-paper-metadata.md)).
 
+> **Personen recherchieren:** Fragen nach einer Person beginnen mit `search_authors` (Name → Personenschlüssel). Meldet die Antwort `ambiguous = true`, den passenden Kandidaten wählen – gleichnamige Personen werden nie still zusammengeführt. Mit dem Schlüssel liefern `get_author`, `search_author_papers` und `get_author_citations` Profil, Suche und Zitationsnetz. Der Block `coverage` sagt, wie viele Volltexte belegte Autoren tragen; „nicht gefunden“ heißt deshalb nicht „nicht im Korpus“ ([ADR 0043](adr/0043-author-index-and-person-tools.md)).
+
 ---
 
 ## 4. Server aktivieren und prüfen
 
 1. `.vscode/mcp.json` speichern (bereits angelegt).
 2. Copilot-Chat öffnen und in den **Agent-Modus** wechseln.
-3. In der Werkzeug-/Tools-Auswahl prüfen, ob die Tools gelistet werden: `search_local`, `search_global`, `search_drift`, `search_basic`, `get_paper`, `get_citations`, `get_reference`, `list_topics`, `answer_question`.
+3. In der Werkzeug-/Tools-Auswahl prüfen, ob die fünfzehn Tools gelistet werden: `search_local`, `search_global`, `search_drift`, `search_basic`, `get_paper`, `get_paper_file`, `get_citations`, `get_reference`, `list_topics`, `answer_question`, `correct_paper_metadata`, `search_authors`, `get_author`, `search_author_papers`, `get_author_citations`.
 4. Bei Problemen: `MCP: List Servers` → Server auswählen → `Show Output` (Startfehler des Prozesses prüfen).
 
 Ist der Server korrekt eingebunden, ruft Copilot die Tools im Agent-Modus selbstständig auf und erhält belegte Antworten mit Provenienz.

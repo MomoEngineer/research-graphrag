@@ -3,9 +3,11 @@
 Registriert die Retrieval-Modi aus Phase 4 (Basic/Local/Global/DRIFT), die Katalog-Tools
 ``get_paper`` und ``list_topics``, die Zitations-Abfrage ``get_citations``, die Literaturangabe
 ``get_reference``, die belegte Antwort ``answer_question``, den lokalen PDF-Pfad
-``get_paper_file`` sowie die Metadaten-Korrektur ``correct_paper_metadata`` als MCP-Tools und
-startet den ``stdio``-Transport, über den VS Code den Server als lokalen Unterprozess betreibt
-(siehe docs/vscode-integration.md).
+``get_paper_file``, die Metadaten-Korrektur ``correct_paper_metadata`` sowie die vier
+Personen-Werkzeuge ``search_authors``, ``get_author``, ``search_author_papers`` und
+``get_author_citations`` (Phase 17 / A4, docs/adr/0043-author-index-and-person-tools.md) als
+MCP-Tools und startet den ``stdio``-Transport, über den VS Code den Server als lokalen
+Unterprozess betreibt (siehe docs/vscode-integration.md).
 
 Grundsätze (docs/adr/0009-mcp-server-stdio-phase5.md):
 
@@ -51,6 +53,13 @@ from research_graphrag.generation.answer import AUTO_MODE, answer_question
 from research_graphrag.generation.provider import NoopGenerationProvider
 from research_graphrag.limits import MAX_RESULT_COUNT
 from research_graphrag.mcp_server.sampling import provider_for
+from research_graphrag.retrieval.authors import (
+    DEFAULT_CANDIDATE_LIMIT,
+    get_author,
+    get_author_citations,
+    search_author_papers,
+    search_authors,
+)
 from research_graphrag.retrieval.basic import search_basic
 from research_graphrag.retrieval.citations import get_citations
 from research_graphrag.retrieval.drift import search_drift
@@ -375,6 +384,91 @@ def get_reference_tool(paper_id: str) -> dict[str, Any]:
     """Literaturangabe in beiden Stilen (siehe specs/get_reference.md)."""
     return _guard(  # type: ignore[return-value]
         "get_reference", lambda: get_reference(_index_path(), paper_id).to_dict()
+    )
+
+
+@mcp.tool(
+    name="search_authors",
+    title="Personen suchen (Name → Personenschlüssel)",
+    description=(
+        "Findet PERSONEN (Autoren) im Korpus per Name oder Namensteil – keine Inhalte (dafür "
+        "search_basic/answer_question). Liefert je Personenschlüssel einen Kandidaten mit "
+        "Identitätsstatus (openalex/orcid/name; 'name' = keine bestätigte Identität), "
+        "Schreibweisen, Paperzahl, Jahresspanne und Beispieltiteln. `ambiguous = true`, sobald "
+        "mehrere Kandidaten passen: dann den passenden wählen, nie zusammenführen. Der "
+        "`person_key` ist die Eingabe für get_author, search_author_papers und "
+        "get_author_citations. `coverage` weist aus, wie viele Volltexte belegte Autoren tragen; "
+        "Paper ohne belegte Zitierdaten fehlen. "
+        'Beispiel: name="Asai" → candidates=[{person_key: "A5023888391", identity: "openalex", '
+        'n_papers: 2}, {person_key: "name:akari asai", identity: "name", n_papers: 1}], '
+        "ambiguous=true."
+    ),
+)
+def search_authors_tool(name: str, limit: int = DEFAULT_CANDIDATE_LIMIT) -> dict[str, Any]:
+    """Personen-Kandidaten zu einem Namen (siehe specs/search_authors.md)."""
+    return _guard(  # type: ignore[return-value]
+        "search_authors", lambda: search_authors(_index_path(), name, limit=limit).to_dict()
+    )
+
+
+@mcp.tool(
+    name="get_author",
+    title="Personenprofil (Paper, Communities, Mitautoren)",
+    description=(
+        "Profil EINER Person per `person_key` (aus search_authors): ihre Paper im Korpus "
+        "(Titel, Jahr, Autorposition, Zitierschlüssel), Jahresspanne, die Themen-Communities "
+        "dieser Paper und die direkten Mitautoren mit der Zahl gemeinsamer Paper. Keine "
+        "Inhaltssuche (dafür search_author_papers), keine Bibliometrie, keine Gruppenbildung. "
+        "`coverage` weist die Lücke der Personenebene aus. "
+        'Beispiel: person_key="A5023888391" → papers=[aaaa0002 (2025), aaaa0001 (2024)], '
+        'coauthors=[{person_key: "name:zeqiu wu", n_shared: 2}, …].'
+    ),
+)
+def get_author_tool(person_key: str, limit: int = MAX_RESULT_COUNT) -> dict[str, Any]:
+    """Schlankes Profil einer Person (siehe specs/get_author.md)."""
+    return _guard(  # type: ignore[return-value]
+        "get_author", lambda: get_author(_index_path(), person_key, limit=limit).to_dict()
+    )
+
+
+@mcp.tool(
+    name="search_author_papers",
+    title="Suche in den Papern einer Person",
+    description=(
+        "Beantwortet 'Was schreibt X über Y?': dieselbe Suche und dieselben belegten Zitate "
+        "(Paper · Abschnitt · Seite · Chunk) wie search_basic, aber NUR in den Papern der Person "
+        "`person_key` (aus search_authors). Für Fragen über den ganzen Korpus search_basic oder "
+        "answer_question nutzen. Ein leeres `citations` ist kein Fehler. "
+        'Beispiel: person_key="A5023888391", query="attention", k=2 → citations aus aaaa0002 '
+        "und aaaa0001, nie aus Papern anderer Autoren."
+    ),
+)
+def search_author_papers_tool(person_key: str, query: str, k: int = 5) -> dict[str, Any]:
+    """Basic-Suche beschränkt auf die Paper einer Person (siehe specs/search_author_papers.md)."""
+    return _guard(  # type: ignore[return-value]
+        "search_author_papers",
+        lambda: search_author_papers(_index_path(), person_key, query, k=k).to_dict(),
+    )
+
+
+@mcp.tool(
+    name="get_author_citations",
+    title="Zitationsnetz einer Person (Intra-Korpus)",
+    description=(
+        "Beantwortet 'Wer zitiert X, wen zitiert X?' für eine PERSON innerhalb des Korpus: "
+        "`cited_by` = Korpus-Paper, die Paper der Person zitieren; `cites` = Korpus-Paper, die "
+        "sie zitiert. Je Gegenüber die beteiligten eigenen Paper (`via`), das Kriterium "
+        "(doi/arxiv/title) und `self` für Selbstzitate. Für ein einzelnes Paper get_citations "
+        "nutzen. Keine externen Zitationszahlen. "
+        'Beispiel: person_key="A5023888391" → cited_by=[{paper: cccc0001, '
+        "via: [aaaa0001, aaaa0002], self: false}, …], cites_total=2."
+    ),
+)
+def get_author_citations_tool(person_key: str, limit: int = MAX_RESULT_COUNT) -> dict[str, Any]:
+    """Intra-Korpus-Zitationen einer Person (siehe specs/get_author_citations.md)."""
+    return _guard(  # type: ignore[return-value]
+        "get_author_citations",
+        lambda: get_author_citations(_index_path(), person_key, limit=limit).to_dict(),
     )
 
 
