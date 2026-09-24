@@ -243,3 +243,69 @@ echten, per `stdio` gestarteten Serverprozess ohne `cwd` (wie unter (1) beschrie
 gesendet – gegen eine isolierte Kopie von `metadata/paper_metadata.json`/`data/`, nicht gegen den
 Produktivbestand. Beide Aufrufe liefern jetzt `isError = false` mit den erwarteten
 `applied_fields` und einem Protokoll-Eintrag in `corrections_log.md`.
+
+## Nachtrag (2026-09-23): Rückfall trotz aller drei Härtungen – vierte, bisher übersehene Stelle ohne Retry
+
+Zwei weitere `correct_paper_metadata`-Aufrufe (Paper `228ab36678b84808`, `1368b41612825326`)
+scheiterten erneut, diesmal aber **nicht** mehr am generischen `internal_error` aus `_guard` –
+Härtung (2) griff wie vorgesehen und lieferte den vollen Exception-Text:
+
+```
+error.message: Korrektur nicht speicherbar (PermissionError): [WinError 5] Zugriff verweigert: 'metadata'
+error.details: { "metadata_path": "metadata\\paper_metadata.json" }
+```
+
+Zwei Beobachtungen grenzten die Ursache sofort ein:
+
+- Die Meldung nennt **einen** Pfad (`'metadata'`), nicht ein `'quelle' -> 'ziel'`-Paar. `os.replace`
+  liefert bei einem Fehler immer beide Pfade – die fehlgeschlagene Operation konnte also nicht
+  `os.replace` sein, sondern nur ein Aufruf mit einem einzelnen Pfadargument.
+- Der genannte Pfad ist der **bare** Ordnername `metadata`, nicht der volle, konfigurierte Pfad aus
+  `metadata_path` in `error.details`. Das passt exakt zu `Path("metadata").parent` aus
+  `store.save_records`, das per `Path(path).parent.mkdir(parents=True, exist_ok=True)` – **ohne**
+  jeden Retry – aufgerufen wird.
+
+Der zeitliche Zusammenhang bestätigte den Verdacht: Kurz vor den beiden Aufrufen war `metadata/`
+lokal von einem versionierten Ordner auf eine NTFS-Junction auf ein externes Datenverzeichnis
+umgestellt worden (derselbe Schritt, mit dem `data/` und `papers/` bereits am 2026-09-01
+umgestellt wurden; Commit „Refactor code structure for improved readability and maintainability“,
+2026-09-21). `Path.mkdir(exist_ok=True)` schluckt eine `OSError` beim Anlegen nur, wenn der
+anschließende `is_dir()`-Check im selben Moment ebenfalls erfolgreich ist (CPython-Quelle,
+`pathlib.py`); bei einem frisch eingerichteten Verzeichnis – ob Junction oder gerade erst
+angelegter Ordner – können beide Schritte im selben kurzen Fenster scheitern, sodass die
+`PermissionError` unverändert durchschlägt. Ein direkter Nachbau des Round-Trips
+(`load_records`/`save_records` gegen die reale, inzwischen eingerichtete Junction) lief zum
+Diagnosezeitpunkt bereits wieder fehlerfrei – die Bedingung ist folgerichtig transient (dasselbe
+Muster wie die bereits gemessene `os.replace`-Rennbedingung aus Härtung (3)), nicht dauerhaft
+falsch konfiguriert.
+
+**Root Cause:** Härtung (3) (2026-09-19) fügte den `PermissionError`-Retry ausschließlich für
+`os.replace` ein. `store.save_records` und `online.report.append_section` legten ihren Zielordner
+aber weiterhin **je selbst**, über eine eigene, ungeschützte `Path.mkdir(parents=True,
+exist_ok=True)`-Kopie – genau die Art doppelten, unabgestimmten Codes, die
+[`atomic_write.py`](../../src/research_graphrag/atomic_write.py) laut eigener Modul-Doku eigentlich
+vermeiden sollte. Der Retry deckte damit nur eine von zwei Stellen ab, die denselben,
+gemessenen Windows-Fehlertyp auslösen können.
+
+**Fix:** `atomic_write_bytes` legt den Elternordner jetzt selbst an (`os.makedirs(...,
+exist_ok=True)`), mit demselben Retry-Mechanismus wie `os.replace` (Konstanten vereinheitlicht zu
+`_PERMISSION_RETRY_ATTEMPTS`/`_PERMISSION_RETRY_SECONDS`, Modul-Doku
+[`atomic_write.md`](../../src/research_graphrag/doc/atomic_write.md), Abschnitt „Warum zusätzlich
+ein Retry auf `os.makedirs`“). `store.save_records` und `report.append_section` verloren dadurch
+ihre je eigene `mkdir`-Zeile ersatzlos – der Vertrag „Elternordner muss bereits existieren“ aus
+`atomic_write_bytes`s früherer Docstring-Fassung entfällt. Tests
+(`tests/test_atomic_write.py::test_retries_mkdir_on_permission_error_then_succeeds`,
+`::test_raises_after_exhausting_mkdir_retries`, `::test_creates_missing_parent_directories`)
+belegen Retry, Erschöpfung und das (neue) automatische Anlegen fehlender, auch mehrstufiger
+Elternordner.
+
+Damit sind jetzt **alle** Stellen, an denen `store.save_records`/`report.append_section`
+`OSError` auslösen können (Ordner anlegen, Temporärdatei schreiben, Zieldatei ersetzen), hinter
+demselben, einmal gemessenen Retry versammelt – eine erneute Divergenz wie bei diesem Rückfall ist
+strukturell ausgeschlossen, weil es nur noch eine Kopie der Logik gibt.
+
+**Betroffene, weiterhin ausstehende Korrekturen:** `228ab36678b84808` (Neuidentifikation am
+Volltext nötig, siehe Fehlerprotokoll) und `1368b41612825326` (Venue-Ergänzung, Autoren noch nicht
+verifiziert) sind durch diesen Fix **nicht** automatisch erneut ausgeführt worden – das sind
+inhaltliche Recherche-Aufgaben am jeweiligen Volltext, keine Bug-Fixes, und bleiben bewusst
+offen für einen eigenen Aufruf von `correct_paper_metadata`, sobald der MCP-Server verbunden ist.

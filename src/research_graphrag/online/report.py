@@ -254,10 +254,10 @@ def append_section(target: Path, lines: Sequence[str], header: Sequence[str]) ->
 
     Existiert die Datei noch nicht, wird sie mit der Kopfzeile angelegt. Bestehender Inhalt wird
     **binär** übernommen, damit vorhandene Zeilenenden unverändert bleiben; geschrieben wird
-    atomar über :func:`research_graphrag.atomic_write.atomic_write_bytes` (Temporärdatei +
-    ``os.replace`` mit Windows-Retry), damit ein Abbruch nichts Halbfertiges hinterlässt (Muster
-    aus docs/adr/0010-drop-in-workflow-and-qa-phase6.md) und zwei nahezu gleichzeitige
-    Schreibversuche nicht abstürzen (ADR 0039, Nachtrag).
+    atomar über :func:`research_graphrag.atomic_write.atomic_write_bytes` (legt den Elternordner
+    bei Bedarf mit Retry an, Temporärdatei + ``os.replace`` mit Windows-Retry), damit ein Abbruch
+    nichts Halbfertiges hinterlässt (Muster aus docs/adr/0010-drop-in-workflow-and-qa-phase6.md)
+    und zwei nahezu gleichzeitige Schreibversuche nicht abstürzen (ADR 0039, Nachträge).
 
     Args:
         target: Zieldatei des Berichts.
@@ -267,7 +267,6 @@ def append_section(target: Path, lines: Sequence[str], header: Sequence[str]) ->
     Returns:
         Den Pfad der geschriebenen Datei.
     """
-    target.parent.mkdir(parents=True, exist_ok=True)
     existing = target.read_bytes() if target.is_file() else b""
     newline = b"\r\n" if b"\r\n" in existing else os.linesep.encode()
     if not existing:

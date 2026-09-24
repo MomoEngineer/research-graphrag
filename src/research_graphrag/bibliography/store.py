@@ -129,12 +129,11 @@ def save_records(path: str | Path, records: Iterable[MetadataRecord]) -> int:
     text = json.dumps(document, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
 
     file_path = Path(path)
-    file_path.parent.mkdir(parents=True, exist_ok=True)
     # write als Bytes (nicht write_text): verhindert die Windows-Umsetzung von \n auf \r\n und
-    # hält die Datei damit über Plattformen hinweg byte-identisch. atomic_write_bytes schließt
-    # zusätzlich die Absturzgefahr zweier nahezu gleichzeitiger Schreibversuche (z. B. zwei
-    # correct_paper_metadata-Aufrufe ohne Warten auf die erste Antwort) – siehe dessen Modul-Doku
-    # (ADR 0039, Nachtrag).
+    # hält die Datei damit über Plattformen hinweg byte-identisch. atomic_write_bytes legt den
+    # Elternordner bei Bedarf selbst an (mit Retry) und schließt zusätzlich die Absturzgefahr
+    # zweier nahezu gleichzeitiger Schreibversuche (z. B. zwei correct_paper_metadata-Aufrufe
+    # ohne Warten auf die erste Antwort) – siehe dessen Modul-Doku (ADR 0039, Nachträge).
     atomic_write_bytes(file_path, text.encode("utf-8"))
     return len(ordered)
 

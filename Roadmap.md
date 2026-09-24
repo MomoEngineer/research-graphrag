@@ -8,7 +8,11 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 > der [Roadmap-Historie](docs/roadmap-historie.md). **Phase 13 steht weiterhin vollständig hier**,
 > als einzige Ausnahme von dieser Regel – sie war die unmittelbare Grundlage von Phase 14 und
 > bleibt aus Kontinuitätsgründen an Ort und Stelle, auch nachdem Phase 14 selbst archiviert ist.
-> **Kein aktiver Plan derzeit:** Phase 15 (Skalierung, [Statusblock](docs/roadmap-historie.md#g0--alles-hinterfragen-und-messen-zwingend-zuerst))
+> **Aktiver Plan (seit 2026-09-24): [Phase 16 – Antwortzeit: Weg B (FTS5)](#phase-16--antwortzeit-weg-b-fts5)
+> und [Phase 17 – Autoren als Rechercheebene](#phase-17--autoren-als-rechercheebene)**, beide
+> geplant und noch nicht begonnen; [A1](#a1--weak--strong-jede-literaturangabe-belegt-vorziehbar)
+> ist ausdrücklich **vor** Phase 16 ausführbar, weil er falsche Literaturangaben korrigiert.
+> Bis dahin abgeschlossen: Phase 15 (Skalierung, [Statusblock](docs/roadmap-historie.md#g0--alles-hinterfragen-und-messen-zwingend-zuerst))
 > und Phase 14 (Referenz-Ernte, [Statusblock](docs/roadmap-historie.md#e0--alles-hinterfragen-und-messen-zwingend-zuerst))
 > sind beide abgeschlossen; Phase 14 **entfällt in der geplanten Form** – E0 fand einen
 > billigeren, gleichwertigen Weg über die bestehende Kette und führte ihn selbst vor. **Phase 9 /
@@ -21,10 +25,12 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 > Der Community-Score aggregiert das Mittel der fünf höchsten Hybrid-Chunk-Scores der
 > Mitgliederpaper statt eines separaten TF-IDF-Rankings über Keywords + Summary – Global-Hit@5
 > steigt am 606-Paper-Korpus von 0,529 auf **1,000**, DRIFT profitiert automatisch mit (0,588 →
-> **0,882**), weil beide Modi dieselbe Auswahlfunktion teilen. **Damit hat Roadmap.md aktuell
-> keine offenen Phasen mehr** – jede hier geführte Phase (9, 10, 13) ist abgeschlossen; ein
-> künftiger Bedarf entsteht erst wieder aus neuen Befunden, nicht aus einer Restarbeit dieses
-> Dokuments.
+> **0,882**), weil beide Modi dieselbe Auswahlfunktion teilen. **Damit waren am 2026-09-16
+> alle hier geführten Phasen (9, 10, 13) abgeschlossen.** Die beiden neuen Phasen entstehen, wie
+> gefordert, aus neuen Befunden und nicht aus Restarbeit: Phase 16 aus der gemessenen
+> Latenz-Überschreitung ([ADR 0038](docs/adr/0038-corpus-ceiling-revision-local-search-latency.md)),
+> Phase 17 aus dem Wunsch nach einer personenbezogenen Rechercheebene und aus dem dabei
+> gemessenen Zustand der Autorendaten (siehe [Statusblock](#phase-17--autoren-als-rechercheebene)).
 
 ---
 
@@ -33,7 +39,7 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 - **Lean & container-frei:** reine Python-Umgebung, kein Docker-/DB-Server.
 - **Provenienz zuerst:** jede Antwort ist auf Paper/Abschnitt/Seite rückführbar.
 - **Inkrementell nutzbar:** neue PDFs per Drop-in-Ordner + Skript, ohne alles neu aufzusetzen.
-- **Klein, aber wachstumsfähig:** Die 2026-09-01 gemessene Auslegung (≤ 750 Volltexte / ≤ 1500 Gesamteinträge, [Phase 15 / G5](docs/roadmap-historie.md#g5--auslegung-neu-festschreiben)) ist **überholt**: Der reale Bestand liegt bei **3.461 Papern** (4,6-Fach über G5) und reißt die damals hergeleitete 5-s-Marke nachweislich – kalt in **allen vier** Modi, warm bereits bei **Local** (Median 6,064 s) und **DRIFT** (1,722 s). [ADR 0038](docs/adr/0038-corpus-ceiling-revision-local-search-latency.md) (2026-09-16) ersetzt die Zahl **nicht** durch eine neue (eine neu hergeleitete Wand läge ohnehin unterhalb des bereits produktiven Bestands), sondern löst ADR 0033s Revisionsbedingung ein und erhebt **Weg B (FTS5)** zur empfohlenen nächsten Phase. Bis dahin gilt der gemessene Ist-Zustand als Grenze, keine unbelegte Zahl.
+- **Klein, aber wachstumsfähig:** Die 2026-09-01 gemessene Auslegung (≤ 750 Volltexte / ≤ 1500 Gesamteinträge, [Phase 15 / G5](docs/roadmap-historie.md#g5--auslegung-neu-festschreiben)) ist **überholt**: Der reale Bestand liegt bei **3.461 Papern** (4,6-Fach über G5) und reißt die damals hergeleitete 5-s-Marke nachweislich – kalt in **allen vier** Modi, warm bereits bei **Local** (Median 6,064 s) und **DRIFT** (1,722 s). [ADR 0038](docs/adr/0038-corpus-ceiling-revision-local-search-latency.md) (2026-09-16) ersetzt die Zahl **nicht** durch eine neue (eine neu hergeleitete Wand läge ohnehin unterhalb des bereits produktiven Bestands), sondern löst ADR 0033s Revisionsbedingung ein und erhebt **Weg B (FTS5)** zur empfohlenen nächsten Phase – geplant als [Phase 16](#phase-16--antwortzeit-weg-b-fts5). Bis zu deren Abschluss ([F4](#f4--auslegung-neu-festschreiben)) gilt der gemessene Ist-Zustand als Grenze, keine unbelegte Zahl.
 - **Offline zuerst:** umgesetzt ist die Offline-Variante (Option B, [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)); ein Netzzugriff bleibt eine **separat startbare Zusatzfunktion**, nie eine Voraussetzung.
 - **Erst messen, dann bauen.** Das ist die wichtigste Lehre aus den Phase-7-Punkten und keine Floskel: In **A3** war die vermutete Ursache der `short_chunk`-Flut falsch (nicht die Seitengrenze, sondern die Überschriften-Heuristik), in **A4** bestätigte sich die Annahme „Fusion schlägt Einzelverfahren" nicht, in **A5** saß das Keyword-Rauschen nicht im Vektorraum, sondern in der Auswahlpolitik, in **A6** hätte eine nackte Coverage-Kennzahl die triviale Strategie gekürt, und in **A7** waren die vermuteten Signal-Konflikte mit 1 von 44 Fragen praktisch inexistent. Jede Ausbaustufe beginnt daher mit einer Wegwerf-Messung und einem **Abbruchkriterium**.
 - **Präzision vor Recall**, wo Daten in den Korpus oder in den Graphen fließen ([ADR 0011](docs/adr/0011-intra-corpus-citation-graph-phase7.md)).
@@ -81,6 +87,20 @@ letzte – **[V4 – Global-Ranking über die Mitglieds-Chunks](#v4--global-comm
 hunderten einchunkigen Einträgen befürchtete; Phase 14s Ergebnis (E1/E2 werden nicht gebaut) hat
 diese Prämisse entkräftet, und [ADR 0036](docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md)
 setzt den Punkt jetzt um.
+
+**Neu geplant (2026-09-24), ohne Reihenfolgekonflikt:**
+
+- **[Phase 16 – Antwortzeit: Weg B (FTS5)](#phase-16--antwortzeit-weg-b-fts5)** löst die in
+  [ADR 0038](docs/adr/0038-corpus-ceiling-revision-local-search-latency.md) verlangte, dedizierte
+  Phase ein.
+- **[Phase 17 – Autoren als Rechercheebene](#phase-17--autoren-als-rechercheebene)** baut in
+  [A3](#a3--autorenindex-beim-index-bau-abgeleitet) und
+  [A5](#a5--personen-im-text-erwähnungen-und-zitate) auf dem FTS5-Index aus
+  [F2](#f2--fts5-index-als-infrastruktur-vorauswahl-nur-nach-regel) auf und folgt deshalb
+  Phase 16.
+- **Ausnahme:** [A1](#a1--weak--strong-jede-literaturangabe-belegt-vorziehbar) hängt nicht von
+  FTS5 ab und korrigiert nachweislich falsche Literaturangaben. A1 darf deshalb **vor** Phase 16
+  laufen; die Nummerierung bleibt davon unberührt.
 
 **Zur Anordnung dieses Dokuments:** Abgeschlossene Phasen werden nicht umsortiert, sondern beim
 Abschluss in die [Historie](docs/roadmap-historie.md) überführt – die Regel, nach der die Phasen
@@ -857,6 +877,471 @@ Kein Volltext-Download (das ist eine eigene Fähigkeit – [S2](#s2--volltext-ho
 
 ---
 
+## Phase 16 – Antwortzeit: Weg B (FTS5)
+
+> **Status: geplant (2026-09-24), nicht begonnen.** Die Phase löst die in
+> [ADR 0038](docs/adr/0038-corpus-ceiling-revision-local-search-latency.md) verlangte, dedizierte
+> Phase ein. Ausgangslage ist die dortige Messung vom 2026-09-16 bei **3.461 Papern / 220.964
+> Chunks / 1.170 Communities**:
+>
+> * **Warm:** Local liegt im Median bei **6,064 s**, DRIFT bei **1,722 s**, beide über der
+>   1-s-Marke.
+> * **Kalt:** Alle vier Modi liegen bei 9,6–15,8 s, also über der 5-s-Marke.
+> * **Ladeanteil:** Basics erster Aufruf dauert **10,824 s**.
+>
+> Seitdem ist der Bestand weiter gewachsen, auf **3.579 Paper / 225.126 Chunks / 1.241
+> Communities** (Stand 2026-09-24). Die Zahlen aus ADR 0038 sind damit eher zu günstig.
+>
+> **Offline-Beschaffbarkeit bereits geprüft:** Das `sqlite3` des venv (SQLite 3.38.4) ist mit
+> `ENABLE_FTS5` gebaut, und eine Tabelle mit dem Tokenizer `trigram` lässt sich anlegen. Ein
+> Fremd-Wheel ist nicht nötig.
+>
+> **Zwei Festlegungen aus der Planung:**
+>
+> 1. **Die Entscheidungsregel aus [G0.6](docs/roadmap-historie.md#g06--was-kostet-bit-identität)
+>    gilt unverändert:** Bit-Identität schlägt Geschwindigkeit.
+> 2. **FTS5 hat zwei getrennte Rollen, die getrennt gemessen, gebaut und abgenommen werden.**
+>    Als **Infrastruktur** für Phrasen- und Namenssuche wird der Index gebaut, sofern F0 seine
+>    Kosten als tragbar ausweist; darauf bauen [A3](#a3--autorenindex-beim-index-bau-abgeleitet)
+>    und [A5](#a5--personen-im-text-erwähnungen-und-zitate) aus Phase 17 auf. Ob FTS5 zusätzlich
+>    als **Vorauswahl** in das Ranking eingreift, entscheidet ausschließlich die Regel aus F0.
+
+**Ziel:** Alle vier Modi halten am realen Bestand und am in F0 festgelegten Auslegungspunkt wieder
+die bestehenden Marken: warm unter 1 s ([ADR 0033](docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md),
+maßgeblich für den MCP-Betrieb) und kalt unter 5 s ([G5](docs/roadmap-historie.md#g5--auslegung-neu-festschreiben)).
+Die Auslegung aus dem Leitprinzip „Klein, aber wachstumsfähig" ist danach wieder mit einer
+gemessenen Zahl unterlegt, statt nur als „überholt" markiert.
+
+**Warum das nötig ist:** Local ist laut Fragetyp-Contract der primäre Modus für Detailfragen und
+heute zugleich der langsamste: Bis zu **elf** volle Korpus-Scorings fallen je Anfrage an. Der
+Prozess-Cache (Weg C) beseitigt diesen strukturellen, mit der Chunkzahl linear wachsenden Anteil
+nicht; ADR 0038 hat das gemessen, nicht nur befürchtet.
+
+### F0 – Kosten zerlegen und beide Wege prototypisch messen (zwingend zuerst, mit Entscheidungsregel)
+_Modell-Tipp: Claude Opus 5.5._
+
+F0 ist eine Wegwerf-Messung wie G0 und ADR 0038: kein Produktivcode, der Live-Index wird nur
+gelesen, und gemessen wird an Index-Kopien.
+
+1. **Kosten von Local zerlegen.** Wie verteilt sich die warme Zeit auf Seed-Suche,
+   Nachbarschafts-Scorings, Fan-out-Suchen und das ungecachte `load_neighbors`? Wie groß ist der
+   Ladeanteil beim ersten Aufruf? ADR 0038 hat diese Aufschlüsselung ausdrücklich offengelassen.
+2. **Bit-identische Kandidaten messen:**
+   * (a) Ein **Fan-out-Vorfilter**, der `paper_ids` **vor** dem Scoring anwendet statt danach
+     (ADR 0038, Abschnitt 3).
+   * (b) Eine **gemeinsame Vektorisierung** der Anfrage über Seed-, Nachbarschafts- und
+     Fan-out-Suchen (Notiz aus G5).
+   * (c) Ein **Prozess-Cache für die Nachbarschaft**.
+
+   Jeder Kandidat muss qid-genau **0 Abweichungen** über alle zehn Ebenen beider Gold-Sets
+   nachweisen.
+3. **FTS5 als Vorauswahl messen.** Grundlage ist eine external-content-Tabelle über `chunks`, damit
+   der Text nicht doppelt gespeichert wird. Die exakte Hybrid-Wertung läuft nur noch auf den
+   Top-*N* der Vorauswahl. Für mehrere Werte von *N* wird qid-genau gezählt, wie viele Ränge sich
+   verschieben.
+4. **FTS5 als Infrastruktur messen.** Zu erheben sind der Zuwachs der Indexgröße (heute 713 MB),
+   die Mehrdauer eines vollen Ingest und die Antwortzeit je einer Phrasen- und einer Namensanfrage.
+   Außerdem ist der Tokenizer zu wählen: `unicode61` mit `remove_diacritics` für den Fließtext,
+   `trigram` nur für die kleine Namenstabelle aus Phase 17. Die Annahme dahinter: Ein
+   Trigramm-Index über 225.000 Chunks belegt ein Vielfaches des Textes. Das ist zu belegen, nicht
+   vorauszusetzen.
+5. **Den Auslegungspunkt festlegen, bevor gebaut wird.** Gemessen wird am realen Bestand und an
+   einer Staffelung darüber, nach dem Chimären-Verfahren aus G5. Richtwert: der doppelte heutige
+   Bestand.
+
+*Vorab fixierte Entscheidungsregel* (übernommen aus G0.6 und ADR 0038; sie wird beim Bau nicht
+mehr verändert):
+
+1. **Bit-identische Kandidaten** aus Punkt 2 werden gebaut, soweit sie messbar beitragen
+   ([F1](#f1--bit-identische-begradigung)).
+2. **FTS5 als Vorauswahl** wird nur gebaut, wenn F1 die warme Marke für Local am Auslegungspunkt
+   verfehlt. Zulässig ist dann nur ein *N*, bei dem qid-genau über alle zehn Ebenen **0 Ränge**
+   abweichen. Lässt sich kein solches *N* finden, ist das ein eigener Befund mit eigenem ADR,
+   ausgewiesenem Bruch und neu eingefrorenen Baselines, kein stiller Kompromiss.
+3. **FTS5 als Infrastruktur** wird gebaut, wenn der Index um höchstens **50 %** wächst und der volle
+   Ingest um höchstens **20 %** länger dauert. *Abbruchkriterium:* Reißt eine der beiden
+   Schwellen, entfällt die Infrastruktur-Rolle. Phase 17 fällt dann auf den in
+   [A5](#a5--personen-im-text-erwähnungen-und-zitate) beschriebenen Rückfallweg zurück; das wird
+   dokumentiert, nicht still hingenommen.
+
+### F1 – Bit-identische Begradigung
+_Modell-Tipp: Claude Opus 5.5._
+
+- Umgesetzt werden die in F0 als wirksam gemessenen Kandidaten: Fan-out-Vorfilter, gemeinsame
+  Vektorisierung, Nachbarschafts-Cache.
+- Ein neuer Cache wird wie in ADR 0033 über den Zustand der Index-Datei invalidiert.
+- *Akzeptanz:*
+  - `--check` meldet gegen beide Baselines 0 Abweichungen (bit-identisch, kein Neueinfrieren).
+  - Die warme Local-Latenz ist gegen die 1-s-Marke gemessen.
+  - Determinismus und `Citation`-Contract bleiben unverändert.
+
+### F2 – FTS5-Index als Infrastruktur, Vorauswahl nur nach Regel
+_Modell-Tipp: Claude Opus 5.5._
+
+- Die FTS5-Tabelle entsteht im Index-Bau als Teil derselben SQLite-Datei und damit des atomaren
+  Swaps aus [Phase 6](docs/roadmap-historie.md#phase-6--drop-in-workflow--qualitätssicherung).
+  Es gibt keine eigene Datei und keinen zweiten Aktualisierungsweg.
+- Eine schmale, interne Abfrageschnittstelle (Phrase, Präfix, Nähe) steht Phase 17 zur Verfügung.
+  Solange Regel 2 nicht greift, ändert sich **nichts** an den vier Retrieval-Modi.
+- Nur falls Regel 2 greift, wird zusätzlich die Vorauswahl mit dem in F0 bestimmten *N* gebaut.
+- **FTS5-Anfragen sind Nutzereingaben.** Sonderzeichen und Operatoren (`"`, `NEAR(`, `*` …) werden
+  entschärft. Eine missglückte Anfrage endet als `invalid_input` und reicht keinen
+  `sqlite3.OperationalError` bis an die MCP-Grenze durch.
+- *Akzeptanz:*
+  - Ohne Vorauswahl meldet `--check` 0 Abweichungen, denn die Infrastruktur verändert kein
+    Ranking.
+  - Mit Vorauswahl: entweder 0 Abweichungen oder ein ausgewiesener Bruch mit neu eingefrorenen
+    Baselines und eigenem ADR.
+  - Indexzuwachs und Mehrdauer des Ingest liegen innerhalb der F0-Schwellen.
+
+### F3 – Kaltstart (bedingt)
+_Modell-Tipp: Claude Sonnet 5._
+
+- Nur nötig, wenn F0 den Ladeanteil als dominanten Kostenblock des kalten Pfads ausweist (heute
+  10,824 s beim ersten Aufruf).
+- Die Kandidaten werden erst in F0 benannt, etwa weitere persistierte Zustände nach dem Muster von
+  Weg A. Ohne Befund entfällt F3, dokumentiert wie [B6](docs/roadmap-historie.md#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen).
+
+### F4 – Auslegung neu festschreiben
+_Modell-Tipp: Claude Sonnet 5._
+
+- Wie in G5 kommt eine gemessene Zahl mit Messdatum in README, CONTRIBUTING und die Roadmap
+  (Leitprinzip „Klein, aber wachstumsfähig"). ADR 0038 erhält einen Nachtrag, und eine neue
+  Revisionsbedingung legt die Korpusgröße fest, ab der erneut zu messen ist.
+- Handprobe wie in [G0.7](docs/roadmap-historie.md#g07--handprobe-bleibt-das-werkzeug-im-alltag-brauchbar):
+  Mindestens 8 von 10 realen Fragen müssen brauchbar beantwortet werden.
+
+### Bewusst ausgeschlossen
+
+- Externe Such- oder Vektor-Backends wie Qdrant, Weaviate oder Neo4j (siehe
+  [Zielbild](#zielbild--erst-bei-belegter-beschaffbarkeit)).
+- Embeddings und ein Index-LLM.
+- Jede Ranking-Änderung ohne die Regel aus F0.
+- Eine Mischung aus Weg A und Weg B, die nicht dieselbe qid-Prüfung besteht.
+
+### Definition of Done
+
+- F0 ist beantwortet und dokumentiert. Auch „FTS5-Vorauswahl nicht nötig" ist ein gültiges
+  Ergebnis.
+- Alle vier Modi halten warm < 1 s und kalt < 5 s am realen Bestand und am Auslegungspunkt – oder
+  die Abweichung ist gemessen, begründet und im ADR festgehalten.
+- `--check` meldet 0 Abweichungen, oder der Bruch ist ausgewiesen und beide Baselines sind neu
+  eingefroren.
+- Die FTS5-Infrastruktur für Phase 17 ist vorhanden, oder ihr Wegfall ist über das
+  Abbruchkriterium dokumentiert.
+- **ADR** zu Weg-Entscheidung, FTS5-Schema und Auslegung; Modul-Doku, [features.md](docs/features.md)
+  und [funktionsweise.md](docs/funktionsweise.md) sind nachgezogen.
+- Tests: Bit-Identität, Cache-Invalidierung, Entschärfung der FTS5-Syntax und atomarer Swap mit
+  FTS5-Tabelle.
+
+---
+
+## Phase 17 – Autoren als Rechercheebene
+
+> **Status: geplant (2026-09-24), nicht begonnen.** Die folgenden Befunde stammen aus einer
+> Planungsmessung: Wegwerf-Skripte, kein Produktivcode, Live-Index nur lesend, Bestand **3.579
+> Paper** (3.213 Volltexte, 366 Referenz-Einträge). Wie bei S0 und R0 entsteht dafür bewusst
+> **kein ADR**, weil die Planung nichts baut; ADRs folgen bei der Umsetzung.
+>
+> **1. Abdeckung – die Autorenebene wäre heute zu 88 % blind.**
+>
+> * Nur **435 von 3.579** Papern tragen im Index Autoren: 430 von 3.213 Volltexten, 5 von 366
+>   Referenz-Einträgen.
+> * Autoren entstehen ausschließlich durch die Online-Auflösung; aus den PDFs selbst werden keine
+>   gelesen.
+> * **2.733** Volltexte haben eine DOI oder arXiv-ID, aber keine Autoren – für sie lief
+>   `scripts.resolve_metadata` nie. 50 Volltexte haben weder Autoren noch Identifikator.
+> * Die Folge ist schon heute in den Literaturangaben sichtbar: Zitierschlüssel fallen auf
+>   Titelwörter zurück. Hasan et al. (2026) etwa führt der Index als `Model2026`.
+>
+> **2. Datenfluss-Lücke bei den Referenz-Einträgen.** Alle **366** `.refjson`-Stubs tragen Autoren,
+> im Index kommen davon nur **5** an. Wo sie verloren gehen, ist noch nicht lokalisiert (A0).
+>
+> **3. `weak` heißt oft: fremdes Paper.**
+>
+> * **427** der 3.213 Volltexte sind `weak`: 335 stammen nur aus der Extraktion, 92 sind online
+>   aufgelöst.
+> * Für die 92 wurde die erste PDF-Seite gegen Titel und Autoren des Treffers geprüft. Die
+>   Heuristik ist grob: Titel gilt ab 80 % übereinstimmender Titelwörter als gefunden, Autoren ab
+>   50 % der ersten zehn Nachnamen.
+>
+>   | Titel auf S. 1 | Autoren auf S. 1 | Anzahl |
+>   | --- | --- | --- |
+>   | ✓ | ✓ | 22 |
+>   | ✓ | ✗ | 19 |
+>   | ✗ | ✓ | 7 |
+>   | ✗ | ✗ | **44** |
+>
+> * Sechs der 44 wurden gegen den Dateinamen geprüft, und **alle sechs sind ein fremdes Paper**.
+>   Beispiele: Die VisRAG-Datei wird als „OpenAI2023 – GPT-4 Technical Report" zitiert, AgentBench
+>   als „Bollacker2008 – Freebase", MCIP als „Brown2020 – Language Models are Few-Shot Learners".
+> * Die Ursache: Die aufgelöste Kennung stammt aus dem Literaturverzeichnis, nicht von der
+>   Titelseite.
+> * Das ist ein **Korrektheitsfehler in `get_reference`**: Die Angaben tragen zwar die Markierung
+>   „schwach belegt", sind aber schlicht falsch. Es geht also nicht nur um eine Lücke der
+>   Autorenebene, und deshalb ist [A1](#a1--weak--strong-jede-literaturangabe-belegt-vorziehbar)
+>   vorziehbar.
+>
+> **4. Namen sind keine Identität.**
+>
+> * **2.389** verschiedene Schreibweisen verteilen sich auf 443 Paper; 318 davon kommen auf
+>   mindestens 2 Papern vor.
+> * Die Schreibformen sind gemischt, oft innerhalb desselben Datensatzes. 322 Namen stehen in der
+>   Form „Nachname, Vorname"; „Asai, Akari" erscheint auf 4 Papern, „Akari Asai" auf 1.
+> * Umgekehrt trennt Initiale plus Nachname Gleichnamige nicht: Es gibt 15 verschiedene
+>   „Y. … Wang".
+> * 11 Autorenlisten sind bei `MAX_AUTHORS = 25` abgeschnitten.
+>
+> **5. Die Identität ist schon heruntergeladen.** Die OpenAlex-Rohantworten unter
+> `data/online_raw/` (1.215 Dateien) enthalten je Autor `author.id`, `orcid` und
+> `raw_author_name`. Gespeichert wird bisher nur `display_name`. Der arXiv-Feed liefert nur Namen,
+> keine Kennung.
+>
+> **6. Korpusbeleg.** Personenbezogene Fragen sind in der Literatur eigene Fragetypen einer
+> GraphRAG-Evaluation: Autoren eines Papers, Mitautoren einer Person, Venues einer Person (Liu et
+> al. 2025, PolyG, arXiv:2504.02112, S. 22–23). Zur **Methodik** der Namens-Disambiguierung enthält
+> der Korpus nichts Einschlägiges. Die Festlegungen unten stützen sich deshalb auf die eigene
+> Messung.
+
+**Ziel:** Eine Person wird zur eigenen Rechercheebene. Abfragbar sind:
+
+- alle Korpus-Paper, an denen sie beteiligt war,
+- ihr schlankes Profil,
+- die Suche innerhalb ihrer Paper,
+- ihre Zitationsbeziehungen im Korpus,
+- ihre Erwähnungen im Text.
+
+Jeder Beleg trägt dieselbe Provenienz wie überall sonst. Arbeitsgruppen werden **nicht** geclustert.
+
+### Festlegungen, die vorab getroffen sind (Planung 2026-09-24)
+
+| Festlegung | Begründung |
+| --- | --- |
+| **Personenkennung statt Namensheuristik:** OpenAlex-Autor-ID und ORCID werden **additiv** gespeichert. | Namen trennen Gleichnamige nicht und führen dieselbe Person unter mehreren Schreibweisen (Befund 4). „Additiv" folgt dem Muster von `cleared_fields` ([ADR 0040](docs/adr/0040-explicit-field-clearing.md)): Datensätze ohne den neuen Schlüssel bleiben gültig. Eine Identität ohne Kennung bleibt ausdrücklich als „nur Name" gekennzeichnet. |
+| **Kein stilles `weak`:** Jeder schwach belegte Datensatz wird `strong`, von Hand korrigiert oder ausdrücklich als nicht auflösbar ausgewiesen. | Befund 3 zeigt, dass `weak` fremde Paper verdeckt. „Präzision vor Recall" (Leitprinzipien) gilt für Literaturangaben erst recht. |
+| **Das LLM schlägt vor, das Skript prüft.** | Ein unterstützendes, normalisierendes Skript bereitet Arbeitslisten für ein LLM auf. Das LLM liefert **nur** einen Identifikator oder Titel, **nie die Metadatenwerte selbst**. Aufgewertet wird ausschließlich über den deterministischen Seite-1-Beleg. Die Herkunft bleibt `resolved`, und der Beleg nennt den Arbeitslisten-Vorschlag. |
+| **`manual` bleibt menschlich.** | Ein LLM-Entscheid unter der Herkunft `manual` würde eine menschliche Prüfung behaupten, die nicht stattfand („Provenienz zuerst"). `manual` bleibt Papern vorbehalten, die in keiner Quelle stehen. Solche Korrekturen laufen über `correct_paper_metadata` und brauchen die Freigabe des Nutzers je Charge. |
+| **Lieber ein MCP-Tool zu viel als zu wenig.** | Das ist eine Nutzervorgabe. Jede Fähigkeit bekommt ein eigenes, scharf abgegrenztes Tool, und die Contracts der bestehenden Tools ändern sich nur additiv. Das Gegengewicht ist belegt: Mit wachsender Tool-Zahl sinken Genauigkeit und Anteil korrekter Tool-Aufrufe (Jia et al. 2025, OSWorld-MCP, arXiv:2510.24563, S. 9), und die Tool-Metadaten landen bei jeder Interaktion erneut im Kontext (Hasan et al. 2026, arXiv:2602.14878, S. 3). Die Antwort darauf ist die Handprobe zur Tool-Wahl in [A6](#a6--wirkung-sichern), nicht der Verzicht auf Tools. |
+| **Netzzugriff nur im separaten Lauf.** | Auflösung und Nachtrag bleiben manuell startbare Skripte außerhalb der Agent-Reichweite ([ADR 0026](docs/adr/0026-online-metadata-resolution.md)). Die Personen-Tools lesen ausschließlich den Index. |
+
+### A0 – Abdeckung, Identität und `weak`-Triage messen (zwingend zuerst, mit Abbruchkriterium)
+_Modell-Tipp: Claude Opus 5.5._
+
+1. **Erreichbare Abdeckung.** Drei Quellen werden bewertet:
+   * die Stubs, sobald die Lücke aus Befund 2 lokalisiert ist,
+   * der Nachtrag aus `data/online_raw/` (zugeordnet über die DOI bzw. OpenAlex-ID des Werks),
+   * der Auflösungslauf.
+
+   Hinzu kommt das **Kontingent**: S0 bezifferte OpenAlex mit rund 100 Abfragen je Kontingent. Für
+   rund 2.700 Paper ist zu klären, ob Sammelabfragen (mehrere DOIs je Anfrage) zulässig und
+   wirksam sind. Das ist unbelegt und daher zu messen. Der arXiv-Feed spart Kontingent, liefert aber
+   nur Namen und keine Kennung.
+2. **Identität.** Gemessen wird der Anteil der Autorennennungen mit OpenAlex-ID bzw. ORCID. Dazu
+   kommen Kollisionen (ein normalisierter Name verweist auf mehrere IDs) und Aufspaltungen (eine ID
+   trägt mehrere Schreibweisen).
+3. **`weak`-Triage sauber nachmessen.** Die Planungsheuristik aus Befund 3 liest nur Seite 1 und
+   arbeitet mit festen Schwellen. Der Seite-1-Beleg für A1 wird deshalb an **mindestens 30** von
+   Hand gegen das PDF geprüften Fällen kalibriert. *Schwelle:* **0 falsch-positive** Aufwertungen
+   in der Stichprobe. Ein fälschlich `strong` ist schlimmer als ein ehrliches `weak`.
+4. **Handprobe.** Der Nutzer benennt 10 für die Masterarbeit relevante Personen, und die erwarteten
+   Paperlisten werden von Hand erstellt. Gezählt werden Treffer und Fehltreffer. Die Schwelle für
+   A4 wird hier **vor** dem Bau fixiert.
+
+*Abbruchkriterien:*
+
+- Ist nach A2 eine Abdeckung von **≥ 80 %** der Volltexte mit Autoren aus `strong`-Datensätzen
+  nicht erreichbar, wird der Zuschnitt verkleinert. Die Tools aus A4 und A5 werden trotzdem
+  gebaut, weisen die Abdeckungslücke aber in jeder Antwort aus (`coverage`), statt Vollständigkeit
+  zu suggerieren.
+- Lässt sich für Punkt 3 kein Beleg ohne falsch-positive Aufwertungen finden, entfällt die
+  automatische Aufwertung. A1 läuft dann vollständig über die Arbeitsliste und die Freigabe des
+  Nutzers.
+
+### A1 – `weak` → `strong`: jede Literaturangabe belegt (vorziehbar)
+_Modell-Tipp: Claude Opus 5.5._
+
+A1 hängt nicht von Phase 16 ab und darf **vorher** laufen. Voraussetzung ist nur A0, Punkt 3.
+
+1. **Deterministischer Seite-1-Beleg.** Zwei Bedingungen müssen beide erfüllt sein:
+   * Der Titel steht auf der Titelseite, mit einer Ähnlichkeit ≥ `TITLE_SIMILARITY` (0,85). Das ist
+     derselbe Mechanismus wie im Intake und in [S2](#s2--volltext-holen-opt-in-lizenz-whitelist);
+     eine zweite Ähnlichkeitslogik entsteht nicht.
+   * Ein in A0 kalibrierter Mindestanteil der Autoren-Nachnamen steht ebenfalls dort.
+
+   Dann wird der Datensatz `strong`, die Herkunft bleibt `resolved`, und der Beleg lautet „Titel
+   und Autoren auf S. 1 belegt". Das ist eine neue Belegklasse in der Konfidenztabelle aus
+   [ADR 0026](docs/adr/0026-online-metadata-resolution.md) und braucht deshalb ein ADR.
+2. **Fremd-Paper-Fälle.** Steht der Titel eines Treffers nicht auf der Titelseite, wird der Treffer
+   **verworfen**. Das Paper wird über eine Kennung der Titelseite bzw. über den Titel neu aufgelöst
+   und danach erneut nach Punkt 1 geprüft. Ein **Ablehnungsvermerk** verhindert, dass ein späterer
+   `resolve_metadata`-Lauf den verworfenen Treffer wieder einspielt. Ohne ihn wäre die Bereinigung
+   nicht stabil.
+3. **Der Rest läuft über die LLM-Arbeitsliste.**
+   * Ein Skript exportiert normalisierte Arbeitslisten: Paper-ID, Dateiname, ein begrenzter Auszug
+     der Titelseite, der aktuelle Datensatz, das Prüfergebnis und der Grund.
+   * Das LLM antwortet in einem festen Format **nur** mit Identifikator oder Titel.
+   * Das Skript validiert das Format, löst auf und prüft nach Punkt 1.
+   * Die LLM-Antworten werden wie die Netz-Rohantworten mit Zeitstempel abgelegt
+     (Reproduzierbarkeit).
+   * Der Seitenauszug ist **nicht vertrauenswürdiger Fremdtext**: Anweisungen darin werden nicht
+     befolgt, und kein Wert aus der LLM-Antwort gelangt ungeprüft in die Metadaten.
+4. **Was in keiner Quelle steht:** Solche Paper werden über `correct_paper_metadata` (`manual`)
+   korrigiert, nach Freigabe durch den Nutzer je Charge. Falsche Felder niedrigerer Herkunft
+   werden dabei explizit geleert ([ADR 0040](docs/adr/0040-explicit-field-clearing.md)), damit sie
+   nicht durchscheinen. Bleibt ein Paper auch so unbelegt, wird es mit Grund als „nicht auflösbar"
+   ausgewiesen.
+5. **Umfang:** alle 427 `weak`-Volltexte und der eine `weak`-Referenz-Eintrag. Die 335 nur
+   extrahierten Volltexte laufen dafür vorab durch die Auflösung.
+
+- *Akzeptanz:*
+  - Kein `weak` bleibt ohne ausgewiesenen Status.
+  - Die belegten Fremd-Paper-Fälle (u. a. VisRAG, AgentBench, MCIP) liefern in `get_reference` die
+    korrekte Angabe.
+  - Ein zweiter `resolve_metadata`-Lauf spielt keinen verworfenen Treffer zurück.
+  - `--dry-run` des Arbeitslisten-Skripts ändert nachweislich nichts.
+  - `data/metadata_log.md` weist jede Aufwertung mit ihrem Beleg aus.
+
+### A2 – Abdeckung und Personenkennung
+_Modell-Tipp: Claude Opus 5.5._
+
+1. **Stub-Lücke schließen.** Die Autoren der 366 `.refjson`-Stubs erreichen den Index (Befund 2),
+   ohne Netzzugriff.
+2. **Additives Schema.** `MetadataRecord`, `metadata/paper_metadata.json` und das `.refjson`-Format
+   (mit additiv erhöhter Schema-Version) bekommen je Autor die OpenAlex-Autor-ID und die ORCID.
+   Die Namen bleiben in der **Schreibweise der Quelle** (Provenienz); normalisiert wird erst im
+   abgeleiteten Index (A3).
+3. **Nachtrag ohne Netz.** Für bereits aufgelöste Paper werden die Kennungen aus
+   `data/online_raw/` übernommen.
+4. **Auflösungslauf.** Die rund 2.700 Paper ohne Autoren werden separat aufgelöst: manuell
+   gestartet, fortsetzbar und idempotent, sodass bereits vollständige Paper nicht erneut abgefragt
+   werden. Das Kontingent richtet sich nach A0. Jeder Treffer durchläuft den Seite-1-Beleg aus A1,
+   neue `weak`-Einträge entstehen also nicht mehr unbemerkt.
+5. **`MAX_AUTHORS` entscheiden.** Entweder wird die vollständige Liste für die Suche gespeichert
+   und erst in der Literaturangabe mit „et al." gekürzt, oder die Kürzung bleibt begründet
+   bestehen. A0 beziffert die Kosten.
+
+- *Akzeptanz:*
+  - Die Abdeckung erreicht die A0-Schwelle, oder die Lücke ist ausgewiesen.
+  - Alte Metadaten-Dateien ohne die neuen Schlüssel laden unverändert (Test).
+  - Ein zweiter Lauf stellt keine Abfrage.
+  - `get_paper` und `get_reference` liefern die Kennungen additiv (Minor-Version der Spec).
+
+### A3 – Autorenindex (beim Index-Bau abgeleitet)
+_Modell-Tipp: Claude Sonnet 5._
+
+- **Tabelle `paper_authors`.** Sie wird beim Index-Bau aus den aufgelösten Metadaten abgeleitet
+  und enthält: Paper, Position, Schreibweise der Quelle, normalisierten Schlüssel, OpenAlex-ID,
+  ORCID und `document_kind`. Der Schlüssel entsteht über das vorhandene `ascii_fold`, es gibt also
+  keine zweite Faltung; „Nachname, Vorname" und „Vorname Nachname" fallen dabei zusammen.
+- Nur `strong`-Datensätze speisen die Tabelle. Nach A1 gibt es kein stilles `weak` mehr, das
+  durchrutschen könnte.
+- **Personenschlüssel:** die OpenAlex-ID, wo vorhanden, sonst ausdrücklich `name:<normalisiert>`
+  als unbestätigte Identität.
+- Die unscharfe Namenssuche läuft über eine kleine FTS5-Trigramm-Tabelle auf den Namen
+  (Infrastruktur aus [F2](#f2--fts5-index-als-infrastruktur-vorauswahl-nur-nach-regel)).
+- Die PDFs werden nicht neu extrahiert; die zwischengespeicherte Extraktion bleibt, ein Index-Bau
+  über `python -m scripts.ingest` genügt.
+- *Akzeptanz:*
+  - Determinismus: Zwei Index-Bauten ergeben eine identische Tabelle.
+  - `--check` meldet 0 Abweichungen, weil kein Retrieval-Modus berührt wird.
+  - Der atomare Swap bleibt unverändert.
+
+### A4 – Personen-Tools (Spezifikation vor Code)
+_Modell-Tipp: Claude Opus 5.5._
+
+| Tool | Beantwortet | Liefert |
+| --- | --- | --- |
+| `search_authors` | „Wer ist gemeint?" | Kandidaten-Identitäten zu einem Namen: Personenschlüssel, Schreibweisen, Paperzahl, Jahresspanne, Beispieltitel und Identitätsstatus (OpenAlex / ORCID / nur Name). Ein mehrdeutiger Name wird als solcher ausgewiesen, nie still zusammengeführt. |
+| `get_author` | „Was hat X im Korpus?" | Schlankes Profil: Paperliste (Paper-ID, Titel, Jahr, Autorposition, `document_kind`, Zitierschlüssel), Jahresspanne, Themen-Communities der Paper, direkte Mitautoren im Korpus mit der Zahl gemeinsamer Paper. Keine Gruppenbildung. |
+| `search_author_papers` | „Was schreibt X über Y?" | Inhaltssuche (Basic/Local), beschränkt auf die Paper der Person. Suchlogik und `Citation`-Contract sind dieselben wie in den bestehenden Modi; eine zweite Implementierung entsteht nicht. |
+| `get_author_citations` | „Wer zitiert X, wen zitiert X?" | Korpus-Paper, die Paper der Person zitieren, und Korpus-Paper, die die Person zitiert. Grundlage sind die bestehenden `CITES`-Kanten; die Grenze „nur innerhalb des Korpus" wird ausgewiesen. |
+| `get_paper` / `get_reference` (additiv) | „Wer hat dieses Paper geschrieben?" | Den Personenschlüssel je Autor zusätzlich zum Namen. Dafür entsteht kein eigenes Tool, weil diese Frage dort schon beantwortet wird. |
+
+- Jede Liste hält die gemeinsame Obergrenze `MAX_RESULT_COUNT` aus
+  [ADR 0037](docs/adr/0037-mcp-tool-response-size-ceiling.md) ein und weist `total_matching` aus.
+  Das ist wichtig bei Personen mit vielen Papern.
+- Eine unbekannte Person ergibt `not_found`. Ein mehrdeutiger Name ist **kein** Fehler, sondern
+  eine Kandidatenliste.
+- Jedes Tool bekommt ein CLI-Gegenstück, nach dem Muster von `scripts.cite` und `scripts.citations`.
+- *Akzeptanz:*
+  - Die Spec jedes Tools existiert vor dem Code.
+  - Contract-, Funktions- und Fehlertests sind vorhanden.
+  - Die Handprobe aus A0, Punkt 4 erreicht die dort fixierte Schwelle.
+
+### A5 – Personen im Text: Erwähnungen und Zitate
+_Modell-Tipp: Claude Opus 5.5._
+
+- **Tool `find_person_mentions`** mit Name und optionaler Paper-ID. Es findet die Fundstellen einer
+  Person im **Fließtext** und im **Literaturverzeichnis**, entweder in einem Paper oder im ganzen
+  Korpus. Je Fundstelle liefert es Paper, Seite, Abschnitt, einen Ausschnitt und die Art der
+  Fundstelle (Text oder Referenz).
+- Die Unterscheidung zwischen Text und Referenz nutzt die bestehende Erkennung von
+  Referenzabschnitten (`evaluation.multihop.is_reference_section` bzw. `indexing.citation_graph`).
+  Diese Logik wird bei Bedarf an einen gemeinsamen Ort verschoben, statt ein drittes Mal zu
+  entstehen.
+- Das Tool funktioniert auch für Personen, die nicht selbst Autor eines Korpus-Papers sind, sondern
+  nur zitiert werden.
+- **Grenze, offen ausgewiesen:** Eine Erwähnung ist ein **Namenstreffer**, keine bestätigte
+  Identität, denn der Text trägt keine Kennung. Häufige Nachnamen wie Wang oder Li liefern viele
+  Fundstellen. Der Ausschnitt ist deshalb Pflicht, und ein optionaler Vorname oder eine Initiale
+  schränkt die Suche ein.
+- **Grundlage** ist die FTS5-Phrasensuche aus F2.
+- **Rückfallweg:** Entfällt F2 über das Abbruchkriterium, wird `chunks` direkt durchsucht. Die
+  Latenz wird dann gemessen, und der Weg ist als bekannt langsam dokumentiert.
+- *Akzeptanz:*
+  - Handprobe mit 10 Namen: Fundstellen im Fließtext und im Literaturverzeichnis werden von Hand
+    gezählt und verglichen.
+  - FTS5-Sonderzeichen in Namen werden entschärft (Test).
+  - Die Obergrenze aus ADR 0037 wird eingehalten.
+
+### A6 – Wirkung sichern
+_Modell-Tipp: Claude Sonnet 5._
+
+- `--check` meldet gegen beide Baselines **0 Abweichungen**, weil kein bestehender Modus berührt
+  wird.
+- **Handprobe zur Tool-Wahl im realen Client (Copilot bzw. Claude).** Gestellt werden 10
+  personenbezogene Fragen und 5 Fragen bestehender Fragetypen.
+  - *Schwelle:* Bei mindestens 9 von 10 wählt der Client das richtige Personen-Tool, und bei den 5
+    bestehenden Fragen verschlechtert sich nichts.
+  - Wird die Schwelle verfehlt, werden die Beschreibungen geschärft, nicht Tools gestrichen.
+- **Dokumentation:**
+  - Tool-Specs, Modul-Doku, [features.md](docs/features.md) und [funktionsweise.md](docs/funktionsweise.md).
+  - In der [README](README.md) eine Anleitung zum Arbeitslisten-Weg aus A1.
+  - **ADRs** zu (1) Seite-1-Belegklasse und Ablehnungsvermerk, (2) Personenkennung und Schema,
+    (3) Autorenindex und Tool-Oberfläche.
+- **Sicherung:** `metadata/paper_metadata.json` ist bereits im Sicherungsumfang aus
+  [B1](docs/roadmap-historie.md#b1--sicherung-des-korpus). Die abgelegten LLM-Antworten aus A1 kommen
+  hinzu. Sie sind aus keiner Quelle rekonstruierbar, im Gegensatz zu den Arbeitslisten, die sich
+  jederzeit neu erzeugen lassen.
+
+### Bewusst ausgeschlossen
+
+- Clustering von Arbeitsgruppen oder Ko-Autor-Communities.
+- Bibliometrie wie h-Index oder externe Zitationszahlen.
+- Institutionen und Affiliationen, obwohl sie in den Rohantworten stehen.
+- Eine Online-Suche nach weiteren Papern einer Person. Sie wäre eine Erweiterung von
+  [Phase 9](#phase-9--online-research-modus-separat-startbar) und bliebe außerhalb der MCP-Oberfläche.
+- Metadatenwerte, die ein LLM schreibt.
+- Automatisches Zusammenführen reiner Namensidentitäten.
+- Heuristische Autorenextraktion aus dem PDF-Text als Datenquelle. Die Titelseite dient nur als
+  **Beleg**, nicht als **Quelle**.
+
+### Definition of Done
+
+- A0 ist beantwortet und dokumentiert.
+- Kein `weak` bleibt ohne ausgewiesenen Status, und die belegten Fremd-Paper-Fälle sind korrigiert.
+- Mindestens 80 % der Volltexte tragen Autoren aus `strong`-Datensätzen, oder die Lücke wird in
+  jeder Antwort ausgewiesen.
+- Die fünf neuen Tools `search_authors`, `get_author`, `search_author_papers`,
+  `get_author_citations` und `find_person_mentions` haben je Spec, Tests und CLI; `get_paper` und
+  `get_reference` sind additiv erweitert.
+- `--check` meldet 0 Abweichungen, und die drei Handproben (Personen, Erwähnungen, Tool-Wahl)
+  erreichen ihre Schwellen.
+- ADRs, Modul-Doku, [features.md](docs/features.md), [funktionsweise.md](docs/funktionsweise.md) und
+  die README-Anleitung sind vorhanden.
+
+---
+
 ## Zielbild – erst bei belegter Beschaffbarkeit
 
 Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötigen Wheels/Modelle/Runtimes offline verfügbar werden ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)); sie sind aktuell **empirisch nicht beschaffbar**.
@@ -886,12 +1371,15 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 | **Unkuratierte PDFs aus dem Netz** (Scans, Fehlerseiten, Schadinhalte)  | Lizenz-Whitelist, Content-Type-/Größenprüfung, selbst erzeugte Dateinamen, Robustheits-Flag für chunk-lose Dokumente.                                                                                                                             |
 | **Verwässerung des kuratierten Korpus** durch automatische Vorschläge | Vorschläge landen im Bericht, nie automatisch im Korpus; Zielgröße ist Präzision, nicht Menge.                                                                                                                                                    |
 | **Abstract-Stubs verdrängen Volltext-Evidenz** (BM25-Längennormalisierung)    | `document_kind` als Pflichtfeld in jedem Beleg, Ausschluss aus der Gold-Ableitung, Verdrängung vorab an einer Index-Kopie gemessen, Nachrangigkeit **nur** bei belegter Regression – **R0 hat sie belegt** (13 qid-Regressionen, alle in den Multi-Hop-Ebenen), die Guardrail ist damit gesetzt ([Phase 13](#phase-13--referenz-einträge-ohne-volltext)).       |
-| Entity Resolution (Synonyme, gleichnamige Autoren)                            | leichte Alias-/Synonym-Kuratierung; bei kleinem Korpus manuell handhabbar.                                                                                                                                                                            |
+| Entity Resolution (Synonyme, gleichnamige Autoren)                            | **Synonyme:** leichte Alias-/Synonym-Kuratierung. **Gleichnamige Autoren:** Die frühere Annahme „bei kleinem Korpus manuell handhabbar" ist überholt. Gemessen (2026-09-24): 2.389 Schreibweisen auf 443 Papern, 322 in der Form „Nachname, Vorname", 15 verschiedene „Y. … Wang". Gegenmaßnahme ist eine Personenkennung (OpenAlex/ORCID) statt einer Namensheuristik; Mehrdeutigkeit wird ausgewiesen, nie still zusammengeführt ([Phase 17](#phase-17--autoren-als-rechercheebene)). |
+| **Falsch aufgelöste Metadaten:** `weak` verdeckt ein fremdes Paper, die Literaturangabe ist falsch | Gemessen: Bei 44 von 92 online aufgelösten `weak`-Volltexten stehen weder Titel noch Autoren auf S. 1; 6 von 6 geprüften sind fremde Paper. Gegenmaßnahmen: deterministischer Seite-1-Beleg, Ablehnungsvermerk gegen Wiedereinspielen, kein stilles `weak` ([A1](#a1--weak--strong-jede-literaturangabe-belegt-vorziehbar), vorziehbar). |
+| **LLM-gestützte Bereinigung** gibt sich als menschliche Prüfung aus oder folgt Anweisungen aus dem PDF-Text | Das LLM schlägt nur Identifikatoren oder Titel vor, und das Skript prüft sie deterministisch. Die Herkunft bleibt `resolved`, `manual` nur mit Freigabe des Nutzers. Der Seitenauszug gilt als nicht vertrauenswürdiger Fremdtext ([A1](#a1--weak--strong-jede-literaturangabe-belegt-vorziehbar)). |
+| **Mehr MCP-Tools verschlechtern die Tool-Wahl** des Agenten                     | Belegt: Mit wachsender Tool-Zahl sinken Genauigkeit und Anteil korrekter Tool-Aufrufe (Jia et al. 2025, arXiv:2510.24563, S. 9). Gegenmaßnahmen: scharf abgegrenzte Beschreibungen und eine Handprobe zur Tool-Wahl mit Schwelle ([A6](#a6--wirkung-sichern)). Bei Verfehlen werden Beschreibungen geschärft, nicht Tools gestrichen. |
 | Scheinsicherheit durch Summaries                                              | Antworten immer mit Quellenankern/Original-TextUnits; für Fakten Basic/Local bevorzugen.                                                                                                                                                             |
 | Inkonsistenz bei inkrementellen Updates                                       | Standard bleibt der volle Re-Index; inkrementell nur mit Identitäts-Nachweis ([G1](docs/roadmap-historie.md#g1--aufnahmepfad-begradigen-die-quadratischen-stellen)).                                                                                                                |
 | Kosten/Datenschutz eines Index-LLM                                            | entschärft durch Option B:**kein** Index-LLM (offline, TF-IDF/BM25); ein LLM kommt nur zur Abfragezeit über die Bridge ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).                                                             |
 | **Der Bestand wächst über die Auslegung hinaus** – Antwortzeit, Speicher und Aufnahmedauer laufen weg | Beziffert statt vermutet ([G0](docs/roadmap-historie.md#g0--alles-hinterfragen-und-messen-zwingend-zuerst)), begradigt an den drei belegten Stellen ([G1](docs/roadmap-historie.md#g1--aufnahmepfad-begradigen-die-quadratischen-stellen), [G2](docs/roadmap-historie.md#g2--antwortzeit-den-vektorraum-nicht-bei-jeder-frage-neu-bauen)), und die Auslegung wird danach **schriftlich neu festgeschrieben** ([G5](docs/roadmap-historie.md#g5--auslegung-neu-festschreiben)) statt still zu veralten. |
-| **Beschleunigung zerstört still die Messgrundlage** – ein anderes Ranking wirkt wie eine Verbesserung | Jede Maßnahme in [G2](docs/roadmap-historie.md#g2--antwortzeit-den-vektorraum-nicht-bei-jeder-frage-neu-bauen) liefert entweder **bit-identische** Ergebnisse (qid-genau belegt) oder weist ihren Bruch aus und friert beide Baselines neu ein; die Entscheidungsregel dafür steht **vor** der Messung fest ([G0.6](docs/roadmap-historie.md#g06--was-kostet-bit-identität)). |
+| **Beschleunigung zerstört still die Messgrundlage** – ein anderes Ranking wirkt wie eine Verbesserung | Jede Maßnahme in [G2](docs/roadmap-historie.md#g2--antwortzeit-den-vektorraum-nicht-bei-jeder-frage-neu-bauen) liefert entweder **bit-identische** Ergebnisse (qid-genau belegt) oder weist ihren Bruch aus und friert beide Baselines neu ein; die Entscheidungsregel dafür steht **vor** der Messung fest ([G0.6](docs/roadmap-historie.md#g06--was-kostet-bit-identität)). Die Regel gilt unverändert für [Phase 16](#phase-16--antwortzeit-weg-b-fts5); dort wird FTS5 als Infrastruktur getrennt von FTS5 als Vorauswahl abgenommen. |
 | **Das kuratierte Relevanzurteil geht beim Abschalten der Übersicht verloren** | Es ist aus keiner Quelle reproduzierbar und wird deshalb **zuerst** maschinenlesbar überführt, erst danach wird das Format abgelöst ([G4](docs/roadmap-historie.md#g4--zuflussregel-und-ablösung-der-übersicht)); der Sicherungsumfang aus [B1](docs/roadmap-historie.md#b1--sicherung-des-korpus) wird entsprechend nachgezogen. |
 | **Massenzufluss von Referenz-Einträgen** (Phase 14) verwässert Korpus, Übersicht und Community-Struktur | Ernte **schlägt vor**, sie übernimmt nicht; harte Obergrenze aus einer gestaffelten Vorabmessung ([E0.2](docs/roadmap-historie.md#e02--skaliert-die-guardrail-das-schärfste-abbruchkriterium)); Wirkung auf Ähnlichkeitsgraph und Übersicht vorab beziffert ([E0.3](docs/roadmap-historie.md#e03--was-macht-der-ähnlichkeitsgraph-mit-vielen-einchunkigen-papern), [E0.5](docs/roadmap-historie.md#e05--verträgt-die-kuratierte-übersicht-den-zufluss)). |
 | **Selbstbezügliche Messung** – geerntete Stubs werden zu Multi-Hop-Gold-Ankern und heben die Kennzahl ohne echten Gewinn | Ankerwahl auf `document_kind = 'full'` beschränken; Referenz-Einträge bleiben **Ziele**, werden aber keine **Anker** – vorab zu belegen ([E0.4](docs/roadmap-historie.md#e04--die-zirkularitätsfalle-der-multi-hop-messung)), analog zum lexikalischen Ausschluss aus [ADR 0031](docs/adr/0031-reference-contract-and-guardrail-phase13.md). |
@@ -912,4 +1400,7 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 - **M9 – Auch das Unerreichbare zählt:** ✅ erreicht – ein Paper, von dem nur der Abstract öffentlich ist, ist über seine DOI auffindbar, zitierfähig und als Ziel von `CITES`-Kanten verknüpft – und in **jeder** Ausgabe als unvollständig ausgewiesen (Phase 13). **Ehrlich dazu:** Der Produktivkorpus ist bewusst noch stubfrei; der Nachweis lief auf Index-Kopien mit **52 echten** Abstracts, deren Handprobe **10/10** trifft. Die Nachrangigkeits-Guardrail senkt die in R0 belegten 13 qid-Regressionen auf **3 ohne Totalverlust** – gemessen, nicht geschätzt, und gegen zwei besser klingende Varianten verteidigt.
 - **M10 – Der Korpus kennt seine eigenen Ränder:** ✅ erreicht **in angepasster Form** (2026-09-01) – [E0](docs/roadmap-historie.md#e0--alles-hinterfragen-und-messen-zwingend-zuerst) fand einen billigeren, gleichwertigen Weg und führte ihn selbst vor: 15 der häufigsten externen Zitations-Kandidaten wurden über die **bestehende** Kette `resolve_references` → `intake` real aufgelöst (15/15 Treffer), ohne ein neues Ernte- oder Kurationswerkzeug zu bauen. Die Handprobe bestätigt den Nutzen (9/10, Schwelle ≥ 7/10); zwei bindende Auflagen für einen künftigen manuellen Harvest stehen fest (Multi-Hop-Anker bleiben auf `document_kind = 'full'` beschränkt, jeder Batch wird vorab mit einer Guardrail-Regression geprüft). **Ehrlich dazu:** Ein automatisiertes Ernte-/Kurationswerkzeug (E1/E2) wurde **nicht** gebaut – „lohnt sich nicht in der geplanten Form" war das durch E0 begründete, zulässige Ergebnis (Phase 14).
 - **M11 – Der Bestand darf wachsen:** ✅ erreicht (2026-09-01, Phase 15). Der Aufnahmepfad hat keine in der Paperzahl quadratische Stelle mehr, warme Anfragen liegen bei Median 0,169 s (Marke < 1 s), die kuratierten Wertungen sind maschinenlesbar gerettet (`metadata/curation.json`) und die Auslegung ist mit **Messdatum** neu festgeschrieben (≤ 750 Volltexte / ≤ 1500 Gesamteinträge, 2026-09-01) statt aus der Zeit mit 145 Papern fortgeschrieben. Beide `--check`-Läufe melden 0 Abweichungen; die Handprobe aus [G0.7](docs/roadmap-historie.md#g07--handprobe-bleibt-das-werkzeug-im-alltag-brauchbar) hält 9 von 10 (Schwelle ≥ 8/10). **Nachtrag (2026-09-16):** Bei 3.461 Papern hält die warme 1-s-Marke nicht mehr für Local (Median 6,064 s) und DRIFT (1,722 s); [ADR 0038](docs/adr/0038-corpus-ceiling-revision-local-search-latency.md) erhebt Weg B (FTS5) zur empfohlenen nächsten Phase.
+- **M12 – Der Bestand trägt wieder:** ⏳ geplant ([Phase 16](#phase-16--antwortzeit-weg-b-fts5)). Alle vier Modi halten warm < 1 s und kalt < 5 s, am realen Bestand und am in F0 festgelegten Auslegungspunkt. Die Auslegung ist mit Messdatum neu festgeschrieben, und `--check` meldet 0 Abweichungen oder einen ausgewiesenen Bruch mit neu eingefrorenen Baselines.
+- **M13 – Jede Literaturangabe ist belegt:** ⏳ geplant ([Phase 17 / A1](#a1--weak--strong-jede-literaturangabe-belegt-vorziehbar), vorziehbar). Kein Datensatz bleibt still `weak`: Jeder ist über die Titelseite belegt `strong`, mit Freigabe des Nutzers `manual` korrigiert oder mit Grund als nicht auflösbar ausgewiesen. Keine Literaturangabe verweist mehr auf ein fremdes Paper.
+- **M14 – Personen sind recherchierbar:** ⏳ geplant ([Phase 17](#phase-17--autoren-als-rechercheebene)). Zu einer Person liefert das System alle Korpus-Paper, ihr Profil, die Suche in ihren Papern, ihre Zitationsbeziehungen und ihre Erwähnungen im Text. Grundlage ist eine Personenkennung statt einer Namensheuristik, und die Abdeckung ist gemessen und ausgewiesen.
 
