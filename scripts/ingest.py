@@ -52,6 +52,11 @@ def main() -> int:
         f"({report.author_coverage:.1%}) mit Personenkennung={report.n_with_author_ids} "
         f"aus Referenz-Einträgen={report.n_from_stubs}"
     )
+    print(
+        f"[ingest] Autorenindex: Personen={report.n_persons} (mit Kennung "
+        f"{report.n_identified_persons}) Nennungen={report.n_author_rows} "
+        f"Namenssuche={report.author_name_search}"
+    )
     print(f"[ingest] Qualitätsreport: {Path(args.data) / 'quality_report.json'}")
     return 0
 

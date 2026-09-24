@@ -244,6 +244,8 @@ def test_ingest_brings_the_stub_authors_into_the_index(tmp_path: Path) -> None:
 
     assert (report.n_from_stubs, report.n_with_author_ids, report.n_full_texts) == (1, 1, 0)
     assert report.author_coverage == 0.0
+    assert (report.n_author_rows, report.n_persons, report.n_identified_persons) == (2, 2, 1)
+    assert report.author_name_search == "fts5-trigram"
 
     assert item.authors == ("Kun Liu", "Evimaria Terzi")
     assert [entry.person_key for entry in item.author_identities] == [

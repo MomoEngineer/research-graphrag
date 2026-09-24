@@ -28,6 +28,7 @@ from research_graphrag.extraction.model import (
 )
 from research_graphrag.extraction.pdf import CanonicalPaper, extract_pdf
 from research_graphrag.extraction.refstub import STUB_SUFFIX, extract_stub
+from research_graphrag.indexing.author_index import AuthorBuildReport, build_author_index
 from research_graphrag.indexing.citation_graph import CitationBuildReport, build_citation_graph
 from research_graphrag.indexing.graph_index import GraphBuildReport, build_graph
 from research_graphrag.indexing.metadata_index import MetadataBuildReport, build_metadata_index
@@ -59,6 +60,10 @@ class IngestReport:
     n_full_with_strong_authors: int = 0
     n_with_author_ids: int = 0
     n_from_stubs: int = 0
+    n_author_rows: int = 0
+    n_persons: int = 0
+    n_identified_persons: int = 0
+    author_name_search: str = ""
 
     @property
     def author_coverage(self) -> float:
@@ -183,7 +188,7 @@ def _build_index_atomically(
     *,
     overview_path: Path | None = None,
     metadata_file: Path | None = None,
-) -> tuple[int, GraphBuildReport, CitationBuildReport, MetadataBuildReport]:
+) -> tuple[int, GraphBuildReport, CitationBuildReport, MetadataBuildReport, AuthorBuildReport]:
     """Baut Index, Graph, Zitationskanten **und** Metadaten in eine Temporärdatei; ersetzt atomar.
 
     Der MCP-Server liest den Index pro Anfrage frisch (On-Read, siehe
@@ -203,8 +208,9 @@ def _build_index_atomically(
             überspringt sie.
 
     Returns:
-        Tupel aus indexierten Chunks, :class:`GraphBuildReport`, :class:`CitationBuildReport`
-        und :class:`MetadataBuildReport`.
+        Tupel aus indexierten Chunks, :class:`GraphBuildReport`, :class:`CitationBuildReport`,
+        :class:`MetadataBuildReport` und – seit Phase 17 / A3 – :class:`AuthorBuildReport`
+        (Personenebene, docs/adr/0043-author-index-and-person-tools.md).
     """
     tmp_path = index_path.with_name(index_path.name + ".tmp")
     try:
@@ -214,10 +220,11 @@ def _build_index_atomically(
         metadata_report = build_metadata_index(
             papers, tmp_path, overview_path=overview_path, metadata_file=metadata_file
         )
+        author_report = build_author_index(tmp_path)
         os.replace(tmp_path, index_path)
     finally:
         tmp_path.unlink(missing_ok=True)
-    return indexed_chunks, graph_report, citation_report, metadata_report
+    return indexed_chunks, graph_report, citation_report, metadata_report, author_report
 
 
 def forget_source(data_dir: str | Path, filename: str) -> bool:
@@ -320,9 +327,13 @@ def ingest(
             ErrorCode.INVALID_INPUT, "Keine Canonical-Paper vorhanden (papers/ leer?)."
         )
 
-    indexed_chunks, graph_report, citation_report, metadata_report = _build_index_atomically(
-        papers, index_path, overview_path=overview, metadata_file=metadata
-    )
+    (
+        indexed_chunks,
+        graph_report,
+        citation_report,
+        metadata_report,
+        author_report,
+    ) = _build_index_atomically(papers, index_path, overview_path=overview, metadata_file=metadata)
     _write_quality_report(papers, data_path)
     return IngestReport(
         extracted=extracted,
@@ -343,4 +354,8 @@ def ingest(
         n_full_with_strong_authors=metadata_report.n_full_with_strong_authors,
         n_with_author_ids=metadata_report.n_with_author_ids,
         n_from_stubs=metadata_report.n_from_stubs,
+        n_author_rows=author_report.n_rows,
+        n_persons=author_report.n_persons,
+        n_identified_persons=author_report.n_identified,
+        author_name_search=author_report.name_search,
     )
