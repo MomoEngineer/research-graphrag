@@ -63,10 +63,17 @@ Extraktion immer den Dateinamen als Titel anbietet.
 
 ### Personenkennungen reisen mit der Autorenliste (ADR 0041)
 
-`author_ids` und `author_orcids` sind **kein** eigenes Feld der Auflösung. Sie stammen immer aus
-dem Datensatz, der das Feld `authors` gewonnen hat. Überschreibt etwa eine `manual`-Korrektur die
-Autorenliste, entfallen die Kennungen der `resolved`-Quelle mit ihr. Eine Kennung kann so nie an
-einen Namen aus einer anderen Quelle geraten.
+`author_ids` und `author_orcids` sind **kein** eigenes Feld der Auflösung. Sie gehören zur
+gewonnenen Autorenliste:
+
+1. Zuerst gelten die Kennungen des Datensatzes, der `authors` gewonnen hat.
+2. Trägt er keine, darf ein anderer Datensatz sie liefern, aber **nur** mit einer Position für
+   Position **identischen** Namensliste. So erhält ein Referenz-Eintrag die Kennungen aus einem
+   Kennungs-Datensatz des Nachtrags ([online/backfill](../../online/doc/backfill.md)).
+3. `origins.author_ids` weist aus, aus welcher Herkunft die Kennungen stammen.
+
+Überschreibt eine `manual`-Korrektur die Autorenliste mit **anderen** Namen, entfallen die
+Kennungen. Eine Kennung kann so nie an einen fremden Namen geraten.
 
 ### Unbekannte Herkunft
 

@@ -657,3 +657,14 @@ def test_the_log_lists_rejected_hits_with_their_reason() -> None:
 
     assert "### Verworfen (Ablehnungsvermerk gesetzt)" in text
     assert "`10.1/gpt4`" in text
+
+
+def test_an_exhausted_quota_stops_all_further_ways() -> None:
+    """Nach HTTP 429 verbraucht keine weitere Abfrage Kontingent (Phase 17 / A2, Punkt 4)."""
+    client = _FakeClient(by_id=b"{}", by_title=_payload(_work()), status=429)
+
+    result = resolve_target(client, _target())
+
+    assert result.record is None
+    assert len(client.urls) == 1
+    assert "Kontingent erschöpft" in result.note

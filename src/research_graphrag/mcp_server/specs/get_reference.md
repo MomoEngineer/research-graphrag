@@ -79,7 +79,9 @@ Ergänzt `get_paper`: Dieses beschreibt das Dokument (Umfang, Abschnitte, Leit-S
   und die ORCID (leer = unbekannt), der **Personenschlüssel** (`person_key`: OpenAlex-ID, sonst
   `orcid:<ORCID>`, sonst ausdrücklich `name:<normalisiert>`) und der Identitätsstatus
   (`openalex`/`orcid`/`name`). Die Kennungen stammen stets aus **derselben** Quelle wie die Namen;
-  `identity = "name"` ist ausdrücklich **keine** bestätigte Identität.
+  `identity = "name"` ist ausdrücklich **keine** bestätigte Identität. Trägt die gewonnene
+  Namensliste selbst keine Kennung, darf sie ein anderer Datensatz mit **identischer** Namensliste
+  liefern; `origins.author_ids` nennt dann deren Herkunft (fehlt, wenn es keine Kennung gibt).
 - `review` (seit Version 0.3.0, additiv, [ADR 0042](../../../../docs/adr/0042-title-page-evidence-and-rejections.md)):
   `null` oder der **ausgewiesene Prüfstatus** `{"status": "unresolvable", "reason": "…"}`. Ein
   schwach belegter Datensatz mit diesem Status ist ausdrücklich als „nicht auflösbar“ ausgewiesen

@@ -89,6 +89,9 @@ MATCH_ARXIV = "arxiv"
 MATCH_TITLE = "title"
 """Belegart: Titel-Suche mit Ähnlichkeitsprüfung."""
 
+HTTP_TOO_MANY_REQUESTS = 429
+"""Statuscode für ein erschöpftes Kontingent: Die Auflösung eines Papers bricht dann ab."""
+
 
 @dataclass(frozen=True)
 class ResolutionTarget:
@@ -581,6 +584,11 @@ def resolve_target(
         if result is None:
             continue
         collected.extend(result.raw)
+        if any(source.status == HTTP_TOO_MANY_REQUESTS for source in result.raw):
+            # Kontingent erschöpft: kein weiterer Weg – jede Abfrage verbrauchte nur noch Kontingent
+            # ohne Aussicht auf Antwort (Phase 17 / A2, Punkt 4).
+            notes.append("Kontingent erschöpft (HTTP 429)")
+            break
         record = result.record
         if record is None:
             if result.note:

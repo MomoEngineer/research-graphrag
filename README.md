@@ -497,6 +497,10 @@ python -m scripts.discover --seed <paper_id> --seit 2023
 python -m scripts.resolve_metadata --dry-run
 python -m scripts.resolve_metadata --limit 50
 
+# 3e1. Personenkennungen (OpenAlex/ORCID) aus den Rohantworten nachtragen – ohne Netz (ADR 0041)
+python -m scripts.backfill_author_ids --dry-run
+python -m scripts.backfill_author_ids
+
 # 3e2. Schwach belegte Zitierdaten klären (Phase 17 / A1, ADR 0042)
 #      Seite-1-Beleg gegen das lokale PDF (kein Netz); vor der Kalibrierung aus A0 nur Messung
 python -m scripts.verify_metadata --dry-run

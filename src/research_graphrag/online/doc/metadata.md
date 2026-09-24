@@ -124,6 +124,13 @@ Jeder Treffer durchläuft zwei Prüfungen, bevor er übernommen wird
    `Resolution.rejected`), und der nächste Weg wird versucht. `confirmed` wertet auf `strong`
    auf. Sonst bleibt der Treffer, wie er ist, und der Befund reist als `Resolution.check` mit.
 
+### Kontingent (Phase 17 / A2, Punkt 4)
+
+Antwortet ein Dienst mit HTTP 429, bricht `resolve_target` die übrigen Wege für dieses Paper ab.
+Jede weitere Abfrage verbrauchte nur Kontingent ohne Aussicht auf Antwort.
+`scripts.resolve_metadata` hält dann den ganzen Lauf an. Er speichert den Zwischenstand alle zehn
+Paper und auch bei einem Abbruch, ist also fortsetzbar.
+
 ## 4. Zusammenspiel
 
 ```mermaid

@@ -165,3 +165,59 @@ Personenkennung und der Zahl der Referenz-Einträge mit Bibliografie.
 - **Folgeentscheidungen:** Nachtrag zu diesem ADR für A2, Punkte 3 bis 5. ADR 0042 für den
   Seite-1-Beleg und den Ablehnungsvermerk (A1). ADR 0043 für den Autorenindex und die
   Tool-Oberfläche (A3/A4).
+
+## Nachtrag (2026-09-24): A2, Punkte 3 bis 5
+
+### Punkt 3 – Nachtrag aus den Rohantworten, ohne Netz
+
+- **Werkzeug:** `online/backfill.py` bzw. `python -m scripts.backfill_author_ids`. Beide lesen die
+  OpenAlex-Rohantworten unter `data/online_raw/`, Einzelwerke wie Trefferlisten.
+- **Zuordnung:** über die **Werk-DOI**, bei Preprints zusätzlich über den DataCite-DOI
+  `10.48550/arxiv.<ID>`.
+- **Übernahme nur bei identischer Namensliste:** Nur dann ist die Zuordnung Kennung ↔ Name
+  belegt. Liefern mehrere Rohantworten zu einem Werk verschiedene Kennungen, bleibt das Paper
+  ohne Kennung und steht als **Konflikt** im Protokoll.
+
+Für Paper ohne gespeicherten `resolved`-Datensatz, typischerweise Referenz-Einträge, entsteht ein
+**Kennungs-Datensatz**: `resolved`, nur Namen und Kennungen, alle übrigen Felder leer. Die
+Stub-Datei selbst wird nicht verändert, sonst änderten sich ihr sha256 und damit die Paper-ID.
+
+Dazu präzisiert Entscheidung 2: Die Kennungen reisen weiterhin mit der gewonnenen Autorenliste.
+Trägt diese selbst keine, darf **ein anderer Datensatz mit Position für Position identischer
+Namensliste** sie liefern. `origins.author_ids` weist dann deren Herkunft aus. Eine Kennung kann so
+nie an einen fremden Namen geraten, auch nicht über eine `manual`-Korrektur mit abweichenden
+Namen.
+
+### Punkt 4 – Auflösungslauf fortsetzbar
+
+- **Fortsetzbar:** `scripts.resolve_metadata` speichert den Zwischenstand alle zehn Paper
+  (`SAVE_EVERY`) und auch bei einem Abbruch durch Netzfehler oder Strg+C.
+- **Kontingent:** Antwortet ein Dienst mit HTTP 429, bricht `resolve_target` die übrigen Wege
+  dieses Papers ab, und der Lauf hält an.
+- **Idempotent:** Das galt schon vorher über `filter_pending`. Ein zweiter Lauf stellt keine
+  Abfrage für ein bereits vollständiges Paper.
+- **Beleg für jeden Treffer:** Jeder neue Treffer durchläuft den Seite-1-Beleg aus
+  [ADR 0042](0042-title-page-evidence-and-rejections.md).
+
+**Bewusst nicht gebaut:** OpenAlex-**Sammelabfragen** (mehrere DOIs je Anfrage). Ob sie über den
+Proxy zulässig sind und das Kontingent wirksam schonen, ist laut Roadmap unbelegt und wird in A0,
+Punkt 1, gemessen. Erst ein positiver Befund rechtfertigt den Umbau.
+
+### Punkt 5 – `MAX_AUTHORS`: Entscheidung vertagt auf die A0-Messung
+
+`MAX_AUTHORS = 25` bleibt bis zur Messung bestehen.
+
+**Nutzen einer vollständigen Liste:** Die Personensuche fände alle Beteiligten. Heute sind laut
+Planung 11 Listen abgeschnitten, betroffen sind also Personen jenseits der Position 25 in wenigen
+großen Kollaborationspapern.
+
+**Kosten:**
+
+- Wachstum von `metadata/paper_metadata.json` und Index.
+- Die Nutzlast `author_identities` in `answer_question` wäre ohne eigene Obergrenze nicht mehr
+  durch [ADR 0037](0037-mcp-tool-response-size-ceiling.md) gedeckt. Ein einzelnes
+  Kollaborationspaper trägt mehrere hundert Namen.
+
+A0 beziffert beides aus den Rohantworten: die Zahl der Werke über 25 Autoren, die Verteilung und
+den Größenzuwachs. Fällt die Entscheidung für die volle Liste, braucht die Ausgabe eine eigene
+Kappung mit ausgewiesener Gesamtzahl. Das ist ein eigener Nachtrag.

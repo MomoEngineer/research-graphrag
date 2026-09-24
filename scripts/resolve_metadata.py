@@ -27,6 +27,10 @@ Seit Phase 17 / A1 gilt zusätzlich (docs/adr/0042-title-page-evidence-and-rejec
   (``--papers``). Nach der Kalibrierung wird ein bestätigter Treffer ``strong`` und ein fremder
   verworfen (samt neuem Vermerk). Vorher wird nur gemessen.
 * Ein als „nicht auflösbar“ ausgewiesenes Paper wird nicht erneut abgefragt.
+* Der Lauf ist **fortsetzbar** (A2, Punkt 4). Der Zwischenstand wird alle :data:`SAVE_EVERY`
+  Paper gespeichert, und auch ein Abbruch (Netzfehler, Strg+C) behält das Erreichte. Meldet ein
+  Dienst HTTP 429, hält der Lauf an. Wiederholt aufgerufen, arbeitet er die rund 2.700 Paper ohne
+  Autoren in Etappen ab und fragt kein bereits vollständiges Paper erneut ab.
 """
 
 from __future__ import annotations
@@ -56,6 +60,7 @@ from research_graphrag.bibliography.triage import IndexedPaper, load_indexed_pap
 from research_graphrag.errors import DomainError
 from research_graphrag.extraction.model import DOCUMENT_KIND_FULL
 from research_graphrag.online.metadata import (
+    HTTP_TOO_MANY_REQUESTS,
     Resolution,
     ResolutionTarget,
     Verifier,
@@ -74,6 +79,9 @@ _DEFAULT_PAPERS = _REPO_ROOT / "papers"
 
 DEFAULT_LIMIT = 50
 """Obergrenze der Paper je Lauf – schont das Kontingent der abgefragten Dienste."""
+
+SAVE_EVERY = 10
+"""Nach so vielen Papern wird der Zwischenstand gespeichert (fortsetzbar, Phase 17 / A2)."""
 
 
 def _print_targets(targets: Sequence[ResolutionTarget]) -> None:
@@ -103,6 +111,30 @@ def _print_resolutions(resolutions: Sequence[Resolution], target_file: Path, log
     print(f"[resolve] Metadaten: {target_file}")
     print(f"[resolve] Protokoll: {log}")
     print("[resolve] Wirksam wird das Ergebnis beim nächsten `python -m scripts.ingest`.")
+
+
+def _quota_exhausted(resolution: Resolution) -> bool:
+    """``True``, wenn ein Dienst das Kontingent als erschöpft meldet (HTTP 429)."""
+    return any(source.status == HTTP_TOO_MANY_REQUESTS for source in resolution.raw)
+
+
+def _persist(
+    target_file: Path,
+    stored: Sequence[MetadataRecord],
+    reviews: dict[str, PaperReview],
+    resolutions: Sequence[Resolution],
+) -> None:
+    """Speichert den bisher erreichten Stand atomar (Datensätze **und** neue Vermerke).
+
+    Der Stand entsteht immer aus dem Ausgangszustand plus **allen** bisherigen Ergebnissen. Ein
+    wiederholter Aufruf schreibt deshalb nichts doppelt.
+    """
+    records = [item.record for item in resolutions if item.record is not None]
+    merged = dict(reviews)
+    for item in resolutions:
+        for rejection in item.rejected:
+            merged = add_rejection(merged, item.target.paper_id, rejection)
+    save_records(target_file, upsert_records(stored, records), reviews=merged)
 
 
 def _verifier_for(paper: IndexedPaper | None, papers_dir: Path) -> Verifier | None:
@@ -166,6 +198,7 @@ def main() -> int:
     data_path = Path(args.data)
     target_file = Path(args.metadaten) if args.metadaten else metadata_path(data_path.parent)
 
+    resolutions: list[Resolution] = []
     try:
         targets = targets_from_index(Path(args.index), only_incomplete=not args.alle)
         if args.paper:
@@ -189,35 +222,49 @@ def main() -> int:
 
         client = create_client(proxy=args.proxy)
         now = datetime.now(UTC)
+        timestamp = now.strftime("%Y%m%dT%H%M%SZ")
         indexed = {paper.paper_id: paper for paper in load_indexed_papers(Path(args.index))}
         papers_dir = Path(args.papers)
-        resolutions = [
-            resolve_target(
-                client,
-                target,
-                rejections=_rejections_of(reviews, target.paper_id),
-                verify=_verifier_for(indexed.get(target.paper_id), papers_dir),
-                today=now.date().isoformat(),
-            )
-            for target in targets
-        ]
-
-        records: list[MetadataRecord] = [
-            item.record for item in resolutions if item.record is not None
-        ]
-        for item in resolutions:
-            for rejection in item.rejected:
-                reviews = add_rejection(reviews, item.target.paper_id, rejection)
-        save_records(target_file, upsert_records(stored, records), reviews=reviews)
-
-        timestamp = now.strftime("%Y%m%dT%H%M%SZ")
-        if not args.ohne_rohdaten:
-            store_raw(data_path, timestamp, tuple(raw for item in resolutions for raw in item.raw))
-        log = append_resolutions(data_path, timestamp, resolutions)
+        stopped = ""
+        try:
+            for position, target in enumerate(targets, start=1):
+                resolution = resolve_target(
+                    client,
+                    target,
+                    rejections=_rejections_of(reviews, target.paper_id),
+                    verify=_verifier_for(indexed.get(target.paper_id), papers_dir),
+                    today=now.date().isoformat(),
+                )
+                resolutions.append(resolution)
+                if _quota_exhausted(resolution):
+                    stopped = (
+                        "Kontingent erschöpft (HTTP 429) – Lauf angehalten. Der nächste Lauf "
+                        "setzt bei den noch offenen Papern fort."
+                    )
+                    break
+                if position % SAVE_EVERY == 0:
+                    _persist(target_file, stored, reviews, resolutions)
+        finally:
+            # Fortsetzbar (Phase 17 / A2, Punkt 4): Auch ein Abbruch – Netzfehler, Strg+C –
+            # hinterlässt den erreichten Stand; der nächste Lauf fragt ihn nicht erneut ab.
+            if resolutions:
+                _persist(target_file, stored, reviews, resolutions)
+                if not args.ohne_rohdaten:
+                    store_raw(
+                        data_path, timestamp, tuple(raw for item in resolutions for raw in item.raw)
+                    )
+                log = append_resolutions(data_path, timestamp, resolutions)
     except DomainError as exc:
         print(f"[resolve] Fehler [{exc.code.value}]: {exc.message}")
+        if resolutions:
+            print(f"[resolve] Bis dahin gespeichert: {len(resolutions)} Paper (fortsetzbar).")
         return 1
+    except KeyboardInterrupt:
+        print(f"[resolve] Abgebrochen – {len(resolutions)} Paper gespeichert (fortsetzbar).")
+        return 130
 
+    if stopped:
+        print(f"[resolve] {stopped}")
     _print_resolutions(resolutions, target_file, log)
     return 0
 
