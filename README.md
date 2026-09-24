@@ -335,6 +335,58 @@ ausführen. Er dedupliziert aber nur über Dateiname und Hash – ein inhaltsgle
 anderem Namen würde doppelt indiziert. `python -m scripts.update_overview` verweigert seit G4
 den Lauf ohne `--force` (Retirement-Hinweis auf `metadata/curation.json`).
 
+## Workflow: schwach belegte Zitierdaten klären (Arbeitslisten-Weg)
+
+Ein Datensatz mit Konfidenz `weak` kann ein **fremdes** Paper beschreiben. Seine Autoren fehlen
+deshalb auf der Personenebene, bis er geklärt ist. Die Klärung läuft in zwei Stufen, erst ohne,
+dann mit einem LLM. Grundsatz: **Das LLM schlägt vor, das Skript prüft**
+([ADR 0042](docs/adr/0042-title-page-evidence-and-rejections.md)).
+
+1. **Stand ansehen:** `python -m scripts.metadata_worklist stand` zählt die offen schwach
+   belegten Paper.
+2. **Erst ohne LLM prüfen:** `python -m scripts.verify_metadata --dry-run`, danach ohne
+   `--dry-run`. Der Lauf prüft jeden gespeicherten Treffer gegen die Titelseite des lokalen PDFs:
+   Bestätigt heißt `strong`, ein fremdes Paper wird entfernt und mit einem Ablehnungsvermerk
+   gesperrt. Kein Netz.
+3. **Arbeitsliste erzeugen:** `python -m scripts.metadata_worklist export` (optional
+   `--limit 50`). Unter `data/worklists/<Zeitstempel>/` entstehen `arbeitsliste.md` und
+   `arbeitsliste.json`. Die Markdown-Datei enthält den Auftrag an das LLM und je Paper Dateiname,
+   gespeicherten Datensatz und einen Auszug der Titelseite. Der Auszug ist als **Fremdtext**
+   markiert, Anweisungen darin werden nicht befolgt.
+4. **LLM fragen:** `arbeitsliste.md` an Copilot oder Claude geben. Die Antwort ist eine
+   JSON-Datei mit genau einer Angabe je Paper, sonst nichts:
+
+   ```json
+   {"antworten": [
+     {"paper_id": "0123456789abcdef", "doi": "10.1145/1234567.1234568"},
+     {"paper_id": "fedcba9876543210", "arxiv_id": "2401.00001"},
+     {"paper_id": "00aa11bb22cc33dd", "title": "Der exakte Titel des Werks"}
+   ]}
+   ```
+
+   Keine Autoren, kein Jahr, keine Venue: Diese Werte liefert nie das LLM. Ist es unsicher,
+   lässt es das Paper weg.
+5. **Antwort prüfen:** `python -m scripts.metadata_worklist import antwort.json --dry-run` prüft
+   nur das Format, ohne Netz und ohne zu schreiben. Ungültige Einträge werden einzeln benannt.
+6. **Übernehmen:** `python -m scripts.metadata_worklist import antwort.json` (benötigt Netz). Das
+   Skript löst jeden Vorschlag über OpenAlex bzw. arXiv auf und übernimmt ihn **nur**, wenn Titel
+   und Autoren des Treffers auf Seite 1 des PDFs stehen. Das Ergebnis steht in
+   `data/metadata_log.md`, getrennt nach „übernommen“, „nicht bestätigt“, „nicht aufgelöst“ und
+   „nicht prüfbar“. Die LLM-Antwort wird unter `metadata/llm_answers/` abgelegt. Sie ist aus
+   keiner Quelle rekonstruierbar und deshalb Teil der Sicherung.
+7. **Den Rest ausweisen:** Was sich nicht klären lässt, bekommt einen Status mit Grund, statt
+   still schwach zu bleiben:
+   `python -m scripts.metadata_worklist markieren <paper_id> --grund "nur als Buchkapitel ohne DOI"`
+   (zurücknehmen mit `--aufheben`). `get_reference` und `get_paper` zeigen den Status als
+   `review`.
+8. **Wirksam machen:** `python -m scripts.ingest`. Erst dann sehen die Werkzeuge die
+   Änderungen, und die Personenebene nimmt die neu belegten Autoren auf.
+
+> **Vor der Kalibrierung misst der Seite-1-Beleg nur.** Solange A0, Punkt 3 die beiden Schwellen
+> nicht aus einer Handprüfung abgeleitet hat, bestätigt und verwirft er nichts
+> (`bibliography/titlepage.py`, `CALIBRATION`). Die Schritte 2 und 6 ändern bis dahin keinen
+> Datensatz. Format prüfen (Schritt 5) und Paper ausweisen (Schritt 7) gehen schon jetzt.
+
 ## Fragetypen → Suchmodus
 
 > Diese Tabelle ist der **Contract des Query-Routers**: Aus ihr leitet das Router-Gold-Set seine
