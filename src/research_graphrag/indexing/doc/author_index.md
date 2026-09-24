@@ -22,6 +22,7 @@ Trigramm-Suche über die Namen. Die Personen-Werkzeuge aus A4 lesen ausschließl
 | --- | --- | --- |
 | `build_author_index` | Funktion | Tabelle und Namenssuche bauen (nach `build_metadata_index`, im atomaren Fenster) |
 | `author_rows` | Funktion | Zeilen aus den aufgelösten Metadaten ableiten (nur `strong`, deterministisch) |
+| `skipped_mentions` | Funktion | Zahl der Nennungen ohne Personenschlüssel (keine Kennung, kein verwertbarer Name); erscheint im Bau-Bericht als `n_skipped` und im Ingest als „ohne Personenschlüssel“ |
 | `load_author_rows` | Funktion | Zeilen laden – alle oder gefiltert nach Personen, Papern bzw. Namensschlüsseln |
 | `search_name_keys` | Funktion | Namensschlüssel zu einer Namensanfrage (Trigramm, Rückfall: Durchsuchen) |
 | `author_coverage` | Funktion | `(Volltexte mit Autoren im Index, Volltexte gesamt)` – die ausgewiesene Lücke |
@@ -80,7 +81,9 @@ flowchart LR
 | Anfrage ohne verwertbares Zeichen | `invalid_input` |
 | FTS5-Operatoren in der Anfrage | entschärft |
 | FTS5 oder `trigram` nicht verfügbar | Namenssuche über die Schlüsselmenge; `meta.author_name_search = scan` |
-| Name ohne verwertbares Zeichen in den Daten | keine Zeile (die Position bleibt frei) |
+| Name ohne lateinische Buchstaben oder Ziffern, **mit** Kennung | Zeile mit leerem Namensschlüssel: über den Personenschlüssel erreichbar, nicht über die Namenssuche |
+| Name ohne lateinische Buchstaben oder Ziffern, **ohne** Kennung | keine Zeile (die Position bleibt frei), gezählt in `n_skipped` |
+| Name in zerlegter Unicode-Form (NFD) | gleicher Schlüssel wie die zusammengesetzte Form (`ascii_fold` setzt vorab nach NFC zusammen) |
 
 ## 6. Determinismus
 
@@ -90,5 +93,9 @@ eine identische Tabelle.
 ## 7. Grenzen
 
 - **Keine Gruppenbildung**, keine Zusammenführung reiner Namensidentitäten.
-- Die Namenssuche ist **Teilstring-** und **Präfix**-basiert, nicht tippfehlertolerant.
+- Die Namenssuche ist **Teilstring-** und **Präfix**-basiert, nicht tippfehlertolerant. Umlaute
+  werden transliteriert: „Müller“ und „Mueller“ finden dieselbe Person, „Muller“ nicht.
+- Namen ohne lateinische Buchstaben (etwa nur in chinesischer oder kyrillischer Schrift) sind
+  nicht über die Namenssuche auffindbar. Mit Kennung bleiben sie über den Personenschlüssel
+  erreichbar; ohne Kennung fehlen sie auf der Personenebene, und der Ingest zählt sie.
 - Positionen jenseits `MAX_AUTHORS` (25) fehlen, solange A2, Punkt 5, die Kürzung beibehält.

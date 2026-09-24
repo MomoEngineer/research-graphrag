@@ -50,7 +50,7 @@ from research_graphrag.bibliography.worklist import (
     store_answers,
     write_worklist,
 )
-from research_graphrag.errors import DomainError
+from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.online.report import append_metadata_section, store_raw
 from research_graphrag.online.transport import create_client
 
@@ -102,6 +102,16 @@ def main() -> int:
         reviews = load_reviews(target_file)
         if args.command == "markieren":
             status = "" if args.aufheben else REVIEW_UNRESOLVABLE
+            # Ein Tippfehler in der Paper-ID ergäbe sonst einen verwaisten Status, und das gemeinte
+            # Paper bliebe still schwach. Aufheben bleibt ohne Prüfung möglich (Aufräumen).
+            if not args.aufheben and args.paper_id not in {
+                paper.paper_id for paper in load_indexed_papers(Path(args.index))
+            }:
+                raise DomainError(
+                    ErrorCode.NOT_FOUND,
+                    f"Paper nicht im Index: {args.paper_id} – die Paper-ID aus `stand` bzw. der "
+                    "Arbeitsliste übernehmen.",
+                )
             updated = set_review_status(reviews, args.paper_id, status, args.grund)
             save_records(target_file, load_records(target_file), reviews=updated)
             action = "aufgehoben" if args.aufheben else "als nicht auflösbar ausgewiesen"

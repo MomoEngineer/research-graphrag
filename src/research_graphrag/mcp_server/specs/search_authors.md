@@ -85,12 +85,17 @@ Personenschlüssel ist die Eingabe für `get_author`, `search_author_papers` und
 ## 4. Annahmen und Vorbedingungen
 
 - Ein Index ab Phase 17 / A3 (`meta.author_schema_version`). Ein älterer Index enthält keine
-  Personenebene; die Suche liefert dann `not_found` mit einer Abdeckung von 0.
+  Personenebene; die Suche liefert dann `not_found` mit dem Hinweis, dass
+  `python -m scripts.ingest` sie baut.
 
 ## 5. Grenzen (Nicht-Ziele)
 
 - **Kein** Zusammenführen von Namensidentitäten, **keine** Arbeitsgruppen.
-- **Keine** Tippfehlertoleranz: Die Suche ist teilstring- bzw. präfixbasiert.
+- **Keine** Tippfehlertoleranz: Die Suche ist teilstring- bzw. präfixbasiert. Umlaute werden
+  transliteriert: „Müller“ und „Mueller“ finden dieselbe Person, „Muller“ nicht.
+- Namen ohne lateinische Buchstaben oder Ziffern sind nicht suchbar (`invalid_input`). Eine
+  solche Person mit Kennung ist über ihren Personenschlüssel erreichbar, etwa aus
+  `author_identities` in `get_paper`.
 - Keine Paper-Liste: dafür `get_author`. Keine Inhaltssuche: dafür `search_author_papers`.
 - Autoren schwach belegter Datensätze fehlen, siehe `coverage`.
 

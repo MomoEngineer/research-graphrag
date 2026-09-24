@@ -155,7 +155,8 @@ Punkte festgelegt, die die Entscheidung oben präzisieren:
    Antwort.
 3. **Abdeckung im Klartext.** `coverage.note` benennt die Lücke mit Zahlen („Nur 4 von 6
    Volltexten (67 %) tragen belegte Autoren …“) und sagt ausdrücklich, dass ein fehlender Treffer
-   nicht „nicht im Korpus“ bedeutet. Dieselbe Angabe steht in jeder `not_found`-Meldung. Ein
+   nicht „nicht im Korpus“ bedeutet. Dieselbe Angabe steht in jeder `not_found`-Meldung zu einem
+   unbekannten Namen oder Personenschlüssel. Ein
    Index von vor A3 meldet stattdessen, dass `python -m scripts.ingest` die Personenebene baut.
 4. **Selbstzitate je Gegenüber.** `get_author_citations` fasst die Kanten je Gegenüber zusammen
    (`via`, `methods`) und markiert mit `self`, wenn das Gegenüber selbst ein Paper der Person ist.
@@ -164,6 +165,30 @@ Punkte festgelegt, die die Entscheidung oben präzisieren:
    Personen-Index `make_person_index` (`tests/conftest.py`). Er enthält bewusst eine gleichnamige
    Namensidentität, einen nur `weak` belegten Datensatz derselben Person und einen Volltext ohne
    Zitierdaten.
+
+## Nachtrag (2026-09-24, zweiter Eintrag): Befunde aus der Gesamtprüfung
+
+Eine End-to-End-Prüfung mit echten PDFs, dem MCP-Server als stdio-Unterprozess, gezielten
+Randfällen und einem synthetischen Index von 3.500 Papern ergab zwei Korrekturen am Verhalten:
+
+1. **Zerlegte Umlaute.** `ascii_fold` setzt jetzt vor der Transliteration nach NFC zusammen. Ein
+   „u + Trema“ in NFD (etwa aus macOS oder einer PDF-Extraktion) faltete vorher zu „u“ statt „ue“:
+   „Müller“ lag dann je nach Kodierung auf zwei Schlüsseln. Das betrifft auch den Seite-1-Beleg,
+   der denselben Schlüssel vergleicht.
+2. **Namen ohne lateinische Buchstaben.** Solche Nennungen fielen still aus der Personenebene,
+   auch mit OpenAlex-ID, und ohne Kennung trugen sie den geteilten Schlüssel `name:`. Jetzt gilt:
+   - Mit Kennung bleibt die Nennung erhalten. Sie ist über den Personenschlüssel erreichbar,
+     nicht über die Namenssuche.
+   - Ohne Kennung ist `person_key` leer, und die Nennung entfällt. Der Ingest zählt sie
+     („ohne Personenschlüssel“), statt sie still zu verlieren.
+
+   Eine zweite, Unicode-fähige Faltung bleibt bewusst aus. Ob sie nötig ist, zeigt erst die
+   Zahl im Ingest am realen Bestand.
+
+Außerdem belegt dieselbe Prüfung die Aussage aus A6: Nach dem Upgrade sind Papers, Chunks,
+Graphen, Communities, Zitationskanten und der Eval-Fingerprint bitgleich. Alle Suchmodi liefern
+dieselben Ergebnisse (30 von 30 Vergleichen). Die größte Antwort der Personen-Werkzeuge lag am
+synthetischen Index bei 45 KB.
 
 **Offen:** Die Handprobe aus A0, Punkt 4 läuft am realen Bestand beim Nutzer (Schwelle: Recall
 ≥ 0,9 und 0 Fehltreffer je Person mit Kennung, bestanden bei mindestens 8 von 10 Personen). Bis

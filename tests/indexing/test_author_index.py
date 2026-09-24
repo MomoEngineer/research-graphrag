@@ -154,6 +154,33 @@ def test_rows_can_be_filtered_by_name_key(index_db: Path) -> None:
     assert load_author_rows(index_db, name_keys=[]) == ()
 
 
+def test_names_without_latin_letters_keep_their_identifier_or_are_counted(tmp_path: Path) -> None:
+    """Mit Kennung bleibt die Nennung erhalten (ohne Namensschlüssel), ohne Kennung wird sie
+    übersprungen und gezählt – nie still verloren, nie unter einem geteilten ``name:``."""
+    papers = [_paper("p1")]
+    metadata = tmp_path / "paper_metadata.json"
+    save_records(
+        metadata, [_record("p1", ["王小明", "Иван Петров", "Akari Asai"], ["A5099999999", "", ""])]
+    )
+    db = tmp_path / "index.sqlite"
+    build_index(papers, db)
+    build_metadata_index(papers, db, metadata_file=metadata)
+
+    report = build_author_index(db)
+
+    rows = load_author_rows(db)
+    assert [(row.name, row.name_key, row.person_key) for row in rows] == [
+        ("王小明", "", "A5099999999"),
+        ("Akari Asai", "akari asai", "name:akari asai"),
+    ]
+    assert report.n_skipped == 1
+    assert report.n_rows == 2
+    with pytest.raises(DomainError) as error:
+        search_name_keys(db, "王小明")
+    assert error.value.code is ErrorCode.INVALID_INPUT
+    assert "Personenschlüssel" in error.value.message
+
+
 def test_the_build_is_versioned_and_deterministic(index_db: Path) -> None:
     """Zwei Bauten ergeben eine identische Tabelle (Akzeptanz A3)."""
     connection = sqlite3.connect(str(index_db))

@@ -64,6 +64,7 @@ class IngestReport:
     n_persons: int = 0
     n_identified_persons: int = 0
     author_name_search: str = ""
+    n_author_skipped: int = 0
 
     @property
     def author_coverage(self) -> float:
@@ -358,4 +359,5 @@ def ingest(
         n_persons=author_report.n_persons,
         n_identified_persons=author_report.n_identified,
         author_name_search=author_report.name_search,
+        n_author_skipped=author_report.n_skipped,
     )

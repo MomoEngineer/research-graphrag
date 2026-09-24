@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -106,6 +107,20 @@ def test_entries_without_pdf_say_why(tmp_path: Path) -> None:
     reasons = {entry.paper_id: entry.reason for entry in entries}
     assert "PDF nicht gefunden" in reasons["aaaa0001"]
     assert "Referenz-Eintrag" in reasons["cccc0001"]
+
+
+def test_the_file_name_is_shown_readable_not_url_encoded(tmp_path: Path) -> None:
+    """Der Dateiname ist der Titel-Hinweis für das LLM – lesbar, auch mit Umlauten."""
+    paper = replace(
+        _indexed("aaaa0001", tmp_path),
+        source_uri=(tmp_path / "Über Retrieval für Dokumente.pdf").as_uri(),
+    )
+
+    entry = build_worklist([paper], papers_dir=tmp_path)[0]
+
+    assert "%" in paper.source_uri
+    assert entry.filename == "Über Retrieval für Dokumente.pdf"
+    assert "Über Retrieval für Dokumente.pdf" in render_worklist_markdown([entry], "t")
 
 
 def test_the_worklist_is_written_as_json_and_markdown(tmp_path: Path) -> None:

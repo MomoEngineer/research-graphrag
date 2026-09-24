@@ -93,6 +93,25 @@ def test_the_name_key_folds_like_the_citation_key() -> None:
     assert person_name_key("  ") == ""
 
 
+def test_decomposed_umlauts_fold_like_composed_ones() -> None:
+    """Ein zerlegtes „u + Trema“ (NFD, etwa aus macOS oder einem PDF) faltet wie „ü“ zu „ue“."""
+    decomposed = "Mu\u0308ller, Jo\u0308rg"
+
+    assert person_name_key(decomposed) == person_name_key("Müller, Jörg") == "joerg mueller"
+
+
+def test_a_name_without_latin_letters_has_no_bare_name_key() -> None:
+    """Ohne Kennung und ohne verwertbaren Namen gibt es keinen Personenschlüssel.
+
+    Ein bloßes ``name:`` wäre ein Schlüssel, den sich alle solchen Namen teilten.
+    """
+    assert person_name_key("王小明") == ""
+    assert person_key("王小明") == ""
+    assert person_key("王小明", "A5099999999") == "A5099999999"
+    assert person_key("Иван Петров", "", _ORCID) == f"orcid:{_ORCID}"
+    assert AuthorIdentity("王小明").to_dict()["person_key"] == ""
+
+
 def test_person_key_prefers_the_identifier_and_marks_bare_names() -> None:
     """Kennung vor Name; eine reine Namensidentität ist am Präfix erkennbar."""
     assert person_key("Akari Asai", "A5023888391", _ORCID) == "A5023888391"

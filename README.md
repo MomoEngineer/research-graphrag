@@ -347,7 +347,8 @@ dann mit einem LLM. Grundsatz: **Das LLM schlägt vor, das Skript prüft**
 2. **Erst ohne LLM prüfen:** `python -m scripts.verify_metadata --dry-run`, danach ohne
    `--dry-run`. Der Lauf prüft jeden gespeicherten Treffer gegen die Titelseite des lokalen PDFs:
    Bestätigt heißt `strong`, ein fremdes Paper wird entfernt und mit einem Ablehnungsvermerk
-   gesperrt. Kein Netz.
+   gesperrt. Kein Netz. Welche Paper schwach belegt sind, liest der Lauf aus dem **Index**, also
+   im Stand des letzten `python -m scripts.ingest`.
 3. **Arbeitsliste erzeugen:** `python -m scripts.metadata_worklist export` (optional
    `--limit 50`). Unter `data/worklists/<Zeitstempel>/` entstehen `arbeitsliste.md` und
    `arbeitsliste.json`. Die Markdown-Datei enthält den Auftrag an das LLM und je Paper Dateiname,
@@ -377,8 +378,9 @@ dann mit einem LLM. Grundsatz: **Das LLM schlägt vor, das Skript prüft**
 7. **Den Rest ausweisen:** Was sich nicht klären lässt, bekommt einen Status mit Grund, statt
    still schwach zu bleiben:
    `python -m scripts.metadata_worklist markieren <paper_id> --grund "nur als Buchkapitel ohne DOI"`
-   (zurücknehmen mit `--aufheben`). `get_reference` und `get_paper` zeigen den Status als
-   `review`.
+   (zurücknehmen mit `--aufheben`). Die Paper-ID muss im Index stehen; ein Tippfehler wird
+   abgewiesen, statt einen verwaisten Status zu schreiben. `get_reference` und `get_paper` zeigen
+   den Status als `review`.
 8. **Wirksam machen:** `python -m scripts.ingest`. Erst dann sehen die Werkzeuge die
    Änderungen, und die Personenebene nimmt die neu belegten Autoren auf.
 

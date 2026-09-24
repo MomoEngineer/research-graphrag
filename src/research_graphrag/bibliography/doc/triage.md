@@ -17,6 +17,11 @@ entfernt und mit einem **Ablehnungsvermerk** gesperrt. Alle übrigen bleiben unv
 in die [Arbeitsliste](worklist.md). Einstiegspunkt ist `python -m scripts.verify_metadata`. Das
 Modul greift nicht aufs Netz zu.
 
+Welche Paper offen schwach belegt sind, stammt aus dem **Index**, also aus dem Stand des letzten
+Ingest. Ein Datensatz, der erst nach dem Ingest in `metadata/paper_metadata.json` geschrieben
+wurde, wird erst nach dem nächsten Ingest geprüft. Frische Treffer prüft ohnehin der
+Auflösungslauf selbst.
+
 ## 2. Öffentliche Schnittstelle
 
 | Symbol | Art | Aufgabe |

@@ -29,7 +29,11 @@ oder einem Titel. Übernommen wird nur, was eine externe Quelle über diesen Vor
 | `import_suggestions` | Funktion | Vorschläge auflösen, nur Bestätigtes übernehmen, Fremdes verwerfen |
 | `render_import` | Funktion | Abschnitt für `data/metadata_log.md` |
 | `Suggestion` / `WorklistEntry` / `ImportOutcome` / `ImportRun` | Dataclasses | Vorschlag, Zeile, Ergebnis |
+| `suggestion_target` | Funktion | Vorschlag → Auflösungsziel; `identifier_backed = False`, denn eine vorgeschlagene Kennung steht nicht belegt auf der Titelseite |
 | `OUTCOME_*` | Konstanten | `accepted`, `not_confirmed`, `unresolved`, `not_checkable` |
+| `WORKLIST_DIR` / `LLM_ANSWERS_DIR` | Konstanten | Ablageorte `data/worklists/` (regenerierbar) und `metadata/llm_answers/` (Sicherungsumfang) |
+| `WORKLIST_FORMAT` / `ANSWER_KEY` / `SUGGESTION_KEYS` | Konstanten | Formatkennung, Antwortschlüssel `antworten`, erlaubte Angaben `doi`/`arxiv_id`/`title` |
+| `MAX_EXCERPT_CHARS` / `MAX_LISTED_AUTHORS` / `MIN_TITLE_CHARS` / `MAX_SUGGESTION_CHARS` | Konstanten | Grenzen für Seitenauszug, Autorenzahl und Vorschlagslänge |
 
 ## 3. Ablauf
 

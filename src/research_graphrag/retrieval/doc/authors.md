@@ -37,6 +37,8 @@ Sie enthält nur Autoren **belegter** (`strong`) Zitierdaten. Deshalb trägt jed
 | `PaperBrief` | Dataclass | Kurzangabe eines Papers (Titel, Jahr, Dokumentart, Quelle, Zitierschlüssel, Kennungen) |
 | `AuthorCandidate`, `AuthorPaper`, `AuthorCommunity`, `Coauthor`, `AuthorCitationLink` | Dataclasses | Einträge der Ergebnislisten |
 | `DEFAULT_CANDIDATE_LIMIT` | Konstante | Standard-Deckel der Kandidatenliste (20) |
+| `MAX_SAMPLE_TITLES` / `COMMUNITY_KEYWORDS` | Konstanten | Beispieltitel je Kandidat (3), Keywords je Community im Profil (5) |
+| `REBUILD_HINT` | Konstante | Hinweis in `not_found`, wenn der Index keine Personenebene trägt |
 | `CORPUS_SCOPE_NOTE`, `SCOPE_CORPUS` | Konstanten | Grenze der Zitationsabfrage im Klartext |
 
 Alle Ergebnisse haben `to_dict()` im Output-Schema der gleichnamigen Werkzeuge
@@ -149,7 +151,10 @@ alphabetisch erste.
 
 - **Abdeckung:** Paper mit schwach belegten oder fehlenden Zitierdaten fehlen auf der
   Personenebene. Die Werkzeuge sagen das in jeder Antwort.
-- **Keine Tippfehlertoleranz** in der Namenssuche (Teilstring bzw. Wortanfang).
+- **Keine Tippfehlertoleranz** in der Namenssuche (Teilstring bzw. Wortanfang). Umlaute werden
+  transliteriert: „Müller“ und „Mueller“ finden dieselbe Person, „Muller“ nicht.
+- Namen ohne lateinische Buchstaben sind nicht über `search_authors` auffindbar; mit Kennung
+  bleiben sie über den Personenschlüssel erreichbar (`get_author` und die Mitautorenliste).
 - **Keine Bibliometrie**, keine Affiliationen, keine Arbeitsgruppen.
 - **Nur innerhalb des Korpus:** Zitationen von oder zu Werken außerhalb fehlen.
 - Erwähnungen einer Person im Fließtext (A5) folgen nach Phase 16 / F2.

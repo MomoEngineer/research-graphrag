@@ -242,3 +242,19 @@ def test_marking_without_a_reason_is_refused(
 
     assert code == 1
     assert "invalid_input" in capsys.readouterr().out
+
+
+def test_marking_an_unknown_paper_is_refused(
+    workspace: dict[str, Path], capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Ein Tippfehler in der Paper-ID ergäbe einen verwaisten Status – das gemeinte Paper bliebe
+    still schwach. Aufheben bleibt möglich, damit sich ein solcher Eintrag aufräumen lässt."""
+    before = workspace["metadata"].read_bytes()
+    args = [*_common(workspace), "markieren", "ffff0001", "--grund", "Tippfehler"]
+
+    assert _run(metadata_worklist, "metadata_worklist", args) == 1
+
+    assert "Fehler [not_found]" in capsys.readouterr().out
+    assert workspace["metadata"].read_bytes() == before
+    clear = [*_common(workspace), "markieren", "ffff0001", "--aufheben"]
+    assert _run(metadata_worklist, "metadata_worklist", clear) == 0

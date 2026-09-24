@@ -15,6 +15,10 @@ Drei Regeln aus der Roadmap:
   (:func:`research_graphrag.bibliography.model.person_key`). Namensidentitäten werden **nie** still
   zusammengeführt.
 * **Eine Faltung:** Der Namensschlüssel entsteht über ``ascii_fold``, eine zweite gibt es nicht.
+  Ein Name ohne lateinische Buchstaben oder Ziffern hat deshalb keinen Namensschlüssel. Trägt er
+  eine Kennung, bleibt die Nennung erhalten (über den Personenschlüssel erreichbar, aber nicht über
+  die Namenssuche). Ohne Kennung gibt es keine Personenidentität; die Nennung wird übersprungen und
+  im Bau-Bericht gezählt (``n_skipped``), statt still zu fehlen.
 
 Für die Namenssuche entsteht die kleine FTS5-Tabelle ``author_name_search`` (Tokenizer
 ``trigram``) über die verschiedenen Namensschlüssel. Fehlt FTS5, und bei Suchwörtern unter drei
@@ -28,12 +32,13 @@ from __future__ import annotations
 
 import re
 import sqlite3
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
 from research_graphrag.bibliography.model import (
     CONFIDENCE_STRONG,
+    AuthorIdentity,
     PaperMetadata,
     person_name_key,
 )
@@ -118,12 +123,16 @@ class AuthorBuildReport:
     n_persons: int
     n_identified: int
     name_search: str
+    n_skipped: int = 0
 
 
 def author_rows(
     metadata: Mapping[str, PaperMetadata], document_kinds: Mapping[str, str]
 ) -> tuple[AuthorRow, ...]:
     """Leitet die Zeilen aus den aufgelösten Metadaten ab (nur ``strong``, deterministisch).
+
+    Eine Nennung ohne Personenschlüssel (keine Kennung, kein verwertbarer Name) entfällt; siehe
+    :func:`skipped_mentions`.
 
     Args:
         metadata: Aufgelöste Datensätze je Paper.
@@ -133,28 +142,51 @@ def author_rows(
         Die Zeilen, sortiert nach Paper und Position.
     """
     rows: list[AuthorRow] = []
+    for paper_id, position, identity in _strong_mentions(metadata, document_kinds):
+        key = person_name_key(identity.name)
+        if not identity.person_key:
+            continue
+        rows.append(
+            AuthorRow(
+                paper_id=paper_id,
+                position=position,
+                name=identity.name,
+                name_key=key,
+                person_key=identity.person_key,
+                openalex_id=identity.openalex_id,
+                orcid=identity.orcid,
+                identity=identity.identity,
+                document_kind=document_kinds[paper_id],
+            )
+        )
+    return tuple(rows)
+
+
+def skipped_mentions(
+    metadata: Mapping[str, PaperMetadata], document_kinds: Mapping[str, str]
+) -> int:
+    """Zahl der Nennungen belegter Datensätze, die ohne Personenschlüssel entfallen.
+
+    Das sind Namen ohne Kennung, in denen nach der Faltung kein lateinischer Buchstabe und keine
+    Ziffer bleibt, etwa ein Name nur in chinesischer oder kyrillischer Schrift.
+    """
+    return sum(
+        1
+        for _, _, identity in _strong_mentions(metadata, document_kinds)
+        if identity.name.strip() and not identity.person_key
+    )
+
+
+def _strong_mentions(
+    metadata: Mapping[str, PaperMetadata], document_kinds: Mapping[str, str]
+) -> Iterator[tuple[str, int, AuthorIdentity]]:
+    """Alle Autorennennungen der ``strong``-Datensätze indizierter Paper, in stabiler Folge."""
     for paper_id in sorted(metadata):
         item = metadata[paper_id]
         if item.confidence != CONFIDENCE_STRONG or paper_id not in document_kinds:
             continue
         for position, identity in enumerate(item.author_identities, start=1):
-            key = person_name_key(identity.name)
-            if not key:
-                continue
-            rows.append(
-                AuthorRow(
-                    paper_id=paper_id,
-                    position=position,
-                    name=identity.name,
-                    name_key=key,
-                    person_key=identity.person_key,
-                    openalex_id=identity.openalex_id,
-                    orcid=identity.orcid,
-                    identity=identity.identity,
-                    document_kind=document_kinds[paper_id],
-                )
-            )
-    return tuple(rows)
+            yield paper_id, position, identity
 
 
 def build_author_index(db_path: str | Path) -> AuthorBuildReport:
@@ -174,6 +206,7 @@ def build_author_index(db_path: str | Path) -> AuthorBuildReport:
             for row in connection.execute("SELECT paper_id, document_kind FROM papers")
         }
         rows = author_rows(metadata, kinds)
+        skipped = skipped_mentions(metadata, kinds)
         connection.executescript(_SCHEMA)
         connection.executemany(
             f"INSERT INTO paper_authors ({_COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -192,7 +225,7 @@ def build_author_index(db_path: str | Path) -> AuthorBuildReport:
                 for row in rows
             ],
         )
-        keys = sorted({row.name_key for row in rows})
+        keys = sorted({row.name_key for row in rows if row.name_key})
         search = NAME_SEARCH_SCAN
         if tokenizer_available(connection, "trigram"):
             connection.execute(
@@ -218,6 +251,7 @@ def build_author_index(db_path: str | Path) -> AuthorBuildReport:
         n_persons=len({row.person_key for row in rows}),
         n_identified=len({row.person_key for row in rows if row.identity != "name"}),
         name_search=search,
+        n_skipped=skipped,
     )
 
 
@@ -338,7 +372,12 @@ def search_name_keys(db_path: str | Path, query: str) -> tuple[str, ...]:
     """
     tokens = _WORD.findall(person_name_key(query))
     if not tokens:
-        raise DomainError(ErrorCode.INVALID_INPUT, "Name ohne verwertbare Zeichen.")
+        raise DomainError(
+            ErrorCode.INVALID_INPUT,
+            "Name ohne verwertbare Zeichen. Die Namenssuche vergleicht lateinische Buchstaben und "
+            "Ziffern; eine Person mit Kennung ist auch direkt über ihren Personenschlüssel "
+            "erreichbar.",
+        )
     long_tokens = [token for token in tokens if len(token) >= TRIGRAM_MIN_CHARS]
     connection = _connect(db_path)
     try:

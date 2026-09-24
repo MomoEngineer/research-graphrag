@@ -55,7 +55,8 @@ def main() -> int:
     print(
         f"[ingest] Autorenindex: Personen={report.n_persons} (mit Kennung "
         f"{report.n_identified_persons}) Nennungen={report.n_author_rows} "
-        f"Namenssuche={report.author_name_search}"
+        f"Namenssuche={report.author_name_search} "
+        f"ohne Personenschlüssel={report.n_author_skipped}"
     )
     print(f"[ingest] Qualitätsreport: {Path(args.data) / 'quality_report.json'}")
     return 0

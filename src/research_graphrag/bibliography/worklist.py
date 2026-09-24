@@ -27,6 +27,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote
 
 from research_graphrag.atomic_write import atomic_write_bytes
 from research_graphrag.bibliography.model import (
@@ -164,7 +165,8 @@ def build_worklist(
     entries: list[WorklistEntry] = []
     for paper in sorted(papers, key=lambda item: item.paper_id):
         item = paper.metadata
-        filename = paper.source_uri.rsplit("/", 1)[-1]
+        # Lesbar statt URL-kodiert: Der Dateiname ist für das LLM der Titel-Hinweis.
+        filename = unquote(paper.source_uri.rsplit("/", 1)[-1])
         front_pages: list[str] = []
         pdf = (
             pdf_path_for(paper.source_uri, papers_dir)

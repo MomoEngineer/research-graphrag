@@ -100,10 +100,14 @@ def ascii_fold(text: str) -> str:
     die im deutschsprachigen Raum übliche Schreibweise eines Nachnamens ohne Sonderzeichen.
     Alle übrigen diakritischen Zeichen werden nach NFKD verworfen.
 
+    Vorab wird nach NFC zusammengesetzt. Ein zerlegtes ``u`` plus Trema (NFD, wie es macOS beim
+    Kopieren oder manche PDF-Extraktion liefert) wird so ebenfalls zu ``ue`` und nicht zu ``u``.
+    Sonst fiele „Müller“ je nach Kodierung auf zwei verschiedene Schlüssel.
+
     Öffentlich, weil auch die Referenz-Auflösung dateinamensichere Slugs bildet
     (docs/adr/0029-reference-stub-resolution-phase13.md) – zwei Faltungen wären zwei Wahrheiten.
     """
-    transliterated = text.translate(_TRANSLITERATION)
+    transliterated = unicodedata.normalize("NFC", text).translate(_TRANSLITERATION)
     decomposed = unicodedata.normalize("NFKD", transliterated)
     return "".join(char for char in decomposed if not unicodedata.combining(char))
 
@@ -213,12 +217,17 @@ def person_key(name: str, openalex_id: str = "", orcid: str = "") -> str:
     Reihenfolge: OpenAlex-Autor-ID (``A5023888391``), sonst ``orcid:<ORCID>``, sonst ausdrücklich
     ``name:<normalisiert>`` als **unbestätigte** Identität. Das Präfix ``name:`` macht den
     Unterschied in jeder Ausgabe sichtbar, statt eine Namensgleichheit als Identität auszugeben.
+
+    Ohne Kennung und ohne verwertbaren Namensschlüssel (etwa ein Name nur in nicht-lateinischer
+    Schrift) ist der Schlüssel **leer**: Es gibt dann keine Personenidentität. Ein bloßes
+    ``name:`` wäre ein Schlüssel, den sich alle solchen Namen teilen.
     """
     if openalex_id:
         return openalex_id
     if orcid:
         return f"{ORCID_KEY_PREFIX}{orcid}"
-    return f"{NAME_KEY_PREFIX}{person_name_key(name)}"
+    name_key = person_name_key(name)
+    return f"{NAME_KEY_PREFIX}{name_key}" if name_key else ""
 
 
 @dataclass(frozen=True)

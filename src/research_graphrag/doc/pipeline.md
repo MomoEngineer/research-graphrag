@@ -25,7 +25,7 @@ Neubau schließt Inkonsistenzen aus.
 | --- | --- | --- |
 | `ingest` | Funktion | Führt den gesamten Lauf aus und liefert die Zählwerte |
 | `forget_source` | Funktion | Vergisst eine nicht mehr vorhandene Korpus-Datei (Manifest-Eintrag und verwaistes Canonical) |
-| `IngestReport` | Dataclass | Zählwerte: extrahiert, übersprungen, Chunks, Flags, Graph, Zitationen, Zitierdaten, seit Phase 17 die Autoren-Abdeckung (`author_coverage`) und die Personenebene (Personen, Nennungen, Art der Namenssuche) |
+| `IngestReport` | Dataclass | Zählwerte: extrahiert, übersprungen, Chunks, Flags, Graph, Zitationen, Zitierdaten, seit Phase 17 die Autoren-Abdeckung (`author_coverage`) und die Personenebene (Personen, Nennungen, Art der Namenssuche, Nennungen ohne Personenschlüssel) |
 | `OVERVIEW_FILENAME` | Konstante | Dateiname der kuratierten Übersicht (Quelle der Herkunft `curated`) |
 
 ## 3. Ablauf

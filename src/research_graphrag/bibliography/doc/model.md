@@ -28,7 +28,7 @@ sich später beantworten, woher eine DOI stammt.
 | `AuthorIdentity` | Dataclass | Autorennennung mit OpenAlex-ID, ORCID, `person_key` und `identity` (ADR 0041) |
 | `normalize_openalex_author_id` / `normalize_orcid` | Funktionen | prüfen und kürzen fremde Kennungen; ungültig ⇒ `""` |
 | `person_name_key` | Funktion | Vergleichsschlüssel eines Namens (beide Schreibweisen, eine Faltung) |
-| `person_key` | Funktion | Personenschlüssel: OpenAlex-ID, sonst `orcid:<ORCID>`, sonst `name:<normalisiert>` |
+| `person_key` | Funktion | Personenschlüssel: OpenAlex-ID, sonst `orcid:<ORCID>`, sonst `name:<normalisiert>`; leer ohne Kennung und ohne verwertbaren Namen |
 | `aligned_identifiers` / `read_identifier_list` / `identities_of` | Funktionen | Positionsgleichheit von Namen und Kennungen prüfen bzw. herstellen |
 | `IDENTITY_OPENALEX` / `IDENTITY_ORCID` / `IDENTITY_NAME` | Konstanten | Identitätsstatus einer Nennung |
 | `Rejection` / `PaperReview` | Dataclasses | Ablehnungsvermerk bzw. Prüfstand eines Papers (ADR 0042) |
@@ -59,8 +59,10 @@ flowchart TD
 ```
 
 Die ASCII-Faltung **transliteriert** deutsche Umlaute (`ü` → `ue`, `ß` → `ss`) und verwirft alle
-übrigen diakritischen Zeichen nach NFKD. Der Schlüssel ist eine **Anzeigehilfe**, kein
-Identifikator: Zwei Paper desselben Erstautors und Jahres bekommen denselben Schlüssel.
+übrigen diakritischen Zeichen nach NFKD. Vorab setzt sie nach NFC zusammen, damit ein zerlegtes
+„u + Trema“ (NFD, etwa aus macOS oder einer PDF-Extraktion) ebenfalls zu `ue` wird. Der
+Schlüssel ist eine **Anzeigehilfe**, kein Identifikator: Zwei Paper desselben Erstautors und
+Jahres bekommen denselben Schlüssel.
 
 ### Identifikatoren und bevorzugter Link
 
@@ -106,7 +108,10 @@ Zwei Regeln tragen die Präzision:
 `person_name_key` dreht „Nachname, Vorname" um und faltet über `ascii_fold`. Es gibt also **keine**
 zweite Faltung, und „Asai, Akari" und „Akari Asai" fallen zusammen. `person_key` bevorzugt die
 Kennung; eine reine Namensidentität trägt das Präfix `name:`, damit sie in keiner Ausgabe als
-bestätigte Identität erscheint.
+bestätigte Identität erscheint. Bleibt nach der Faltung kein lateinischer Buchstabe und keine
+Ziffer (etwa bei einem Namen nur in chinesischer Schrift) und fehlt eine Kennung, ist der
+Schlüssel **leer**: Es gibt dann keine Personenidentität. Ein bloßes `name:` wäre ein Schlüssel,
+den sich alle solchen Namen teilten.
 
 Die Speicherform schreibt `author_ids`/`author_orcids` nur, wenn mindestens eine Kennung vorliegt.
 Ein Datensatz ohne Kennung bleibt so byte-identisch zur Form vor ADR 0041, und eine alte Datei lädt

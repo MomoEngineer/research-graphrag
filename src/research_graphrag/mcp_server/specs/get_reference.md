@@ -77,7 +77,8 @@ Ergänzt `get_paper`: Dieses beschreibt das Dokument (Umfang, Abschnitte, Leit-S
 - `author_identities` (seit Version 0.2.0, additiv, [ADR 0041](../../../../docs/adr/0041-author-identity-and-schema.md)):
   je Autor positionsgleich zu `authors` der Name in der Schreibweise der Quelle, die OpenAlex-Autor-ID
   und die ORCID (leer = unbekannt), der **Personenschlüssel** (`person_key`: OpenAlex-ID, sonst
-  `orcid:<ORCID>`, sonst ausdrücklich `name:<normalisiert>`) und der Identitätsstatus
+  `orcid:<ORCID>`, sonst ausdrücklich `name:<normalisiert>`; leer ohne Kennung und ohne
+  lateinisch verwertbaren Namen) und der Identitätsstatus
   (`openalex`/`orcid`/`name`). Die Kennungen stammen stets aus **derselben** Quelle wie die Namen;
   `identity = "name"` ist ausdrücklich **keine** bestätigte Identität. Trägt die gewonnene
   Namensliste selbst keine Kennung, darf sie ein anderer Datensatz mit **identischer** Namensliste
