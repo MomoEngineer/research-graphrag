@@ -37,8 +37,12 @@ BACKUP_MANIFEST_NAME = "backup_manifest.json"
 BACKUP_SCHEMA_VERSION = "0.1.0"
 """Version des Manifest-Formats (eigenständig, unabhängig vom Index-Schema)."""
 
-SOURCE_DIRECTORIES: tuple[str, ...] = ("papers",)
-"""Vollständig (rekursiv) gesicherte Verzeichnisse."""
+SOURCE_DIRECTORIES: tuple[str, ...] = ("papers", "metadata/llm_answers")
+"""Vollständig (rekursiv) gesicherte Verzeichnisse; ein fehlendes wird übersprungen.
+
+``metadata/llm_answers/`` hält die abgelegten LLM-Antworten der Metadaten-Arbeitsliste
+(Phase 17 / A1). Sie sind aus keiner Quelle rekonstruierbar, anders als die Arbeitslisten
+selbst, die jederzeit neu entstehen (docs/adr/0042-title-page-evidence-and-rejections.md)."""
 
 SOURCE_FILES: tuple[str, ...] = (
     "Übersicht.md",

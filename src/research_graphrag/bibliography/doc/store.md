@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/bibliography/store.py` |
 | **Paket** | `bibliography` – zitierfähige Metadaten |
-| **Phase** | 12 / K1 |
-| **Grundlagen** | [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md) · [ADR 0026](../../../../docs/adr/0026-online-metadata-resolution.md) |
+| **Phase** | 12 / K1, erweitert in 17 / A1 |
+| **Grundlagen** | [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md) · [ADR 0026](../../../../docs/adr/0026-online-metadata-resolution.md) · [ADR 0042](../../../../docs/adr/0042-title-page-evidence-and-rejections.md) |
 
 ---
 
@@ -21,7 +21,10 @@ werden kann.
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
 | `load_records` | Funktion | Datei → Datensätze (fehlende Datei ⇒ leer) |
-| `save_records` | Funktion | Datensätze → Datei (deterministisch, atomar) |
+| `save_records` | Funktion | Datensätze → Datei (deterministisch, atomar); `reviews=None` **behält** den Prüfstand der Datei |
+| `load_reviews` | Funktion | Prüfstand je Paper (Ablehnungsvermerke, Status) – fehlend ⇒ leer |
+| `add_rejection` / `set_review_status` | Funktionen | Vermerk ergänzen (ohne Dublette) bzw. Status setzen/aufheben (mit Pflicht-Grund) |
+| `REVIEWS_KEY` | Konstante | Schlüssel `reviews` in der Datei (additiv, Phase 17 / A1) |
 | `upsert_records` | Funktion | je `(paper_id, origin)` ersetzen, Rest behalten |
 | `metadata_path` | Funktion | Pfad unterhalb eines Wurzelverzeichnisses |
 | `SCHEMA_VERSION` / `METADATA_DIR` / `METADATA_FILENAME` / `WRITABLE_ORIGINS` | Konstanten | Format und Ablageort |
@@ -58,6 +61,17 @@ dokumentiert diese Festlegung.
 Auflösungslauf ausschließlich seine eigenen früheren Ergebnisse; ein `manual`-Eintrag zum selben
 Paper bleibt unangetastet.
 
+### Der Prüfstand in derselben Datei (Phase 17 / A1)
+
+Unter `reviews` trägt die Datei je Paper Ablehnungsvermerke und einen optionalen Status
+„nicht auflösbar“ ([ADR 0042](../../../../docs/adr/0042-title-page-evidence-and-rejections.md)).
+Dass beides in **derselben** Datei liegt wie die Datensätze, ist Absicht. Das Entfernen eines
+verworfenen Treffers und sein Vermerk entstehen in einem atomaren Schreibvorgang; zwei Dateien
+könnten nach einem Abbruch den Datensatz ohne Vermerk zurücklassen. `save_records` behält den
+Prüfstand, solange der Aufrufer keinen neuen übergibt. Auflösungslauf und Korrektur-Tool, die nur
+Datensätze schreiben, können deshalb keinen Vermerk verlieren. Der Schlüssel ist additiv und
+erscheint nur, wenn es einen Prüfstand gibt.
+
 ## 4. Zusammenspiel
 
 ```mermaid
@@ -81,6 +95,8 @@ Der Weg ist **einseitig gerichtet**: Netz → Datei → Index. Kein Werkzeug sch
 | Wurzel ist kein Objekt | `constraint_violation` |
 | unbekannte `schema_version` | `constraint_violation` |
 | `papers` ist kein Objekt | `constraint_violation` |
+| `reviews` ist kein Objekt | `constraint_violation` |
+| unbekannter Status in `reviews` | gilt als nicht gesetzt |
 | Datensatzliste eines Papers ist keine Liste bzw. enthält kein Objekt | `constraint_violation` |
 
 Die strenge Prüfung ist Absicht: Eine von Hand bearbeitete Datei soll bei einem Tippfehler

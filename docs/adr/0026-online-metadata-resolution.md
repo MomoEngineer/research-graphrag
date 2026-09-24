@@ -127,3 +127,18 @@ Physik-Kollaborationen) würde die Datei sonst unbrauchbar machen.
   `manual`-Eintrag.
 - **Testgrenze:** `online/transport.py` bleibt die dokumentierte Coverage-Ausnahme; die neue
   Auflösungslogik ist über den injizierten Port **vollständig offline** getestet.
+
+## Nachtrag (2026-09-24, Phase 17 / A1): Seite-1-Beleg als neue Belegklasse
+
+Die Planungsmessung der Phase 17 zeigte, dass `weak` häufig ein **fremdes** Paper verdeckt: Bei
+44 von 92 online aufgelösten `weak`-Volltexten stehen weder Titel noch Autoren des Treffers auf
+Seite 1. [ADR 0042](0042-title-page-evidence-and-rejections.md) ergänzt die Tabelle aus
+Abschnitt 2 um zwei Zeilen:
+
+- Ein Treffer, dessen Titel **und** Autoren auf Seite 1 des lokalen PDFs stehen, wird `strong`.
+  Die Herkunft bleibt `resolved`.
+- Ein Treffer ohne Titel und ohne (nennenswert) Autoren auf Seite 1 wird verworfen, und ein
+  **Ablehnungsvermerk** verhindert das Wiedereinspielen.
+
+Beide Schwellen werden in Phase 17 / A0, Punkt 3, kalibriert. Bis dahin entscheidet der Beleg
+nichts, sondern misst nur.

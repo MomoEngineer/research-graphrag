@@ -1154,7 +1154,7 @@ Festgelegt mit dem Nutzer am 2026-09-24, **vor** dem ersten Code:
 | --- | --- | --- |
 | A0 | Festlegungen fixiert; Messpaket folgt nach der A1/A2-Mechanik, damit es genau den gebauten Seite-1-Beleg kalibriert | dieser Block |
 | A2, Punkte 1–2 | **umgesetzt:** Die Stub-Lücke ist im Code lokalisiert und geschlossen, die Personenkennung wird additiv gespeichert, und jeder Ingest weist die Autoren-Abdeckung aus. Die Wirkung am realen Bestand steht noch aus und wird beim nächsten Ingest gemessen | [ADR 0041](docs/adr/0041-author-identity-and-schema.md) |
-| A1 | offen | – |
+| A1 | **Mechanik umgesetzt, noch nicht scharfgeschaltet:** Seite-1-Beleg, Ablehnungsvermerk (atomar in derselben Metadatendatei), Triage (`scripts.verify_metadata`), LLM-Arbeitsliste (`scripts.metadata_worklist`), Status „nicht auflösbar“ bis in `get_reference`; `resolve_metadata` spielt keinen verworfenen Treffer zurück. **Präzisiert:** Die Ablehnung verlangt zusätzlich, dass kaum ein Autor auf S. 1 steht (7 Planungsfälle „Titel fehlt, Autoren stehen“); beide Schwellen kalibriert A0, Punkt 3, bis dahin wird nur gemessen | [ADR 0042](docs/adr/0042-title-page-evidence-and-rejections.md) |
 | A2, Punkte 3–5 | offen | – |
 | A3, A4, A6 | offen | – |
 | A5 | wartet auf Phase 16 / F2 | – |

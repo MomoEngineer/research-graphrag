@@ -190,7 +190,9 @@ def test_metadata_to_dict_shape() -> None:
         "confidence",
         "citable",
         "author_identities",
+        "review",
     }
+    assert payload["review"] is None
     assert payload["citable"] is True
     assert payload["author_identities"] == [
         {

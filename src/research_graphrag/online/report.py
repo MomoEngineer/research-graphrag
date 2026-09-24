@@ -338,6 +338,17 @@ def render_resolutions(timestamp: str, resolutions: Sequence[Resolution]) -> lis
             note = escape_markdown(item.note, limit=300)
             lines.append(f"- `{item.target.paper_id}` {title} — {note}")
         lines.append("")
+    rejected = [(item, entry) for item in resolutions for entry in item.rejected]
+    if rejected:
+        # Phase 17 / A1: Ein verworfener Treffer wird nie still verworfen, sondern mit Grund
+        # protokolliert – der Vermerk selbst steht in metadata/paper_metadata.json (ADR 0042).
+        lines += ["### Verworfen (Ablehnungsvermerk gesetzt)", ""]
+        for item, entry in rejected:
+            title = escape_markdown(entry.title, limit=MAX_TITLE_CHARS) or "(ohne Titel)"
+            reason = escape_markdown(entry.reason, limit=300)
+            key = entry.doi or entry.arxiv_id or "ohne Kennung"
+            lines.append(f"- `{item.target.paper_id}` {title} (`{key}`) — {reason}")
+        lines.append("")
     if not resolutions:
         lines += ["*Nichts aufzulösen – alle Datensätze sind vollständig.*", ""]
     return lines
@@ -366,6 +377,16 @@ def append_resolutions(data_path: Path, timestamp: str, resolutions: Sequence[Re
         render_resolutions(timestamp, resolutions),
         _METADATA_HEADER,
     )
+
+
+def append_metadata_section(data_path: Path, lines: Sequence[str]) -> Path:
+    """Hängt einen beliebigen Abschnitt an ``data/metadata_log.md`` an (Phase 17 / A1).
+
+    Seite-1-Prüfung und Arbeitslisten-Import protokollieren in **dasselbe** append-only Protokoll
+    wie der Auflösungslauf. So steht jede Aufwertung und jede Ablehnung mit ihrem Beleg an einer
+    Stelle (docs/adr/0042-title-page-evidence-and-rejections.md).
+    """
+    return append_section(data_path / METADATA_REPORT_NAME, lines, _METADATA_HEADER)
 
 
 def render_references(timestamp: str, outcomes: Sequence[ReferenceOutcome]) -> list[str]:

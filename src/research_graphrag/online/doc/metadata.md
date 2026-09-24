@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/online/metadata.py` |
 | **Paket** | `online` – Netzzugang hinter einem Port |
-| **Phase** | 12 / K2, erweitert in 17 / A2 |
-| **Grundlagen** | [ADR 0026](../../../../docs/adr/0026-online-metadata-resolution.md) · [ADR 0020](../../../../docs/adr/0020-online-candidate-search-phase9.md) · [ADR 0041](../../../../docs/adr/0041-author-identity-and-schema.md) |
+| **Phase** | 12 / K2, erweitert in 17 / A1 + A2 |
+| **Grundlagen** | [ADR 0026](../../../../docs/adr/0026-online-metadata-resolution.md) · [ADR 0020](../../../../docs/adr/0020-online-candidate-search-phase9.md) · [ADR 0041](../../../../docs/adr/0041-author-identity-and-schema.md) · [ADR 0042](../../../../docs/adr/0042-title-page-evidence-and-rejections.md) |
 
 ---
 
@@ -20,7 +20,9 @@ Titel-Ähnlichkeit.
 
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
-| `resolve_target` | Funktion | ein Paper auflösen (probiert alle Wege) |
+| `resolve_target` | Funktion | ein Paper auflösen (probiert alle Wege); seit Phase 17 mit Ablehnungsvermerken und Seite-1-Beleg |
+| `skip_settled` | Funktion | Paper mit ausgewiesenem Prüfstatus („nicht auflösbar“) ausblenden |
+| `Verifier` | Typ | Prüffunktion eines Treffers gegen die Titelseite |
 | `targets_from_index` | Funktion | Auswahl der aufzulösenden Paper aus dem Index |
 | `filter_pending` | Funktion | bereits gespeicherte Ergebnisse ausblenden |
 | `ResolutionTarget` | Dataclass | ein Paper samt lokal bekannter Angaben |
@@ -110,6 +112,17 @@ den Namen im Datensatz ([ADR 0041](../../../../docs/adr/0041-author-identity-and
 Kennung wird geprüft; eine ungültige wird leer. Der arXiv-Feed kennt keine Kennung, sein Datensatz
 bleibt ohne. `authorships_of_work` ist öffentlich, weil der Nachtrag aus den abgelegten
 Rohantworten dieselbe Lesart braucht.
+
+### Vermerk und Seite-1-Beleg in der Auflösung (Phase 17 / A1)
+
+Jeder Treffer durchläuft zwei Prüfungen, bevor er übernommen wird
+([ADR 0042](../../../../docs/adr/0042-title-page-evidence-and-rejections.md)):
+
+1. Entspricht er einem **Ablehnungsvermerk** (DOI, arXiv-ID oder Titel), wird er übersprungen,
+   und der nächste Weg wird versucht.
+2. Mit `verify` wird er gegen die Titelseite geprüft. `foreign` erzeugt einen neuen Vermerk (in
+   `Resolution.rejected`), und der nächste Weg wird versucht. `confirmed` wertet auf `strong`
+   auf. Sonst bleibt der Treffer, wie er ist, und der Befund reist als `Resolution.check` mit.
 
 ## 4. Zusammenspiel
 

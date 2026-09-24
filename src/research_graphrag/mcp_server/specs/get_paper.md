@@ -11,7 +11,7 @@
 | Feld | Wert |
 | --- | --- |
 | **Tool-Name** | `get_paper` |
-| **Version** | `0.3.0` |
+| **Version** | `0.4.0` |
 | **Capability-Schicht** | Katalog / Provenienz (siehe README.md) |
 | **Status** | Implementiert (Phase 5) |
 
@@ -59,6 +59,7 @@ Liefert die **Metadaten eines einzelnen Papers** anhand seiner stabilen `paper_i
       { "name": "Anna Beispiel", "openalex_id": "A5023888391", "orcid": "0000-0002-1825-0097", "person_key": "A5023888391", "identity": "openalex" },
       { "name": "Bert Muster", "openalex_id": "", "orcid": "", "person_key": "name:bert muster", "identity": "name" }
     ],
+    "review": null,
     "harvard": "Beispiel, A. and Muster, B. (2023) …",
     "apa": "Beispiel, A., & Muster, B. (2023). …",
     "in_text": { "harvard": "(Beispiel and Muster, 2023)", "apa": "(Beispiel & Muster, 2023)" }
@@ -78,6 +79,10 @@ Liefert die **Metadaten eines einzelnen Papers** anhand seiner stabilen `paper_i
   `orcid:<ORCID>`, sonst ausdrücklich `name:<normalisiert>`) und der Identitätsstatus
   (`openalex`/`orcid`/`name`). Die Kennungen stammen stets aus **derselben** Quelle wie die Namen;
   `identity = "name"` ist ausdrücklich **keine** bestätigte Identität.
+- `review` (seit Version 0.4.0, additiv, [ADR 0042](../../../../docs/adr/0042-title-page-evidence-and-rejections.md)):
+  `null` oder der **ausgewiesene Prüfstatus** `{"status": "unresolvable", "reason": "…"}`. Ein
+  schwach belegter Datensatz mit diesem Status ist ausdrücklich als „nicht auflösbar“ ausgewiesen
+  (Grund vom Menschen gesetzt), statt still `weak` zu bleiben.
 
 ## 4. Annahmen und Vorbedingungen
 
@@ -147,6 +152,7 @@ Antwort:
     "confidence": "weak",
     "citable": false,
     "author_identities": [],
+    "review": null,
     "harvard": "aaaa0001 (2024) Available at: https://doi.org/10.1145/1234",
     "apa": "aaaa0001. (2024). https://doi.org/10.1145/1234",
     "in_text": { "harvard": "(aaaa0001, 2024)", "apa": "(aaaa0001, 2024)" }

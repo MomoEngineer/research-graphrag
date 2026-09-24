@@ -497,6 +497,17 @@ python -m scripts.discover --seed <paper_id> --seit 2023
 python -m scripts.resolve_metadata --dry-run
 python -m scripts.resolve_metadata --limit 50
 
+# 3e2. Schwach belegte Zitierdaten klären (Phase 17 / A1, ADR 0042)
+#      Seite-1-Beleg gegen das lokale PDF (kein Netz); vor der Kalibrierung aus A0 nur Messung
+python -m scripts.verify_metadata --dry-run
+python -m scripts.verify_metadata
+#      Rest über die LLM-Arbeitsliste: das LLM liefert nur Kennung oder Titel, das Skript prüft
+python -m scripts.metadata_worklist stand
+python -m scripts.metadata_worklist export
+python -m scripts.metadata_worklist import antwort.json --dry-run
+python -m scripts.metadata_worklist import antwort.json
+python -m scripts.metadata_worklist markieren <paper_id> --grund "nur als Buchkapitel ohne DOI"
+
 # 3f. (optional, benötigt Netz) Paper ohne Volltext über DOI/arXiv-ID erfassen
 #     Liest new_papers/referenzen.txt und legt je Kennung eine Stub-Datei *.refjson im
 #     Eingangsordner ab (Titel, Autoren, Jahr, Venue, Abstract) – kein Volltext-Download.

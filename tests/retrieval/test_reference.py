@@ -126,6 +126,7 @@ def test_result_to_dict_shape(tmp_path: Path) -> None:
         "confidence",
         "citable",
         "author_identities",
+        "review",
         "harvard",
         "apa",
         "in_text",

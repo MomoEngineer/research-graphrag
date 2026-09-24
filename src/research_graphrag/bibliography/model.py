@@ -469,6 +469,19 @@ class PaperMetadata:
     confidence: str = CONFIDENCE_NONE
     author_ids: tuple[str, ...] = ()
     author_orcids: tuple[str, ...] = ()
+    review_status: str = ""
+    review_reason: str = ""
+
+    @property
+    def review(self) -> dict[str, str] | None:
+        """Der ausgewiesene Prüfstatus (``None``, wenn keiner gesetzt ist).
+
+        Ein ``weak``-Datensatz mit Status :data:`REVIEW_UNRESOLVABLE` ist **ausdrücklich**
+        ausgewiesen statt still schwach (docs/adr/0042-title-page-evidence-and-rejections.md).
+        """
+        if not self.review_status:
+            return None
+        return {"status": self.review_status, "reason": self.review_reason}
 
     @property
     def author_identities(self) -> tuple[AuthorIdentity, ...]:
@@ -529,7 +542,8 @@ class PaperMetadata:
         :func:`research_graphrag.bibliography.styles.reference_payload`; so bleibt dieses Modul
         frei von Formatierungswissen. ``author_identities`` ist additiv (ADR 0041): je Autor
         Name, Kennungen, Personenschlüssel und Identitätsstatus – ohne Kennung ausdrücklich
-        ``identity = "name"``.
+        ``identity = "name"``. ``review`` ist ebenfalls additiv (ADR 0042): ``None`` oder der
+        ausgewiesene Prüfstatus samt Grund.
         """
         return {
             "paper_id": self.paper_id,
@@ -546,6 +560,7 @@ class PaperMetadata:
             "confidence": self.confidence,
             "citable": self.is_citable(),
             "author_identities": [entry.to_dict() for entry in self.author_identities],
+            "review": self.review,
         }
 
 
@@ -559,3 +574,103 @@ def lowest_confidence(values: Sequence[str]) -> str:
     if not values:
         return CONFIDENCE_NONE
     return min(values, key=lambda value: CONFIDENCES.index(value) if value in CONFIDENCES else 0)
+
+
+REVIEW_UNRESOLVABLE = "unresolvable"
+"""Prüfstatus: Das Paper ist ausdrücklich als „nicht auflösbar“ ausgewiesen (mit Grund).
+
+Kein stilles ``weak`` (Roadmap Phase 17, Festlegungen): Ein schwach belegter Datensatz wird
+``strong``, von Hand korrigiert **oder** mit diesem Status ausgewiesen
+(docs/adr/0042-title-page-evidence-and-rejections.md)."""
+
+REVIEW_STATUSES: tuple[str, ...] = (REVIEW_UNRESOLVABLE,)
+"""Die zulässigen Prüfstatus eines Papers (leer = kein Status)."""
+
+
+@dataclass(frozen=True)
+class Rejection:
+    """Ablehnungsvermerk: ein verworfener Treffer, der nicht wieder eingespielt werden darf.
+
+    Ohne diesen Vermerk wäre die Bereinigung eines Fremd-Paper-Falls nicht stabil: Der nächste
+    Auflösungslauf fände über dieselbe (falsche) Kennung denselben Treffer wieder
+    (Roadmap Phase 17 / A1, Punkt 2; docs/adr/0042-title-page-evidence-and-rejections.md).
+
+    Attributes:
+        doi: DOI des verworfenen Treffers (ohne URL-Präfix).
+        arxiv_id: arXiv-ID des verworfenen Treffers.
+        title: Titel des verworfenen Treffers (Vergleich über die normalisierte Form).
+        reason: Klartext-Begründung, z. B. der Befund des Seite-1-Belegs.
+        date: Datum der Ablehnung (ISO, ``JJJJ-MM-TT``).
+    """
+
+    doi: str = ""
+    arxiv_id: str = ""
+    title: str = ""
+    reason: str = ""
+    date: str = ""
+
+    def to_dict(self) -> dict[str, str]:
+        """Serialisiert den Vermerk (Speicherform)."""
+        return {
+            "doi": self.doi,
+            "arxiv_id": self.arxiv_id,
+            "title": self.title,
+            "reason": self.reason,
+            "date": self.date,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> Rejection:
+        """Liest einen Vermerk (fehlende Felder bleiben leer)."""
+        return cls(
+            doi=str(payload.get("doi", "")),
+            arxiv_id=str(payload.get("arxiv_id", "")),
+            title=str(payload.get("title", "")),
+            reason=str(payload.get("reason", "")),
+            date=str(payload.get("date", "")),
+        )
+
+
+@dataclass(frozen=True)
+class PaperReview:
+    """Der Prüfstand eines Papers: Ablehnungsvermerke und ein optionaler Status.
+
+    Attributes:
+        paper_id: Stabile Paper-ID des Korpus.
+        status: ``""`` oder ein Wert aus :data:`REVIEW_STATUSES`.
+        reason: Begründung des Status (Pflicht, wenn ein Status gesetzt ist).
+        rejections: Verworfene Treffer in der Reihenfolge ihrer Ablehnung.
+    """
+
+    paper_id: str
+    status: str = ""
+    reason: str = ""
+    rejections: tuple[Rejection, ...] = ()
+
+    @property
+    def is_empty(self) -> bool:
+        """``True``, wenn weder Status noch Vermerk vorliegt (dann wird nichts gespeichert)."""
+        return not self.status and not self.rejections
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialisiert den Prüfstand (Speicherform unter ``reviews`` in der Metadatendatei)."""
+        return {
+            "status": self.status,
+            "reason": self.reason,
+            "rejections": [entry.to_dict() for entry in self.rejections],
+        }
+
+    @classmethod
+    def from_dict(cls, paper_id: str, payload: Mapping[str, Any]) -> PaperReview:
+        """Liest einen Prüfstand; ein unbekannter Status gilt als nicht gesetzt."""
+        status = str(payload.get("status", ""))
+        raw = payload.get("rejections")
+        entries = raw if isinstance(raw, list) else []
+        return cls(
+            paper_id=paper_id,
+            status=status if status in REVIEW_STATUSES else "",
+            reason=str(payload.get("reason", "")),
+            rejections=tuple(
+                Rejection.from_dict(entry) for entry in entries if isinstance(entry, Mapping)
+            ),
+        )

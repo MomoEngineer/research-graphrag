@@ -27,7 +27,7 @@ import re
 import sqlite3
 from collections import Counter
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -45,18 +45,20 @@ from research_graphrag.bibliography.model import (
     empty_metadata,
 )
 from research_graphrag.bibliography.resolve import resolve_all
-from research_graphrag.bibliography.store import load_records
+from research_graphrag.bibliography.store import load_records, load_reviews
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.model import DOCUMENT_KIND_FULL, DOCUMENT_KIND_REFERENCE
 from research_graphrag.extraction.pdf import CanonicalPaper
 from research_graphrag.indexing.citation_graph import front_matter_text, title_from_uri, title_of
 
-METADATA_SCHEMA_VERSION = "0.2.0"
+METADATA_SCHEMA_VERSION = "0.3.0"
 """Version des Teilschemas ``paper_metadata`` (additiv, unabhängig vom Kern-Schema).
 
-``0.1.0 -> 0.2.0`` (Phase 17 / A2): Spalten ``author_ids`` und ``author_orcids``. Die Tabelle wird
-bei jedem Index-Bau neu angelegt; ein älterer Index bleibt lesbar und liefert dann keine
-Kennungen (docs/adr/0041-author-identity-and-schema.md)."""
+``0.1.0 -> 0.2.0`` (Phase 17 / A2): Spalten ``author_ids`` und ``author_orcids``
+(docs/adr/0041-author-identity-and-schema.md). ``0.2.0 -> 0.3.0`` (Phase 17 / A1): Spalte
+``review`` mit dem ausgewiesenen Prüfstatus, etwa „nicht auflösbar“
+(docs/adr/0042-title-page-evidence-and-rejections.md). Die Tabelle wird bei jedem Index-Bau neu
+angelegt; ein älterer Index bleibt lesbar und liefert die fehlenden Angaben leer."""
 
 _ARXIV_ID = re.compile(r"^(\d{2})(\d{2})\.\d{4,5}$")
 _ARXIV_EPOCH = 2000
@@ -77,7 +79,8 @@ CREATE TABLE paper_metadata (
     confidence   TEXT NOT NULL DEFAULT 'none',
     citation_key TEXT NOT NULL DEFAULT '',
     author_ids    TEXT NOT NULL DEFAULT '[]',
-    author_orcids TEXT NOT NULL DEFAULT '[]'
+    author_orcids TEXT NOT NULL DEFAULT '[]',
+    review        TEXT NOT NULL DEFAULT ''
 );
 """
 
@@ -286,6 +289,12 @@ def build_metadata_index(
     records = collect_records(papers, overview_path=overview_path, metadata_file=metadata_file)
     paper_ids = sorted({paper.paper_id for paper in papers})
     resolved = resolve_all(records, paper_ids)
+    reviews = load_reviews(metadata_file) if metadata_file is not None else {}
+    for paper_id, review in reviews.items():
+        if paper_id in resolved and review.status:
+            resolved[paper_id] = replace(
+                resolved[paper_id], review_status=review.status, review_reason=review.reason
+            )
     _persist_metadata(path, resolved)
 
     origins = Counter(record.origin for record in records)
@@ -326,8 +335,8 @@ def _persist_metadata(db_path: Path, resolved: Mapping[str, PaperMetadata]) -> N
             item = resolved[paper_id]
             connection.execute(
                 "INSERT INTO paper_metadata (paper_id, title, authors, year, venue, doi, "
-                "arxiv_id, url, origins, confidence, citation_key, author_ids, author_orcids) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "arxiv_id, url, origins, confidence, citation_key, author_ids, author_orcids, "
+                "review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     item.paper_id,
                     item.title,
@@ -342,6 +351,9 @@ def _persist_metadata(db_path: Path, resolved: Mapping[str, PaperMetadata]) -> N
                     item.citation_key(),
                     json.dumps(list(item.author_ids)),
                     json.dumps(list(item.author_orcids)),
+                    json.dumps(item.review, ensure_ascii=False, sort_keys=True)
+                    if item.review
+                    else "",
                 ),
             )
         connection.commit()
@@ -352,12 +364,13 @@ def _persist_metadata(db_path: Path, resolved: Mapping[str, PaperMetadata]) -> N
 def _row_to_metadata(row: Sequence[Any]) -> PaperMetadata:
     """Bildet eine Tabellenzeile auf einen :class:`PaperMetadata` ab.
 
-    Die Kennungsspalten (Teilschema 0.2.0) sind optional: Ein älterer Index liefert nur zehn
-    Spalten, und dann bleiben die Kennungen leer.
+    Die Kennungsspalten (Teilschema 0.2.0) und die Prüfstatus-Spalte (0.3.0) sind optional: Ein
+    älterer Index liefert weniger Spalten, und dann bleiben diese Angaben leer.
     """
     authors = tuple(str(name) for name in json.loads(str(row[2])))
     author_ids = [str(value) for value in json.loads(str(row[10]))] if len(row) > 10 else []
     author_orcids = [str(value) for value in json.loads(str(row[11]))] if len(row) > 11 else []
+    review = json.loads(str(row[12])) if len(row) > 12 and str(row[12]) else {}
     return PaperMetadata(
         paper_id=str(row[0]),
         title=str(row[1]),
@@ -371,6 +384,8 @@ def _row_to_metadata(row: Sequence[Any]) -> PaperMetadata:
         confidence=str(row[9]),
         author_ids=aligned_identifiers(authors, author_ids),
         author_orcids=aligned_identifiers(authors, author_orcids),
+        review_status=str(review.get("status", "")),
+        review_reason=str(review.get("reason", "")),
     )
 
 
@@ -394,6 +409,8 @@ def load_paper_metadata(db_path: str | Path) -> dict[str, PaperMetadata]:
         identity_columns = (
             ", author_ids, author_orcids" if {"author_ids", "author_orcids"} <= columns else ""
         )
+        if identity_columns and "review" in columns:
+            identity_columns += ", review"
         rows = connection.execute(
             "SELECT paper_id, title, authors, year, venue, doi, arxiv_id, url, origins, "
             f"confidence{identity_columns} FROM paper_metadata"

@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/bibliography/model.py` |
 | **Paket** | `bibliography` – zitierfähige Metadaten |
-| **Phase** | 12 / K1, erweitert in 17 / A2 |
-| **Grundlagen** | [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md), [ADR 0040](../../../../docs/adr/0040-explicit-field-clearing.md), [ADR 0041](../../../../docs/adr/0041-author-identity-and-schema.md) |
+| **Phase** | 12 / K1, erweitert in 17 / A1 + A2 |
+| **Grundlagen** | [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md), [ADR 0040](../../../../docs/adr/0040-explicit-field-clearing.md), [ADR 0041](../../../../docs/adr/0041-author-identity-and-schema.md), [ADR 0042](../../../../docs/adr/0042-title-page-evidence-and-rejections.md) |
 
 ---
 
@@ -31,6 +31,8 @@ sich später beantworten, woher eine DOI stammt.
 | `person_key` | Funktion | Personenschlüssel: OpenAlex-ID, sonst `orcid:<ORCID>`, sonst `name:<normalisiert>` |
 | `aligned_identifiers` / `read_identifier_list` / `identities_of` | Funktionen | Positionsgleichheit von Namen und Kennungen prüfen bzw. herstellen |
 | `IDENTITY_OPENALEX` / `IDENTITY_ORCID` / `IDENTITY_NAME` | Konstanten | Identitätsstatus einer Nennung |
+| `Rejection` / `PaperReview` | Dataclasses | Ablehnungsvermerk bzw. Prüfstand eines Papers (ADR 0042) |
+| `REVIEW_UNRESOLVABLE` / `REVIEW_STATUSES` | Konstanten | ausgewiesener Status „nicht auflösbar“ |
 | `ORIGIN_MANUAL` / `ORIGIN_CURATED` / `ORIGIN_RESOLVED` / `ORIGIN_EXTRACTED` / `ORIGIN_PRECEDENCE` | Konstanten | Herkünfte und ihr Vorrang |
 | `CONFIDENCE_STRONG` / `CONFIDENCE_WEAK` / `CONFIDENCE_NONE` / `CONFIDENCES` | Konstanten | Konfidenzstufen (aufsteigend) |
 | `METADATA_FIELDS` / `CITABLE_FIELDS` | Konstanten | aufgelöste Felder bzw. Pflichtfelder |
@@ -109,6 +111,14 @@ bestätigte Identität erscheint.
 Die Speicherform schreibt `author_ids`/`author_orcids` nur, wenn mindestens eine Kennung vorliegt.
 Ein Datensatz ohne Kennung bleibt so byte-identisch zur Form vor ADR 0041, und eine alte Datei lädt
 ohne Migration.
+
+### Prüfstand: Vermerk und Status (ADR 0042)
+
+`Rejection` hält einen verworfenen Treffer fest (DOI, arXiv-ID, Titel, Grund, Datum). `PaperReview`
+bündelt die Vermerke eines Papers und einen optionalen Status. `PaperMetadata.review` gibt einen
+gesetzten Status als `{status, reason}` aus, sonst `None`. So ist ein schwacher Datensatz
+ausdrücklich als „nicht auflösbar“ ausgewiesen, statt still `weak` zu bleiben. Wie ein Vermerk
+geprüft wird, regelt [titlepage](titlepage.md); dieses Modul bleibt reine Datenhaltung.
 
 ### Warum keine feldweise Konfidenz
 

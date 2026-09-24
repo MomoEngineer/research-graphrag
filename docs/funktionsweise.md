@@ -509,10 +509,31 @@ Drei Eigenschaften halten diese Kette zusammen:
   ([ADR 0025](adr/0025-citable-paper-metadata.md),
   [ADR 0026](adr/0026-online-metadata-resolution.md)).
 
+Seit Phase 17 kommen zwei Prüfungen hinzu, bevor ein Treffer die Datei erreicht:
+
+```mermaid
+flowchart LR
+    HIT["Treffer der Auflösung<br/>oder LLM-Vorschlag"] --> VM{"Ablehnungsvermerk?"}
+    VM -- ja --> NEXT["nächster Weg"]
+    VM -- nein --> S1{"Seite-1-Beleg<br/>Titel + Autoren auf S. 1"}
+    S1 -- bestätigt --> STRONG["resolved · strong"]
+    S1 -- fremd --> REJ["verworfen + Vermerk"]
+    S1 -- unbestätigt --> KEEP["bleibt, wie er ist<br/>→ Arbeitsliste"]
+```
+
+- **Der Beleg entscheidet, nicht die Quelle.** Die Titelseite ist nur Beleg, nie Quelle. Ein
+  LLM-Vorschlag wird genauso geprüft wie ein Treffer der Online-Auflösung
+  ([ADR 0042](adr/0042-title-page-evidence-and-rejections.md)).
+- **Die Personenkennung reist mit der Autorenliste.** OpenAlex-ID und ORCID stehen
+  positionsgleich neben den Namen und erscheinen als `author_identities` in jeder Literaturangabe
+  ([ADR 0041](adr/0041-author-identity-and-schema.md)).
+
 Vertiefung: [reference](../src/research_graphrag/retrieval/doc/reference.md),
 [styles](../src/research_graphrag/bibliography/doc/styles.md),
 [resolve](../src/research_graphrag/bibliography/doc/resolve.md),
-[online/metadata](../src/research_graphrag/online/doc/metadata.md).
+[online/metadata](../src/research_graphrag/online/doc/metadata.md),
+[titlepage](../src/research_graphrag/bibliography/doc/titlepage.md),
+[worklist](../src/research_graphrag/bibliography/doc/worklist.md).
 
 ---
 
@@ -632,5 +653,5 @@ erkennbar.
 | `evaluation/` | [gold](../src/research_graphrag/evaluation/doc/gold.md) · [metrics](../src/research_graphrag/evaluation/doc/metrics.md) · [runner](../src/research_graphrag/evaluation/doc/runner.md) · [baseline](../src/research_graphrag/evaluation/doc/baseline.md) · [routing](../src/research_graphrag/evaluation/doc/routing.md) · [multihop](../src/research_graphrag/evaluation/doc/multihop.md) · [report](../src/research_graphrag/evaluation/doc/report.md) |
 | `overview/` | [drafts](../src/research_graphrag/overview/doc/drafts.md) |
 | `online/` | [transport](../src/research_graphrag/online/doc/transport.md) · [sources](../src/research_graphrag/online/doc/sources.md) · [candidates](../src/research_graphrag/online/doc/candidates.md) · [search](../src/research_graphrag/online/doc/search.md) · [metadata](../src/research_graphrag/online/doc/metadata.md) · [references](../src/research_graphrag/online/doc/references.md) · [report](../src/research_graphrag/online/doc/report.md) |
-| `bibliography/` | [model](../src/research_graphrag/bibliography/doc/model.md) · [resolve](../src/research_graphrag/bibliography/doc/resolve.md) · [curated](../src/research_graphrag/bibliography/doc/curated.md) · [store](../src/research_graphrag/bibliography/doc/store.md) · [styles](../src/research_graphrag/bibliography/doc/styles.md) |
+| `bibliography/` | [model](../src/research_graphrag/bibliography/doc/model.md) · [resolve](../src/research_graphrag/bibliography/doc/resolve.md) · [curated](../src/research_graphrag/bibliography/doc/curated.md) · [store](../src/research_graphrag/bibliography/doc/store.md) · [styles](../src/research_graphrag/bibliography/doc/styles.md) · [corrections](../src/research_graphrag/bibliography/doc/corrections.md) · [titlepage](../src/research_graphrag/bibliography/doc/titlepage.md) · [triage](../src/research_graphrag/bibliography/doc/triage.md) · [worklist](../src/research_graphrag/bibliography/doc/worklist.md) |
 | `mcp_server/` | [server](../src/research_graphrag/mcp_server/doc/server.md) · [sampling](../src/research_graphrag/mcp_server/doc/sampling.md) |

@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/online/report.py` |
 | **Paket** | `online` – Kandidatensuche im Netz |
-| **Phase** | 9 / S1+S2 |
-| **Grundlagen** | [ADR 0020](../../../../docs/adr/0020-online-candidate-search-phase9.md), [ADR 0010](../../../../docs/adr/0010-drop-in-workflow-and-qa-phase6.md), [ADR 0035](../../../../docs/adr/0035-fulltext-download-phase9-s2.md) |
+| **Phase** | 9 / S1+S2, erweitert in 17 / A1 |
+| **Grundlagen** | [ADR 0020](../../../../docs/adr/0020-online-candidate-search-phase9.md), [ADR 0010](../../../../docs/adr/0010-drop-in-workflow-and-qa-phase6.md), [ADR 0035](../../../../docs/adr/0035-fulltext-download-phase9-s2.md), [ADR 0042](../../../../docs/adr/0042-title-page-evidence-and-rejections.md) |
 
 ---
 
@@ -32,7 +32,8 @@ Identifikator und Link bleiben davon unabhängig immer sichtbar. Ohne das Flag b
 | `render_report` | Funktion | Rendert einen Lauf als Markdown-Abschnitt |
 | `append_report` | Funktion | Hängt den Abschnitt byte-erhaltend und atomar an |
 | `append_section` | Funktion | gemeinsamer Anhänge-Mechanismus aller drei Protokolle |
-| `render_resolutions` / `append_resolutions` | Funktionen | Bericht der Metadaten-Auflösung (`data/metadata_log.md`) |
+| `render_resolutions` / `append_resolutions` | Funktionen | Bericht der Metadaten-Auflösung (`data/metadata_log.md`), seit Phase 17 mit Abschnitt „Verworfen (Ablehnungsvermerk gesetzt)“ |
+| `append_metadata_section` | Funktion | beliebiger Abschnitt in `data/metadata_log.md` (Seite-1-Prüfung, Arbeitslisten-Import) |
 | `render_references` / `append_references` | Funktionen | Protokoll der Referenz-Auflösung (`data/references_log.md`) |
 | `store_raw` | Funktion | Legt die Rohantworten datiert ab |
 | `escape_markdown` | Funktion | Entschärft fremden Text |

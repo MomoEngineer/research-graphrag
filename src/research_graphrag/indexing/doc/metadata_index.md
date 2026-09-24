@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/indexing/metadata_index.py` |
 | **Paket** | `indexing` – Index, Graphen und Metadaten |
-| **Phase** | 12 / K1, erweitert in 17 / A2 |
-| **Grundlagen** | [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md) · [ADR 0010](../../../../docs/adr/0010-drop-in-workflow-and-qa-phase6.md) · [ADR 0041](../../../../docs/adr/0041-author-identity-and-schema.md) |
+| **Phase** | 12 / K1, erweitert in 17 / A1 + A2 |
+| **Grundlagen** | [ADR 0025](../../../../docs/adr/0025-citable-paper-metadata.md) · [ADR 0010](../../../../docs/adr/0010-drop-in-workflow-and-qa-phase6.md) · [ADR 0041](../../../../docs/adr/0041-author-identity-and-schema.md) · [ADR 0042](../../../../docs/adr/0042-title-page-evidence-and-rejections.md) |
 
 ---
 
@@ -80,6 +80,13 @@ Spalten nur ab, wenn es sie gibt. Der Bericht weist `author_coverage` aus, den A
 Volltexte mit Autoren aus einem `strong`-Datensatz. Das ist die Kennzahl des
 A0-Abbruchkriteriums (Schwelle 80 %), und `python -m scripts.ingest` gibt sie nach jedem Lauf aus.
 
+### Ausgewiesener Prüfstatus (Teilschema 0.3.0, Phase 17 / A1)
+
+Der Bau liest zusätzlich den Prüfstand der Metadatendatei. Ein gesetzter Status („nicht
+auflösbar“ samt Grund) landet in der Spalte `review` und erscheint in `get_reference`,
+`get_paper` und `answer_question` als `review`. Ein älterer Index ohne die Spalte bleibt lesbar
+und liefert `review = None`.
+
 ### Ein Datensatz, eine Konfidenz
 
 Bewusst wird **nicht** je Feld eine eigene Konfidenz geführt, obwohl der Titel (Dateiname) auch
@@ -122,6 +129,7 @@ vollständig in die Temporärdatei, dann ein `os.replace`.
 | Index-Datei fehlt (Bau oder Lesen) | `not_found` |
 | Tabelle fehlt (Index vor Phase 12) | kein Fehler – leeres Ergebnis |
 | Tabelle ohne Kennungsspalten (Teilschema 0.1.0) | kein Fehler – Metadaten ohne Kennungen |
+| Tabelle ohne `review` (Teilschema 0.2.0) | kein Fehler – `review = None` |
 | Paper ohne jeden Datensatz | kein Fehler – leerer `PaperMetadata` |
 | defekte oder versionsfremde `metadata/paper_metadata.json` | `parse_error` / `constraint_violation` (aus dem Store) |
 

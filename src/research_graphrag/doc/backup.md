@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/backup.py` |
 | **Paket** | Top-Level – Sicherung des nicht reproduzierbaren Bestandes |
-| **Phase** | 11 / B1 |
-| **Grundlagen** | [ADR 0027](../../../docs/adr/0027-corpus-backup-phase11.md), [ADR 0019](../../../docs/adr/0019-corpus-intake-new-papers-phase8.md), [ADR 0013](../../../docs/adr/0013-chunking-refinement-phase7.md) |
+| **Phase** | 11 / B1, erweitert in 17 / A1 |
+| **Grundlagen** | [ADR 0027](../../../docs/adr/0027-corpus-backup-phase11.md), [ADR 0019](../../../docs/adr/0019-corpus-intake-new-papers-phase8.md), [ADR 0013](../../../docs/adr/0013-chunking-refinement-phase7.md), [ADR 0042](../../../docs/adr/0042-title-page-evidence-and-rejections.md) |
 
 ---
 
@@ -27,7 +27,7 @@ gebaut.
 | `BackupItem` | Dataclass | Ergebnis für **eine** Datei (Pfad, Aktion, sha256, Größe) |
 | `BackupReport` | Dataclass | Bilanz eines Laufs; Kennzahlen als abgeleitete Eigenschaften |
 | `VerificationReport` | Dataclass | Befund der Nachrechnung (verändert / fehlend) |
-| `SOURCE_DIRECTORIES`, `SOURCE_FILES` | Konstanten | Der festgelegte Sicherungsumfang |
+| `SOURCE_DIRECTORIES`, `SOURCE_FILES` | Konstanten | Der festgelegte Sicherungsumfang; seit Phase 17 / A1 auch `metadata/llm_answers/` (LLM-Antworten der Metadaten-Arbeitsliste, nicht rekonstruierbar) |
 | `REQUIRED_DIRECTORY` | Konstante | Ohne dieses Verzeichnis gibt es nichts zu sichern |
 | `ACTION_COPIED` / `ACTION_UNCHANGED` / `ACTION_MISSING` | Konstanten | Stabiles Vokabular des Berichts |
 | `BACKUP_MANIFEST_NAME`, `BACKUP_SCHEMA_VERSION` | Konstanten | Name und Format des Prüfnachweises |

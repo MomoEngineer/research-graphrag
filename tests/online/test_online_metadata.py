@@ -6,7 +6,7 @@ Der Netzzugang läuft über den injizierten Port; alle Prüfungen sind damit **o
 from __future__ import annotations
 
 import json
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from urllib.parse import quote
 
@@ -17,8 +17,12 @@ from research_graphrag.bibliography.model import (
     CONFIDENCE_WEAK,
     ORIGIN_EXTRACTED,
     ORIGIN_RESOLVED,
+    REVIEW_UNRESOLVABLE,
     MetadataRecord,
+    PaperReview,
+    Rejection,
 )
+from research_graphrag.bibliography.titlepage import Calibration, TitlePageCheck
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.model import SECTION_KIND_BODY, Section
 from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
@@ -29,6 +33,7 @@ from research_graphrag.online.metadata import (
     MATCH_DOI,
     MATCH_TITLE,
     MAX_AUTHORS,
+    Resolution,
     ResolutionTarget,
     authors_of,
     authorships_of,
@@ -37,9 +42,11 @@ from research_graphrag.online.metadata import (
     openalex_title_url,
     parse_openalex_work,
     resolve_target,
+    skip_settled,
     targets_from_index,
     venue_of,
 )
+from research_graphrag.online.report import render_resolutions
 from research_graphrag.online.transport import HttpResponse
 
 _TITLE = "Graph Retrieval for Scientific Corpora at Scale"
@@ -537,3 +544,116 @@ def test_malformed_authorships_are_skipped_not_fatal() -> None:
     identities = authorships_of(json.dumps(work).encode())
 
     assert [(entry.name, entry.openalex_id) for entry in identities] == [("Anna Beispiel", "")]
+
+
+# --------------------------------------------------------------------------------------
+# Ablehnungsvermerk und Seite-1-Beleg in der Auflösung (Phase 17 / A1, ADR 0042)
+# --------------------------------------------------------------------------------------
+
+_FOREIGN_TITLE = "GPT-4 Technical Report of a Large Multimodal Model"
+_CALIBRATED = Calibration(min_author_share=0.5, max_share_for_rejection=0.0, source="Test")
+
+
+def _checker(verdicts: dict[str, TitlePageCheck]) -> Callable[[MetadataRecord], TitlePageCheck]:
+    """Liefert je Treffer-Titel einen vorbereiteten Seite-1-Beleg."""
+
+    def verify(record: MetadataRecord) -> TitlePageCheck:
+        return verdicts[record.title]
+
+    return verify
+
+
+def test_a_rejected_hit_is_skipped_and_the_next_way_is_tried() -> None:
+    """Der Vermerk verhindert das Wiedereinspielen; die Titel-Suche findet das eigene Paper."""
+    client = _FakeClient(
+        by_id=json.dumps(_work(title=_FOREIGN_TITLE, doi="10.1/gpt4")).encode(),
+        by_title=_payload(_work()),
+    )
+    rejection = Rejection(doi="10.1/GPT4", reason="Fremd-Paper", date="2026-09-01")
+
+    result = resolve_target(client, _target(doi="10.1/gpt4"), rejections=[rejection])
+
+    assert result.match == MATCH_TITLE
+    assert result.record is not None
+    assert result.record.title == _TITLE
+
+
+def test_a_foreign_hit_becomes_a_new_rejection() -> None:
+    """Ein kalibriert als fremd erkannter Treffer wird verworfen und als Vermerk zurückgegeben."""
+    client = _FakeClient(
+        by_id=json.dumps(_work(title=_FOREIGN_TITLE, doi="10.1/gpt4")).encode(),
+        by_title=_payload(_work()),
+    )
+    verify = _checker(
+        {
+            _FOREIGN_TITLE: TitlePageCheck(True, 0.2, 2, 0),
+            _TITLE: TitlePageCheck(True, 1.0, 2, 2),
+        }
+    )
+
+    result = resolve_target(
+        client,
+        _target(doi="10.1/gpt4"),
+        verify=verify,
+        calibration=_CALIBRATED,
+        today="2026-09-24",
+    )
+
+    assert [entry.doi for entry in result.rejected] == ["10.1/gpt4"]
+    assert result.rejected[0].date == "2026-09-24"
+    assert result.record is not None
+    assert result.record.title == _TITLE
+    assert result.record.confidence == CONFIDENCE_STRONG
+    assert "Titel und Autoren auf S. 1 belegt" in result.record.evidence
+
+
+def test_an_unconfirmed_hit_is_kept_as_it_is_but_carries_its_check() -> None:
+    """Ohne Kalibrierung wird nur gemessen: Der Treffer bleibt, der Befund reist mit."""
+    client = _FakeClient(by_title=_payload(_work()))
+    check = TitlePageCheck(True, 1.0, 2, 2)
+
+    result = resolve_target(client, _target(doi=""), verify=lambda _record: check)
+
+    assert result.record is not None
+    assert result.record.confidence == CONFIDENCE_WEAK
+    assert result.check == check
+    assert result.rejected == ()
+
+
+def test_all_ways_rejected_leaves_the_paper_unresolved() -> None:
+    """Verwirft der Beleg jeden Treffer, bleibt das Paper offen – mit Grund und Vermerken."""
+    client = _FakeClient(by_id=json.dumps(_work(title=_FOREIGN_TITLE)).encode())
+    verify = _checker({_FOREIGN_TITLE: TitlePageCheck(True, 0.1, 1, 0)})
+
+    result = resolve_target(
+        client, _target(title=""), verify=verify, calibration=_CALIBRATED, today="2026-09-24"
+    )
+
+    assert result.record is None
+    assert len(result.rejected) == 1
+    assert "Fremd-Paper" in result.note
+
+
+def test_settled_papers_are_not_queried_again() -> None:
+    """Ein als „nicht auflösbar“ ausgewiesenes Paper fällt aus der Auswahl."""
+    reviews = {"aaaa0001": PaperReview("aaaa0001", REVIEW_UNRESOLVABLE, "nur als Poster")}
+    targets = (_target(), _target(paper_id="bbbb0001"))
+
+    assert [target.paper_id for target in skip_settled(targets, reviews)] == ["bbbb0001"]
+
+
+def test_the_log_lists_rejected_hits_with_their_reason() -> None:
+    """Ein verworfener Treffer wird nie still verworfen."""
+    resolution = Resolution(
+        target=_target(),
+        record=None,
+        note="kein Treffer",
+        rejected=(
+            Rejection(doi="10.1/gpt4", title=_FOREIGN_TITLE, reason="Fremd-Paper laut Beleg"),
+        ),
+    )
+
+    text = "\n".join(render_resolutions("20260924T100000Z", [resolution]))
+
+    assert "### Verworfen (Ablehnungsvermerk gesetzt)" in text
+    assert "`10.1/gpt4`" in text

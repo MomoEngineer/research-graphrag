@@ -20,7 +20,7 @@ Zeichenketten gelten als nicht vertrauenswürdige Eingabe und werden vor der Üb
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -34,8 +34,19 @@ from ..bibliography.model import (
     ORIGIN_RESOLVED,
     AuthorIdentity,
     MetadataRecord,
+    PaperReview,
+    Rejection,
     normalize_openalex_author_id,
     normalize_orcid,
+)
+from ..bibliography.titlepage import (
+    VERDICT_CONFIRMED,
+    VERDICT_FOREIGN,
+    Calibration,
+    TitlePageCheck,
+    is_rejected,
+    rejection_for,
+    upgrade,
 )
 from ..errors import DomainError, ErrorCode
 from ..indexing.citation_graph import normalize_title
@@ -116,6 +127,9 @@ class Resolution:
         match: Belegart (:data:`MATCH_DOI`, :data:`MATCH_ARXIV`, :data:`MATCH_TITLE`) oder leer.
         note: Klartext-Begründung – auch (und gerade) im Misserfolgsfall.
         raw: Rohantworten des Laufs für die Ablage.
+        rejected: In **diesem** Lauf über den Seite-1-Beleg verworfene Treffer; der Aufrufer
+            speichert sie als Ablehnungsvermerk (ADR 0042).
+        check: Seite-1-Beleg des übernommenen Treffers; ``None``, wenn nicht geprüft wurde.
     """
 
     target: ResolutionTarget
@@ -123,6 +137,8 @@ class Resolution:
     match: str = ""
     note: str = ""
     raw: tuple[SourceResult, ...] = ()
+    rejected: tuple[Rejection, ...] = ()
+    check: TitlePageCheck | None = None
 
     @property
     def resolved(self) -> bool:
@@ -504,37 +520,104 @@ def filter_pending(
     )
 
 
-def resolve_target(client: HttpClient, target: ResolutionTarget) -> Resolution:
+Verifier = Callable[[MetadataRecord], "TitlePageCheck | None"]
+"""Prüft einen Treffer gegen die Titelseite; ``None`` heißt „nicht prüfbar“ (kein PDF)."""
+
+
+def skip_settled(
+    targets: Sequence[ResolutionTarget], reviews: Mapping[str, PaperReview]
+) -> tuple[ResolutionTarget, ...]:
+    """Blendet Paper mit ausgewiesenem Prüfstatus aus (etwa „nicht auflösbar“).
+
+    Den Status setzt ein Mensch mit Grund (docs/adr/0042-title-page-evidence-and-rejections.md).
+    Ein Auflösungslauf fragt ein solches Paper deshalb nicht erneut ab; wer es doch will, hebt den
+    Status zuvor auf.
+    """
+    return tuple(
+        target
+        for target in targets
+        if not (target.paper_id in reviews and reviews[target.paper_id].status)
+    )
+
+
+def resolve_target(
+    client: HttpClient,
+    target: ResolutionTarget,
+    *,
+    rejections: Sequence[Rejection] = (),
+    verify: Verifier | None = None,
+    calibration: Calibration | None = None,
+    today: str = "",
+) -> Resolution:
     """Löst die Metadaten **eines** Papers auf.
+
+    Seit Phase 17 / A1 durchläuft jeder Treffer zwei Prüfungen, bevor er übernommen wird
+    (docs/adr/0042-title-page-evidence-and-rejections.md):
+
+    1. **Ablehnungsvermerk:** Ein früher verworfener Treffer (gleiche DOI, arXiv-ID oder
+       gleicher Titel) wird übersprungen, und der nächste Weg wird versucht.
+    2. **Seite-1-Beleg** (nur mit ``verify``): Ist der Treffer laut kalibriertem Beleg fremd, wird
+       er verworfen und als neuer Vermerk zurückgegeben. Ist er bestätigt, wird er ``strong``.
+       Sonst bleibt er, wie er ist. Neue ``weak``-Einträge entstehen so nicht mehr unbemerkt,
+       weil der Befund in ``check`` mitkommt.
 
     Args:
         client: Injizierter Transport-Port (die einzige Stelle mit Netzzugriff).
         target: Das aufzulösende Paper samt lokal bekannter Angaben.
+        rejections: Die gespeicherten Ablehnungsvermerke **dieses** Papers.
+        verify: Prüft einen Treffer gegen die Titelseite; ``None`` schaltet die Prüfung ab.
+        calibration: Schwellen des Belegs; ``None`` = die geltende Kalibrierung.
+        today: Datum für neue Vermerke (ISO); der Aufrufer legt es fest (Determinismus).
 
     Returns:
         Eine :class:`Resolution`; ohne Beleg ist ``record`` ``None`` und ``note`` nennt den Grund.
     """
     collected: list[SourceResult] = []
     notes: list[str] = []
+    known = list(rejections)
+    new_rejections: list[Rejection] = []
     for attempt in (_by_identifier, _by_title, _by_arxiv_feed):
         result = attempt(client, target)
         if result is None:
             continue
         collected.extend(result.raw)
-        if result.resolved:
-            return Resolution(
-                target=result.target,
-                record=result.record,
-                match=result.match,
-                note=result.note,
-                raw=tuple(collected),
-            )
-        if result.note:
-            notes.append(result.note)
+        record = result.record
+        if record is None:
+            if result.note:
+                notes.append(result.note)
+            continue
+        if is_rejected(record, known):
+            notes.append(f"{result.note}: Treffer laut Ablehnungsvermerk verworfen")
+            continue
+        check = verify(record) if verify is not None else None
+        verdict = check.verdict(calibration) if check is not None else ""
+        if check is not None and verdict == VERDICT_FOREIGN:
+            rejection = rejection_for(record, check, today)
+            known.append(rejection)
+            new_rejections.append(rejection)
+            notes.append(f"{result.note}: {rejection.reason}")
+            continue
+        if check is not None and verdict == VERDICT_CONFIRMED:
+            record = upgrade(record, check)
+        return Resolution(
+            target=result.target,
+            record=record,
+            match=result.match,
+            note=result.note,
+            raw=tuple(collected),
+            rejected=tuple(new_rejections),
+            check=check,
+        )
     if notes:
         note = "; ".join(notes)
     elif collected:
         note = "kein belastbarer Treffer"
     else:
         note = "keine Abfragemöglichkeit (kein Titel, kein Identifikator)"
-    return Resolution(target=target, record=None, note=note, raw=tuple(collected))
+    return Resolution(
+        target=target,
+        record=None,
+        note=note,
+        raw=tuple(collected),
+        rejected=tuple(new_rejections),
+    )
