@@ -10,7 +10,7 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 > bleibt aus Kontinuitätsgründen an Ort und Stelle, auch nachdem Phase 14 selbst archiviert ist.
 > **Aktiver Plan (seit 2026-09-24): [Phase 16 – Antwortzeit: Weg B (FTS5)](#phase-16--antwortzeit-weg-b-fts5)
 > und [Phase 17 – Autoren als Rechercheebene](#phase-17--autoren-als-rechercheebene)**. Phase 16
-> ist geplant und noch nicht begonnen; Phase 17 ist **in Arbeit** (seit 2026-09-24,
+> ist **in Arbeit** (seit 2026-09-25, F0 beantwortet); Phase 17 ist **in Arbeit** (seit 2026-09-24,
 > [Umsetzungsblock](#umsetzung-stand-und-reihenfolge)).
 > [A1](#a1--weak--strong-jede-literaturangabe-belegt-vorziehbar) ist ausdrücklich **vor**
 > Phase 16 ausführbar, weil er falsche Literaturangaben korrigiert.
@@ -881,7 +881,9 @@ Kein Volltext-Download (das ist eine eigene Fähigkeit – [S2](#s2--volltext-ho
 
 ## Phase 16 – Antwortzeit: Weg B (FTS5)
 
-> **Status: geplant (2026-09-24), nicht begonnen.** Die Phase löst die in
+> **Status: in Arbeit (seit 2026-09-25).** [F0](#f0--kosten-zerlegen-und-beide-wege-prototypisch-messen-zwingend-zuerst-mit-entscheidungsregel)
+> ist beantwortet: F1 baut vier bit-identische Kandidaten, die FTS5-Vorauswahl entfällt, FTS5 wird
+> als Infrastruktur gebaut, und F3 ist nötig. Ursprünglicher Planungsstand (2026-09-24): Die Phase löst die in
 > [ADR 0038](docs/adr/0038-corpus-ceiling-revision-local-search-latency.md) verlangte, dedizierte
 > Phase ein. Ausgangslage ist die dortige Messung vom 2026-09-16 bei **3.461 Papern / 220.964
 > Chunks / 1.170 Communities**:
@@ -921,6 +923,147 @@ nicht; ADR 0038 hat das gemessen, nicht nur befürchtet.
 
 ### F0 – Kosten zerlegen und beide Wege prototypisch messen (zwingend zuerst, mit Entscheidungsregel)
 _Modell-Tipp: Claude Opus 5.5._
+
+> **Status (2026-09-25, beantwortet – kein Produktivcode, kein ADR):** Die Regel entscheidet
+> eindeutig. **Regel 1 greift** (bit-identische Begradigung wird gebaut, wirksam sind vier
+> Kandidaten), **Regel 2 greift nicht** (keine FTS5-Vorauswahl), **Regel 3 greift** (FTS5 als
+> Infrastruktur: +16,0 % Index, +6,7 % Ingest). **F3 ist nötig**: Der Kaltstart hält die 5-s-Marke
+> auch nach F1 nicht. **Auslegungspunkt:** der doppelte Bestand, 7.158 Einträge / 450.779 Chunks.
+> Die Messung korrigierte zwei Annahmen: Teuer ist nicht die Python-Sortierung allein, sondern vor
+> allem die **Matrixmultiplikation über alle 23 Mio. Nicht-Null-Einträge**. Und der Fan-out-Vorfilter
+> aus ADR 0038 ist in der dort beschriebenen Form **nicht** bit-identisch.
+>
+> **Messumgebung und Messbasis.** Gemessen wurde in einem Linux-Container (4 vCPU, 15 GB RAM,
+> Python 3.11.15, SQLite 3.45.1) mit den gepinnten Versionen aus `pyproject.toml`, am realen
+> Bestand aus dem Daten-Repo (Stand 2026-09-25), wie mit dem Nutzer vereinbart. Der Index entstand
+> über den regulären `python -m scripts.ingest`, die Extraktion lief vorab parallel über dieselben
+> Funktionen. Er umfasst **3.579 Paper, 225.126 Chunks, 1.239 Communities, 16.832 Zitationskanten,
+> 714 MB** (Schema 0.6.0); die Roadmap nannte 1.241 Communities. Alle 3.267 PDFs passen zum
+> Manifest; 19 `.refjson` tragen einen neueren Hash als dort vermerkt und wurden neu gelesen.
+> Zur Kalibrierung wurde der Ist-Stand nach dem Protokoll aus ADR 0038 nachgemessen (warm: 20
+> Gold-Fragen je Modus, ein Prozess; kalt: `python -m scripts.ask`, 3 Wiederholungen). Die Werte
+> liegen in derselben Größenordnung wie dort: Local warm im Median 6,69 s bzw. 6,87 s in zwei
+> Läufen (ADR 0038: 6,064 s). **Die Streuung zwischen Läufen ist erheblich** (Basic 1,22 s gegen
+> 1,60 s). Absolute Zahlen gelten nur für diese Maschine; die Bestätigung auf dem Rechner des
+> Nutzers folgt in F4.
+>
+> **F0.1 – Kostenzerlegung.** Local kostet warm 8,7 s je Anfrage (instrumentiert). Davon entfallen
+> 3,9 s auf fünf Nachbarschafts-Scorings (je ~0,8 s), 1,6 s auf die Seed-Suche und 3,2 s auf den
+> Fan-out. In jeder Suche dominiert `_scores` (TF-IDF-Kosinus und BM25, ~1 s je Aufruf), weil
+> `linear_kernel` und das BM25-Produkt die **ganze** Matrix berühren. Die Python-Ranglisten kosten
+> ~0,17 s je Aufruf, die Fusion 0,08 s. `load_neighbors` ist mit < 1 ms bedeutungslos, ebenso
+> das Nachladen der Texte. **Ladeanteil** (`TfidfIndex.load`, 8,4 s): TF-IDF-Transformation
+> 3,2 s, BM25-Gewichte 3,0 s, Lesen der Zustands-Blobs 1,9 s, `_ChunkRef`-Objekte 0,8 s, Chunk-SQL
+> 0,7 s. Hinzu kommen Imports (0,8 s) und für Global/DRIFT `ProvenanceAssembler.load` (0,6 s).
+> Kalt dauert eine Anfrage 11,1–22,6 s (Local am längsten).
+>
+> **F0.2 – Bit-identische Kandidaten.** Prototypisch als Methodenersatz an `TfidfIndex`
+> (Wegwerf-Skript, außerhalb des Repos):
+>
+> | Kandidat | Wirkung (warm, realer Bestand) | Bit-identisch? |
+> | --- | --- | --- |
+> | (a) Fan-out-Vorfilter **vor der Wertung** (ADR 0038, Abschnitt 3) | – | **nein**: RRF rechnet mit Rängen über den ganzen Korpus. Am Mini-Index weichen 239 von 240 gefilterten `hybrid`-Suchen ab (Score, teils Reihenfolge); `tfidf`/`bm25` bleiben gleich |
+> | (a) Filter **vor der Sortierung** auf der globalen Wertung | nur zusammen mit (b)/(d) wirksam | ja |
+> | (b) gemeinsame Wertung je Anfrage (LRU am Index-Objekt) | DRIFT 1,46 → 0,90 s (mit d) | ja, per Konstruktion |
+> | (c) Nachbarschafts-Cache | **3 Treffer auf 100 Aufrufe**: wirkungslos | ja, wird aber nicht gebaut |
+> | (d) NumPy-Ranglisten, Fusion und Top-k mit identischem Tie-Break | Basic 1,22 → 0,52 s | ja |
+> | (n) Nachbarschaft mit Zeilen-Lookup und vektorisierter Top-k-Auswahl | Local 3,4 → 2,5 s (mit d, a, b) | ja |
+> | (e) **spaltenweise Wertung**: nur die Spalten der Anfrage-Terme, in der Summationsfolge von scipy | Wertung 1 s → **5 ms** | ja |
+> | (v) dichter Anfragevektor + `csr_matvec` (keine Kopie) | Wertung 1 s → ~0,1 s | ja |
+>
+> (e) und (v) sind Kandidaten, die die Roadmap nicht vorsah. Ihr Ziel ist der von ADR 0038
+> gemessene strukturelle Anteil, den ein Cache nicht beseitigt. Sie verändern keine Rechnung, nur
+> deren Reihenfolge im Speicher; die Summation je Chunk läuft in derselben Folge wie bei scipy.
+> Ergebnis je Kombination (Median / Max über 20 Anfragen):
+>
+> | Kombination | Basic | Local | Global | DRIFT |
+> | --- | --- | --- | --- | --- |
+> | Original | 1,596 / 2,560 s | 6,873 / 16,549 s | 1,265 / 2,358 s | 2,373 / 3,490 s |
+> | d, a, b, n, v | 0,149 / 0,226 s | 0,421 / 0,454 s | 0,324 / 0,792 s | 0,332 / 0,404 s |
+> | **d, a, b, n, e** | **0,052 / 0,064 s** | **0,167 / 0,199 s** | **0,220 / 0,306 s** | **0,230 / 0,288 s** |
+>
+> *Nachweis:* `--check` beider Kombinationen gegen eine Wegwerf-Baseline, die mit dem
+> **unveränderten** Code am realen Bestand eingefroren wurde. Die eingefrorenen Baselines im Repo
+> stammen vom 606-Paper-Stand; der Fingerprint-Guard verweigert dort den Vergleich, wie schon in
+> G1/G2. Retrieval-Ebenen: **0 Abweichungen** für beide. Multi-Hop-Ebenen: siehe Nachtrag unten.
+> Dazu kommt ein Feldvergleich (`chunk_id`, alle drei Scores, Snippet, komplette Provenienz,
+> `score_chunks_by_paper`, Nachbarschaften, alle vier Modi als `to_dict`) mit allen Gold-, QA- und
+> Sonderanfragen (Gleichstand, Wiederholung, Allerweltswort, kein Treffer, FTS-Sonderzeichen) sowie
+> jeder dritten Multi-Hop-Frage: siehe Nachtrag unten. Am Mini-Index (150 Paper) lief derselbe
+> Vergleich über je 1.776 Prüfungen mit 0 Abweichungen.
+>
+> **F0.3 – FTS5 als Vorauswahl.** Die external-content-Tabelle wird über eine ODER-Verknüpfung der
+> Anfrage-Tokens abgefragt; exakt gewertet werden danach nur die Top-*N*. Qid-Abweichungen auf den
+> fünf Retrieval-Ebenen: *N* = 1.000 ergibt 1 Regression und 13 Abweichungen, *N* = 5.000 sieben
+> Abweichungen, *N* = 20.000 und 50.000 jeweils 0. **Entscheidend ist die Zeit:** Die FTS5-Stufe
+> selbst kostet 0,29–0,33 s je Anfrage, unabhängig von *N*, weil Allerweltswörter fast jeden Chunk
+> treffen und FTS5 alle Treffer bewertet. Die **exakte** Wertung über alle Chunks mit (e) kostet
+> 5 ms. Die Vorauswahl wäre damit rund 60-mal teurer als das, was sie einspart, und sie ist
+> höchstens rang-, nie bit-identisch (die RRF-Werte ändern sich).
+>
+> **F0.4 – FTS5 als Infrastruktur** (Index-Kopie, `rebuild` über `chunks`, 244 MB Chunk-Text):
+>
+> | Variante | Indexzuwachs | Bauzeit | Anfragen (Top-50 mit Snippet) |
+> | --- | --- | --- | --- |
+> | **`unicode61 remove_diacritics 2`, `detail=full`** | **+16,0 %** | **12,1 s** | Phrase 6–11 ms, Name 2–4 ms, Nähe 5 ms, Präfix 50 ms |
+> | `detail=column` / `detail=none` | +12,9 % / +5,7 % | 11,4 / 9,1 s | Phrase und Nähe nicht möglich |
+> | `trigram` über den Fließtext | +97,8 % | 65,5 s | Phrase 60–80 ms |
+>
+> Bezug der 20-%-Schwelle ist der volle Ingest aus dem Extraktions-Cache, vorab festgelegt als
+> strengere Lesart: 181 s (Index 43 s, Ähnlichkeitsgraph 104 s, Zitationsgraph 18 s). +12,1 s
+> sind **+6,7 %**. Die Annahme zu `trigram` ist belegt: Der Index belegt rund das 2,9-Fache des
+> Textes. `trigram` bleibt deshalb der Namenstabelle aus Phase 17 vorbehalten.
+>
+> **F0.5 – Staffel und Auslegungspunkt.** Chimären nach G0.1 mit Seed 1616: je drei echte
+> Volltext-Spender liefern 20–40 % ihrer Chunks unverändert, ohne Abschnitte und ohne
+> Literaturverzeichnis. Gebaut über `_build_index_atomically`:
+>
+> | Stand | Paper / Chunks | Laden | warm Local (Median / Max) | warm, schlechtester Modus (Max) | kalt (Median, alle Modi) |
+> | --- | --- | --- | --- | --- | --- |
+> | real | 3.579 / 225.126 | 7,1–8,4 s | Original 6,87 / 16,55 s · (v) 0,42 / 0,45 s · **(e) 0,17 / 0,20 s** | (e) 0,31 s | 10,5–22,6 s |
+> | 1,5× | 5.369 / 337.415 | 14,5 s | Original 16,99 / 22,47 s · (v) 0,64 / 0,68 s · **(e) 0,25 / 0,34 s** | (e) 0,45 s | 15,7–36,7 s |
+> | **2× (Auslegungspunkt)** | **7.158 / 450.779** | 15,3 s | Original 21,70 / 32,38 s · (v) 0,87 / **0,93 s** · **(e) 0,35 / 0,45 s** | (v) 0,93 s · **(e) 0,77 s** | 20,2–51,4 s |
+>
+> Warm hält (v) am Auslegungspunkt die Marke nur ohne Reserve (Local-Max 0,93 s, Global 0,91 s).
+> (e) hält sie mit Reserve: Das Maximum über alle Modi liegt bei 0,77 s (Global). **Gewählt ist
+> deshalb (e).** Der Preis ist messbar: Die spaltenweisen Kopien kosten beim Laden 1,1–3,4 s,
+> erhöhen aber den Spitzenspeicher nicht, denn die Spitze entsteht beim Laden (1,97 GB real,
+> 3,59 GB bei 2×, mit und ohne (e) gleich). **Nebenbefund:** Die 2-GB-Schwelle aus G0.1 ist damit
+> schon heute am realen Bestand erreicht.
+>
+> **Kaltstart: der Grund für F3.** Auch mit (e) liegt der kalte Pfad bei 10,5–12,2 s (real) bzw.
+> 20–23 s (2×). Er wächst linear mit der Zahl der Nicht-Null-Einträge. Zwei Wege wurden
+> prototypisch gemessen, beide bitgleich:
+>
+> 1. **Schlanker Lader** (dieselbe Rechnung ohne die Validierungs- und Kopier-Umwege von
+>    sklearn/scipy): Die Matrixteile sinken von ~9,0 auf ~5,9 s. Die Indizes im persistierten
+>    Zustand sind **nicht** zeilenweise sortiert; das Sortieren beim Laden (1,0 s) ist echte Arbeit.
+> 2. **Alle abgeleiteten Matrizen persistieren** (TF-IDF, BM25, spaltenweise Kopien): Lesen 1,4 s,
+>    Index **+930 MB (+130 %)**. Kalt ergäbe das am realen Bestand geschätzt ~4 s, bei 2× etwa 7 s.
+>
+> Keiner der beiden Wege erreicht die 5-s-Marke am Auslegungspunkt. F3 entscheidet deshalb mit
+> dem Nutzer zwischen Indexgröße, Kaltstart und einem **Vorladen im MCP-Server** (der Index wird
+> beim Serverstart geladen, die erste Frage im Betrieb trifft dann einen warmen Prozess); eine
+> verbleibende Abweichung wird nach der DoD im ADR begründet.
+>
+> **Anwendung der Regel** (unverändert aus G0.6/ADR 0038):
+>
+> 1. **Gebaut werden (d), (a) als Filter vor der Sortierung, (b), (n) und (e)**, weil sie messbar
+>    beitragen und bit-identisch sind. Nicht gebaut werden (c), weil er wirkungslos ist, und (v),
+>    weil er am Auslegungspunkt ohne Reserve bleibt.
+> 2. **Die FTS5-Vorauswahl entfällt.** F1 hält die warme Marke für Local am Auslegungspunkt
+>    (0,45 s Max), und die Vorauswahl wäre ohnehin langsamer als die exakte Wertung.
+> 3. **FTS5 als Infrastruktur wird gebaut**: `unicode61 remove_diacritics 2` mit `detail=full`,
+>    denn Phrase und Nähe brauchen Positionen. Beide Schwellen werden deutlich eingehalten.
+>
+> **Offen ausgewiesen:** Die Chimären führen kein neues Vokabular ein; die Staffel trägt nur Zeit,
+> Speicher und Größe, nicht die Retrieval-Güte (G0.3). Die Zeiten stammen vom Container, nicht vom
+> Rechner des Nutzers. Alle Mess-Skripte sind Wegwerf-Skripte, wie in G0/G5 und ADR 0038.
+>
+> **Nachtrag – ausstehende Nachweise (laufen noch):** `--check` der Multi-Hop-Ebenen gegen die
+> Wegwerf-Baseline sowie der Feldvergleich am realen Bestand. Bis zum Eintrag der Ergebnisse gilt
+> der Bit-Nachweis nur für die fünf Retrieval-Ebenen und den Mini-Index als erbracht; F1 beginnt
+> erst danach.
 
 F0 ist eine Wegwerf-Messung wie G0 und ADR 0038: kein Produktivcode, der Live-Index wird nur
 gelesen, und gemessen wird an Index-Kopien.
