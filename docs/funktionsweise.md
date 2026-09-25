@@ -56,7 +56,10 @@ Daraus folgen drei Eigenschaften, die den Rest der Architektur erklären:
   dadurch faktisch **einmal**, statt sie je Ebene oder je Frage neu aufzubauen. Neue Paper
   (atomarer Swap) wirken dadurch weiterhin sofort
   ([ADR 0010](adr/0010-drop-in-workflow-and-qa-phase6.md),
-  [ADR 0033](adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md)).
+  [ADR 0033](adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md)). Seit Phase 16 / F3
+  lädt der MCP-Server alle drei Strukturen beim Start im Hintergrund vor; eine frühe Frage wartet auf
+  dasselbe Laden, statt ein zweites anzustoßen
+  ([ADR 0044](adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md)).
 - **Kein `scikit-learn`-Objekt wird `pickle`d.** Persistiert werden seit Phase 15 / G2 reine
   Zahlen (Vokabular als JSON, Zähl-Matrix als Rohbytes fester Breite), aus denen der Vektorraum
   beim Laden **rekonstruiert** wird – byte-genau zu einem frischen Fit aus dem Chunk-Text, aber
@@ -335,9 +338,9 @@ Ergebnis ist ein Unterschied der Bewertung, nicht der Vorverarbeitung.
 
 ```mermaid
 flowchart TD
-    L["CountVectorizer: ein Fit über alle Chunks"] --> A["TfidfTransformer → TF-IDF-Matrix"]
-    L --> B["bm25.build_weights → BM25-Gewichte"]
-    Q["Anfrage"] --> A
+    L["CountVectorizer: ein Fit über alle Chunks"] --> A["TF-IDF-Matrix<br/>(+ spaltenweise Kopie)"]
+    L --> B["BM25-Gewichte<br/>(+ spaltenweise Kopie)"]
+    Q["Anfrage: nur ihre Terme"] --> A
     Q --> B
     A --> RA["Rangliste TF-IDF"]
     B --> RB["Rangliste BM25"]
@@ -355,8 +358,21 @@ getragen hat.
 > Ähnlichkeit. Er ist nur innerhalb einer Antwort vergleichbar, nicht zwischen Anfragen
 > ([ADR 0014](adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md)).
 
+**Nur die Spalten der Anfrage-Terme werden angefasst (seit Phase 16 / F1).** Früher multiplizierte
+jede Wertung die Anfrage gegen die ganze Matrix – am realen Bestand 23 Mio. Einträge, bei Local bis
+zu elfmal je Frage. Jetzt addiert die Wertung nur die Spalten der Anfrage-Terme, in derselben
+Summationsfolge wie zuvor; Ranglisten und Top-*k* laufen vektorisiert, und Seed-, Fan-out- und
+DRIFT-Suchen derselben Anfrage teilen **eine** Wertung. Jede Ausgabe ist bitgleich zu vorher,
+Local warm sinkt am realen Bestand von 6,9 s auf 0,17 s
+([ADR 0044](adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md)).
+
+**Der Phrasenindex greift nicht ein.** Die FTS5-Tabelle `chunk_fts` (seit Phase 16 / F2) beantwortet
+Wortfolge, Präfix und Nähe für künftige Werkzeuge; die Wertung der vier Modi liest sie nicht.
+
 Vertiefung: [bm25](../src/research_graphrag/indexing/doc/bm25.md),
-[fusion](../src/research_graphrag/indexing/doc/fusion.md).
+[fusion](../src/research_graphrag/indexing/doc/fusion.md),
+[tfidf_index](../src/research_graphrag/indexing/doc/tfidf_index.md),
+[chunk_fts](../src/research_graphrag/indexing/doc/chunk_fts.md).
 
 ---
 

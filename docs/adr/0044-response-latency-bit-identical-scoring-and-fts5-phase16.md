@@ -10,7 +10,7 @@ Bestand (damals 3.461 Paper) beide Marken reißt: warm lag Local im Median bei 6
 1,722 s, kalt lagen alle vier Modi bei 9,6–15,8 s. Das ADR hat **Weg B (FTS5)** zur empfohlenen
 nächsten Phase erhoben und eine schmalere Alternative notiert (Fan-out-Vorfilter), aber bewusst
 nichts entschieden. Die Entscheidung fiel in
-[Phase 16](../../Roadmap.md#phase-16--antwortzeit-weg-b-fts5) über eine vorab fixierte Regel (aus
+[Phase 16](../roadmap-historie.md#phase-16--antwortzeit-weg-b-fts5) über eine vorab fixierte Regel (aus
 G0.6 übernommen): Bit-identische Kandidaten zuerst, eine FTS5-Vorauswahl nur, wenn sie die warme
 Marke für Local sonst verfehlt, FTS5 als Infrastruktur nur unter 50 % Indexzuwachs und 20 %
 Ingest-Mehrdauer. **Bit-Identität schlägt Geschwindigkeit.**
@@ -145,3 +145,34 @@ vergrößert.
 
 **Revisionsbedingung:** Braucht der Nutzer den kalten CLI-Pfad regelmäßig unter 5 s, ist die
 Persistenz der abgeleiteten Matrizen mit dann gemessener Indexgröße neu abzuwägen.
+
+## Nachtrag (2026-09-25): F4 – Auslegung, Handprobe, Baselines
+
+- **Auslegung:** **≤ 7.150 Gesamteinträge / ≤ 450.000 Chunks**, gemessen am 2026-09-25 als der
+  doppelte Bestand (3.579 Paper / 225.126 Chunks; Chimären-Verfahren aus G0.1 mit Seed 1616).
+  Die Chunkzahl ist der treibende Wert, weil jede Wertung linear über die Chunks läuft.
+
+  | am Auslegungspunkt (7.158 Einträge / 450.779 Chunks), finaler Code | Basic | Local | Global | DRIFT |
+  | --- | --- | --- | --- | --- |
+  | warm, Median / Max | 0,124 / 0,153 s | 0,355 / 0,453 s | 0,501 / 0,656 s | 0,488 / 0,591 s |
+  | kalt über die CLI, Median | 15,5 s | 15,8 s | 17,1 s | 18,1 s |
+
+  Vorladen im MCP-Server: 15,9 s; die erste Frage danach dauert 0,38 s.
+- **Revisionsbedingung:** erneut messen, sobald der Bestand 450.000 Chunks oder 7.150 Einträge
+  überschreitet oder die Bestätigung auf dem Arbeitsrechner warm über 0,8 s liegt. Gemessen wurde
+  in einem Linux-Container (4 vCPU, 15 GB); das Messpaket für den Arbeitsrechner bestätigt die
+  Zahlen lokal.
+- **Handprobe (G0.7-Verfahren, zehn Fragen aus `scripts.qa`):** **8 von 10** brauchbar, Schwelle
+  erreicht. Nicht brauchbar sind S2 (die erste Community ist fachfremd, eine kleine
+  Verifikations-Community; die richtige steht auf Rang 2) und W1 (nur ein passendes Paper unter den
+  Belegen). Weil F1–F3 bit-identisch sind, beschreibt das den Stand der Retrieval-Güte am realen
+  Bestand, nicht eine Folge dieser Phase. Die Bevorzugung kleiner Communities durch das Mittel der
+  Top-5-Chunk-Scores ([ADR 0036](0036-global-community-ranking-over-member-chunks-phase10.md)) ist
+  als Beobachtung festgehalten und nicht Gegenstand dieser Phase.
+- **Baselines neu eingefroren (mit dem Nutzer abgestimmt):** Beide Gold-Sets sind am realen Bestand
+  neu abgeleitet: Retrieval-Gold 1.6.0 (34 Fragen, 34/34 Labels reproduzierbar), Multi-Hop-Gold
+  mit 747 statt 181 Ankern und 0 Befunden. Beide Baselines sind danach eingefroren, und beide
+  `--check`-Läufe melden 0 Abweichungen. Der Fingerprint beschreibt den Stand des Daten-Repos
+  (3.579 Paper, 225.126 Chunks, 1.239 Communities). Weicht ein lokal gebauter Index davon ab,
+  verweigert `--check` den Vergleich; das ist dann selbst ein Befund (z. B. ein veralteter
+  Extraktions-Cache).

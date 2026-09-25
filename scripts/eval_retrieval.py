@@ -91,11 +91,11 @@ _DEFAULT_BASELINE = _REPO_ROOT / "eval" / "retrieval-baseline.json"
 _DEFAULT_CITATION_GOLD = _REPO_ROOT / "eval" / "citation-gold.json"
 _DEFAULT_CITATION_BASELINE = _REPO_ROOT / "eval" / "citation-baseline.json"
 
-_NEXT_GOLD_VERSION = "1.5.0"
-"""Default für ``--write-gold`` (Minor-Schritt: Fragen bleiben, Labels sind neu). War seit dem
-1.4.0-Freeze (2026-08-09) veraltet, weil dort ``--gold-version`` explizit statt über diesen
-Default gesetzt wurde (Phase 15 / G5, 2026-09-01) - vor dem nächsten ``--write-gold`` erneut auf
-die dann nächste Minor-Version anheben."""
+_NEXT_GOLD_VERSION = "1.6.0"
+"""Default für ``--write-gold`` (Minor-Schritt: Fragen bleiben, Labels sind neu). 1.5.0 galt für den
+606-Paper-Stand (Phase 15 / G5, 2026-09-01); 1.6.0 ist die Neuableitung am realen Bestand in
+Phase 16 / F4 (2026-09-25) - vor dem nächsten ``--write-gold`` erneut auf die dann nächste
+Minor-Version anheben."""
 
 
 def _parse_labels(raw: str) -> tuple[str, ...]:
