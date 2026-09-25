@@ -12,6 +12,7 @@ from pathlib import Path
 
 from scripts.status import collect_status, render
 
+from research_graphrag.indexing.chunk_fts import CHUNK_SEARCH_FTS
 from research_graphrag.indexing.citation_graph import CITATION_SCHEMA_VERSION
 from research_graphrag.pipeline import ingest
 
@@ -41,6 +42,12 @@ def test_status_reports_citation_graph(make_pdf: MakePdf, tmp_path: Path) -> Non
     assert status.n_citation_edges == report.n_citation_edges == 1
     assert status.consistent
     assert any("Zitationskanten: 1" in line for line in render(status))
+    # Phase 16 / F2: der Phrasenindex ist Teil des Index und wird ausgewiesen.
+    assert status.chunk_search == report.chunk_search == CHUNK_SEARCH_FTS
+    assert any(
+        f"Phrasenindex (FTS5 über chunks, Phase 16 / F2): {CHUNK_SEARCH_FTS}" in line
+        for line in render(status)
+    )
 
 
 def test_status_without_index_reports_no_citation_schema(tmp_path: Path) -> None:
@@ -50,3 +57,4 @@ def test_status_without_index_reports_no_citation_schema(tmp_path: Path) -> None
     assert status.index_present is False
     assert status.citation_schema_version is None
     assert status.n_citation_edges == 0
+    assert status.chunk_search is None

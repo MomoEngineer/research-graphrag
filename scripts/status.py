@@ -57,6 +57,7 @@ class StatusReport:
     missing_pdfs: tuple[str, ...]
     missing_canonical: tuple[str, ...]
     orphan_canonical: tuple[str, ...]
+    chunk_search: str | None = None
 
     @property
     def consistent(self) -> bool:
@@ -124,6 +125,7 @@ def collect_status(data_dir: str | Path, papers_dir: str | Path) -> StatusReport
     graph_schema_version: str | None = None
     citation_schema_version: str | None = None
     metadata_schema_version: str | None = None
+    chunk_search: str | None = None
     n_papers = n_chunks = n_communities = n_citation_edges = n_identified = 0
     n_citable = n_weak_metadata = n_reference_entries = 0
     if index_present:
@@ -132,6 +134,7 @@ def collect_status(data_dir: str | Path, papers_dir: str | Path) -> StatusReport
             schema_version = _meta_value(connection, "schema_version")
             graph_schema_version = _meta_value(connection, "graph_schema_version")
             citation_schema_version = _meta_value(connection, "citation_schema_version")
+            chunk_search = _meta_value(connection, "chunk_search")
             n_papers = _scalar(connection, "SELECT COUNT(*) FROM papers")
             n_chunks = _scalar(connection, "SELECT COUNT(*) FROM chunks")
             n_identified = _scalar(
@@ -189,6 +192,7 @@ def collect_status(data_dir: str | Path, papers_dir: str | Path) -> StatusReport
         graph_schema_version=graph_schema_version,
         citation_schema_version=citation_schema_version,
         metadata_schema_version=metadata_schema_version,
+        chunk_search=chunk_search,
         n_papers=n_papers,
         n_chunks=n_chunks,
         n_communities=n_communities,
@@ -235,6 +239,10 @@ def render(status: StatusReport) -> list[str]:
             f"  Index-Schema: {status.schema_version} · Graph-Schema: {status.graph_schema_version}"
             f" · Zitations-Schema: {status.citation_schema_version}"
             f" · Metadaten-Schema: {status.metadata_schema_version}"
+        )
+        lines.append(
+            f"  Phrasenindex (FTS5 über chunks, Phase 16 / F2): "
+            f"{status.chunk_search or 'fehlt – mit `python -m scripts.ingest` neu bauen'}"
         )
         lines.append(
             f"  Paper: {status.n_papers} · Chunks: {status.n_chunks} · "

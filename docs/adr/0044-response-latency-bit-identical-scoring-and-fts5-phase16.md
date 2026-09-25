@@ -79,3 +79,25 @@ Regel 3 greift (F0: +16,0 % Index, +6,7 % Ingest mit `unicode61 remove_diacritic
   Matrizen ein zweites Mal im Speicher. Der Spitzenspeicher steigt dadurch nicht, er entsteht beim
   Laden selbst. Der Kaltstart hält die 5-s-Marke damit weiterhin nicht (siehe Nachtrag F3).
 - **Folgeentscheidungen:** FTS5-Schema (F2), Kaltstart (F3), Auslegung (F4) als Nachträge unten.
+
+## Nachtrag (2026-09-25): F2 – FTS5-Schema
+
+- **Tabelle:** `CREATE VIRTUAL TABLE chunk_fts USING fts5(text, content='chunks',
+  content_rowid='rowid', tokenize='unicode61 remove_diacritics 2')`, gefüllt per `rebuild`.
+  *external content* hält nur den invertierten Index; der Text bleibt allein in `chunks`.
+  `detail=full` (Voreinstellung) ist nötig, weil Phrase und Nähe Positionen brauchen. `detail=column`
+  bzw. `detail=none` sparten nur 3 bzw. 10 Prozentpunkte Indexgröße.
+- **Bindung an die `rowid`:** tragfähig, weil der Index nur als Ganzes neu gebaut wird und `chunks`
+  danach nie geändert wird. Wer `chunks` in einer fertigen Datei ändert, muss `rebuild` ausführen.
+- **Versionierung:** eigene `meta`-Schlüssel `chunk_fts_version` (0.1.0) und `chunk_search`
+  (`fts5-unicode61` bzw. `unavailable`), nach dem Muster des Autorenindex. Die `schema_version`
+  bleibt 0.6.0 und damit auch der Fingerprint der Baselines.
+- **Ort im Bau:** letzter Schritt in `pipeline._build_index_atomically`, im selben atomaren Fenster.
+- **Schnittstelle (intern, für Phase 17 / A5):** `search_phrase`, `search_prefix` (mindestens drei
+  Zeichen) und `search_near` (Abstand 0–50); Obergrenze `MAX_RESULT_COUNT`, Ausgabe mit
+  `total_matching`. Entschärfung ausschließlich über `indexing/fts.py`; Fehler enden als
+  `invalid_input` bzw. `constraint_violation`.
+- **Gemessen am realen Bestand:** +16,0 % Indexgröße (714,0 → 828,6 MB), Bau +15,5 s (+10,5 %
+  gegenüber dem Bau ohne Tabelle). Anfragen dauern 2–11 ms (Phrase, Name, Nähe), 50 ms
+  (Präfix). `trigram` über den Fließtext hätte den Index verdoppelt (+97,8 %) und bleibt der
+  Namenstabelle vorbehalten.

@@ -1173,6 +1173,44 @@ _Modell-Tipp: Claude Opus 5.5._
 ### F2 – FTS5-Index als Infrastruktur, Vorauswahl nur nach Regel
 _Modell-Tipp: Claude Opus 5.5._
 
+> **Status (2026-09-25, umgesetzt): Infrastruktur gebaut, Vorauswahl nicht** (Regel 2 greift
+> nicht, siehe F0).
+>
+> - `indexing/chunk_fts.py` legt im Index-Bau die external-content-Tabelle `chunk_fts` über
+>   `chunks` an: `unicode61 remove_diacritics 2`, `detail=full`. Sie entsteht als letzter Schritt
+>   in `pipeline._build_index_atomically`, also in derselben Datei und im selben atomaren Swap;
+>   einen zweiten Aktualisierungsweg gibt es nicht. Eine eigene Version (`chunk_fts_version`) und
+>   der Suchweg (`chunk_search`) stehen im `meta`. Die `schema_version` bleibt `0.6.0`, der
+>   Fingerprint der Baselines ist damit unberührt.
+> - Die schmale **interne** Schnittstelle für Phase 17 heißt `search_phrase`, `search_prefix`
+>   (mindestens 3 Zeichen) und `search_near` (Abstand 0–50). Jede liefert Fundstellen mit
+>   Provenienz und Ausschnitt, dazu `total_matching`; optional filtert sie auf Paper, und `limit`
+>   ist durch `MAX_RESULT_COUNT` gedeckelt. Ein MCP-Werkzeug entsteht erst in A5.
+> - **Entschärfung an einer Stelle:** `indexing/fts.py` um `quote_phrase`, `quote_prefix` und
+>   `quote_near` erweitert. Der Abstand ist eine geprüfte Ganzzahl und stammt nie als Text aus der
+>   Eingabe. Eine missglückte Anfrage endet als `invalid_input`, ein Index ohne Tabelle als
+>   `constraint_violation`; ein `sqlite3.OperationalError` erreicht nie die Grenze.
+> - Fehlt FTS5 oder der Tokenizer, entsteht keine Tabelle, und `meta` weist `unavailable` aus.
+>   `scripts.ingest` zeigt den Suchweg an.
+>
+> *Akzeptanz am realen Bestand* (voller Bau aus dem Extraktions-Cache in eine eigene Datei, übrige
+> Messläufe angehalten):
+>
+> - **Indexgröße:** 714,0 → 828,6 MB, **+16,0 %** (Schwelle 50 %).
+> - **Bauzeit:** `build_chunk_fts` 15,5 s. Gegen den Bau ohne Tabelle (147,3 s) sind das
+>   **+10,5 %** (Schwelle 20 %). Die Ingest-Mehrdauer ist geringer, weil dort noch die Extraktion
+>   hinzukommt.
+> - **Ohne Vorauswahl ändert sich kein Ranking.** Ein Test vergleicht die Suche mit und ohne
+>   Tabelle. Der Byte-Vergleich aller Ausgaben am realen F2-Index gegen den Referenzcode folgt
+>   zusammen mit dem F1-Nachtrag.
+>
+> Tests: Aufbau und `meta`, Phrase, Präfix, Nähe, Groß-/Kleinschreibung und Diakritika,
+> Paper-Filter und Gesamtzahl, Obergrenze, acht feindliche Eingaben (`"`, `NEAR(`, `*`, `:`, `^`,
+> Klammern, `OR/NOT`), Rückfall ohne Tokenizer, Index ohne Tabelle, Determinismus, keine Wirkung
+> aufs Retrieval, **atomarer Swap mit FTS5-Tabelle** (ein scheiternder Bau lässt den Alt-Index samt
+> Tabelle stehen). Modul-Doku `chunk_fts.md` neu; `fts.md`, `pipeline.md` und `features.md`
+> nachgezogen.
+
 - Die FTS5-Tabelle entsteht im Index-Bau als Teil derselben SQLite-Datei und damit des atomaren
   Swaps aus [Phase 6](docs/roadmap-historie.md#phase-6--drop-in-workflow--qualitätssicherung).
   Es gibt keine eigene Datei und keinen zweiten Aktualisierungsweg.

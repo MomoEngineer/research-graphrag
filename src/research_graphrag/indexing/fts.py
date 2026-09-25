@@ -2,9 +2,10 @@
 
 FTS5 ist im ``sqlite3`` der Offline-Umgebung enthalten (Roadmap Phase 16: SQLite 3.38.4 mit
 ``ENABLE_FTS5``, Tokenizer ``trigram`` verfügbar). Zwei Stellen nutzen es: die kleine
-Namenstabelle des Autorenindex (Phase 17 / A3) und künftig die Phrasensuche über ``chunks``
-(Phase 16 / F2). Dieses Modul ist die **eine** Stelle für die Regeln, die beide teilen
-(docs/adr/0043-author-index-and-person-tools.md):
+Namenstabelle des Autorenindex (Phase 17 / A3) und die Phrasen-, Präfix- und Nähe-Suche über
+``chunks`` (Phase 16 / F2, :mod:`research_graphrag.indexing.chunk_fts`). Dieses Modul ist die
+**eine** Stelle für die Regeln, die beide teilen (docs/adr/0043-author-index-and-person-tools.md,
+docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md):
 
 * **FTS5-Anfragen sind Nutzereingaben.** Jedes Token wird als String-Literal gesetzt, innere
   Anführungszeichen werden verdoppelt. Operatoren (``AND``/``OR``/``NOT``/``NEAR``), Präfix-``*``,
@@ -62,6 +63,46 @@ def quote_tokens(tokens: Sequence[str]) -> str:
     if not cleaned:
         raise DomainError(ErrorCode.INVALID_INPUT, "Leere Suchanfrage.")
     return " ".join('"' + token.replace('"', '""') + '"' for token in cleaned)
+
+
+def quote_phrase(text: str) -> str:
+    """Setzt einen Text als **eine** FTS5-Phrase: ein String-Literal, innere ``"`` verdoppelt.
+
+    FTS5 zerlegt das Literal mit dem Tokenizer der Tabelle in eine Wortfolge; Operatoren,
+    Präfix-``*``, Spaltenfilter und Klammern im Text sind darin wirkungslos (Phase 16 / F2).
+
+    Raises:
+        DomainError: ``invalid_input`` bei leerem Text.
+    """
+    if not text.strip():
+        raise DomainError(ErrorCode.INVALID_INPUT, "Leere Suchanfrage.")
+    return '"' + text.replace('"', '""') + '"'
+
+
+def quote_prefix(text: str) -> str:
+    """Phrase, deren **letztes** Wort als Präfix gilt (FTS5-Syntax ``"…" *``).
+
+    Raises:
+        DomainError: ``invalid_input`` bei leerem Text.
+    """
+    return quote_phrase(text) + " *"
+
+
+def quote_near(terms: Sequence[str], distance: int) -> str:
+    """``NEAR``-Gruppe: alle Begriffe höchstens ``distance`` Wörter auseinander.
+
+    Jeder Begriff wird als eigene Phrase gesetzt; ``distance`` ist eine geprüfte Ganzzahl und
+    stammt nie als Text aus der Eingabe.
+
+    Raises:
+        DomainError: ``invalid_input`` bei weniger als zwei Begriffen oder negativem Abstand.
+    """
+    cleaned = [term for term in terms if term.strip()]
+    if len(cleaned) < 2:
+        raise DomainError(ErrorCode.INVALID_INPUT, "NEAR braucht mindestens zwei Begriffe.")
+    if distance < 0:
+        raise DomainError(ErrorCode.INVALID_INPUT, "Der Abstand muss >= 0 sein.")
+    return "NEAR(" + " ".join(quote_phrase(term) for term in cleaned) + f", {int(distance)})"
 
 
 def safe_match(connection: sqlite3.Connection, sql: str, params: Sequence[Any]) -> list[Any]:

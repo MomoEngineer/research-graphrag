@@ -17,6 +17,7 @@ from pathlib import Path
 import pytest
 
 from research_graphrag import pipeline
+from research_graphrag.indexing.chunk_fts import CHUNK_SEARCH_FTS, search_phrase
 from research_graphrag.pipeline import ingest
 from research_graphrag.retrieval.basic import search_basic
 
@@ -112,3 +113,34 @@ def test_failed_citation_build_preserves_previous_index(
     assert index.is_file()
     assert not index.with_name(index.name + ".tmp").exists()
     assert search_basic(index, "alpha", k=3).citations
+
+
+def test_phrase_index_is_part_of_the_atomic_swap(
+    make_pdf: MakePdf, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Der FTS5-Phrasenindex entsteht im atomaren Fenster (Phase 16 / F2, ADR 0044).
+
+    Erfolgreicher Bau: Die Tabelle liegt in der Index-Datei selbst. Scheitert ihr Aufbau, bleibt
+    der Alt-Index samt seiner Tabelle intakt, und keine Temporärdatei bleibt zurück.
+    """
+    make_pdf(["stable alpha content token method"], "papers/a.pdf")
+    papers = tmp_path / "papers"
+    data = tmp_path / "data"
+    index = data / "index" / "index.sqlite"
+
+    report = ingest(papers, data)
+    assert report.chunk_search == CHUNK_SEARCH_FTS
+    assert search_phrase(index, "alpha content").total_matching == 1
+
+    def _boom(*_args: object, **_kwargs: object) -> None:
+        raise RuntimeError("simulierter FTS5-Fehler")
+
+    monkeypatch.setattr(pipeline, "build_chunk_fts", _boom)
+    make_pdf(["changed beta content token method"], "papers/a.pdf")
+
+    with pytest.raises(RuntimeError):
+        ingest(papers, data)
+
+    assert not index.with_name(index.name + ".tmp").exists()
+    assert search_phrase(index, "alpha content").total_matching == 1
+    assert search_phrase(index, "beta content").total_matching == 0
