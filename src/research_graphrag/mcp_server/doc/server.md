@@ -23,7 +23,8 @@ Der Server enthält **keine** Fachlogik. Jedes Werkzeug ist ein dünner Wrapper 
 | Symbol | Art | Aufgabe |
 | --- | --- | --- |
 | `mcp` | Objekt | Die FastMCP-Instanz mit den registrierten Werkzeugen |
-| `main` | Funktion | Startet den `stdio`-Transport |
+| `main` | Funktion | Startet das Vorladen im Hintergrund und den `stdio`-Transport |
+| `preload_index` | Funktion | Lädt Index, Communities und Provenienz in die Prozess-Caches (Phase 16 / F3); `False` ohne Index, der Server startet trotzdem |
 
 Die fünfzehn Werkzeuge: `search_basic`, `search_local`, `search_global`, `search_drift`,
 `get_paper`, `get_paper_file`, `get_citations`, `get_reference`, `answer_question`, `list_topics`,
@@ -99,14 +100,23 @@ geteilten Obergrenze `research_graphrag.limits.MAX_RESULT_COUNT`, die jeder Tref
 (deutlich unter dieser Schwelle, siehe ADR 0037 für die Messtabelle). `_guard` fängt ausschließlich
 Unvorhergesehenes ab.
 
-### On-Read: der Index wird pro Anfrage geladen
+### On-Read: der Index wird bei Bedarf geladen, vorgeladen beim Start
 
-Kein Werkzeug hält einen geladenen Index. Jeder Aufruf liest die Index-Datei neu.
+Jeder Aufruf fragt `TfidfIndex.load`, `load_communities` bzw. `ProvenanceAssembler.load` nach dem
+Index. Diese drei halten seit Phase 15 / G2–G3 einen **Prozess-Cache**, der über den **Zustand
+der Index-Datei** (Änderungszeit + Größe) verfällt, nie über eine Zeitspanne
+([ADR 0033](../../../../docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md)).
+Das ist die Voraussetzung für den Drop-in-Workflow: Neue Paper werden nach dem nächsten Ingest
+sofort sichtbar, ohne den Server neu zu starten. Zusammen mit dem atomaren Index-Swap kann eine
+Anfrage auch während eines laufenden Neuaufbaus keinen halbfertigen Zustand sehen.
 
-Das ist die Voraussetzung für den Drop-in-Workflow: Neue Paper werden sofort sichtbar, ohne den
-Server neu zu starten. Der Preis ist Ladezeit je Aufruf – bewusst akzeptiert, weil ein Cache die
-Freshness-Garantie bräche. Zusammen mit dem atomaren Index-Swap kann eine Anfrage auch während
-eines laufenden Neuaufbaus keinen halbfertigen Zustand sehen.
+**Vorladen (Phase 16 / F3).** Das erste Laden kostet am realen Bestand ~9 s (225.126 Chunks), am
+Auslegungspunkt ~16 s. `main` startet es deshalb als Hintergrund-Thread `index-preload`, bevor der
+Transport läuft. Trifft die erste Frage vor dem Ende ein, wartet sie auf **dasselbe** Laden: Ein
+Bau-Lock je Pfad in `TfidfIndex.load` verhindert einen zweiten, parallelen Bau und damit den
+doppelten Spitzenspeicher. Fehlt der Index, protokolliert das Vorladen eine Warnung, und jede
+Anfrage meldet den Fehler wie bisher
+([ADR 0044](../../../../docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md)).
 
 ### Der Index-Pfad
 

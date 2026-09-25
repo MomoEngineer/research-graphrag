@@ -4,7 +4,7 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/indexing/tfidf_index.py` |
 | **Paket** | `indexing` – Canonical JSON zum Offline-Hybrid-Index |
-| **Phase** | 0b (eingeführt), 4 + 5 + 7 / A3 + A4 (erweitert), 13 / R2 (Dokumentart), 15 / G2 (Cache + persistierter Zustand), 10 / V4 (`score_chunks_by_paper`), 16 / F1 (bit-identische Begradigung der Wertung) |
+| **Phase** | 0b (eingeführt), 4 + 5 + 7 / A3 + A4 (erweitert), 13 / R2 (Dokumentart), 15 / G2 (Cache + persistierter Zustand), 10 / V4 (`score_chunks_by_paper`), 16 / F1 (bit-identische Begradigung der Wertung), 16 / F3 (schlanker Lader, Bau-Lock) |
 | **Grundlagen** | [ADR 0005](../../../../docs/adr/0005-graphrag-index-backend-open.md), [ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md), [ADR 0033](../../../../docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md), [ADR 0036](../../../../docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md), [ADR 0044](../../../../docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md) |
 
 ---
@@ -74,7 +74,8 @@ inkrementelle Pflege und schließt Inkonsistenzen zwischen Text und Vektorraum a
 flowchart TD
     L["TfidfIndex.load(pfad)"] --> S{"Cache-Treffer?<br/>(mtime_ns, Größe) unverändert"}
     S -- ja --> CACHED["gecachtes TfidfIndex-Objekt"]
-    S -- nein --> A["SELECT chunks JOIN papers<br/>ORDER BY row_index<br/>(OHNE Text-Spalte)"]
+    S -- nein --> BL["Bau-Lock je Pfad;<br/>danach Cache erneut prüfen"]
+    BL --> A["SELECT chunks JOIN papers<br/>ORDER BY row_index<br/>(OHNE Text-Spalte)"]
     A --> B{"Zeilen vorhanden?"}
     B -- nein --> ERR["constraint_violation"]
     B -- ja --> TS{"tfidf_state vorhanden?"}
@@ -82,9 +83,9 @@ flowchart TD
     TS -- ja --> C["_ChunkRef je Zeile (ohne Text)"]
     C --> D["CountVectorizer(vocabulary=...).fit([])<br/>rekonstruiert den Fit-Zustand"]
     D --> DS["Zähl-Matrix aus CSR-Rohbytes"]
-    DS --> SO["Zeilen sortieren (sort_indices)"]
-    SO --> E["TfidfTransformer → TF-IDF-Matrix"]
-    SO --> F["bm25.build_weights → BM25-Gewichte"]
+    DS --> SO["Zeilen sortieren, falls nötig<br/>(seit F3 sortiert persistiert)"]
+    SO --> E["_tfidf_from_counts → TF-IDF-Matrix<br/>+ Transformer mit IDF"]
+    E --> F["bm25.build_weights(copy=False)<br/>→ BM25-Gewichte in place"]
     E --> H["Hilfsstrukturen: Rang der chunk_id,<br/>Zeile je chunk_id, Paper je Zeile,<br/>spaltenweise Kopien beider Matrizen"]
     F --> H
     H --> CACHE_STORE["im Prozess-Cache ablegen"]
@@ -98,10 +99,23 @@ BM25 bekommt weiterhin dieselben rohen Termhäufigkeiten und dasselbe Vokabular 
 Unterschied zwischen den Verfahren ist damit garantiert ein Unterschied der Bewertung, nicht der
 Vorverarbeitung.
 
-**Sortierte Zeilen sind eine Invariante.** Die persistierten Spaltenindizes sind je Zeile nicht
-sortiert; früher sortierte `scikit-learn` sie beim Fit nebenbei. Seit Phase 16 / F1 geschieht es
-ausdrücklich direkt nach dem Deserialisieren – die Werte beider Matrizen bleiben bitgleich, und die
-spaltenweise Wertung kann sich auf die Summationsfolge verlassen.
+**Sortierte Zeilen sind eine Invariante.** Vor Phase 16 waren die persistierten Spaltenindizes je
+Zeile nicht sortiert; `scikit-learn` sortierte sie beim Fit nebenbei. Seit F1 sortiert der Lader
+ausdrücklich direkt nach dem Deserialisieren, seit F3 persistiert `build_index` die Zeilen bereits
+sortiert – ein neuer Index spart das Sortieren beim Laden, ein älterer wird weiter sortiert. Die
+Werte beider Matrizen sind in beiden Fällen bitgleich (Test mit absichtlich umgekehrten Zeilen).
+
+**Schlanker Lader (Phase 16 / F3).** Dieselbe Rechnung wie `TfidfTransformer().fit_transform` und
+das frühere `bm25.build_weights`, aber ohne die Validierungs- und Typkopien: Die Zählwerte kommen
+als `float64` mit `int32`-Indizes aus den Rohbytes; `_tfidf_from_counts` bildet die geglättete IDF
+per `bincount`, multipliziert und normiert über dieselbe Routine wie `sklearn.preprocessing.normalize`
+und gibt einen Transformer zurück, der Anfragen wie ein regulär gefitteter umwandelt; BM25 rechnet
+danach **in place** auf den Zählwerten (`copy=False`), sodass alle drei Matrizen dieselbe Besetzung
+teilen und `_by_term` mit **einer** Spaltenumwandlung über eine Positions-Permutation auskommt.
+Am realen Bestand: Laden 12,0 s → 6,5 s, jedes Array bitgleich (SHA-256 über 15 Arrays).
+
+**Ein Bau je Pfad.** Laden zwei Threads denselben Index gleichzeitig – das Vorladen des
+MCP-Servers und die erste Anfrage –, baut nur einer; der andere wartet und erhält dasselbe Objekt.
 
 **Der Prozess-Cache ist über den Dateizustand ungültig, nie über eine Zeitspanne.** Ein nach dem
 Laden neu gebauter Index (atomarer Swap) wirkt beim nächsten Aufruf sofort – ohne Serverneustart,
@@ -252,7 +266,9 @@ wenn mindestens ein Verfahren ihn positiv bewertet.
   hintereinander) teilen ihn nicht – nur ein langlebiger Prozess (MCP-Server) profitiert über
   mehrere Anfragen hinweg.
 - **Spaltenweise Kopien kosten Ladezeit.** Beide Matrizen liegen zusätzlich spaltenweise im
-  Speicher; die Umwandlung kostet am realen Bestand 1–3 s beim Laden. Der Spitzenspeicher entsteht
+  Speicher; die (seit F3 einzige) Umwandlung kostet am realen Bestand rund 1 s beim Laden.
+- **Der Kaltstart bleibt über der 5-s-Marke** (CLI am realen Bestand 8,6–9,5 s): Das Laden ist
+  O(Nicht-Null-Einträge). Der MCP-Server lädt deshalb beim Start vor (Phase 16 / F3). Der Spitzenspeicher entsteht
   weiterhin beim Laden selbst und steigt dadurch nicht (Phase 16 / F0).
 - **Kein Feld-Ranking.** Titel, Abschnitt und Fließtext werden gleich gewichtet.
 - **`k` ist gedeckelt.** Seit [ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md)

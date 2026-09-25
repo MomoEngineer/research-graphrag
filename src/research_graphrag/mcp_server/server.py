@@ -39,6 +39,8 @@ import json
 import logging
 import os
 import sys
+import threading
+import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -51,6 +53,8 @@ from research_graphrag.bibliography.corrections import apply_manual_correction
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.generation.answer import AUTO_MODE, answer_question
 from research_graphrag.generation.provider import NoopGenerationProvider
+from research_graphrag.indexing.graph_index import load_communities
+from research_graphrag.indexing.tfidf_index import TfidfIndex
 from research_graphrag.limits import MAX_RESULT_COUNT
 from research_graphrag.mcp_server.sampling import provider_for
 from research_graphrag.retrieval.authors import (
@@ -67,6 +71,7 @@ from research_graphrag.retrieval.global_search import search_global
 from research_graphrag.retrieval.local import search_local
 from research_graphrag.retrieval.paper import get_paper
 from research_graphrag.retrieval.paper_file import get_paper_file
+from research_graphrag.retrieval.provenance import ProvenanceAssembler
 from research_graphrag.retrieval.reference import get_reference
 from research_graphrag.retrieval.topics import DEFAULT_LIMIT, DEFAULT_MIN_SIZE, get_topic
 from research_graphrag.retrieval.topics import list_topics as list_topics_overview
@@ -539,9 +544,38 @@ def correct_paper_metadata_tool(
     return _guard("correct_paper_metadata", produce)  # type: ignore[return-value]
 
 
+def preload_index(index_path: str) -> bool:
+    """Lädt Index, Communities und Provenienz vorab in die Prozess-Caches (Phase 16 / F3).
+
+    Der Kaltstart kostet am realen Bestand mehrere Sekunden Ladezeit – unabhängig vom Modus
+    (docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md). Beim Serverstart
+    läuft das Laden deshalb im Hintergrund, bevor die erste Frage eintrifft; kommt sie früher,
+    wartet sie auf dasselbe Laden statt ein zweites anzustoßen (Bau-Lock in
+    ``TfidfIndex.load``). Die On-Read-Frische bleibt unberührt: Alle drei Caches verfallen weiter
+    über den Dateizustand.
+
+    Returns:
+        ``True``, wenn alles geladen wurde; ``False``, wenn der Index fehlt oder unvollständig ist
+        (der Server startet trotzdem, jede Anfrage meldet den Fehler wie bisher).
+    """
+    started = time.perf_counter()
+    try:
+        TfidfIndex.load(index_path)
+        load_communities(index_path)
+        ProvenanceAssembler.load(index_path)
+    except DomainError as exc:
+        logger.warning("Vorladen übersprungen [%s]: %s", exc.code.value, exc.message)
+        return False
+    logger.info("Index vorgeladen in %.1f s: %s", time.perf_counter() - started, index_path)
+    return True
+
+
 def main() -> None:
-    """Startet den MCP-Server über den ``stdio``-Transport."""
+    """Startet den MCP-Server über den ``stdio``-Transport; der Index lädt im Hintergrund vor."""
     logger.info("Starte MCP-Server 'research-graphrag' (stdio) …")
+    threading.Thread(
+        target=preload_index, args=(_index_path(),), name="index-preload", daemon=True
+    ).start()
     mcp.run()
 
 

@@ -101,3 +101,47 @@ Regel 3 greift (F0: +16,0 % Index, +6,7 % Ingest mit `unicode61 remove_diacritic
   gegenüber dem Bau ohne Tabelle). Anfragen dauern 2–11 ms (Phrase, Name, Nähe), 50 ms
   (Präfix). `trigram` über den Fließtext hätte den Index verdoppelt (+97,8 %) und bleibt der
   Namenstabelle vorbehalten.
+
+## Nachtrag (2026-09-25): F3 – Kaltstart
+
+**Befund aus F0:** Der kalte Pfad wird vom Laden beherrscht. Das Laden ist O(Nicht-Null-Einträge)
+und kostete am realen Bestand 8–12 s. Mit bit-identischen Mitteln erreicht es die 5-s-Marke am
+Auslegungspunkt nicht. Das Persistieren aller abgeleiteten Matrizen hätte am realen Bestand ~4 s
+ergeben, am Auslegungspunkt aber weiterhin ~7 s, und hätte die Index-Datei um 930 MB (+130 %)
+vergrößert.
+
+**Entscheidung (mit dem Nutzer abgestimmt):**
+
+1. **Schlanker Lader, bitgleich.**
+   - TF-IDF wie `TfidfTransformer().fit_transform`, aber ohne Validierungs- und Typkopien:
+     IDF per `bincount`, Normierung über dieselbe Routine wie `sklearn.preprocessing.normalize`.
+   - BM25 in place auf den Zählwerten.
+   - **Eine** Spaltenumwandlung über eine Positions-Permutation statt zwei.
+   - `NamedTuple` statt eingefrorener Dataclass für die Chunk-Referenzen.
+   - `build_index` persistiert die Zeilen sortiert. Ein älterer Index wird beim Laden weiter
+     sortiert und lädt bitgleich (Test mit absichtlich umgekehrten Zeilen).
+   - Nachweis am realen Bestand: SHA-256 über 15 geladene Arrays (beide Matrizen, beide
+     Spaltenkopien, IDF, transformierte Anfragen) identisch zum Lader vor F3.
+   - Laden 12,0 → 6,5 s.
+2. **Vorladen im MCP-Server.** `main` lädt Index, Communities und Provenienz in einem
+   Hintergrund-Thread, bevor die erste Frage eintrifft. Ein Bau-Lock je Pfad sorgt dafür, dass eine
+   frühe Frage auf dasselbe Laden wartet, statt ein zweites anzustoßen; sonst hielte der Prozess den
+   Spitzenspeicher doppelt. Die On-Read-Frische bleibt: Alle Caches verfallen weiter über den
+   Dateizustand.
+3. **Ausgewiesene Abweichung.** Der kalte Pfad über die CLI hält die 5-s-Marke **nicht**: am
+   realen Bestand 8,6–9,5 s, am Auslegungspunkt 15,5–18,1 s (Median je Modus). Er betrifft
+   einmalige Aufrufe (`scripts.ask`, Messläufe), nicht den MCP-Betrieb, für den ADR 0033 die warme
+   Marke als maßgeblich festgelegt hat. Im Betrieb dauert das Vorladen ~9 s (real) bzw. ~16 s
+   (2×); die erste Frage danach ist warm (0,17 s bzw. 0,38 s).
+
+**Verworfen:**
+
+- *Alle abgeleiteten Matrizen persistieren:* +130 % Indexgröße, hält die Marke am Auslegungspunkt
+  trotzdem nicht.
+- *Speicherabbild neben der Index-Datei* (z. B. `.npy`): bräche die Regel „eine Datei, ein atomarer
+  Swap“.
+- *Nachladen der spaltenweisen Kopien erst bei Bedarf:* verschiebt die Kosten nur in die erste
+  Frage.
+
+**Revisionsbedingung:** Braucht der Nutzer den kalten CLI-Pfad regelmäßig unter 5 s, ist die
+Persistenz der abgeleiteten Matrizen mit dann gemessener Indexgröße neu abzuwägen.

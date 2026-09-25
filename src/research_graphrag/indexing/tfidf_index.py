@@ -40,11 +40,13 @@ from collections import OrderedDict
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Literal
+from types import MappingProxyType
+from typing import Any, Literal, NamedTuple
 
 import numpy as np
 import scipy.sparse as sp
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.utils.sparsefuncs_fast import inplace_csr_row_normalize_l2
 
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.model import DOCUMENT_KIND_FULL, DOCUMENT_KIND_REFERENCE
@@ -154,14 +156,18 @@ class Hit:
     document_kind: str = DOCUMENT_KIND_FULL
 
 
-@dataclass(frozen=True)
-class _ChunkRef:
+_NO_IDENTIFIERS: Mapping[str, str] = MappingProxyType({})
+
+
+class _ChunkRef(NamedTuple):
     """Interne Chunk-Referenz inkl. Provenienz (Reihenfolge = TF-IDF-Zeile).
 
     Trägt bewusst **keinen** Chunk-Text: Für die Wertung genügen Kennungen und Gewichte: Der
     Text wird erst für die tatsächlichen Top-*k*-Treffer nachgeladen (Phase 15 / G2) – bei
     Tausenden von Chunks wäre das Halten aller Texte im Speicher der größte, aber am wenigsten
-    genutzte Speicheranteil.
+    genutzte Speicheranteil. Ein ``NamedTuple`` statt einer eingefrorenen Dataclass, weil der
+    Lader eine Referenz **je Chunk** erzeugt und das Tupel dreimal schneller entsteht (Phase 16 /
+    F3); Felder und Zugriff sind dieselben.
     """
 
     chunk_id: str
@@ -170,7 +176,7 @@ class _ChunkRef:
     source_uri: str
     section_title: str = ""
     page_end: int = 0
-    identifiers: Mapping[str, str] = field(default_factory=dict)
+    identifiers: Mapping[str, str] = _NO_IDENTIFIERS
     citation_key: str = ""
     document_kind: str = DOCUMENT_KIND_FULL
 
@@ -294,19 +300,91 @@ def _serialize_counts(counts: Any) -> tuple[bytes, bytes, bytes]:
 def _deserialize_counts(
     data: bytes, indices: bytes, indptr: bytes, n_docs: int, n_features: int
 ) -> Any:
-    """Rekonstruiert die CSR-Zähl-Matrix bit-genau aus den gespeicherten Rohdaten.
+    """Rekonstruiert die CSR-Zähl-Matrix wertgleich aus den gespeicherten Rohdaten.
 
-    Die Arrays werden kopiert, weil ``np.frombuffer`` schreibgeschützte Sichten liefert und der
-    Lader die Zeilen anschließend in place sortiert (Phase 16 / F1).
+    Die Zählwerte werden als ``float64`` geliefert (ganze Zahlen, exakt darstellbar – genau der
+    Typ, in den TF-IDF und BM25 sie ohnehin umwandeln), die Indizes als ``int32``, solange sie
+    hineinpassen. Beides ist genau eine Umwandlungskopie der schreibgeschützten
+    ``np.frombuffer``-Sichten; der Lader sortiert die Zeilen danach in place (Phase 16 / F3).
     """
+    fits_int32 = (
+        max(n_features, len(data) // np.dtype(_CSR_DTYPE).itemsize) < np.iinfo(np.int32).max
+    )
+    index_dtype = np.int32 if fits_int32 else np.int64
     return sp.csr_matrix(
         (
-            np.frombuffer(data, dtype=_CSR_DTYPE).copy(),
-            np.frombuffer(indices, dtype=_CSR_DTYPE).copy(),
-            np.frombuffer(indptr, dtype=_CSR_DTYPE).copy(),
+            np.frombuffer(data, dtype=_CSR_DTYPE).astype(np.float64),
+            np.frombuffer(indices, dtype=_CSR_DTYPE).astype(index_dtype),
+            np.frombuffer(indptr, dtype=_CSR_DTYPE).astype(index_dtype),
         ),
         shape=(n_docs, n_features),
+        copy=False,
     )
+
+
+def _tfidf_from_counts(counts: Any) -> tuple[Any, Any]:
+    """Wie ``TfidfTransformer().fit_transform(counts)`` – dieselben Operationen, ohne Umwege.
+
+    ``fit`` bildet die geglättete IDF aus der Dokumentfrequenz (``bincount`` der Spaltenindizes),
+    ``transform`` multipliziert jeden Eintrag mit der IDF seiner Spalte und normiert jede Zeile
+    über dieselbe Routine wie ``sklearn.preprocessing.normalize``. Hier geschieht genau das,
+    nur ohne die Validierungs- und Typkopien von scikit-learn (Phase 16 / F3). Der zurückgegebene
+    Transformer trägt die IDF und transformiert Anfragen wie ein regulär gefitteter.
+
+    Args:
+        counts: Zähl-Matrix (CSR, ``float64``, Zeilen sortiert).
+
+    Returns:
+        ``(transformer, matrix)`` – bitgleich zu ``TfidfTransformer().fit_transform(counts)``.
+    """
+    n_docs, n_features = counts.shape
+    document_frequency = np.bincount(counts.indices, minlength=n_features).astype(np.float64)
+    document_frequency += 1.0  # smooth_idf
+    idf = np.full_like(document_frequency, fill_value=n_docs + 1, dtype=np.float64)
+    idf /= document_frequency
+    np.log(idf, out=idf)
+    idf += 1.0
+    transformer = TfidfTransformer()
+    transformer.idf_ = idf
+    transformer.n_features_in_ = n_features
+    matrix = sp.csr_matrix(
+        (counts.data * idf[counts.indices], counts.indices, counts.indptr),
+        shape=counts.shape,
+        copy=False,
+    )
+    matrix.has_sorted_indices = True
+    inplace_csr_row_normalize_l2(matrix)
+    return transformer, matrix
+
+
+def _by_term(matrix: Any, bm25_weights: Any) -> tuple[Any, Any]:
+    """Spaltenweise Kopien beider Matrizen (Grundlage der Wertung, Phase 16 / F1).
+
+    Teilen beide Matrizen dieselbe Besetzung – der Regelfall, denn beide entstehen aus derselben
+    Zähl-Matrix –, genügt **eine** Umwandlung: Die Positionen der Einträge werden einmal
+    spaltenweise umgeordnet und beide Wertearrays danach nur noch umsortiert (Phase 16 / F3).
+    Werte und Reihenfolge sind dieselben wie bei zwei ``tocsc()``-Aufrufen.
+    """
+    shared = (matrix.indices is bm25_weights.indices and matrix.indptr is bm25_weights.indptr) or (
+        np.array_equal(matrix.indptr, bm25_weights.indptr)
+        and np.array_equal(matrix.indices, bm25_weights.indices)
+    )
+    if not shared:
+        return matrix.tocsc(), bm25_weights.tocsc()
+    positions = sp.csr_matrix(
+        (np.arange(1, matrix.nnz + 1, dtype=matrix.indices.dtype), matrix.indices, matrix.indptr),
+        shape=matrix.shape,
+        copy=False,
+    ).tocsc()
+    order = positions.data - 1  # Startwert 1: keine gespeicherte Null, die verloren gehen könnte
+    return tuple(
+        sp.csc_matrix(
+            (values.data[order], positions.indices, positions.indptr),
+            shape=matrix.shape,
+            copy=False,
+        )
+        for values in (matrix, bm25_weights)
+    )  # type: ignore[return-value]
 
 
 def build_index(papers: Sequence[CanonicalPaper], db_path: str | Path) -> int:
@@ -338,6 +416,9 @@ def build_index(papers: Sequence[CanonicalPaper], db_path: str | Path) -> int:
 
     vectorizer = CountVectorizer()
     counts = vectorizer.fit_transform([chunk.text for chunk, _paper in indexable])
+    # Zeilen sortiert persistieren: Der Lader muss sie dann nicht mehr sortieren (Phase 16 / F3).
+    # Die Einträge sind dieselben, nur ihre Reihenfolge innerhalb jeder Zeile ist festgelegt.
+    counts.sort_indices()
     vocabulary = {term: int(index) for term, index in vectorizer.vocabulary_.items()}
     counts_data, counts_indices, counts_indptr = _serialize_counts(counts)
 
@@ -410,6 +491,11 @@ _CACHE: dict[str, tuple[int, int, TfidfIndex]] = {}
 """Prozess-Cache: aufgelöster Pfad -> ((mtime_ns, Größe), Index). Ungültig über den Dateizustand,
 nie über eine Zeitspanne (Phase 15 / G2, Weg C)."""
 
+_BUILD_LOCKS: dict[str, threading.Lock] = {}
+"""Ein Bau-Lock je Pfad (Phase 16 / F3): Laden zwei Threads denselben Index gleichzeitig – etwa das
+Vorladen beim Serverstart und die erste Anfrage –, baut nur einer; der andere wartet und erhält
+dasselbe Objekt. Zwei parallele Bauten hielten sonst den Spitzenspeicher doppelt."""
+
 
 class TfidfIndex:
     """Geladener Index: TF-IDF- und BM25-Raum über einer gemeinsamen Tokenisierung."""
@@ -442,8 +528,7 @@ class TfidfIndex:
             dtype=np.int64,
             count=len(refs),
         )
-        self._matrix_by_term = matrix.tocsc()
-        self._bm25_by_term = bm25_weights.tocsc()
+        self._matrix_by_term, self._bm25_by_term = _by_term(matrix, bm25_weights)
         self._memo: OrderedDict[tuple[str, str], _Scored] = OrderedDict()
         self._memo_lock = threading.Lock()
 
@@ -460,22 +545,40 @@ class TfidfIndex:
         über eine Zeitspanne: Ein neu gebauter Index (z. B. nach ``ingest``, atomarer Swap via
         ``os.replace``) wirkt beim nächsten Aufruf sofort, ohne Neustart (Phase 15 / G2, Weg C;
         docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md).
+
+        Gleichzeitige Aufrufe für denselben Pfad bauen den Index nur **einmal** (ein Bau-Lock je
+        Pfad, Phase 16 / F3); wer wartet, prüft danach den Cache erneut.
         """
         path = Path(db_path)
         if not path.is_file():
             raise DomainError(ErrorCode.NOT_FOUND, f"Index nicht gefunden: {path}")
 
         resolved = str(path.resolve())
+        cached = cls._cached(path, resolved)
+        if cached is not None:
+            return cached
+
+        with _CACHE_LOCK:
+            build_lock = _BUILD_LOCKS.setdefault(resolved, threading.Lock())
+        with build_lock:
+            cached = cls._cached(path, resolved)
+            if cached is not None:
+                return cached
+            stat = path.stat()
+            index = cls._build_from_db(path, resolved)
+            with _CACHE_LOCK:
+                _CACHE[resolved] = (stat.st_mtime_ns, stat.st_size, index)
+        return index
+
+    @staticmethod
+    def _cached(path: Path, resolved: str) -> TfidfIndex | None:
+        """Das gecachte Objekt, sofern der Dateizustand unverändert ist – sonst ``None``."""
         stat = path.stat()
         with _CACHE_LOCK:
             cached = _CACHE.get(resolved)
-            if cached is not None and cached[0] == stat.st_mtime_ns and cached[1] == stat.st_size:
-                return cached[2]
-
-        index = cls._build_from_db(path, resolved)
-        with _CACHE_LOCK:
-            _CACHE[resolved] = (stat.st_mtime_ns, stat.st_size, index)
-        return index
+        if cached is not None and cached[0] == stat.st_mtime_ns and cached[1] == stat.st_size:
+            return cached[2]
+        return None
 
     @classmethod
     def _build_from_db(cls, path: Path, resolved: str) -> TfidfIndex:
@@ -524,17 +627,24 @@ class TfidfIndex:
 
         refs = tuple(
             _ChunkRef(
-                chunk_id=str(row[0]),
-                paper_id=str(row[1]),
-                page_number=int(row[2]),
-                source_uri=str(row[3]),
-                section_title=str(row[4]),
-                page_end=int(row[5]),
-                identifiers=citation_data.get(str(row[1]), _NO_CITATION_DATA)[0],
-                citation_key=citation_data.get(str(row[1]), _NO_CITATION_DATA)[1],
-                document_kind=str(row[6]),
+                str(chunk_id),
+                str(paper_id),
+                int(page_number),
+                str(source_uri),
+                str(section_title),
+                int(page_end),
+                *citation_data.get(str(paper_id), _NO_CITATION_DATA),
+                str(document_kind),
             )
-            for row in rows
+            for (
+                chunk_id,
+                paper_id,
+                page_number,
+                source_uri,
+                section_title,
+                page_end,
+                document_kind,
+            ) in rows
         )
 
         n_docs, n_features, vocabulary_json, counts_data, counts_indices, counts_indptr = state_row
@@ -555,14 +665,15 @@ class TfidfIndex:
         # sortierte Zeilen voraus, deshalb geschieht es hier ausdrücklich – die Werte beider
         # Matrizen bleiben bitgleich (Nachweis: Roadmap.md, Phase 16 / F0).
         counts.sort_indices()
-        transformer = TfidfTransformer()
-        matrix = transformer.fit_transform(counts)
+        transformer, matrix = _tfidf_from_counts(counts)
+        # Die Zählwerte braucht danach niemand mehr: BM25 rechnet in place auf ihnen, alle drei
+        # Matrizen teilen dieselbe Besetzung (eine Spaltenumwandlung genügt, siehe _by_term).
         return cls(
             refs=refs,
             vectorizer=vectorizer,
             transformer=transformer,
             matrix=matrix,
-            bm25_weights=bm25.build_weights(counts),
+            bm25_weights=bm25.build_weights(counts, copy=False),
             db_path=resolved,
         )
 

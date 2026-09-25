@@ -1230,6 +1230,28 @@ _Modell-Tipp: Claude Opus 5.5._
 ### F3 – Kaltstart (bedingt)
 _Modell-Tipp: Claude Sonnet 5._
 
+> **Status (2026-09-25, umgesetzt – nötig laut F0; die Abweichung ist ausgewiesen):** Mit dem
+> Nutzer abgestimmt: ein schlanker Lader und das Vorladen im MCP-Server, keine Persistenz der
+> abgeleiteten Matrizen ([ADR 0044, Nachtrag F3](docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md#nachtrag-2026-09-25-f3--kaltstart)).
+>
+> - **Schlanker Lader, bitgleich:** TF-IDF ohne Validierungskopien, BM25 in place, eine
+>   Spaltenumwandlung statt zwei, leichtere Chunk-Referenzen, Zeilen schon beim Bau sortiert.
+>   SHA-256 über 15 geladene Arrays ist identisch zum Lader vor F3, auch beim Laden eines alten,
+>   unsortiert persistierten Index. Laden am realen Bestand 12,0 → **6,5 s**.
+> - **Vorladen:** `main` lädt Index, Communities und Provenienz im Hintergrund-Thread
+>   `index-preload` vor. Ein Bau-Lock je Pfad lässt eine frühe Frage auf dasselbe Laden warten
+>   (Test: drei gleichzeitige Aufrufe, ein Bau; eine Mutationsprobe ohne Lock schlägt fehl).
+>
+> | Realer Bestand / 2× (Auslegungspunkt) | Wert |
+> | --- | --- |
+> | Vorladen beim Serverstart | 9,0 s / 15,9 s |
+> | erste Frage nach dem Vorladen (Local) | 0,17 s / 0,38 s |
+> | warm, schlechtester Modus (Max) | 0,26 s / 0,66 s |
+> | **kalt über die CLI** (Median je Modus) | **8,6–9,5 s / 15,5–18,1 s** ⚠ |
+>
+> **Offen ausgewiesen:** Der kalte CLI-Pfad hält die 5-s-Marke nicht. Er betrifft einmalige
+> Aufrufe, nicht den MCP-Betrieb. Die Revisionsbedingung steht im ADR.
+
 - Nur nötig, wenn F0 den Ladeanteil als dominanten Kostenblock des kalten Pfads ausweist (heute
   10,824 s beim ersten Aufruf).
 - Die Kandidaten werden erst in F0 benannt, etwa weitere persistierte Zustände nach dem Muster von

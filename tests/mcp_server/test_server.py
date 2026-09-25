@@ -601,3 +601,50 @@ def test_guard_passes_through_a_response_within_the_safety_threshold() -> None:
     result = server_module._guard("dummy_tool", lambda: payload)
 
     assert result == payload
+
+
+# --------------------------------------------------------------------------------------
+# Vorladen beim Serverstart, Phase 16 / F3 (ADR 0044): Die erste Frage trifft einen warmen
+# Prozess; die On-Read-Frische bleibt, weil alle Caches weiter über den Dateizustand verfallen.
+# --------------------------------------------------------------------------------------
+
+
+def test_preload_index_warms_all_caches(index_db: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Nach dem Vorladen liefern alle drei Ladepunkte ihr gecachtes Objekt, ohne neu zu bauen."""
+    from research_graphrag.indexing.graph_index import load_communities
+    from research_graphrag.indexing.tfidf_index import TfidfIndex
+    from research_graphrag.retrieval.provenance import ProvenanceAssembler
+
+    assert server_module.preload_index(str(index_db)) is True
+
+    def _no_rebuild(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("nach dem Vorladen darf nicht neu gebaut werden")
+
+    monkeypatch.setattr(TfidfIndex, "_build_from_db", _no_rebuild)
+    index = TfidfIndex.load(index_db)
+    assert TfidfIndex.load(index_db) is index
+    assert load_communities(index_db) is load_communities(index_db)
+    assert ProvenanceAssembler.load(index_db) is ProvenanceAssembler.load(index_db)
+
+
+def test_preload_without_index_does_not_break_startup(tmp_path: Path) -> None:
+    """Fehlt der Index, meldet das Vorladen ``False`` – der Server startet trotzdem."""
+    assert server_module.preload_index(str(tmp_path / "fehlt.sqlite")) is False
+
+
+def test_main_preloads_in_the_background(monkeypatch: pytest.MonkeyPatch) -> None:
+    """``main`` startet das Vorladen als Hintergrund-Thread und danach den Server."""
+    calls: list[str] = []
+    monkeypatch.setattr(
+        server_module, "preload_index", lambda path: calls.append(f"preload:{path}")
+    )
+    monkeypatch.setattr(server_module.mcp, "run", lambda: calls.append("run"))
+    monkeypatch.setenv("RESEARCH_GRAPHRAG_INDEX", "vorlade/index.sqlite")
+
+    server_module.main()
+    for thread in __import__("threading").enumerate():
+        if thread.name == "index-preload":
+            thread.join(timeout=5)
+
+    assert "run" in calls
+    assert "preload:vorlade/index.sqlite" in calls
