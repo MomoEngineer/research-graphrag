@@ -2342,10 +2342,10 @@ _Modell-Tipp: Claude Opus 5.5._
 > 2. **Byte-Vergleich aller Ausgaben:** Referenzcode per `git archive` aus dem Stand vor F1, Floats
 >    als `float.hex`. Am Mini-Index über 60 Anfragen (43 MB Ausgabe) byte-gleich; am realen
 >    Bestand (173 Anfragen, jeweils alle drei Wertungen × 4 Filter, Wertung je Paper,
->    Nachbarschaften, die vier Modi): **Zwischenstand 2026-09-25: die ersten 75 Anfragen
->    byte-gleich** (≈ 0,9 GB Ausgabe), sowohl mit dem F2-Stand als auch mit dem Endstand nach F3.
->    Der Rest läuft noch (der Referenzcode braucht ~45 s je Anfrage); das Endergebnis folgt als
->    Nachtrag.
+>    Nachbarschaften, die vier Modi): **vollständig byte-gleich**. 3.615 Ausgabeblöcke, 2,24 GB,
+>    identischer SHA-256 (`9ef67910…`). Das gilt für den Stand nach F2 (Index mit
+>    FTS5-Tabelle) und für den Endstand nach F3 (schlanker Lader, sortiert persistierter
+>    Zustand). Der Referenzcode brauchte 6.635 s, der neue Code 231–262 s.
 > 3. **Dauerhaft im Testsuite:** Ein hypothesis-Test vergleicht Suche, Wertung je Paper und
 >    Nachbarschaft gegen den früheren Algorithmus wörtlich, mit erzwungenen Gleichständen. Eine
 >    Mutationsprobe bestätigt, dass er greift: Vertauschter Tie-Break und vertauschte

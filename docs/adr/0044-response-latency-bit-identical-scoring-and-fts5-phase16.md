@@ -74,7 +74,9 @@ Regel 3 greift (F0: +16,0 % Index, +6,7 % Ingest mit `unicode61 remove_diacritic
 
 - **Positiv:** Warm liegen alle vier Modi am realen Bestand im Median bei 0,05–0,23 s (vorher
   1,3–6,9 s), am doppelten Bestand bei höchstens 0,77 s. Jede Ausgabe bleibt bitgleich; die
-  Baselines müssen dafür **nicht** neu eingefroren werden.
+  Baselines müssen dafür **nicht** neu eingefroren werden. Nachweis am realen Bestand: Der
+  Byte-Vergleich aller Ausgaben (173 Anfragen, 3.615 Ausgabeblöcke, 2,24 GB, Floats als
+  `float.hex`) ist gegen den Code vor der Phase **vollständig byte-gleich**, nach F2 wie nach F3.
 - **Negativ / Aufwand:** Die spaltenweisen Kopien kosten beim Laden 1–3 s und halten beide
   Matrizen ein zweites Mal im Speicher. Der Spitzenspeicher steigt dadurch nicht, er entsteht beim
   Laden selbst. Der Kaltstart hält die 5-s-Marke damit weiterhin nicht (siehe Nachtrag F3).
