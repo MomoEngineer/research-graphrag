@@ -13,7 +13,7 @@ Dieses Dokument ist das zentrale Regelwerk für die Arbeit am Repository **Resea
 3. **Reproduzierbarkeit.** Versionen werden über ein Lockfile fixiert; Seeds/Läufe werden festgehalten, wo Ergebnisse variieren.
 4. **Offline-bewusst.** Die Entwicklung erfolgt in einem Umfeld ohne PyPI-Zugang; es werden nur beschaffbare Werkzeuge vorausgesetzt (siehe [ADR 0002](docs/adr/0002-venv-and-offline-dependency-strategy.md) und [ADR 0003](docs/adr/0003-offline-test-and-coverage-tooling.md)).
 5. **Lokal zuerst.** Der MCP-Server wird lokal per `stdio` in VS Code eingebunden und von Copilot genutzt.
-6. **Klein, aber wachstumsfähig.** Die 2026-09-01 gemessene Auslegung (≤ 750 Volltexte / ≤ 1500 Gesamteinträge, [Roadmap.md](docs/roadmap-historie.md#g5--auslegung-neu-festschreiben)) ist beim realen Bestand (3.461 Paper, Stand 2026-09-16) um das 4,6-Fache überschritten. Eine Nachmessung direkt am realen Bestand ([ADR 0038](docs/adr/0038-corpus-ceiling-revision-local-search-latency.md)) bestätigt: Die 5-s-Marke reißt kalt in **allen vier** Modi, warm reißt sie **Local** (Median 6,064 s) und liegt **DRIFT** bereits über der 1-s-Marke. Statt einer neuen Zahl gilt bis zu einer dedizierten Fix-Phase (Weg B/FTS5, ADR-0033-Revisionsbedingung ausgelöst) der gemessene Ist-Zustand als Grenze – **keine** unbelegte Zahl fortschreiben.
+6. **Klein, aber wachstumsfähig.** Auslegung seit Phase 16 (gemessen 2026-09-25): **≤ 7.150 Gesamteinträge / ≤ 450.000 Chunks**, der doppelte Bestand vom 2026-09-25. Dort halten alle vier Modi warm die 1-s-Marke (schlechtester Einzellauf 0,66 s); der kalte CLI-Pfad hält die 5-s-Marke nicht, der MCP-Server lädt deshalb beim Start vor ([ADR 0044](docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md)). Änderungen an Wertung oder Lader müssen **bit-identisch** bleiben oder ihren Bruch mit neu eingefrorenen Baselines ausweisen. Revisionsbedingung: erneut messen ab 450.000 Chunks bzw. 7.150 Einträgen – keine unbelegte Zahl fortschreiben.
 
 ---
 
@@ -59,7 +59,7 @@ Alle Werkzeuge werden über `python -m <tool>` gestartet (WinPython ohne Konsole
 
 ## 4. Arbeitsablauf (phasenorientiert)
 
-Die Umsetzung folgt der [Roadmap.md](Roadmap.md) (aktiv: Phasen 9–11; Phase 8, Phase 12 und Phase 13 sind umgesetzt, die abgeschlossenen Phasen 0–7 sind in der [Roadmap-Historie](docs/roadmap-historie.md) archiviert). Für neuen Code gilt:
+Die Umsetzung folgt der [Roadmap.md](Roadmap.md) (aktiv: Phase 17; die abgeschlossenen Phasen – zuletzt Phase 16 – sind in der [Roadmap-Historie](docs/roadmap-historie.md) archiviert, Phase 13 steht als Ausnahme weiter in der Roadmap). Für neuen Code gilt:
 
 1. **Entscheidung dokumentieren**, falls architektonisch relevant (ADR, siehe [docs/adr/README.md](docs/adr/README.md)).
 2. **Spezifikation vor Code** für jedes MCP-Tool ([templates/tool-spec.md](templates/tool-spec.md)) – das Input-/Output-Schema ist die Single Source of Truth.

@@ -189,6 +189,22 @@
 > Append-only-Mechanismus wie `metadata_log.md`. Eine Korrektur wirkt **nicht sofort** – wie beim
 > bestehenden `python -m scripts.resolve_metadata` erst nach dem nächsten
 > `python -m scripts.ingest`-Lauf, was jede Antwort über `effective_after` ausweist.
+>
+> **Nachtrag (2026-09-25): Phase 16 ist abgeschlossen – die Antwortzeit hält wieder.** Die
+> Vorabmessung fand die Kosten nicht dort, wo sie vermutet waren. Es war nicht allein die
+> Sortierung, sondern vor allem die Wertung: Jede Anfrage wurde gegen **alle** 23 Mio.
+> Nicht-Null-Einträge der Matrix multipliziert, bei Local bis zu elfmal. Die Wertung rechnet jetzt
+> nur noch über die Spalten der Anfrage-Terme, in derselben Summationsfolge wie zuvor. Die
+> Ergebnisse sind damit **bitgleich**: qid-genau über alle zehn Evaluationsebenen belegt, dazu ein
+> Byte-Vergleich aller Ausgaben gegen den Code vor der Phase
+> ([Historie](docs/roadmap-historie.md#f1--bit-identische-begradigung)). Am realen Bestand (3.579 Paper) liegen warm Local bei 0,17 s statt 6,9 s, DRIFT bei
+> 0,21 s statt 2,4 s, Basic und Global unter 0,25 s. Eine FTS5-**Vorauswahl** wurde gemessen und
+> verworfen: Sie wäre langsamer als die exakte Wertung. FTS5 kommt stattdessen als
+> **Phrasenindex** in den Index (Wortfolge, Präfix, Nähe) und ist die Grundlage für Phase 17 / A5.
+> Der MCP-Server lädt den Index beim Start im Hintergrund vor. Ein einzelner CLI-Aufruf braucht
+> weiterhin ~9 s, das ist begründet ausgewiesen. Neue Auslegung mit Messdatum: ≤ 7.150
+> Gesamteinträge / ≤ 450.000 Chunks. Beide Gold-Sets und Baselines sind am realen Bestand neu
+> eingefroren ([ADR 0044](docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md)).
 
 ---
 
@@ -198,7 +214,7 @@ Dieses Projekt baut ein **GraphRAG-System** über einer lokalen Sammlung wissens
 
 - **Kein Teil einer wissenschaftlichen Arbeit**, sondern ein Werkzeug, das die tägliche Arbeit mit Papern erleichtert (u. a. begleitend zu einer Masterarbeit genutzt).
 - **Konsolidierte Forschungsbasis:** ersetzt den bisherigen separaten `Recherche`-Ordner und vereint PDFs, die kuratierte [Literaturübersicht](Übersicht.md) und den GraphRAG-Index an einem Ort.
-- **Klein & lokal:** aktuell **3.461** Paper (Stand 2026-09-16). Die G5-Auslegung „≤ 750 Volltexte / ≤ 1500 Gesamteinträge" (2026-09-01) ist beim 4,6-Fachen überholt: Eine Nachmessung am realen Bestand ([ADR 0038](docs/adr/0038-corpus-ceiling-revision-local-search-latency.md)) zeigt, dass die 5-s-Marke inzwischen kalt in **allen vier** Modi reißt und Local (Median 6,064 s) sie sogar warm reißt – statt einer neuen Zahl gilt bis zu einer dedizierten Fix-Phase (Weg B/FTS5) der gemessene Ist-Zustand als Grenze.
+- **Klein & lokal:** aktuell **3.579** Paper / 225.126 Chunks (Stand 2026-09-25). Ausgelegt ist das Werkzeug seit Phase 16 auf **≤ 7.150 Gesamteinträge / ≤ 450.000 Chunks** (gemessen 2026-09-25, der doppelte Bestand): Dort bleiben alle vier Suchmodi im MCP-Server warm unter 1 s. Der erste Aufruf nach einem Neustart lädt den Index einmalig (~9 s am realen Bestand) – der MCP-Server erledigt das beim Start im Hintergrund; ein einzelner CLI-Aufruf zahlt es jedes Mal ([ADR 0044](docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md)).
 - **Container-frei:** reine Python-Umgebung, kein Docker- oder Datenbank-Server nötig.
 - **Drop-in-Workflow:** neue PDFs in einen Ordner legen, kurz ein Skript ausführen – fertig.
 

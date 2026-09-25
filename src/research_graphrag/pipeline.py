@@ -29,6 +29,7 @@ from research_graphrag.extraction.model import (
 from research_graphrag.extraction.pdf import CanonicalPaper, extract_pdf
 from research_graphrag.extraction.refstub import STUB_SUFFIX, extract_stub
 from research_graphrag.indexing.author_index import AuthorBuildReport, build_author_index
+from research_graphrag.indexing.chunk_fts import build_chunk_fts
 from research_graphrag.indexing.citation_graph import CitationBuildReport, build_citation_graph
 from research_graphrag.indexing.graph_index import GraphBuildReport, build_graph
 from research_graphrag.indexing.metadata_index import MetadataBuildReport, build_metadata_index
@@ -65,6 +66,7 @@ class IngestReport:
     n_identified_persons: int = 0
     author_name_search: str = ""
     n_author_skipped: int = 0
+    chunk_search: str = ""
 
     @property
     def author_coverage(self) -> float:
@@ -189,14 +191,15 @@ def _build_index_atomically(
     *,
     overview_path: Path | None = None,
     metadata_file: Path | None = None,
-) -> tuple[int, GraphBuildReport, CitationBuildReport, MetadataBuildReport, AuthorBuildReport]:
+) -> tuple[int, GraphBuildReport, CitationBuildReport, MetadataBuildReport, AuthorBuildReport, str]:
     """Baut Index, Graph, Zitationskanten **und** Metadaten in eine Temporärdatei; ersetzt atomar.
 
     Der MCP-Server liest den Index pro Anfrage frisch (On-Read, siehe
     docs/adr/0010-drop-in-workflow-and-qa-phase6.md); ein *In-place*-Neuaufbau könnte daher
     kurzzeitig einen halbfertigen Zustand liefern. Deshalb wird zunächst vollständig nach
-    ``index.sqlite.tmp`` gebaut (TF-IDF/SQLite, Paper-Graph, Zitationsgraph und die
-    bibliografischen Datensätze aus docs/adr/0025-citable-paper-metadata.md) und erst nach
+    ``index.sqlite.tmp`` gebaut (TF-IDF/SQLite, Paper-Graph, Zitationsgraph, die
+    bibliografischen Datensätze aus docs/adr/0025-citable-paper-metadata.md und seit Phase 16 / F2
+    der FTS5-Phrasenindex über ``chunks``) und erst nach
     Erfolg per :func:`os.replace` **atomar** an die Zielstelle verschoben. Schlägt der Bau fehl,
     bleibt der bestehende Index unangetastet (Crash-Sicherheit); die Temporärdatei wird stets
     entfernt.
@@ -210,8 +213,10 @@ def _build_index_atomically(
 
     Returns:
         Tupel aus indexierten Chunks, :class:`GraphBuildReport`, :class:`CitationBuildReport`,
-        :class:`MetadataBuildReport` und – seit Phase 17 / A3 – :class:`AuthorBuildReport`
-        (Personenebene, docs/adr/0043-author-index-and-person-tools.md).
+        :class:`MetadataBuildReport`, – seit Phase 17 / A3 – :class:`AuthorBuildReport`
+        (Personenebene, docs/adr/0043-author-index-and-person-tools.md) und – seit Phase 16 /
+        F2 – den Suchweg des Phrasenindex (``meta``-Wert ``chunk_search``,
+        docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md).
     """
     tmp_path = index_path.with_name(index_path.name + ".tmp")
     try:
@@ -222,10 +227,18 @@ def _build_index_atomically(
             papers, tmp_path, overview_path=overview_path, metadata_file=metadata_file
         )
         author_report = build_author_index(tmp_path)
+        chunk_search = build_chunk_fts(tmp_path).search
         os.replace(tmp_path, index_path)
     finally:
         tmp_path.unlink(missing_ok=True)
-    return indexed_chunks, graph_report, citation_report, metadata_report, author_report
+    return (
+        indexed_chunks,
+        graph_report,
+        citation_report,
+        metadata_report,
+        author_report,
+        chunk_search,
+    )
 
 
 def forget_source(data_dir: str | Path, filename: str) -> bool:
@@ -334,6 +347,7 @@ def ingest(
         citation_report,
         metadata_report,
         author_report,
+        chunk_search,
     ) = _build_index_atomically(papers, index_path, overview_path=overview, metadata_file=metadata)
     _write_quality_report(papers, data_path)
     return IngestReport(
@@ -360,4 +374,5 @@ def ingest(
         n_identified_persons=author_report.n_identified,
         author_name_search=author_report.name_search,
         n_author_skipped=author_report.n_skipped,
+        chunk_search=chunk_search,
     )

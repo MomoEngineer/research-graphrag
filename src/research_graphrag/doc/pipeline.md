@@ -4,7 +4,7 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/pipeline.py` |
 | **Paket** | Top-Level – Orchestrierung |
-| **Phase** | 0b (eingeführt), 6 (atomarer Swap), 7 / A2 (Zitationsgraph), 12 / K1 (Zitierdaten), 13 / R2 (zweiter Dokumenttyp), 17 / A2 (Stub-Bibliografie, Autoren-Abdeckung), 17 / A3 (Personenebene) |
+| **Phase** | 0b (eingeführt), 6 (atomarer Swap), 7 / A2 (Zitationsgraph), 12 / K1 (Zitierdaten), 13 / R2 (zweiter Dokumenttyp), 17 / A2 (Stub-Bibliografie, Autoren-Abdeckung), 17 / A3 (Personenebene), 16 / F2 (Phrasenindex) |
 | **Grundlagen** | [ADR 0005](../../../docs/adr/0005-graphrag-index-backend-open.md), [ADR 0010](../../../docs/adr/0010-drop-in-workflow-and-qa-phase6.md), [ADR 0011](../../../docs/adr/0011-intra-corpus-citation-graph-phase7.md), [ADR 0041](../../../docs/adr/0041-author-identity-and-schema.md), [ADR 0043](../../../docs/adr/0043-author-index-and-person-tools.md) |
 
 ---
@@ -86,6 +86,8 @@ sequenceDiagram
     I->>T: build_graph
     I->>T: build_citation_graph
     I->>T: build_metadata_index
+    I->>T: build_author_index
+    I->>T: build_chunk_fts
     Note over L: bis hier unverändert lesbar
     I->>L: os.replace – atomar
     I->>T: unlink im finally
@@ -99,16 +101,19 @@ Eigenschaften folgen daraus:
 
 - **Crash-Sicherheit:** Schlägt ein Bauschritt fehl, bleibt der bisherige Index intakt und
   abfragbar.
-- **Konsistenz:** Chunks, Ähnlichkeitsgraph, Zitationskanten und bibliografische Daten entstehen
-  im **selben** Fenster und passen zwangsläufig zueinander.
+- **Konsistenz:** Chunks, Ähnlichkeitsgraph, Zitationskanten, bibliografische Daten,
+  Autorenindex und Phrasenindex entstehen im **selben** Fenster und passen zwangsläufig zueinander.
+  Für den Phrasenindex ist das tragend: Er verweist über die `rowid` auf `chunks` und speichert
+  den Text nicht selbst (Phase 16 / F2,
+  [ADR 0044](../../../docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md)).
 
 Das Aufräumen läuft in jedem Fall: Im Erfolgsfall ist die Nebendatei bereits verschoben, im
 Fehlerfall wird sie entfernt.
 
 ### Die Reihenfolge der Bauschritte
 
-Chunk-Index zuerst, dann Ähnlichkeitsgraph, dann Zitationskanten, zuletzt die bibliografischen
-Daten – die späteren Schritte schreiben **additiv** in dieselbe Datei und setzen die
+Chunk-Index zuerst, dann Ähnlichkeitsgraph, Zitationskanten, bibliografische Daten, Autorenindex
+und zuletzt der Phrasenindex über den Chunk-Text – die späteren Schritte schreiben **additiv** in dieselbe Datei und setzen die
 Basistabellen voraus. Der Metadaten-Schritt liest zusätzlich zwei Dateien **außerhalb** des
 Index: die kuratierte Übersicht und `metadata/paper_metadata.json`
 ([ADR 0025](../../../docs/adr/0025-citable-paper-metadata.md)). Fehlen sie, entfällt die

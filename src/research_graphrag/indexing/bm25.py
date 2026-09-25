@@ -37,7 +37,7 @@ B = 0.75
 """Stärke der Längennormalisierung: ``0`` = keine, ``1`` = volle (Standardwert)."""
 
 
-def build_weights(counts: Any) -> Any:
+def build_weights(counts: Any, *, copy: bool = True) -> Any:
     """Berechnet die BM25-Gewichtsmatrix aus einer Term-Häufigkeitsmatrix.
 
     Args:
@@ -46,12 +46,17 @@ def build_weights(counts: Any) -> Any:
             dort übliche Form **ohne explizit gespeicherte Nullen** (die Dokumentfrequenz wird
             aus der Besetzungsstruktur abgelesen).
 
+        copy: ``False`` erlaubt, eine ``float64``-CSR-Matrix **in place** in die Gewichte zu
+            verwandeln (der Lader braucht die Zählwerte danach nicht mehr, Phase 16 / F3). Andere
+            Eingaben werden immer kopiert.
+
     Returns:
         Eine Matrix gleicher Gestalt und Besetzung mit den BM25-Gewichten je Term und Chunk.
     """
-    matrix = counts.tocsr().astype(np.float64)
+    in_place = not copy and counts.format == "csr" and counts.dtype == np.float64
+    matrix = counts if in_place else counts.tocsr().astype(np.float64)
     n_documents = matrix.shape[0]
-    document_frequency = matrix.getnnz(axis=0)
+    document_frequency = np.bincount(matrix.indices, minlength=matrix.shape[1])
     inverse_document_frequency = np.log(
         1.0 + (n_documents - document_frequency + 0.5) / (document_frequency + 0.5)
     )
@@ -62,10 +67,15 @@ def build_weights(counts: Any) -> Any:
         average_length = 1.0  # leeres Vokabular: Längennormalisierung neutralisieren
 
     length_norm = K1 * (1.0 - B + B * lengths / average_length)
-    denominator = matrix.data + np.repeat(length_norm, np.diff(matrix.indptr))
-    matrix.data = (
-        matrix.data * (K1 + 1.0) / denominator * inverse_document_frequency[matrix.indices]
-    )
+    # In place, aber in derselben Reihenfolge wie
+    # ``data * (K1 + 1) / (data + norm) * idf`` – die Werte bleiben bitgleich, es entstehen nur
+    # keine Zwischen-Arrays von Matrixgröße (Phase 16 / F3; Nachweis im Test).
+    denominator = np.repeat(length_norm, np.diff(matrix.indptr))
+    denominator += matrix.data
+    data = matrix.data
+    data *= K1 + 1.0
+    data /= denominator
+    data *= inverse_document_frequency[matrix.indices]
     return matrix
 
 

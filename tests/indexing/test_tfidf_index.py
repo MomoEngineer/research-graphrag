@@ -3,18 +3,32 @@
 from __future__ import annotations
 
 import sqlite3
+import tempfile
+import threading
+import time
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
+import numpy as np
 import pytest
-from hypothesis import given
+from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer, TfidfVectorizer
+from sklearn.metrics.pairwise import linear_kernel
 
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.pdf import CanonicalPaper, Chunk
-from research_graphrag.indexing.fusion import RRF_K
-from research_graphrag.indexing.tfidf_index import TfidfIndex, _snippet, build_index
+from research_graphrag.indexing import bm25
+from research_graphrag.indexing.fusion import RRF_K, fuse_rankings
+from research_graphrag.indexing.tfidf_index import (
+    SCORE_MEMO_SIZE,
+    TfidfIndex,
+    _by_term,
+    _snippet,
+    _tfidf_from_counts,
+    build_index,
+)
 
 
 def _paper(paper_id: str, texts: Sequence[str]) -> CanonicalPaper:
@@ -546,3 +560,288 @@ def test_load_missing_tfidf_state_raises_constraint_violation(tmp_path: Path) ->
     with pytest.raises(DomainError) as excinfo:
         TfidfIndex.load(db)
     assert excinfo.value.code is ErrorCode.CONSTRAINT_VIOLATION
+
+
+# --------------------------------------------------------------------------------------
+# Bit-identische Begradigung, Phase 16 / F1: Der neue Wertungskern muss jeden Treffer, jeden
+# Score und jede Reihenfolge des früheren Algorithmus **bitgleich** reproduzieren. Die Referenz
+# unten ist der frühere Algorithmus wörtlich (volles Sparse-Produkt, Python-Ranglisten,
+# ``fuse_rankings``, Sortierung mit ``chunk_id``-Tie-Break).
+# --------------------------------------------------------------------------------------
+
+_WORDS = ("graph", "retrieval", "agent", "attention", "rag", "survey", "tool", "memory")
+"""Kleines Vokabular: erzwingt wiederholte Texte und damit Gleichstände in allen Wertungen."""
+
+
+def _reference_ranked(
+    index: TfidfIndex, query: str, scoring: str
+) -> tuple[dict[int, float], Any, Any]:
+    query_counts = index._vectorizer.transform([query])
+    tfidf = linear_kernel(index._transformer.transform(query_counts), index._matrix).ravel()
+    bm25_scores = bm25.score(index._bm25_weights, query_counts)
+
+    def ranking(scores: Any) -> list[int]:
+        positive = [i for i in range(index.size) if float(scores[i]) > 0.0]
+        positive.sort(key=lambda i: (-float(scores[i]), index._refs[i].chunk_id))
+        return positive
+
+    if scoring == "tfidf":
+        return {i: float(tfidf[i]) for i in ranking(tfidf)}, tfidf, bm25_scores
+    if scoring == "bm25":
+        return {i: float(bm25_scores[i]) for i in ranking(bm25_scores)}, tfidf, bm25_scores
+    return fuse_rankings([ranking(tfidf), ranking(bm25_scores)]), tfidf, bm25_scores
+
+
+def _reference_search(
+    index: TfidfIndex, query: str, k: int, paper_ids: set[str] | None, scoring: str
+) -> list[tuple[str, float, float, float]]:
+    ranked, tfidf, bm25_scores = _reference_ranked(index, query, scoring)
+    order = sorted(ranked, key=lambda i: (-ranked[i], index._refs[i].chunk_id))
+    selected = [i for i in order if paper_ids is None or index._refs[i].paper_id in paper_ids][:k]
+    return [
+        (index._refs[i].chunk_id, ranked[i], float(tfidf[i]), float(bm25_scores[i]))
+        for i in selected
+    ]
+
+
+def _reference_neighbors(index: TfidfIndex, chunk_id: str, k: int) -> list[tuple[str, float]]:
+    seed = next(i for i, ref in enumerate(index._refs) if ref.chunk_id == chunk_id)
+    scores = linear_kernel(index._matrix[seed], index._matrix).ravel()
+    order = sorted(range(index.size), key=lambda i: (-float(scores[i]), index._refs[i].chunk_id))
+    selected = [i for i in order if i != seed and float(scores[i]) > 0.0][:k]
+    return [(index._refs[i].chunk_id, float(scores[i])) for i in selected]
+
+
+_texts = st.lists(st.sampled_from(_WORDS), min_size=1, max_size=6).map(" ".join)
+
+
+@settings(max_examples=40, deadline=None, suppress_health_check=[HealthCheck.too_slow])
+@given(
+    corpus=st.lists(st.lists(_texts, min_size=1, max_size=4), min_size=1, max_size=4),
+    query=st.lists(st.sampled_from((*_WORDS, "unbekannt")), min_size=1, max_size=4).map(" ".join),
+    k=st.integers(min_value=1, max_value=8),
+    scoring=st.sampled_from(("hybrid", "tfidf", "bm25")),
+    filtered=st.booleans(),
+)
+def test_scoring_core_is_bit_identical_to_the_previous_algorithm(
+    corpus: list[list[str]], query: str, k: int, scoring: str, filtered: bool
+) -> None:
+    """Suche, Wertung je Paper und Nachbarschaft sind bitgleich zum früheren Algorithmus."""
+    papers = [_paper(f"p{number:07d}", texts) for number, texts in enumerate(corpus)]
+    with tempfile.TemporaryDirectory() as directory:
+        db = Path(directory) / "index.sqlite"
+        build_index(papers, db)
+        index = TfidfIndex.load(db)
+        paper_ids = {papers[0].paper_id} if filtered else None
+
+        hits = index.search(query, k, paper_ids=paper_ids, scoring=scoring)  # type: ignore[arg-type]
+        actual = [(h.chunk_id, h.score, h.score_tfidf, h.score_bm25) for h in hits]
+        assert actual == _reference_search(index, query, k, paper_ids, scoring)
+
+        ranked, _tfidf, _bm25 = _reference_ranked(index, query, scoring)
+        expected_by_paper: dict[str, list[float]] = {}
+        for row, score in ranked.items():
+            expected_by_paper.setdefault(index._refs[row].paper_id, []).append(score)
+        assert index.score_chunks_by_paper(query, scoring=scoring) == expected_by_paper  # type: ignore[arg-type]
+
+        seed = papers[0].chunks[0].chunk_id
+        neighbors = [(h.chunk_id, h.score) for h in index.neighbors_of_chunk(seed, k)]
+        assert neighbors == _reference_neighbors(index, seed, k)
+
+
+def test_ties_are_broken_by_chunk_id_like_before(tmp_path: Path) -> None:
+    """Identische Texte ergeben identische Scores; die Reihenfolge folgt der ``chunk_id``."""
+    papers = [_paper(f"t{n:07d}", ["retrieval agent", "retrieval agent"]) for n in (3, 1, 2)]
+    db = tmp_path / "index.sqlite"
+    build_index(papers, db)
+    index = TfidfIndex.load(db)
+
+    for scoring in ("hybrid", "tfidf", "bm25"):
+        hits = index.search("retrieval", k=4, scoring=scoring)  # type: ignore[arg-type]
+        assert [h.chunk_id for h in hits] == sorted(h.chunk_id for h in hits)
+        assert [(h.chunk_id, h.score) for h in hits] == [
+            (chunk_id, score)
+            for chunk_id, score, _t, _b in _reference_search(index, "retrieval", 4, None, scoring)
+        ]
+
+
+def test_paper_filter_keeps_corpus_wide_fusion_values(tmp_path: Path) -> None:
+    """Der Filter wirkt vor der Sortierung, nicht vor der Wertung: gleiche Werte wie ungefiltert."""
+    index = TfidfIndex.load(_hybrid_corpus(tmp_path))
+
+    unfiltered = {h.chunk_id: h.score for h in index.search("attention mechanism", k=10)}
+    filtered = index.search("attention mechanism", k=10, paper_ids={"cccc0003"})
+
+    assert filtered
+    assert all(unfiltered[h.chunk_id] == h.score for h in filtered)
+
+
+def test_scored_query_is_shared_and_bounded(tmp_path: Path) -> None:
+    """Dieselbe Anfrage wird einmal gewertet und geteilt; der Merker bleibt begrenzt."""
+    index = TfidfIndex.load(_hybrid_corpus(tmp_path))
+
+    first = index._scored("attention", "hybrid")
+    assert index._scored("attention", "hybrid") is first
+    assert index._scored("attention", "tfidf") is not first
+
+    for number in range(SCORE_MEMO_SIZE + 2):
+        index._scored(f"attention graph {number}", "hybrid")
+    assert len(index._memo) == SCORE_MEMO_SIZE
+    assert index._scored("attention", "hybrid") is not first  # verdrängt, neu gewertet
+
+
+def test_rebuilt_index_does_not_reuse_scored_queries(tmp_path: Path) -> None:
+    """Der Merker hängt am Index-Objekt und verfällt mit ihm über den Dateizustand (ADR 0033)."""
+    db = tmp_path / "index.sqlite"
+    build_index([_paper("aaaa0001", ["alpha beta gamma content"])], db)
+    first = TfidfIndex.load(db)
+    assert first.search("alpha", k=1)[0].paper_id == "aaaa0001"
+
+    build_index([_paper("bbbb0002", ["alpha distinctive singular token"])], db)
+    second = TfidfIndex.load(db)
+
+    assert second is not first
+    assert not second._memo
+    assert second.search("alpha", k=1)[0].paper_id == "bbbb0002"
+
+
+def test_loaded_matrices_have_sorted_rows(tmp_path: Path) -> None:
+    """Invariante der spaltenweisen Wertung: Zeilen sortiert, spaltenweise Kopien vorhanden."""
+    index = TfidfIndex.load(_hybrid_corpus(tmp_path))
+
+    assert index._matrix.has_sorted_indices
+    assert index._bm25_weights.has_sorted_indices
+    assert index._matrix_by_term.shape == index._matrix.shape
+    assert index._bm25_by_term.shape == index._bm25_weights.shape
+
+
+# --------------------------------------------------------------------------------------
+# Schlanker Lader, Phase 16 / F3: dieselbe Rechnung ohne Validierungs- und Typkopien – die
+# geladenen Matrizen müssen **bitgleich** zu den früheren Bausteinen sein.
+# --------------------------------------------------------------------------------------
+
+
+def _bits(matrix: Any) -> tuple[bytes, bytes, bytes]:
+    return (
+        np.ascontiguousarray(matrix.data).tobytes(),
+        np.asarray(matrix.indices, dtype=np.int64).tobytes(),
+        np.asarray(matrix.indptr, dtype=np.int64).tobytes(),
+    )
+
+
+def _counts(texts: Sequence[str]) -> Any:
+    counts = CountVectorizer().fit_transform(texts).astype(np.float64)
+    counts.sort_indices()
+    return counts
+
+
+_LOADER_TEXTS = (
+    "transformer attention mechanism attention",
+    "graph neural message passing graph graph",
+    "retrieval augmented generation with faiss and retrieval",
+    "evaluation protocol",
+    "knowledge graph construction from retrieval",
+)
+
+
+def test_tfidf_from_counts_is_bit_identical_to_sklearn() -> None:
+    """``_tfidf_from_counts`` == ``TfidfTransformer().fit_transform`` – Matrix und Anfragen."""
+    counts = _counts(_LOADER_TEXTS)
+    reference = TfidfTransformer()
+    expected = reference.fit_transform(counts.copy())
+
+    transformer, actual = _tfidf_from_counts(counts.copy())
+
+    assert _bits(actual) == _bits(expected)
+    assert transformer.idf_.tobytes() == reference.idf_.tobytes()
+    query = counts[1]
+    assert _bits(transformer.transform(query)) == _bits(reference.transform(query))
+
+
+def test_bm25_in_place_equals_the_copying_build() -> None:
+    """``build_weights(copy=False)`` rechnet dieselben Werte wie die kopierende Variante."""
+    expected = bm25.build_weights(_counts(_LOADER_TEXTS))
+    counts = _counts(_LOADER_TEXTS)
+
+    actual = bm25.build_weights(counts, copy=False)
+
+    assert actual is counts
+    assert _bits(actual) == _bits(expected)
+    integer_counts = CountVectorizer().fit_transform(_LOADER_TEXTS)
+    assert bm25.build_weights(integer_counts, copy=False) is not integer_counts
+
+
+def test_by_term_permutation_equals_two_tocsc() -> None:
+    """Eine Spaltenumwandlung über die Positionen == zwei ``tocsc()``-Aufrufe."""
+    counts = _counts(_LOADER_TEXTS)
+    _transformer, matrix = _tfidf_from_counts(counts)
+    weights = bm25.build_weights(counts, copy=False)
+
+    by_term, bm25_by_term = _by_term(matrix, weights)
+    unshared = _by_term(matrix, bm25.build_weights(_counts(_LOADER_TEXTS[::-1])))
+
+    assert _bits(by_term) == _bits(matrix.tocsc())
+    assert _bits(bm25_by_term) == _bits(weights.tocsc())
+    assert unshared[0].shape == matrix.shape  # andere Besetzung: Rückfall auf zwei tocsc()
+
+
+def test_unsorted_persisted_state_loads_like_a_sorted_one(tmp_path: Path) -> None:
+    """Ein vor F3 gebauter Index (Zeilen unsortiert persistiert) lädt bitgleich zum neuen."""
+    papers = [_paper("aaaa0001", list(_LOADER_TEXTS))]
+    sorted_db = tmp_path / "sorted.sqlite"
+    unsorted_db = tmp_path / "unsorted.sqlite"
+    build_index(papers, sorted_db)
+    build_index(papers, unsorted_db)
+    connection = sqlite3.connect(unsorted_db)
+    data, indices, indptr = connection.execute(
+        "SELECT counts_data, counts_indices, counts_indptr FROM tfidf_state"
+    ).fetchone()
+    values, columns = np.frombuffer(data, np.int64), np.frombuffer(indices, np.int64)
+    bounds = np.frombuffer(indptr, np.int64)
+    new_values = np.concatenate(
+        [values[a:b][::-1] for a, b in zip(bounds[:-1], bounds[1:], strict=True)]
+    )
+    new_columns = np.concatenate(
+        [columns[a:b][::-1] for a, b in zip(bounds[:-1], bounds[1:], strict=True)]
+    )
+    connection.execute(
+        "UPDATE tfidf_state SET counts_data = ?, counts_indices = ?",
+        (new_values.tobytes(), new_columns.tobytes()),
+    )
+    connection.commit()
+    connection.close()
+
+    expected = TfidfIndex.load(sorted_db)
+    actual = TfidfIndex.load(unsorted_db)
+
+    assert _bits(actual._matrix) == _bits(expected._matrix)
+    assert _bits(actual._bm25_weights) == _bits(expected._bm25_weights)
+    assert actual.search("graph retrieval", k=5) == expected.search("graph retrieval", k=5)
+
+
+def test_concurrent_loads_build_the_index_only_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Vorladen und erste Anfrage gleichzeitig: ein Bau, beide erhalten dasselbe Objekt (F3)."""
+    db = _hybrid_corpus(tmp_path)
+    original = TfidfIndex._build_from_db.__func__  # type: ignore[attr-defined]
+    builds: list[int] = []
+
+    def _slow_build(cls: type[TfidfIndex], path: Path, resolved: str) -> TfidfIndex:
+        builds.append(1)
+        time.sleep(0.2)  # hält das Fenster offen, in dem der zweite Aufruf ankommt
+        return original(cls, path, resolved)  # type: ignore[no-any-return]
+
+    monkeypatch.setattr(TfidfIndex, "_build_from_db", classmethod(_slow_build))
+    results: list[TfidfIndex] = []
+    threads = [
+        threading.Thread(target=lambda: results.append(TfidfIndex.load(db))) for _ in range(3)
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=10)
+
+    assert len(builds) == 1
+    assert len(results) == 3
+    assert all(result is results[0] for result in results)

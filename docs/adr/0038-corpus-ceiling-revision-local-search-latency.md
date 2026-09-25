@@ -178,3 +178,27 @@ mit eigener Messung, welche der Kandidaten (oder beide) die 1-s-Marke wieder her
   Latenz über mehrere Korpusgrößen) und eigenem Baseline-Neueinfrieren, falls die gewählte Option
   das Ranking verändert. Bis dahin bleibt Basic/Global der einzige Modus mit verlässlicher Marge
   unter der 1-s-Marke; DRIFT und insbesondere Local sind als **bekannt langsam** dokumentiert.
+
+## Nachtrag (2026-09-25): Die dedizierte Phase ist umgesetzt – Phase 16, ADR 0044
+
+Die in Abschnitt 2 verlangte Phase hat beide offenen Fragen dieses ADR beantwortet, und zwar
+anders, als hier vermutet
+([ADR 0044](0044-response-latency-bit-identical-scoring-and-fts5-phase16.md)):
+
+- **Weg B (FTS5) als Vorauswahl** wurde gemessen und **verworfen**. Die FTS5-Stufe allein kostet
+  0,3 s je Anfrage, weil Allerweltswörter fast jeden Chunk treffen, und sie ist nie bit-identisch.
+  FTS5 kommt nur als Phrasenindex (Infrastruktur für Phase 17) in den Index.
+- **Der Fan-out-Vorfilter aus Abschnitt 3** ist in der hier beschriebenen Form (Filter **vor** der
+  Wertung) **nicht** bit-identisch: Die Hybrid-Wertung fusioniert korpusweite Ränge. Gebaut ist er
+  als Filter vor der **Sortierung**.
+- **Die eigentliche Ursache** lag in der Wertung selbst: Jede Anfrage wurde gegen alle 23 Mio.
+  Nicht-Null-Einträge der Matrix multipliziert. Die Wertung läuft jetzt spaltenweise nur über die
+  Anfrage-Terme, bitgleich. Warm liegen am realen Bestand (3.579 Paper) alle Modi im Median bei
+  0,05–0,21 s; Local lag vorher bei 6,1–6,9 s.
+
+**Die „vorerst fehlende Korpusgrenze“ (Konsequenzen) ist ersetzt:** ≤ 7.150 Gesamteinträge /
+≤ 450.000 Chunks, gemessen am 2026-09-25 als der doppelte Bestand. Warm halten dort alle vier Modi
+die 1-s-Marke (schlechtester Einzellauf 0,66 s). Der kalte CLI-Pfad bleibt über der 5-s-Marke
+(8,6–9,5 s real); der MCP-Server lädt deshalb beim Start vor. **Neue Revisionsbedingung:** erneut
+messen, sobald der Bestand 450.000 Chunks oder 7.150 Einträge überschreitet oder die Bestätigung
+auf dem Arbeitsrechner warm über 0,8 s liegt.

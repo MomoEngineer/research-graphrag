@@ -2,18 +2,19 @@
 
 Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistenten. Der Plan ist **iterativ**: erst ein dünner, lauffähiger Durchstich, dann gezielte Ausbaustufen. **Bewusst ohne Zeitschätzungen** – Fortschritt wird über die „Definition of Done" (DoD) je Phase und über Meilensteine gemessen.
 
-> Ergänzt die [README](README.md). **Die Phasen 0–8 sowie 11, 12, 13, 14 und 15 sind abgeschlossen**
+> Ergänzt die [README](README.md). **Die Phasen 0–8 sowie 11, 12, 13, 14, 15 und 16 sind abgeschlossen**
 > und hier nur noch als Ergebnis-Tabelle zusammengefasst; die vollständigen Status-Blockquotes mit
 > allen Kennzahlen, korrigierten Annahmen und offen dokumentierten Abweichungen stehen wörtlich in
 > der [Roadmap-Historie](docs/roadmap-historie.md). **Phase 13 steht weiterhin vollständig hier**,
 > als einzige Ausnahme von dieser Regel – sie war die unmittelbare Grundlage von Phase 14 und
 > bleibt aus Kontinuitätsgründen an Ort und Stelle, auch nachdem Phase 14 selbst archiviert ist.
-> **Aktiver Plan (seit 2026-09-24): [Phase 16 – Antwortzeit: Weg B (FTS5)](#phase-16--antwortzeit-weg-b-fts5)
-> und [Phase 17 – Autoren als Rechercheebene](#phase-17--autoren-als-rechercheebene)**. Phase 16
-> ist geplant und noch nicht begonnen; Phase 17 ist **in Arbeit** (seit 2026-09-24,
-> [Umsetzungsblock](#umsetzung-stand-und-reihenfolge)).
-> [A1](#a1--weak--strong-jede-literaturangabe-belegt-vorziehbar) ist ausdrücklich **vor**
-> Phase 16 ausführbar, weil er falsche Literaturangaben korrigiert.
+> **Aktiver Plan: [Phase 17 – Autoren als Rechercheebene](#phase-17--autoren-als-rechercheebene)**,
+> **in Arbeit** seit 2026-09-24 ([Umsetzungsblock](#umsetzung-stand-und-reihenfolge)).
+> **[Phase 16 – Antwortzeit: Weg B (FTS5)](docs/roadmap-historie.md#phase-16--antwortzeit-weg-b-fts5) ist am 2026-09-25 abgeschlossen**
+> ([ADR 0044](docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md)). Die
+> Wertung ist bit-identisch begradigt, und alle vier Modi halten warm < 1 s am realen Bestand und
+> am neuen Auslegungspunkt. FTS5 kam als Phrasenindex für A5 hinzu, eine Vorauswahl entfiel. Der
+> kalte CLI-Pfad bleibt über 5 s; das ist ausgewiesen, und der MCP-Server lädt beim Start vor.
 > Bis dahin abgeschlossen: Phase 15 (Skalierung, [Statusblock](docs/roadmap-historie.md#g0--alles-hinterfragen-und-messen-zwingend-zuerst))
 > und Phase 14 (Referenz-Ernte, [Statusblock](docs/roadmap-historie.md#e0--alles-hinterfragen-und-messen-zwingend-zuerst))
 > sind beide abgeschlossen; Phase 14 **entfällt in der geplanten Form** – E0 fand einen
@@ -41,14 +42,14 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 - **Lean & container-frei:** reine Python-Umgebung, kein Docker-/DB-Server.
 - **Provenienz zuerst:** jede Antwort ist auf Paper/Abschnitt/Seite rückführbar.
 - **Inkrementell nutzbar:** neue PDFs per Drop-in-Ordner + Skript, ohne alles neu aufzusetzen.
-- **Klein, aber wachstumsfähig:** Die 2026-09-01 gemessene Auslegung (≤ 750 Volltexte / ≤ 1500 Gesamteinträge, [Phase 15 / G5](docs/roadmap-historie.md#g5--auslegung-neu-festschreiben)) ist **überholt**: Der reale Bestand liegt bei **3.461 Papern** (4,6-Fach über G5) und reißt die damals hergeleitete 5-s-Marke nachweislich – kalt in **allen vier** Modi, warm bereits bei **Local** (Median 6,064 s) und **DRIFT** (1,722 s). [ADR 0038](docs/adr/0038-corpus-ceiling-revision-local-search-latency.md) (2026-09-16) ersetzt die Zahl **nicht** durch eine neue (eine neu hergeleitete Wand läge ohnehin unterhalb des bereits produktiven Bestands), sondern löst ADR 0033s Revisionsbedingung ein und erhebt **Weg B (FTS5)** zur empfohlenen nächsten Phase – geplant als [Phase 16](#phase-16--antwortzeit-weg-b-fts5). Bis zu deren Abschluss ([F4](#f4--auslegung-neu-festschreiben)) gilt der gemessene Ist-Zustand als Grenze, keine unbelegte Zahl.
+- **Klein, aber wachstumsfähig:** Auslegung seit [Phase 16](docs/roadmap-historie.md#phase-16--antwortzeit-weg-b-fts5) (gemessen 2026-09-25): **≤ 7.150 Gesamteinträge / ≤ 450.000 Chunks** – der doppelte Bestand vom 2026-09-25 (3.579 Paper / 225.126 Chunks). Am Auslegungspunkt halten alle vier Modi warm die 1-s-Marke (schlechtester Einzellauf 0,66 s, Global); treibend ist die **Chunkzahl**, weil jede Wertung linear über die Chunks läuft. Der kalte CLI-Pfad hält die 5-s-Marke **nicht** (8,6–9,5 s real, 15,5–18,1 s am Auslegungspunkt); der MCP-Server lädt den Index deshalb beim Start vor – die Abweichung ist in [ADR 0044](docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md) begründet. Gemessen im Linux-Container; die Bestätigung auf dem Arbeitsrechner steht aus (Messpaket). *Revisionsbedingung:* erneut messen, sobald der Bestand 450.000 Chunks oder 7.150 Einträge überschreitet oder die lokale Bestätigung warm über 0,8 s liegt. Die Vorgänger-Auslegungen (≤ 750/≤ 1500 aus G5, überholt laut [ADR 0038](docs/adr/0038-corpus-ceiling-revision-local-search-latency.md)) bleiben in der Historie datiert.
 - **Offline zuerst:** umgesetzt ist die Offline-Variante (Option B, [ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)); ein Netzzugriff bleibt eine **separat startbare Zusatzfunktion**, nie eine Voraussetzung.
 - **Erst messen, dann bauen.** Das ist die wichtigste Lehre aus den Phase-7-Punkten und keine Floskel: In **A3** war die vermutete Ursache der `short_chunk`-Flut falsch (nicht die Seitengrenze, sondern die Überschriften-Heuristik), in **A4** bestätigte sich die Annahme „Fusion schlägt Einzelverfahren" nicht, in **A5** saß das Keyword-Rauschen nicht im Vektorraum, sondern in der Auswahlpolitik, in **A6** hätte eine nackte Coverage-Kennzahl die triviale Strategie gekürt, und in **A7** waren die vermuteten Signal-Konflikte mit 1 von 44 Fragen praktisch inexistent. Jede Ausbaustufe beginnt daher mit einer Wegwerf-Messung und einem **Abbruchkriterium**.
 - **Präzision vor Recall**, wo Daten in den Korpus oder in den Graphen fließen ([ADR 0011](docs/adr/0011-intra-corpus-citation-graph-phase7.md)).
 
 ---
 
-## Stand: Phasen 0–8, 11, 12, 13, 14 und 15 (abgeschlossen)
+## Stand: Phasen 0–8, 11, 12, 13, 14, 15 und 16 (abgeschlossen)
 
 | Phase                                       | Ergebnis                                                                                                               | Entscheidung                                                                                                                                                                                 |
 | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -74,6 +75,7 @@ Phasenweiser Umsetzungsplan für den persönlichen Scientific-GraphRAG-Assistent
 | **13** – Referenz-Einträge ohne Volltext | `*.refjson`-Stubs aus DOI/arXiv, `document_kind` bis in jeden Beleg, Nachrangigkeits-Guardrail (13 → **3** Regressionen ohne Totalverlust); **M9** erreicht – [Details unten](#phase-13--referenz-einträge-ohne-volltext) | [ADR 0029](docs/adr/0029-reference-stub-resolution-phase13.md) · [ADR 0030](docs/adr/0030-reference-entries-in-corpus-phase13.md) · [ADR 0031](docs/adr/0031-reference-contract-and-guardrail-phase13.md) |
 | **15** – Skalierung (G0–G5) | Aho-Corasick statt O(Paper²), Prozess-Cache mit persistiertem TF-IDF-Zustand (warm < 1 s), `Übersicht.md` abgelöst durch `metadata/curation.json`, Auslegung neu festgeschrieben (≤ 750 Volltexte / ≤ 1500 Gesamteinträge); **M11** erreicht – [Archiv](docs/roadmap-historie.md#phase-15--skalierung-den-wachsenden-bestand-tragen) | [ADR 0033](docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md) · [ADR 0034](docs/adr/0034-decommission-uebersicht-and-inflow-stop-rule-phase15.md) |
 | **14** – Referenz-Ernte (E0) | **Entfällt in der geplanten Form:** E0 fand einen billigeren, gleichwertigen Weg (bestehende Kette `resolve_references` → `intake` statt neuer Ernte-/Kurationswerkzeuge) und führte ihn selbst mit 15/15 echten Treffern vor; zwei bindende Auflagen für einen künftigen manuellen Harvest festgehalten; **M10** erreicht (angepasste Form) – [Archiv](docs/roadmap-historie.md#phase-14--referenz-ernte-externe-verweise-aus-dem-eigenen-bestand) | Kein ADR (E0 baut nichts) |
+| **16** – Antwortzeit (F0–F4) | Wertung **bit-identisch** ohne volle Matrixmultiplikation (spaltenweise über die Anfrage-Terme, vektorisierte Ranglisten, gemeinsame Wertung je Anfrage): Local warm 6,9 s → 0,17 s am realen Bestand; FTS5-Vorauswahl gemessen und verworfen, FTS5-**Phrasenindex** als Infrastruktur (+16 % Index); schlanker bitgleicher Lader + Vorladen im MCP-Server; Auslegung ≤ 7.150 Einträge / ≤ 450.000 Chunks (2026-09-25), kalter CLI-Pfad ausgewiesen über 5 s; Gold-Sets und Baselines am realen Bestand neu eingefroren; **M12** erreicht – [Archiv](docs/roadmap-historie.md#phase-16--antwortzeit-weg-b-fts5) | [ADR 0044](docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md) |
 
 **Nicht umgesetzt aus Phase 7:** der Punkt **A8** (inkrementelles Update, Auto-Watcher). Er ist in dieser Fassung aufgelöst – das inkrementelle Update lebt über B2 in [Phase 15 / G1](docs/roadmap-historie.md#g1--aufnahmepfad-begradigen-die-quadratischen-stellen) weiter (dort ausdrücklich als **Frage**, siehe [G0.5](docs/roadmap-historie.md#g05--erübrigt-sich-das-inkrementelle-update)), der Auto-Watcher ist [bewusst gestrichen](docs/roadmap-historie.md#b4--auto-watcher-bewusst-gestrichen) und wird durch den manuellen Intake der [Phase 8](docs/roadmap-historie.md#phase-8--korpus-zufluss-new_papers--intake) ersetzt.
 
@@ -90,23 +92,20 @@ hunderten einchunkigen Einträgen befürchtete; Phase 14s Ergebnis (E1/E2 werden
 diese Prämisse entkräftet, und [ADR 0036](docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md)
 setzt den Punkt jetzt um.
 
-**Neu geplant (2026-09-24), ohne Reihenfolgekonflikt:**
+**Geplant am 2026-09-24:**
 
-- **[Phase 16 – Antwortzeit: Weg B (FTS5)](#phase-16--antwortzeit-weg-b-fts5)** löst die in
-  [ADR 0038](docs/adr/0038-corpus-ceiling-revision-local-search-latency.md) verlangte, dedizierte
-  Phase ein.
+- **[Phase 16 – Antwortzeit: Weg B (FTS5)](docs/roadmap-historie.md#phase-16--antwortzeit-weg-b-fts5)** ist **abgeschlossen** (2026-09-25) und hat die
+  in [ADR 0038](docs/adr/0038-corpus-ceiling-revision-local-search-latency.md) verlangte Phase
+  eingelöst.
 - **[Phase 17 – Autoren als Rechercheebene](#phase-17--autoren-als-rechercheebene)** baut in
-  [A3](#a3--autorenindex-beim-index-bau-abgeleitet) und
-  [A5](#a5--personen-im-text-erwähnungen-und-zitate) auf dem FTS5-Index aus
-  [F2](#f2--fts5-index-als-infrastruktur-vorauswahl-nur-nach-regel) auf und folgt deshalb
-  Phase 16.
-- **Ausnahme:** [A1](#a1--weak--strong-jede-literaturangabe-belegt-vorziehbar) hängt nicht von
-  FTS5 ab und korrigiert nachweislich falsche Literaturangaben. A1 darf deshalb **vor** Phase 16
-  laufen; die Nummerierung bleibt davon unberührt.
+  [A5](#a5--personen-im-text-erwähnungen-und-zitate) auf dem FTS5-Phrasenindex aus
+  [F2](docs/roadmap-historie.md#f2--fts5-index-als-infrastruktur-vorauswahl-nur-nach-regel) auf.
+  Die Tabelle `chunk_fts` und die Schnittstelle `indexing.chunk_fts` stehen bereit; A5 kann
+  beginnen.
 
 **Zur Anordnung dieses Dokuments:** Abgeschlossene Phasen werden nicht umsortiert, sondern beim
 Abschluss in die [Historie](docs/roadmap-historie.md) überführt – die Regel, nach der die Phasen
-0–8, 11, 12, 14 und 15 dort stehen (Phase 13 bleibt als einzige Ausnahme vollständig hier, siehe
+0–8, 11, 12, 14, 15 und 16 dort stehen (Phase 13 bleibt als einzige Ausnahme vollständig hier, siehe
 oben).
 
 ---
@@ -879,165 +878,6 @@ Kein Volltext-Download (das ist eine eigene Fähigkeit – [S2](#s2--volltext-ho
 
 ---
 
-## Phase 16 – Antwortzeit: Weg B (FTS5)
-
-> **Status: geplant (2026-09-24), nicht begonnen.** Die Phase löst die in
-> [ADR 0038](docs/adr/0038-corpus-ceiling-revision-local-search-latency.md) verlangte, dedizierte
-> Phase ein. Ausgangslage ist die dortige Messung vom 2026-09-16 bei **3.461 Papern / 220.964
-> Chunks / 1.170 Communities**:
->
-> * **Warm:** Local liegt im Median bei **6,064 s**, DRIFT bei **1,722 s**, beide über der
->   1-s-Marke.
-> * **Kalt:** Alle vier Modi liegen bei 9,6–15,8 s, also über der 5-s-Marke.
-> * **Ladeanteil:** Basics erster Aufruf dauert **10,824 s**.
->
-> Seitdem ist der Bestand weiter gewachsen, auf **3.579 Paper / 225.126 Chunks / 1.241
-> Communities** (Stand 2026-09-24). Die Zahlen aus ADR 0038 sind damit eher zu günstig.
->
-> **Offline-Beschaffbarkeit bereits geprüft:** Das `sqlite3` des venv (SQLite 3.38.4) ist mit
-> `ENABLE_FTS5` gebaut, und eine Tabelle mit dem Tokenizer `trigram` lässt sich anlegen. Ein
-> Fremd-Wheel ist nicht nötig.
->
-> **Zwei Festlegungen aus der Planung:**
->
-> 1. **Die Entscheidungsregel aus [G0.6](docs/roadmap-historie.md#g06--was-kostet-bit-identität)
->    gilt unverändert:** Bit-Identität schlägt Geschwindigkeit.
-> 2. **FTS5 hat zwei getrennte Rollen, die getrennt gemessen, gebaut und abgenommen werden.**
->    Als **Infrastruktur** für Phrasen- und Namenssuche wird der Index gebaut, sofern F0 seine
->    Kosten als tragbar ausweist; darauf bauen [A3](#a3--autorenindex-beim-index-bau-abgeleitet)
->    und [A5](#a5--personen-im-text-erwähnungen-und-zitate) aus Phase 17 auf. Ob FTS5 zusätzlich
->    als **Vorauswahl** in das Ranking eingreift, entscheidet ausschließlich die Regel aus F0.
-
-**Ziel:** Alle vier Modi halten am realen Bestand und am in F0 festgelegten Auslegungspunkt wieder
-die bestehenden Marken: warm unter 1 s ([ADR 0033](docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md),
-maßgeblich für den MCP-Betrieb) und kalt unter 5 s ([G5](docs/roadmap-historie.md#g5--auslegung-neu-festschreiben)).
-Die Auslegung aus dem Leitprinzip „Klein, aber wachstumsfähig" ist danach wieder mit einer
-gemessenen Zahl unterlegt, statt nur als „überholt" markiert.
-
-**Warum das nötig ist:** Local ist laut Fragetyp-Contract der primäre Modus für Detailfragen und
-heute zugleich der langsamste: Bis zu **elf** volle Korpus-Scorings fallen je Anfrage an. Der
-Prozess-Cache (Weg C) beseitigt diesen strukturellen, mit der Chunkzahl linear wachsenden Anteil
-nicht; ADR 0038 hat das gemessen, nicht nur befürchtet.
-
-### F0 – Kosten zerlegen und beide Wege prototypisch messen (zwingend zuerst, mit Entscheidungsregel)
-_Modell-Tipp: Claude Opus 5.5._
-
-F0 ist eine Wegwerf-Messung wie G0 und ADR 0038: kein Produktivcode, der Live-Index wird nur
-gelesen, und gemessen wird an Index-Kopien.
-
-1. **Kosten von Local zerlegen.** Wie verteilt sich die warme Zeit auf Seed-Suche,
-   Nachbarschafts-Scorings, Fan-out-Suchen und das ungecachte `load_neighbors`? Wie groß ist der
-   Ladeanteil beim ersten Aufruf? ADR 0038 hat diese Aufschlüsselung ausdrücklich offengelassen.
-2. **Bit-identische Kandidaten messen:**
-   * (a) Ein **Fan-out-Vorfilter**, der `paper_ids` **vor** dem Scoring anwendet statt danach
-     (ADR 0038, Abschnitt 3).
-   * (b) Eine **gemeinsame Vektorisierung** der Anfrage über Seed-, Nachbarschafts- und
-     Fan-out-Suchen (Notiz aus G5).
-   * (c) Ein **Prozess-Cache für die Nachbarschaft**.
-
-   Jeder Kandidat muss qid-genau **0 Abweichungen** über alle zehn Ebenen beider Gold-Sets
-   nachweisen.
-3. **FTS5 als Vorauswahl messen.** Grundlage ist eine external-content-Tabelle über `chunks`, damit
-   der Text nicht doppelt gespeichert wird. Die exakte Hybrid-Wertung läuft nur noch auf den
-   Top-*N* der Vorauswahl. Für mehrere Werte von *N* wird qid-genau gezählt, wie viele Ränge sich
-   verschieben.
-4. **FTS5 als Infrastruktur messen.** Zu erheben sind der Zuwachs der Indexgröße (heute 713 MB),
-   die Mehrdauer eines vollen Ingest und die Antwortzeit je einer Phrasen- und einer Namensanfrage.
-   Außerdem ist der Tokenizer zu wählen: `unicode61` mit `remove_diacritics` für den Fließtext,
-   `trigram` nur für die kleine Namenstabelle aus Phase 17. Die Annahme dahinter: Ein
-   Trigramm-Index über 225.000 Chunks belegt ein Vielfaches des Textes. Das ist zu belegen, nicht
-   vorauszusetzen.
-5. **Den Auslegungspunkt festlegen, bevor gebaut wird.** Gemessen wird am realen Bestand und an
-   einer Staffelung darüber, nach dem Chimären-Verfahren aus G5. Richtwert: der doppelte heutige
-   Bestand.
-
-*Vorab fixierte Entscheidungsregel* (übernommen aus G0.6 und ADR 0038; sie wird beim Bau nicht
-mehr verändert):
-
-1. **Bit-identische Kandidaten** aus Punkt 2 werden gebaut, soweit sie messbar beitragen
-   ([F1](#f1--bit-identische-begradigung)).
-2. **FTS5 als Vorauswahl** wird nur gebaut, wenn F1 die warme Marke für Local am Auslegungspunkt
-   verfehlt. Zulässig ist dann nur ein *N*, bei dem qid-genau über alle zehn Ebenen **0 Ränge**
-   abweichen. Lässt sich kein solches *N* finden, ist das ein eigener Befund mit eigenem ADR,
-   ausgewiesenem Bruch und neu eingefrorenen Baselines, kein stiller Kompromiss.
-3. **FTS5 als Infrastruktur** wird gebaut, wenn der Index um höchstens **50 %** wächst und der volle
-   Ingest um höchstens **20 %** länger dauert. *Abbruchkriterium:* Reißt eine der beiden
-   Schwellen, entfällt die Infrastruktur-Rolle. Phase 17 fällt dann auf den in
-   [A5](#a5--personen-im-text-erwähnungen-und-zitate) beschriebenen Rückfallweg zurück; das wird
-   dokumentiert, nicht still hingenommen.
-
-### F1 – Bit-identische Begradigung
-_Modell-Tipp: Claude Opus 5.5._
-
-- Umgesetzt werden die in F0 als wirksam gemessenen Kandidaten: Fan-out-Vorfilter, gemeinsame
-  Vektorisierung, Nachbarschafts-Cache.
-- Ein neuer Cache wird wie in ADR 0033 über den Zustand der Index-Datei invalidiert.
-- *Akzeptanz:*
-  - `--check` meldet gegen beide Baselines 0 Abweichungen (bit-identisch, kein Neueinfrieren).
-  - Die warme Local-Latenz ist gegen die 1-s-Marke gemessen.
-  - Determinismus und `Citation`-Contract bleiben unverändert.
-
-### F2 – FTS5-Index als Infrastruktur, Vorauswahl nur nach Regel
-_Modell-Tipp: Claude Opus 5.5._
-
-- Die FTS5-Tabelle entsteht im Index-Bau als Teil derselben SQLite-Datei und damit des atomaren
-  Swaps aus [Phase 6](docs/roadmap-historie.md#phase-6--drop-in-workflow--qualitätssicherung).
-  Es gibt keine eigene Datei und keinen zweiten Aktualisierungsweg.
-- Eine schmale, interne Abfrageschnittstelle (Phrase, Präfix, Nähe) steht Phase 17 zur Verfügung.
-  Solange Regel 2 nicht greift, ändert sich **nichts** an den vier Retrieval-Modi.
-- Nur falls Regel 2 greift, wird zusätzlich die Vorauswahl mit dem in F0 bestimmten *N* gebaut.
-- **FTS5-Anfragen sind Nutzereingaben.** Sonderzeichen und Operatoren (`"`, `NEAR(`, `*` …) werden
-  entschärft. Eine missglückte Anfrage endet als `invalid_input` und reicht keinen
-  `sqlite3.OperationalError` bis an die MCP-Grenze durch.
-- *Akzeptanz:*
-  - Ohne Vorauswahl meldet `--check` 0 Abweichungen, denn die Infrastruktur verändert kein
-    Ranking.
-  - Mit Vorauswahl: entweder 0 Abweichungen oder ein ausgewiesener Bruch mit neu eingefrorenen
-    Baselines und eigenem ADR.
-  - Indexzuwachs und Mehrdauer des Ingest liegen innerhalb der F0-Schwellen.
-
-### F3 – Kaltstart (bedingt)
-_Modell-Tipp: Claude Sonnet 5._
-
-- Nur nötig, wenn F0 den Ladeanteil als dominanten Kostenblock des kalten Pfads ausweist (heute
-  10,824 s beim ersten Aufruf).
-- Die Kandidaten werden erst in F0 benannt, etwa weitere persistierte Zustände nach dem Muster von
-  Weg A. Ohne Befund entfällt F3, dokumentiert wie [B6](docs/roadmap-historie.md#b6--grad-des-ähnlichkeitsgraphen-geprüft-verworfen).
-
-### F4 – Auslegung neu festschreiben
-_Modell-Tipp: Claude Sonnet 5._
-
-- Wie in G5 kommt eine gemessene Zahl mit Messdatum in README, CONTRIBUTING und die Roadmap
-  (Leitprinzip „Klein, aber wachstumsfähig"). ADR 0038 erhält einen Nachtrag, und eine neue
-  Revisionsbedingung legt die Korpusgröße fest, ab der erneut zu messen ist.
-- Handprobe wie in [G0.7](docs/roadmap-historie.md#g07--handprobe-bleibt-das-werkzeug-im-alltag-brauchbar):
-  Mindestens 8 von 10 realen Fragen müssen brauchbar beantwortet werden.
-
-### Bewusst ausgeschlossen
-
-- Externe Such- oder Vektor-Backends wie Qdrant, Weaviate oder Neo4j (siehe
-  [Zielbild](#zielbild--erst-bei-belegter-beschaffbarkeit)).
-- Embeddings und ein Index-LLM.
-- Jede Ranking-Änderung ohne die Regel aus F0.
-- Eine Mischung aus Weg A und Weg B, die nicht dieselbe qid-Prüfung besteht.
-
-### Definition of Done
-
-- F0 ist beantwortet und dokumentiert. Auch „FTS5-Vorauswahl nicht nötig" ist ein gültiges
-  Ergebnis.
-- Alle vier Modi halten warm < 1 s und kalt < 5 s am realen Bestand und am Auslegungspunkt – oder
-  die Abweichung ist gemessen, begründet und im ADR festgehalten.
-- `--check` meldet 0 Abweichungen, oder der Bruch ist ausgewiesen und beide Baselines sind neu
-  eingefroren.
-- Die FTS5-Infrastruktur für Phase 17 ist vorhanden, oder ihr Wegfall ist über das
-  Abbruchkriterium dokumentiert.
-- **ADR** zu Weg-Entscheidung, FTS5-Schema und Auslegung; Modul-Doku, [features.md](docs/features.md)
-  und [funktionsweise.md](docs/funktionsweise.md) sind nachgezogen.
-- Tests: Bit-Identität, Cache-Invalidierung, Entschärfung der FTS5-Syntax und atomarer Swap mit
-  FTS5-Tabelle.
-
----
-
 ## Phase 17 – Autoren als Rechercheebene
 
 > **Status: in Arbeit (seit 2026-09-24).** Umsetzungsstand und Reihenfolge stehen im
@@ -1159,7 +999,7 @@ Festgelegt mit dem Nutzer am 2026-09-24, **vor** dem ersten Code:
 | A3 | **umgesetzt:** `paper_authors` nur aus `strong`-Datensätzen, Personenschlüssel Kennung vor Name, Trigramm-Namenssuche mit getestetem Rückfallweg, gemeinsame FTS5-Entschärfung (`indexing/fts.py`) für F2; kein Retrieval-Modus berührt | [ADR 0043](docs/adr/0043-author-index-and-person-tools.md) |
 | A4 | **umgesetzt:** vier Werkzeuge nach Spezifikation (`search_authors`, `get_author`, `search_author_papers` als Basic-Suche mit Paper-Filter, `get_author_citations`), jede Antwort mit `coverage`, Mehrdeutigkeit als Kandidatenliste, CLI `scripts.authors`; Contract-, Funktions- und Fehlertests. **Offen:** die Handprobe aus A0, Punkt 4 am realen Bestand | [ADR 0043, Nachtrag](docs/adr/0043-author-index-and-person-tools.md#nachtrag-2026-09-24-umsetzung-von-a4) |
 | A6 | **Doku und Sicherung umgesetzt:** Specs, Modul-Doku, features, funktionsweise, README-Anleitung zum Arbeitslisten-Weg, ADRs 0041–0043; `metadata/llm_answers/` im Sicherungsumfang. `--check` sollte 0 Abweichungen melden, denn kein Suchmodus, keine Wertung und keine Chunk- oder Community-Bildung wurde geändert; der Fingerprint (Schema, Paper, Chunks, Communities) bleibt gleich. Am Prüfkorpus nachgewiesen: Nach dem Upgrade sind Chunks, Graphen und Kanten bitgleich, und alle Suchmodi liefern dieselben Ergebnisse. **Offen, nur beim Nutzer ausführbar:** `--check` gegen beide Baselines nach dem nächsten Ingest und die Handprobe zur Tool-Wahl im realen Client (Vorlage [eval/personen-toolwahl.md](eval/personen-toolwahl.md)) | [README](README.md#workflow-schwach-belegte-zitierdaten-klären-arbeitslisten-weg) |
-| A5 | wartet auf Phase 16 / F2 | – |
+| A5 | **kann beginnen:** Phase 16 / F2 ist umgesetzt – `chunk_fts` im Index, Schnittstelle `indexing.chunk_fts.search_phrase`/`search_prefix`/`search_near` | [ADR 0044](docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md) |
 
 ### A0 – Abdeckung, Identität und `weak`-Triage messen (zwingend zuerst, mit Abbruchkriterium)
 _Modell-Tipp: Claude Opus 5.5._
@@ -1277,7 +1117,7 @@ _Modell-Tipp: Claude Sonnet 5._
 - **Personenschlüssel:** die OpenAlex-ID, wo vorhanden, sonst ausdrücklich `name:<normalisiert>`
   als unbestätigte Identität.
 - Die unscharfe Namenssuche läuft über eine kleine FTS5-Trigramm-Tabelle auf den Namen
-  (Infrastruktur aus [F2](#f2--fts5-index-als-infrastruktur-vorauswahl-nur-nach-regel)).
+  (Infrastruktur aus [F2](docs/roadmap-historie.md#f2--fts5-index-als-infrastruktur-vorauswahl-nur-nach-regel)).
 - Die PDFs werden nicht neu extrahiert; die zwischengespeicherte Extraktion bleibt, ein Index-Bau
   über `python -m scripts.ingest` genügt.
 - *Akzeptanz:*
@@ -1418,7 +1258,7 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 | Inkonsistenz bei inkrementellen Updates                                       | Standard bleibt der volle Re-Index; inkrementell nur mit Identitäts-Nachweis ([G1](docs/roadmap-historie.md#g1--aufnahmepfad-begradigen-die-quadratischen-stellen)).                                                                                                                |
 | Kosten/Datenschutz eines Index-LLM                                            | entschärft durch Option B:**kein** Index-LLM (offline, TF-IDF/BM25); ein LLM kommt nur zur Abfragezeit über die Bridge ([ADR 0005](docs/adr/0005-graphrag-index-backend-open.md)).                                                             |
 | **Der Bestand wächst über die Auslegung hinaus** – Antwortzeit, Speicher und Aufnahmedauer laufen weg | Beziffert statt vermutet ([G0](docs/roadmap-historie.md#g0--alles-hinterfragen-und-messen-zwingend-zuerst)), begradigt an den drei belegten Stellen ([G1](docs/roadmap-historie.md#g1--aufnahmepfad-begradigen-die-quadratischen-stellen), [G2](docs/roadmap-historie.md#g2--antwortzeit-den-vektorraum-nicht-bei-jeder-frage-neu-bauen)), und die Auslegung wird danach **schriftlich neu festgeschrieben** ([G5](docs/roadmap-historie.md#g5--auslegung-neu-festschreiben)) statt still zu veralten. |
-| **Beschleunigung zerstört still die Messgrundlage** – ein anderes Ranking wirkt wie eine Verbesserung | Jede Maßnahme in [G2](docs/roadmap-historie.md#g2--antwortzeit-den-vektorraum-nicht-bei-jeder-frage-neu-bauen) liefert entweder **bit-identische** Ergebnisse (qid-genau belegt) oder weist ihren Bruch aus und friert beide Baselines neu ein; die Entscheidungsregel dafür steht **vor** der Messung fest ([G0.6](docs/roadmap-historie.md#g06--was-kostet-bit-identität)). Die Regel gilt unverändert für [Phase 16](#phase-16--antwortzeit-weg-b-fts5); dort wird FTS5 als Infrastruktur getrennt von FTS5 als Vorauswahl abgenommen. |
+| **Beschleunigung zerstört still die Messgrundlage** – ein anderes Ranking wirkt wie eine Verbesserung | Jede Maßnahme in [G2](docs/roadmap-historie.md#g2--antwortzeit-den-vektorraum-nicht-bei-jeder-frage-neu-bauen) liefert entweder **bit-identische** Ergebnisse (qid-genau belegt) oder weist ihren Bruch aus und friert beide Baselines neu ein; die Entscheidungsregel dafür steht **vor** der Messung fest ([G0.6](docs/roadmap-historie.md#g06--was-kostet-bit-identität)). Die Regel galt unverändert für [Phase 16](docs/roadmap-historie.md#phase-16--antwortzeit-weg-b-fts5): Alle Beschleunigungen sind bit-identisch (Byte-Vergleich aller Ausgaben), FTS5 wurde als Infrastruktur getrennt von FTS5 als Vorauswahl abgenommen. |
 | **Das kuratierte Relevanzurteil geht beim Abschalten der Übersicht verloren** | Es ist aus keiner Quelle reproduzierbar und wird deshalb **zuerst** maschinenlesbar überführt, erst danach wird das Format abgelöst ([G4](docs/roadmap-historie.md#g4--zuflussregel-und-ablösung-der-übersicht)); der Sicherungsumfang aus [B1](docs/roadmap-historie.md#b1--sicherung-des-korpus) wird entsprechend nachgezogen. |
 | **Massenzufluss von Referenz-Einträgen** (Phase 14) verwässert Korpus, Übersicht und Community-Struktur | Ernte **schlägt vor**, sie übernimmt nicht; harte Obergrenze aus einer gestaffelten Vorabmessung ([E0.2](docs/roadmap-historie.md#e02--skaliert-die-guardrail-das-schärfste-abbruchkriterium)); Wirkung auf Ähnlichkeitsgraph und Übersicht vorab beziffert ([E0.3](docs/roadmap-historie.md#e03--was-macht-der-ähnlichkeitsgraph-mit-vielen-einchunkigen-papern), [E0.5](docs/roadmap-historie.md#e05--verträgt-die-kuratierte-übersicht-den-zufluss)). |
 | **Selbstbezügliche Messung** – geerntete Stubs werden zu Multi-Hop-Gold-Ankern und heben die Kennzahl ohne echten Gewinn | Ankerwahl auf `document_kind = 'full'` beschränken; Referenz-Einträge bleiben **Ziele**, werden aber keine **Anker** – vorab zu belegen ([E0.4](docs/roadmap-historie.md#e04--die-zirkularitätsfalle-der-multi-hop-messung)), analog zum lexikalischen Ausschluss aus [ADR 0031](docs/adr/0031-reference-contract-and-guardrail-phase13.md). |
@@ -1439,7 +1279,7 @@ Diese Punkte bleiben das **Zielbild** und werden erst umgesetzt, wenn die nötig
 - **M9 – Auch das Unerreichbare zählt:** ✅ erreicht – ein Paper, von dem nur der Abstract öffentlich ist, ist über seine DOI auffindbar, zitierfähig und als Ziel von `CITES`-Kanten verknüpft – und in **jeder** Ausgabe als unvollständig ausgewiesen (Phase 13). **Ehrlich dazu:** Der Produktivkorpus ist bewusst noch stubfrei; der Nachweis lief auf Index-Kopien mit **52 echten** Abstracts, deren Handprobe **10/10** trifft. Die Nachrangigkeits-Guardrail senkt die in R0 belegten 13 qid-Regressionen auf **3 ohne Totalverlust** – gemessen, nicht geschätzt, und gegen zwei besser klingende Varianten verteidigt.
 - **M10 – Der Korpus kennt seine eigenen Ränder:** ✅ erreicht **in angepasster Form** (2026-09-01) – [E0](docs/roadmap-historie.md#e0--alles-hinterfragen-und-messen-zwingend-zuerst) fand einen billigeren, gleichwertigen Weg und führte ihn selbst vor: 15 der häufigsten externen Zitations-Kandidaten wurden über die **bestehende** Kette `resolve_references` → `intake` real aufgelöst (15/15 Treffer), ohne ein neues Ernte- oder Kurationswerkzeug zu bauen. Die Handprobe bestätigt den Nutzen (9/10, Schwelle ≥ 7/10); zwei bindende Auflagen für einen künftigen manuellen Harvest stehen fest (Multi-Hop-Anker bleiben auf `document_kind = 'full'` beschränkt, jeder Batch wird vorab mit einer Guardrail-Regression geprüft). **Ehrlich dazu:** Ein automatisiertes Ernte-/Kurationswerkzeug (E1/E2) wurde **nicht** gebaut – „lohnt sich nicht in der geplanten Form" war das durch E0 begründete, zulässige Ergebnis (Phase 14).
 - **M11 – Der Bestand darf wachsen:** ✅ erreicht (2026-09-01, Phase 15). Der Aufnahmepfad hat keine in der Paperzahl quadratische Stelle mehr, warme Anfragen liegen bei Median 0,169 s (Marke < 1 s), die kuratierten Wertungen sind maschinenlesbar gerettet (`metadata/curation.json`) und die Auslegung ist mit **Messdatum** neu festgeschrieben (≤ 750 Volltexte / ≤ 1500 Gesamteinträge, 2026-09-01) statt aus der Zeit mit 145 Papern fortgeschrieben. Beide `--check`-Läufe melden 0 Abweichungen; die Handprobe aus [G0.7](docs/roadmap-historie.md#g07--handprobe-bleibt-das-werkzeug-im-alltag-brauchbar) hält 9 von 10 (Schwelle ≥ 8/10). **Nachtrag (2026-09-16):** Bei 3.461 Papern hält die warme 1-s-Marke nicht mehr für Local (Median 6,064 s) und DRIFT (1,722 s); [ADR 0038](docs/adr/0038-corpus-ceiling-revision-local-search-latency.md) erhebt Weg B (FTS5) zur empfohlenen nächsten Phase.
-- **M12 – Der Bestand trägt wieder:** ⏳ geplant ([Phase 16](#phase-16--antwortzeit-weg-b-fts5)). Alle vier Modi halten warm < 1 s und kalt < 5 s, am realen Bestand und am in F0 festgelegten Auslegungspunkt. Die Auslegung ist mit Messdatum neu festgeschrieben, und `--check` meldet 0 Abweichungen oder einen ausgewiesenen Bruch mit neu eingefrorenen Baselines.
+- **M12 – Der Bestand trägt wieder:** ✅ erreicht am 2026-09-25 ([Phase 16](docs/roadmap-historie.md#phase-16--antwortzeit-weg-b-fts5)). Alle vier Modi halten warm < 1 s am realen Bestand und am Auslegungspunkt (≤ 7.150 Einträge / ≤ 450.000 Chunks); der kalte CLI-Pfad hält die 5-s-Marke nicht, die Abweichung ist gemessen und in ADR 0044 begründet (Vorladen im MCP-Server). Die Wertung ist bit-identisch; beide Baselines wurden am realen Bestand neu eingefroren, `--check` meldet 0 Abweichungen.
 - **M13 – Jede Literaturangabe ist belegt:** ⏳ geplant ([Phase 17 / A1](#a1--weak--strong-jede-literaturangabe-belegt-vorziehbar), vorziehbar). Kein Datensatz bleibt still `weak`: Jeder ist über die Titelseite belegt `strong`, mit Freigabe des Nutzers `manual` korrigiert oder mit Grund als nicht auflösbar ausgewiesen. Keine Literaturangabe verweist mehr auf ein fremdes Paper.
 - **M14 – Personen sind recherchierbar:** ⏳ geplant ([Phase 17](#phase-17--autoren-als-rechercheebene)). Zu einer Person liefert das System alle Korpus-Paper, ihr Profil, die Suche in ihren Papern, ihre Zitationsbeziehungen und ihre Erwähnungen im Text. Grundlage ist eine Personenkennung statt einer Namensheuristik, und die Abdeckung ist gemessen und ausgewiesen.
 

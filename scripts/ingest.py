@@ -58,6 +58,7 @@ def main() -> int:
         f"Namenssuche={report.author_name_search} "
         f"ohne Personenschlüssel={report.n_author_skipped}"
     )
+    print(f"[ingest] Phrasenindex (FTS5 über chunks): {report.chunk_search}")
     print(f"[ingest] Qualitätsreport: {Path(args.data) / 'quality_report.json'}")
     return 0
 
