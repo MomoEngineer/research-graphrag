@@ -21,6 +21,13 @@ Ties werden über die ``chunk_id`` stabil gebrochen. ``TfidfIndex.load`` cacht d
 **pro Prozess**, ungültig gemacht über den **Zustand der Datei** (Größe + Änderungszeit), nie
 über eine Zeitspanne – ein neu gebauter Index wirkt dadurch weiterhin ohne Neustart des
 MCP-Servers (On-Read-Frische, docs/adr/0010-drop-in-workflow-and-qa-phase6.md).
+
+Seit Phase 16 / F1 rechnet die Wertung **bit-identisch, aber ohne volle Matrixmultiplikation**
+(docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md): Die Scores entstehen
+spaltenweise nur über die Terme der Anfrage – in derselben Summationsfolge je Chunk wie das
+bisherige Sparse-Produkt –, Ranglisten, Fusion und Top-*k* laufen vektorisiert mit identischem
+Tie-Break, und die Wertung einer Anfrage wird am Index-Objekt gemerkt, sodass Seed-, Fan-out-
+und DRIFT-Suchen derselben Anfrage sie teilen.
 """
 
 from __future__ import annotations
@@ -29,6 +36,7 @@ import json
 import sqlite3
 import threading
 import warnings
+from collections import OrderedDict
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -37,13 +45,12 @@ from typing import Any, Literal
 import numpy as np
 import scipy.sparse as sp
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-from sklearn.metrics.pairwise import linear_kernel
 
 from research_graphrag.errors import DomainError, ErrorCode
 from research_graphrag.extraction.model import DOCUMENT_KIND_FULL, DOCUMENT_KIND_REFERENCE
 from research_graphrag.extraction.pdf import CanonicalPaper
 from research_graphrag.indexing import bm25
-from research_graphrag.indexing.fusion import fuse_rankings
+from research_graphrag.indexing.fusion import RRF_K
 from research_graphrag.limits import check_max_count
 
 Scoring = Literal["hybrid", "tfidf", "bm25"]
@@ -56,6 +63,12 @@ _SCORINGS: frozenset[str] = frozenset(("hybrid", "tfidf", "bm25"))
 
 _CSR_DTYPE = np.int64
 """Fester Speichertyp der persistierten Zähl-Matrix (versionsunabhängig von scikit-learn/scipy)."""
+
+SCORE_MEMO_SIZE = 4
+"""Zahl der am Index-Objekt gemerkten Anfrage-Wertungen (Phase 16 / F1).
+
+Eine Local-Anfrage wertet dieselbe Anfrage bis zu sechsmal (Seed + Fan-out), DRIFT zwei- bis
+dreimal; wenige Einträge genügen deshalb. Jeder Eintrag hält drei Arrays je Chunk."""
 
 SCHEMA_VERSION = "0.6.0"
 """Version des Index-Schemas. ``0.5.0 -> 0.6.0``: neue Tabelle ``tfidf_state`` – Vokabular und
@@ -162,6 +175,29 @@ class _ChunkRef:
     document_kind: str = DOCUMENT_KIND_FULL
 
 
+@dataclass(frozen=True)
+class _Scored:
+    """Wertung **einer** Anfrage über alle Zeilen – gemeinsam genutzt (Phase 16 / F1).
+
+    Attributes:
+        values: Wert der gewählten Wertung je Zeile (Fusionswert bei ``hybrid``, sonst Rohwert);
+            außerhalb von ``members`` ohne Bedeutung.
+        members: Zeilen mit Wert – bei ``hybrid`` alle, die mindestens ein Verfahren positiv
+            bewertet, sonst die mit positivem Rohwert (aufsteigend).
+        tfidf: Roher TF-IDF-Kosinus je Zeile (Contract-Feld ``score_tfidf``).
+        bm25: Roher BM25-Wert je Zeile (Contract-Feld ``score_bm25``).
+        insertion: Die Mitgliedszeilen in der Reihenfolge, in der die frühere
+            ``fuse_rankings``-Rechnung sie einfügte (erst TF-IDF-Rangliste, dann neue Zeilen aus
+            der BM25-Rangliste); Grundlage der Listenreihenfolge in :meth:`score_chunks_by_paper`.
+    """
+
+    values: Any
+    members: Any
+    tfidf: Any
+    bm25: Any
+    insertion: Any
+
+
 def _snippet(text: str, limit: int = 200) -> str:
     """Erzeugt einen einzeiligen, gekürzten Ausschnitt (für die Antwort-Anzeige)."""
     collapsed = " ".join(text.split())
@@ -258,12 +294,16 @@ def _serialize_counts(counts: Any) -> tuple[bytes, bytes, bytes]:
 def _deserialize_counts(
     data: bytes, indices: bytes, indptr: bytes, n_docs: int, n_features: int
 ) -> Any:
-    """Rekonstruiert die CSR-Zähl-Matrix bit-genau aus den gespeicherten Rohdaten."""
+    """Rekonstruiert die CSR-Zähl-Matrix bit-genau aus den gespeicherten Rohdaten.
+
+    Die Arrays werden kopiert, weil ``np.frombuffer`` schreibgeschützte Sichten liefert und der
+    Lader die Zeilen anschließend in place sortiert (Phase 16 / F1).
+    """
     return sp.csr_matrix(
         (
-            np.frombuffer(data, dtype=_CSR_DTYPE),
-            np.frombuffer(indices, dtype=_CSR_DTYPE),
-            np.frombuffer(indptr, dtype=_CSR_DTYPE),
+            np.frombuffer(data, dtype=_CSR_DTYPE).copy(),
+            np.frombuffer(indices, dtype=_CSR_DTYPE).copy(),
+            np.frombuffer(indptr, dtype=_CSR_DTYPE).copy(),
         ),
         shape=(n_docs, n_features),
     )
@@ -389,6 +429,23 @@ class TfidfIndex:
         self._matrix = matrix
         self._bm25_weights = bm25_weights
         self._db_path = db_path
+        # Phase 16 / F1: abgeleitete Hilfsstrukturen, einmal je geladenem Index. Sie hängen am
+        # Objekt und verfallen damit zusammen mit ihm über den Dateizustand (ADR 0033).
+        chunk_ids = [ref.chunk_id for ref in refs]
+        order = sorted(range(len(chunk_ids)), key=chunk_ids.__getitem__)
+        self._chunk_rank = np.empty(len(chunk_ids), dtype=np.int64)
+        self._chunk_rank[order] = np.arange(len(chunk_ids), dtype=np.int64)
+        self._row_of = {chunk_id: row for row, chunk_id in enumerate(chunk_ids)}
+        self._paper_number: dict[str, int] = {}
+        self._paper_of_row = np.fromiter(
+            (self._paper_number.setdefault(ref.paper_id, len(self._paper_number)) for ref in refs),
+            dtype=np.int64,
+            count=len(refs),
+        )
+        self._matrix_by_term = matrix.tocsc()
+        self._bm25_by_term = bm25_weights.tocsc()
+        self._memo: OrderedDict[tuple[str, str], _Scored] = OrderedDict()
+        self._memo_lock = threading.Lock()
 
     @property
     def size(self) -> int:
@@ -493,6 +550,11 @@ class TfidfIndex:
         counts = _deserialize_counts(
             counts_data, counts_indices, counts_indptr, int(n_docs), int(n_features)
         )
+        # Die persistierten Spaltenindizes sind je Zeile nicht sortiert. Bisher sortierte sie
+        # scikit-learn beim Fit nebenbei in place; die spaltenweise Wertung (Phase 16 / F1) setzt
+        # sortierte Zeilen voraus, deshalb geschieht es hier ausdrücklich – die Werte beider
+        # Matrizen bleiben bitgleich (Nachweis: Roadmap.md, Phase 16 / F0).
+        counts.sort_indices()
         transformer = TfidfTransformer()
         matrix = transformer.fit_transform(counts)
         return cls(
@@ -519,28 +581,82 @@ class TfidfIndex:
             connection.close()
         return {str(chunk_id): str(text) for chunk_id, text in rows}
 
-    def _ranking(self, scores: Any) -> list[int]:
-        """Absteigende Rangliste der Zeilen mit positivem Score (Tie-Break ``chunk_id``)."""
-        positive = [i for i in range(len(self._refs)) if float(scores[i]) > 0.0]
-        positive.sort(key=lambda i: (-float(scores[i]), self._refs[i].chunk_id))
-        return positive
+    def _order(self, rows: Any, values: Any) -> Any:
+        """Ordnet Zeilen absteigend nach Wert, Tie-Break aufsteigende ``chunk_id``.
+
+        Entspricht ``sorted(rows, key=lambda i: (-values[i], chunk_id))``: Der vorab berechnete
+        Rang der ``chunk_id`` (:attr:`_chunk_rank`) bildet den Python-Stringvergleich nach.
+        """
+        return rows[np.lexsort((self._chunk_rank[rows], -values[rows]))]
+
+    def _top(self, rows: Any, values: Any, k: int) -> Any:
+        """Die ersten ``k`` Zeilen von :meth:`_order` – ohne alle Zeilen zu sortieren.
+
+        Behalten werden alle Zeilen, deren Wert mindestens den ``k``-größten erreicht; Gleichstände
+        an der Grenze bleiben damit vollständig im Rennen, und der Tie-Break entscheidet exakt
+        wie bei einer vollständigen Sortierung.
+        """
+        if rows.size > k:
+            threshold = np.partition(values[rows], rows.size - k)[rows.size - k]
+            rows = rows[values[rows] >= threshold]
+        return self._order(rows, values)[:k]
+
+    @staticmethod
+    def _by_term(by_term: Any, n_rows: int, terms: Any, weights: Any) -> Any:
+        """Summiert ``weights[t] * Spalte t`` über die Terme – in der gegebenen Reihenfolge.
+
+        Das ist das Sparse-Produkt ``Zeile · Matrixᵀ`` bzw. ``Matrix · Spalte``, aber nur über
+        die Spalten der beteiligten Terme statt über die ganze Matrix. Die Summation je Zeile
+        beginnt bei ``0.0`` und folgt der Termreihenfolge – genau der Folge, in der scipys
+        ``csr_matmat`` akkumuliert. Das Ergebnis ist deshalb **bitgleich**, nicht nur numerisch
+        gleich (Nachweis: Roadmap.md, Phase 16 / F0; Test in ``test_tfidf_index.py``).
+        """
+        total = np.zeros(n_rows, dtype=np.float64)
+        indptr, indices, data = by_term.indptr, by_term.indices, by_term.data
+        for term, weight in zip(terms.tolist(), weights.tolist(), strict=True):
+            start, end = indptr[term], indptr[term + 1]
+            if start != end:
+                total[indices[start:end]] += data[start:end] * weight
+        return total
 
     def _scores(self, query: str) -> tuple[Any, Any]:
-        """Bewertet die Anfrage mit beiden Verfahren (eine Tokenisierung, zwei Wertungen)."""
+        """Bewertet die Anfrage mit beiden Verfahren (eine Tokenisierung, zwei Wertungen).
+
+        TF-IDF-Kosinus: die Terme in der gespeicherten Folge des Anfragevektors (so iteriert das
+        frühere ``linear_kernel``). BM25: die Terme aufsteigend, denn das frühere
+        ``weights @ query.T`` iteriert je Zeile über deren sortierte Spalten.
+        """
         query_counts = self._vectorizer.transform([query])
-        tfidf_scores = linear_kernel(
-            self._transformer.transform(query_counts), self._matrix
-        ).ravel()
-        return tfidf_scores, bm25.score(self._bm25_weights, query_counts)
+        query_tfidf = self._transformer.transform(query_counts)
+        n_rows = len(self._refs)
+        tfidf_scores = self._by_term(
+            self._matrix_by_term, n_rows, query_tfidf.indices, query_tfidf.data
+        )
+        ascending = np.argsort(query_counts.indices, kind="stable")
+        bm25_scores = self._by_term(
+            self._bm25_by_term,
+            n_rows,
+            query_counts.indices[ascending],
+            query_counts.data[ascending].astype(np.float64),
+        )
+        return tfidf_scores, bm25_scores
 
-    def _all_scores(self, query: str, scoring: Scoring) -> tuple[dict[int, float], Any, Any]:
-        """Berechnet Ranking und rohe Teil-Scores in einem Durchgang (ein Query-Vektor).
+    def _ranking(self, scores: Any) -> Any:
+        """Absteigende Rangliste der Zeilen mit positivem Score (Tie-Break ``chunk_id``)."""
+        return self._order(np.flatnonzero(scores > 0.0), scores)
 
-        Gemeinsamer Kern von :meth:`search` und :meth:`score_chunks_by_paper`. Das
-        Ranking-Dict enthält den Wert der **gewählten** Wertung (Fusionswert bei ``hybrid``,
-        sonst der Rohwert); die rohen TF-IDF-/BM25-Arrays bleiben daneben erhalten, weil
-        ``search`` sie **unabhängig** von der gewählten Wertung für die Contract-Felder
-        ``score_tfidf``/``score_bm25`` jedes Treffers braucht (docs/adr/0014).
+    def _scored(self, query: str, scoring: Scoring) -> _Scored:
+        """Wertet eine Anfrage einmal aus – und merkt sich das Ergebnis am Index-Objekt.
+
+        Gemeinsamer Kern von :meth:`search` und :meth:`score_chunks_by_paper`. Die Fusion rechnet
+        wie :func:`research_graphrag.indexing.fusion.fuse_rankings`: je Zeile ``0.0`` plus
+        ``1 / (RRF_K + Rang)`` erst aus der TF-IDF-, dann aus der BM25-Rangliste. Die rohen
+        TF-IDF-/BM25-Arrays bleiben daneben erhalten, weil jeder Treffer sie **unabhängig** von der
+        gewählten Wertung für ``score_tfidf``/``score_bm25`` braucht (docs/adr/0014).
+
+        Seed-, Fan-out- und DRIFT-Suchen derselben Anfrage teilen die Wertung (bis zu
+        :data:`SCORE_MEMO_SIZE` Anfragen). Der Merker hängt am Objekt und verfällt mit ihm über
+        den Zustand der Index-Datei (docs/adr/0033).
 
         Raises:
             DomainError: ``invalid_input`` bei leerer Anfrage oder unbekannter Wertung.
@@ -550,16 +666,41 @@ class TfidfIndex:
         if scoring not in _SCORINGS:
             raise DomainError(ErrorCode.INVALID_INPUT, f"Unbekannte Wertung: {scoring}")
 
+        key = (query, scoring)
+        with self._memo_lock:
+            cached = self._memo.get(key)
+            if cached is not None:
+                self._memo.move_to_end(key)
+                return cached
+
         tfidf_scores, bm25_scores = self._scores(query)
         if scoring == "tfidf":
-            order = self._ranking(tfidf_scores)
-            ranked: dict[int, float] = {i: float(tfidf_scores[i]) for i in order}
+            insertion = self._ranking(tfidf_scores)
+            values = tfidf_scores
         elif scoring == "bm25":
-            order = self._ranking(bm25_scores)
-            ranked = {i: float(bm25_scores[i]) for i in order}
+            insertion = self._ranking(bm25_scores)
+            values = bm25_scores
         else:
-            ranked = fuse_rankings([self._ranking(tfidf_scores), self._ranking(bm25_scores)])
-        return ranked, tfidf_scores, bm25_scores
+            by_tfidf = self._ranking(tfidf_scores)
+            by_bm25 = self._ranking(bm25_scores)
+            values = np.zeros(len(self._refs), dtype=np.float64)
+            for ranking in (by_tfidf, by_bm25):
+                values[ranking] += 1.0 / (RRF_K + np.arange(1, ranking.size + 1))
+            seen = np.zeros(len(self._refs), dtype=bool)
+            seen[by_tfidf] = True
+            insertion = np.concatenate([by_tfidf, by_bm25[~seen[by_bm25]]])
+        scored = _Scored(
+            values=values,
+            members=np.sort(insertion),
+            tfidf=tfidf_scores,
+            bm25=bm25_scores,
+            insertion=insertion,
+        )
+        with self._memo_lock:
+            self._memo[key] = scored
+            while len(self._memo) > SCORE_MEMO_SIZE:
+                self._memo.popitem(last=False)
+        return scored
 
     def score_chunks_by_paper(
         self, query: str, *, scoring: Scoring = DEFAULT_SCORING
@@ -583,10 +724,12 @@ class TfidfIndex:
         Raises:
             DomainError: ``invalid_input`` bei leerer Anfrage oder unbekannter Wertung.
         """
-        ranked, _tfidf_scores, _bm25_scores = self._all_scores(query, scoring)
+        scored = self._scored(query, scoring)
         by_paper: dict[str, list[float]] = {}
-        for row_index, score in ranked.items():
-            by_paper.setdefault(self._refs[row_index].paper_id, []).append(score)
+        refs = self._refs
+        rows = scored.insertion
+        for row, score in zip(rows.tolist(), scored.values[rows].tolist(), strict=True):
+            by_paper.setdefault(refs[row].paper_id, []).append(score)
         return by_paper
 
     def search(
@@ -603,7 +746,10 @@ class TfidfIndex:
             query: Natürlichsprachige Anfrage.
             k: Maximale Trefferzahl (``0 < k <= MAX_RESULT_COUNT``).
             paper_ids: Optionaler Filter – nur Chunks dieser Paper werden berücksichtigt
-                (z. B. Local-Fan-out je Nachbarpaper oder DRIFT innerhalb einer Community).
+                (z. B. Local-Fan-out je Nachbarpaper oder DRIFT innerhalb einer Community). Der
+                Filter wirkt **nach** der Wertung über den ganzen Korpus und **vor** der
+                Sortierung; die Werte (bei ``hybrid`` die korpusweiten Ränge) bleiben dadurch
+                dieselben wie ohne Filter.
             scoring: ``hybrid`` (Default, Rang-Fusion aus BM25 und TF-IDF), ``tfidf``
                 (nur Kosinus) oder ``bm25`` (nur BM25).
 
@@ -621,18 +767,17 @@ class TfidfIndex:
             raise DomainError(ErrorCode.INVALID_INPUT, "k muss > 0 sein.")
         check_max_count("k", k)
 
-        ranked, tfidf_scores, bm25_scores = self._all_scores(query, scoring)
-        order = sorted(ranked, key=lambda i: (-ranked[i], self._refs[i].chunk_id))
+        scored = self._scored(query, scoring)
+        rows = scored.members
+        if paper_ids is not None:
+            wanted = [self._paper_number[p] for p in paper_ids if p in self._paper_number]
+            rows = rows[np.isin(self._paper_of_row[rows], wanted)]
+        chosen = self._top(rows, scored.values, k).tolist()
 
-        selected: list[tuple[_ChunkRef, float, float, float]] = []
-        for i in order:
-            if len(selected) >= k:
-                break
-            ref = self._refs[i]
-            if paper_ids is not None and ref.paper_id not in paper_ids:
-                continue
-            selected.append((ref, ranked[i], float(tfidf_scores[i]), float(bm25_scores[i])))
-
+        selected = [
+            (self._refs[i], float(scored.values[i]), float(scored.tfidf[i]), float(scored.bm25[i]))
+            for i in chosen
+        ]
         texts = self._fetch_texts(ref.chunk_id for ref, *_ in selected)
         hits = [
             _hit(ref, score, texts[ref.chunk_id], score_tfidf=score_tfidf, score_bm25=score_bm25)
@@ -648,6 +793,7 @@ class TfidfIndex:
         Chunk selbst, absteigend sortiert (Tie-Break über ``chunk_id``). Bewusst **ohne**
         BM25: Das ist ein Anfrage-Dokument-Modell und für Ähnlichkeit zwischen zwei
         Dokumenten nicht gedacht (docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md).
+        Gerechnet wird wie in :meth:`_scores` nur über die Terme des Chunks (Phase 16 / F1).
 
         Args:
             chunk_id: Ausgangs-Chunk (muss im Index liegen).
@@ -666,27 +812,17 @@ class TfidfIndex:
         if k <= 0:
             raise DomainError(ErrorCode.INVALID_INPUT, "k muss > 0 sein.")
         check_max_count("k", k)
-        seed_row = next((i for i, ref in enumerate(self._refs) if ref.chunk_id == chunk_id), None)
+        seed_row = self._row_of.get(chunk_id)
         if seed_row is None:
             raise DomainError(ErrorCode.NOT_FOUND, f"Chunk nicht gefunden: {chunk_id}")
 
-        scores = linear_kernel(self._matrix[seed_row], self._matrix).ravel()
-        order = sorted(
-            range(len(self._refs)),
-            key=lambda i: (-float(scores[i]), self._refs[i].chunk_id),
-        )
+        seed = self._matrix[seed_row]
+        scores = self._by_term(self._matrix_by_term, len(self._refs), seed.indices, seed.data)
+        rows = np.flatnonzero(scores > 0.0)
+        rows = rows[rows != seed_row]
+        chosen = self._top(rows, scores, k).tolist()
 
-        selected: list[tuple[_ChunkRef, float]] = []
-        for i in order:
-            if len(selected) >= k:
-                break
-            if i == seed_row:
-                continue
-            score = float(scores[i])
-            if score <= 0.0:
-                continue
-            selected.append((self._refs[i], score))
-
+        selected = [(self._refs[i], float(scores[i])) for i in chosen]
         texts = self._fetch_texts(ref.chunk_id for ref, _score in selected)
         hits = [_hit(ref, score, texts[ref.chunk_id], score_tfidf=score) for ref, score in selected]
         return demote_references(hits)

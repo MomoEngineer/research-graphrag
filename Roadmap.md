@@ -1060,10 +1060,14 @@ _Modell-Tipp: Claude Opus 5.5._
 > Speicher und Größe, nicht die Retrieval-Güte (G0.3). Die Zeiten stammen vom Container, nicht vom
 > Rechner des Nutzers. Alle Mess-Skripte sind Wegwerf-Skripte, wie in G0/G5 und ADR 0038.
 >
-> **Nachtrag – ausstehende Nachweise (laufen noch):** `--check` der Multi-Hop-Ebenen gegen die
-> Wegwerf-Baseline sowie der Feldvergleich am realen Bestand. Bis zum Eintrag der Ergebnisse gilt
-> der Bit-Nachweis nur für die fünf Retrieval-Ebenen und den Mini-Index als erbracht; F1 beginnt
-> erst danach.
+> **Nachtrag (2026-09-25) – Multi-Hop-Ebenen:** Der `--check` der fünf Multi-Hop-Ebenen verweigert
+> am realen Bestand **unabhängig vom Code**. Der Label-Guard stellt fest, dass die Gold-Labels
+> vom 606-Paper-Stand nicht mehr reproduzierbar sind (z. B. zeigt Anker C01 heute auf ein anderes
+> Paper). Verglichen wurden deshalb die Ränge direkt: gleiche Rechnung wie `--check`, nur ohne den
+> Guard. Ergebnis: **0 Abweichungen** auf allen fünf Multi-Hop-Ebenen, gegen die mit dem
+> Originalcode eingefrorene Wegwerf-Baseline. Damit sind alle zehn Ebenen belegt. Der
+> Feldvergleich des Prototyps lief über 75 der 173 Anfragen (je Kandidat 1.700 Einzelprüfungen) ohne Abweichung und wurde dann zugunsten des Byte-Vergleichs am Produktivcode beendet; den abschließenden Nachweis
+> führt F1 am Produktivcode als Byte-Vergleich.
 
 F0 ist eine Wegwerf-Messung wie G0 und ADR 0038: kein Produktivcode, der Live-Index wird nur
 gelesen, und gemessen wird an Index-Kopien.
@@ -1111,6 +1115,52 @@ mehr verändert):
 
 ### F1 – Bit-identische Begradigung
 _Modell-Tipp: Claude Opus 5.5._
+
+> **Status (2026-09-25, umgesetzt):** Gebaut sind die in F0 als wirksam gemessenen Kandidaten,
+> ausschließlich in `indexing/tfidf_index.py`
+> ([ADR 0044](docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md)):
+>
+> - spaltenweise Wertung über die Anfrage-Terme in der Summationsfolge des früheren Sparse-Produkts,
+> - vektorisierte Ranglisten und Fusion mit identischem Tie-Break,
+> - Top-*k* per Partition,
+> - `paper_ids` als Filter vor der Sortierung,
+> - gemeinsame Wertung je Anfrage (`SCORE_MEMO_SIZE` = 4, am Index-Objekt),
+> - schnelle Nachbarschaft.
+>
+> Die bisher nebenbei von scikit-learn erledigte Zeilensortierung ist jetzt eine ausdrückliche
+> Invariante des Laders. `local.py`, `drift.py` und `global_search.py` sind unverändert.
+>
+> | Warm, Median / Max (20 Gold-Fragen) | Basic | Local | Global | DRIFT |
+> | --- | --- | --- | --- | --- |
+> | realer Bestand, vorher | 1,596 / 2,560 s | 6,873 / 16,549 s | 1,265 / 2,358 s | 2,373 / 3,490 s |
+> | **realer Bestand, F1** | **0,060 / 0,092 s** | **0,189 / 0,232 s** | **0,236 / 0,281 s** | **0,246 / 0,329 s** |
+> | 2× (Auslegungspunkt), F1 | 0,136 / 0,165 s | 0,423 / 0,508 s | 0,623 / 0,849 s | 0,568 / 0,863 s |
+>
+> Die warme Local-Latenz hält die 1-s-Marke am realen Bestand und am Auslegungspunkt. **Offen
+> ausgewiesen:** Global und DRIFT haben am Auslegungspunkt nur ~15 % Reserve. Übrig ist eine
+> Python-Schleife über alle Chunk-Scores (`score_chunks_by_paper` und die Community-Aggregation),
+> die linear mit dem Bestand wächst; sie wäre der nächste bit-identische Kandidat, falls die
+> Bestätigung auf dem Rechner des Nutzers (F4) knapper ausfällt. Der Preis von F1 ist die
+> Ladezeit: 10,9 s statt ~8 s (spaltenweise Kopien, Hilfsstrukturen). Das ist Gegenstand von F3.
+>
+> *Nachweis der Bit-Identität:*
+>
+> 1. **Zehn Ebenen, qid-genau:** Die fünf Retrieval- und fünf Multi-Hop-Ebenen melden
+>    0 Abweichungen gegen die mit dem Originalcode am realen Bestand eingefrorenen
+>    Wegwerf-Baselines (Multi-Hop ohne Label-Guard, siehe F0-Nachtrag).
+> 2. **Byte-Vergleich aller Ausgaben:** Referenzcode per `git archive` aus dem Stand vor F1, Floats
+>    als `float.hex`. Am Mini-Index über 60 Anfragen (43 MB Ausgabe) byte-gleich; am realen
+>    Bestand: läuft (Referenzcode ~2 h); das Ergebnis folgt als Nachtrag.
+> 3. **Dauerhaft im Testsuite:** Ein hypothesis-Test vergleicht Suche, Wertung je Paper und
+>    Nachbarschaft gegen den früheren Algorithmus wörtlich, mit erzwungenen Gleichständen. Eine
+>    Mutationsprobe bestätigt, dass er greift: Vertauschter Tie-Break und vertauschte
+>    Summationsfolge lassen ihn fehlschlagen.
+>
+> Weitere Tests: Tie-Break bei identischen Texten, Filterwerte gleich ungefiltert, Merker geteilt
+> und begrenzt, kein Merker über einen Neubau hinweg, sortierte Zeilen als Invariante. `--check`
+> gegen die eingefrorenen Repo-Baselines ist weiterhin nicht ausführbar (606-Paper-Fingerprint);
+> das Neueinfrieren folgt in F4. Determinismus und `Citation`-Contract sind unverändert. Modul-Doku
+> nachgezogen.
 
 - Umgesetzt werden die in F0 als wirksam gemessenen Kandidaten: Fan-out-Vorfilter, gemeinsame
   Vektorisierung, Nachbarschafts-Cache.

@@ -4,8 +4,8 @@
 | --- | --- |
 | **Modul** | `src/research_graphrag/indexing/tfidf_index.py` |
 | **Paket** | `indexing` – Canonical JSON zum Offline-Hybrid-Index |
-| **Phase** | 0b (eingeführt), 4 + 5 + 7 / A3 + A4 (erweitert), 13 / R2 (Dokumentart), 15 / G2 (Cache + persistierter Zustand), 10 / V4 (`score_chunks_by_paper`) |
-| **Grundlagen** | [ADR 0005](../../../../docs/adr/0005-graphrag-index-backend-open.md), [ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md), [ADR 0033](../../../../docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md), [ADR 0036](../../../../docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md) |
+| **Phase** | 0b (eingeführt), 4 + 5 + 7 / A3 + A4 (erweitert), 13 / R2 (Dokumentart), 15 / G2 (Cache + persistierter Zustand), 10 / V4 (`score_chunks_by_paper`), 16 / F1 (bit-identische Begradigung der Wertung) |
+| **Grundlagen** | [ADR 0005](../../../../docs/adr/0005-graphrag-index-backend-open.md), [ADR 0014](../../../../docs/adr/0014-hybrid-retrieval-bm25-tfidf-phase7.md), [ADR 0033](../../../../docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md), [ADR 0036](../../../../docs/adr/0036-global-community-ranking-over-member-chunks-phase10.md), [ADR 0044](../../../../docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md) |
 
 ---
 
@@ -25,6 +25,12 @@ unverändertem Index (Schlüssel: Dateigröße + Änderungszeit, nie eine Zeitsp
 On-Read-Frische bleibt dadurch wörtlich erhalten. Details und Zahlen:
 [ADR 0033](../../../../docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md).
 
+Seit Phase 16 / F1 rechnet die Wertung **bit-identisch, aber ohne volle Matrixmultiplikation**:
+Gewertet wird nur über die Spalten der Anfrage-Terme, Ranglisten und Top-*k* laufen vektorisiert,
+und die Wertung einer Anfrage wird am Index-Objekt gemerkt. Am realen Bestand (225.126 Chunks)
+sinkt Local warm von 6,9 s auf 0,17 s; jede Ausgabe bleibt bitgleich
+([ADR 0044](../../../../docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md)).
+
 ## 2. Öffentliche Schnittstelle
 
 | Symbol | Art | Aufgabe |
@@ -35,6 +41,7 @@ On-Read-Frische bleibt dadurch wörtlich erhalten. Details und Zahlen:
 | `demote_references` | Funktion | Guardrail: sortiert Referenz-Einträge hinter die Volltext-Treffer |
 | `Scoring` | Typ-Alias | `hybrid` · `tfidf` · `bm25` |
 | `DEFAULT_SCORING` | Konstante | Die Standard-Wertung |
+| `SCORE_MEMO_SIZE` | Konstante | Zahl der je Index-Objekt gemerkten Anfrage-Wertungen (Phase 16 / F1) |
 | `SCHEMA_VERSION` | Konstante | Version des Index-Schemas (**0.6.0**: additive Tabelle `tfidf_state` – Vokabular + Zähl-Matrix) |
 
 ## 3. Ablauf
@@ -75,10 +82,12 @@ flowchart TD
     TS -- ja --> C["_ChunkRef je Zeile (ohne Text)"]
     C --> D["CountVectorizer(vocabulary=...).fit([])<br/>rekonstruiert den Fit-Zustand"]
     D --> DS["Zähl-Matrix aus CSR-Rohbytes"]
-    DS --> E["TfidfTransformer → TF-IDF-Matrix"]
-    DS --> F["bm25.build_weights → BM25-Gewichte"]
-    F --> CACHE_STORE["im Prozess-Cache ablegen"]
-    E --> CACHE_STORE
+    DS --> SO["Zeilen sortieren (sort_indices)"]
+    SO --> E["TfidfTransformer → TF-IDF-Matrix"]
+    SO --> F["bm25.build_weights → BM25-Gewichte"]
+    E --> H["Hilfsstrukturen: Rang der chunk_id,<br/>Zeile je chunk_id, Paper je Zeile,<br/>spaltenweise Kopien beider Matrizen"]
+    F --> H
+    H --> CACHE_STORE["im Prozess-Cache ablegen"]
 ```
 
 **Rekonstruktion statt Neu-Fit.** Der pro Aufbau persistierte Vokabular-/Zähl-Zustand macht das
@@ -88,6 +97,11 @@ Raum aus reinen Zahlen nach, den ein frischer Fit ergäbe (byte-genau nachgewies
 BM25 bekommt weiterhin dieselben rohen Termhäufigkeiten und dasselbe Vokabular wie TF-IDF – ein
 Unterschied zwischen den Verfahren ist damit garantiert ein Unterschied der Bewertung, nicht der
 Vorverarbeitung.
+
+**Sortierte Zeilen sind eine Invariante.** Die persistierten Spaltenindizes sind je Zeile nicht
+sortiert; früher sortierte `scikit-learn` sie beim Fit nebenbei. Seit Phase 16 / F1 geschieht es
+ausdrücklich direkt nach dem Deserialisieren – die Werte beider Matrizen bleiben bitgleich, und die
+spaltenweise Wertung kann sich auf die Summationsfolge verlassen.
 
 **Der Prozess-Cache ist über den Dateizustand ungültig, nie über eine Zeitspanne.** Ein nach dem
 Laden neu gebauter Index (atomarer Swap) wirkt beim nächsten Aufruf sofort – ohne Serverneustart,
@@ -101,28 +115,45 @@ Wörter tragend sein. Die Keyword-Politik wirkt an anderer Stelle, als Nachfilte
 ```mermaid
 flowchart TD
     Q["Anfrage"] --> V["Eingaben prüfen:<br/>leer · k ≤ 0 · k > MAX_RESULT_COUNT · unbekannte Wertung"]
-    V --> S["_scores: immer BEIDE Wertungen"]
+    V --> MEMO{"Wertung dieser Anfrage<br/>schon gemerkt?"}
+    MEMO -- ja --> F
+    MEMO -- nein --> S["_scores: BEIDE Wertungen,<br/>spaltenweise über die Anfrage-Terme"]
     S --> M{"scoring"}
     M -- tfidf --> R1["Rangliste TF-IDF"]
     M -- bm25 --> R2["Rangliste BM25"]
-    M -- hybrid --> R3["beide Ranglisten → fuse_rankings"]
-    R1 --> O["Reihenfolge festlegen<br/>Tie-Break chunk_id"]
-    R2 --> O
-    R3 --> O
-    O --> P["über die Reihenfolge laufen,<br/>paper_ids-Filter anwenden,<br/>bis k Treffer (nur Refs, kein Text)"]
-    P --> TXT["_fetch_texts: EIN SELECT<br/>nur für die gewählten chunk_ids"]
+    M -- hybrid --> R3["beide Ranglisten → Fusion<br/>(Rechnung wie fuse_rankings)"]
+    R1 --> F["_Scored: Werte, Mitglieder,<br/>Rohwerte (gemerkt)"]
+    R2 --> F
+    R3 --> F
+    F --> P["paper_ids-Filter auf die Mitglieder"]
+    P --> O["Top-k: Schwelle per Partition,<br/>dann sortieren, Tie-Break chunk_id"]
+    O --> TXT["_fetch_texts: EIN SELECT<br/>nur für die gewählten chunk_ids"]
     TXT --> H["Hit mit Gesamt-Score,<br/>beiden Teil-Scores und Snippet"]
     H --> G["demote_references:<br/>Referenz-Einträge ans Ende"]
 ```
 
-Vier Details, die das Verhalten prägen:
+Fünf Details, die das Verhalten prägen:
+
+**Gewertet wird nur über die Terme der Anfrage.** `_by_term` addiert je Anfrage-Term dessen
+Spalte (spaltenweise Kopie, einmal beim Laden) – statt die Anfrage gegen die ganze Matrix zu
+multiplizieren. Die Summation je Chunk beginnt bei `0.0` und folgt derselben Termreihenfolge, in
+der das frühere Sparse-Produkt akkumulierte: beim TF-IDF-Kosinus die gespeicherte Folge des
+Anfragevektors, bei BM25 die aufsteigende Spaltenfolge. Das Ergebnis ist deshalb **bitgleich**,
+nicht nur numerisch gleich; ein hypothesis-Test vergleicht gegen den früheren Algorithmus
+wörtlich, und eine Mutationsprobe (vertauschte Reihenfolge) lässt ihn fehlschlagen.
+
+**Dieselbe Anfrage wird einmal gewertet.** Local wertet eine Anfrage bis zu sechsmal (Seed +
+Fan-out), DRIFT zwei- bis dreimal. `_scored` merkt sich die letzten `SCORE_MEMO_SIZE`
+Wertungen am Index-Objekt; der Merker verfällt mit dem Objekt über den Dateizustand.
 
 **Beide Score-Vektoren werden immer berechnet.** Das kostet wenig und sorgt dafür, dass jeder
 Treffer seine Teil-Scores ausweisen kann – unabhängig davon, welche Wertung gewählt wurde.
 
-**Der Filter wirkt nach der Sortierung.** `paper_ids` schneidet nicht den Suchraum, sondern
-überspringt beim Einsammeln. Die Rangfolge innerhalb der gefilterten Menge ist dadurch identisch
-zur ungefilterten Rangfolge – genau das brauchen Local-Fan-out und DRIFT.
+**Der Filter wirkt nach der Wertung, vor der Sortierung.** `paper_ids` schneidet nicht den
+Suchraum der Wertung: Die Werte – bei `hybrid` aus korpusweiten Rängen – sind dieselben wie ohne
+Filter, sortiert werden aber nur noch die Zeilen der gewünschten Paper. Ein Filter **vor** der
+Wertung würde die Ränge innerhalb der Teilmenge bilden und damit andere Fusionswerte liefern
+(gemessen in Phase 16 / F0: 239 von 240 gefilterten Suchen weichen dann ab).
 
 **Der Score der Hybrid-Wertung ist ein Fusionswert.** Er stammt aus Rängen, nicht aus
 Ähnlichkeiten, und ist nur innerhalb einer Antwort vergleichbar.
@@ -144,7 +175,7 @@ Seit Phase 10 / V4 ([ADR 0036](../../../../docs/adr/0036-global-community-rankin
 teilt sich `search` seinen Bewertungskern mit einer zweiten Methode: `score_chunks_by_paper`
 liefert **alle** positiv bewerteten Chunks einer Anfrage, gruppiert nach Paper – ohne
 Top-k-Grenze und ohne den Text nachzuladen. Beide Methoden rufen intern denselben privaten
-Baustein (`_all_scores`, ein Query-Vektor, eine Fusion) auf; `search` sortiert und begrenzt
+Baustein (`_scored`, ein Query-Vektor, eine Fusion, gemerkt) auf; `search` sortiert und begrenzt
 zusätzlich, `score_chunks_by_paper` gruppiert nur. Grundlage für Aggregationen über
 Chunk-**Mengen** statt über Einzeltreffer – bislang der einzige Aufrufer ist das
 Community-Ranking in `retrieval/global_search.py`.
@@ -154,6 +185,9 @@ Community-Ranking in `retrieval/global_search.py`.
 `neighbors_of_chunk` bewertet einen **Chunk gegen alle anderen** und bleibt bewusst beim reinen
 Kosinus: BM25 ist ein Anfrage-Dokument-Modell und für Dokument-Dokument-Ähnlichkeit nicht
 gedacht. Der Ausgangs-Chunk wird ausgeschlossen; `score_bm25` ist in diesen Treffern `0.0`.
+Seit Phase 16 / F1 findet ein Wörterbuch die Zeile des Ausgangs-Chunks, und die Ähnlichkeit
+entsteht wie in der Suche nur über dessen Terme; statt aller Zeilen wird nur die Top-*k*-Auswahl
+sortiert.
 Die Guardrail und das Nachladen der Texte wirken hier genauso wie in `search`.
 
 ## 4. Zusammenspiel
@@ -203,6 +237,11 @@ wenn mindestens ein Verfahren ihn positiv bewertet.
   ergibt gleiche Matrizen – unabhängig davon, ob ein Cache-Treffer vorliegt oder neu geladen wird
   (byte-genau geprüft, siehe [ADR 0033](../../../../docs/adr/0033-response-latency-cache-and-persisted-tfidf-state-phase15.md)).
 - Identifikatoren werden mit sortierten Schlüsseln serialisiert.
+- Die Begradigung aus Phase 16 / F1 ist **bitgleich** zum früheren Algorithmus: Top-*k* behält alle
+  Gleichstände an der Grenze, bevor der Tie-Break entscheidet; die Fusion rechnet `0.0 + 1/(K+Rang)`
+  in derselben Reihenfolge wie `fuse_rankings`. Nachweis am realen Bestand: Byte-Vergleich aller
+  Ausgaben alt gegen neu
+  ([ADR 0044](../../../../docs/adr/0044-response-latency-bit-identical-scoring-and-fts5-phase16.md)).
 
 ## 7. Grenzen
 
@@ -212,6 +251,9 @@ wenn mindestens ein Verfahren ihn positiv bewertet.
 - **Der Prozess-Cache ist prozesslokal.** Mehrere getrennte Prozesse (z. B. mehrere CLI-Aufrufe
   hintereinander) teilen ihn nicht – nur ein langlebiger Prozess (MCP-Server) profitiert über
   mehrere Anfragen hinweg.
+- **Spaltenweise Kopien kosten Ladezeit.** Beide Matrizen liegen zusätzlich spaltenweise im
+  Speicher; die Umwandlung kostet am realen Bestand 1–3 s beim Laden. Der Spitzenspeicher entsteht
+  weiterhin beim Laden selbst und steigt dadurch nicht (Phase 16 / F0).
 - **Kein Feld-Ranking.** Titel, Abschnitt und Fließtext werden gleich gewichtet.
 - **`k` ist gedeckelt.** Seit [ADR 0037](../../../../docs/adr/0037-mcp-tool-response-size-ceiling.md)
   gilt für `search`/`neighbors_of_chunk` dieselbe geteilte Obergrenze
